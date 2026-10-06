@@ -1,0 +1,22 @@
+[Unit]
+Description=Durable GLM-5.2 SkyPilot teacher-to-training campaign
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/keep-campaign/repo
+Environment=CAMPAIGN_DESCRIPTOR=/etc/keep-glm52/campaign.json
+Environment=ROOT=/mnt/nvme/glm52-campaign
+Environment=KEEP_REPO_DIR=/opt/keep-campaign/repo
+Environment=PYTHONUNBUFFERED=1
+Environment=GLM52_ENV_PREPARED=1
+EnvironmentFile=/mnt/nvme/glm52-campaign/runtime/campaign.env
+ExecStart=/opt/keep-campaign/repo/aws/glm52-gpu/scripts/run_campaign.sh
+KillSignal=SIGTERM
+SuccessExitStatus=75
+TimeoutStopSec=1800
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

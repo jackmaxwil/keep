@@ -1,0 +1,100 @@
+{
+  "record_type": "dsv4_task2_source_control_identity_extract_v1",
+  "engine": "source_mxfp4_streamed",
+  "source_files": {
+    "external_rows_path": "/Users/jack.mazac/keep-artifacts/dsv4-quality-gate/rows.jsonl",
+    "external_rows_sha256": "3c7b91e354e49433cb6b84f324dff338e1d0ef8e117ddb7e516cdf1bf5b8a22c",
+    "external_run_path": "/Users/jack.mazac/keep-artifacts/dsv4-quality-gate/run-source_mxfp4_streamed.json",
+    "external_run_sha256": "995182195ae136526358c9d0f606a027122854d3d542e69b6045647998cd47ac",
+    "committed_rows_extract": "prefill-source-control-rows.jsonl",
+    "committed_rows_extract_sha256": "12e1f7db2753dca0b00621dc4bb1fc0a56fa89514c492e3803b4f86f428312b6",
+    "committed_run_copy": "prefill-source-control-run.json",
+    "committed_run_copy_sha256": "995182195ae136526358c9d0f606a027122854d3d542e69b6045647998cd47ac"
+  },
+  "checkpoint": {
+    "path": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+    "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+    "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+    "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+    "revision_provenance_path": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731/_KEEP_DOWNLOAD_COMPLETE.json",
+    "revision_provenance_sha256": "68d973a8b79801a90f888c4edc5d7739721aaf2e5dc3698787964d64467cf4eb"
+  },
+  "teacher": {
+    "path": "/Users/jack.mazac/keep-artifacts/dsv4-teacher-logits-eval",
+    "generation_config_sha256": "c9d68af1c4939b9281571f5fae69ea51c482928f6ea0c9a7cd2d398131d240f1"
+  },
+  "run_shape": {
+    "pack_path": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+    "split": "report",
+    "position_slice": 256,
+    "prefill_chunk_tokens": 1024,
+    "teacher_top_k": 2048,
+    "hidden_size": 4096,
+    "moe_intermediate_size": 2048,
+    "n_routed_experts": 256,
+    "num_experts_per_tok": 6,
+    "num_hidden_layers": 43,
+    "with_mtp": false
+  },
+  "run_config_sha256": "cf7150bcf7954a7b61a53ffa8071181bc32d0c262da626631b0d39d88fd03e86",
+  "selected_sessions_sha256": "765c34a3f61d997bfd030ad0b16cb88e206ebeb4afa7bc8debae3b196b54dd2d",
+  "selected_sessions": [
+    {
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34",
+      "split": "report",
+      "supervised": 1615,
+      "teacher_top_k": 2048,
+      "token_count": 4405
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-07-11T18-14-54-019f53e4-3cc4-7123-ada8-e1074d082246",
+      "split": "report",
+      "supervised": 3288,
+      "teacher_top_k": 2048,
+      "token_count": 26323
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-07-10T14-23-17-019f4de9-d2d7-76f1-b585-2e512e0ef4f3",
+      "split": "report",
+      "supervised": 7458,
+      "teacher_top_k": 2048,
+      "token_count": 33487
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-07-06T09-36-52-019f384a-2a4b-71f2-90bc-ff18536f627f",
+      "split": "report",
+      "supervised": 8797,
+      "teacher_top_k": 2048,
+      "token_count": 49767
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-05-27T21-21-35-019e6cd0-f8a6-7ae0-a3ee-5d1d9110165c",
+      "split": "report",
+      "supervised": 13277,
+      "teacher_top_k": 2048,
+      "token_count": 55123
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-07-02T12-37-58-019f2456-88a9-77e2-8de0-a21753083115",
+      "split": "report",
+      "supervised": 13636,
+      "teacher_top_k": 2048,
+      "token_count": 59867
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-06-19T10-50-52-019ee101-d002-7ae0-a1d9-22c16ba7ff3c",
+      "split": "report",
+      "supervised": 21607,
+      "teacher_top_k": 2048,
+      "token_count": 63781
+    },
+    {
+      "prompt_id": "teich_codex_rollout-2026-07-03T15-31-42-019f2a1b-f3ce-7071-920f-e3f04bae1a03",
+      "split": "report",
+      "supervised": 19908,
+      "teacher_top_k": 2048,
+      "token_count": 68613
+    }
+  ],
+  "revision_limitation": "The historical source run payload records checkpoint path, config hash, and index hash but not revision. Revision is taken from the pinned checkpoint's _KEEP_DOWNLOAD_COMPLETE.json, whose hash is recorded above; the source run's config and index hashes match that pinned checkpoint."
+}

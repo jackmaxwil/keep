@@ -1,0 +1,36 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "tokenizer_dir": "b513616c55d1144366e6a8d7728692ea5e8dbaac9105eabeeda3b15246a28e3d"
+  },
+  "op": "qwen-family-eval-prompt-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/prepare_qwen_family_eval_prompts.py",
+    "--tokenizer-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence.jsonl",
+    "--expected-vocab-size",
+    "248320",
+    "--min-prompts-per-split",
+    "22",
+    "--min-tokens-per-prompt",
+    "2",
+    "--model-id",
+    "Qwen/Qwen3.6-35B-A3B",
+    "--revision",
+    "995ad96eacd98c81ed38be0c5b274b04031597b0"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_eval_prompts",
+  "step_key": "c622c3d25018c7ec"
+}

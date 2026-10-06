@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "record_type": "glm45_air_single_host_cache_prefix_attempt_summary",
+  "decision": "single_host_cache_prefix_generated_dirty_stage_views_not_clean",
+  "cache_rows_generated": true,
+  "cache_row_count": 1,
+  "validation_ran": true,
+  "validation_ok": true,
+  "all_memory_clean": false,
+  "bounded_single_host_attempt": true,
+  "model_id": "zai-org/GLM-4.5-Air",
+  "revision": "a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "teacher_kind": "bf16_source",
+  "prompt_ids": ["capital_france"],
+  "top_k": 16,
+  "max_positions": 1,
+  "no_full_logits": true,
+  "layer_split": 23,
+  "lm_head_chunk_rows": 8192,
+  "local_sequential_stage_processes": true,
+  "local_sequential_head_process": true,
+  "local_sequential_lower_split_layer": 12,
+  "local_sequential_upper_split_layer": 34,
+  "local_sequential_lower_pre_hidden_host_spill": true,
+  "local_sequential_lower_pre_hidden_host_dtype": "bfloat16",
+  "local_sequential_lower_pre_hidden_host_shape": [1, 5, 4096],
+  "local_sequential_lower_pre_hidden_host_nbytes": 81920,
+  "local_sequential_lower_hidden_host_spill": true,
+  "local_sequential_lower_hidden_host_dtype": "bfloat16",
+  "local_sequential_lower_hidden_host_shape": [1, 5, 4096],
+  "local_sequential_lower_hidden_host_nbytes": 81920,
+  "local_sequential_upper_pre_hidden_host_spill": true,
+  "local_sequential_upper_pre_hidden_host_dtype": "bfloat16",
+  "local_sequential_upper_pre_hidden_host_shape": [1, 5, 4096],
+  "local_sequential_upper_pre_hidden_host_nbytes": 81920,
+  "local_sequential_upper_hidden_host_spill": true,
+  "local_sequential_upper_hidden_host_dtype": "bfloat16",
+  "local_sequential_upper_hidden_host_shape": [1, 5, 4096],
+  "local_sequential_upper_hidden_host_nbytes": 81920,
+  "local_sequential_stage_view_plan_json": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704.json",
+  "local_sequential_stage_view_roots_json": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/local_sequential_stage_view_roots.json",
+  "local_sequential_stage_view_roots": {
+    "head": {
+      "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/head"
+    },
+    "lower-final": {
+      "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/lower-final"
+    },
+    "lower-pre": {
+      "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/lower-pre"
+    },
+    "upper-final": {
+      "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/upper-final"
+    },
+    "upper-pre": {
+      "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/upper-pre"
+    }
+  },
+  "stage_view_source_visibility": [
+    {
+      "stage": "lower-pre",
+      "rank": 1,
+      "first_layer": 0,
+      "last_layer": 11,
+      "parameter_key_count": 200,
+      "required_source_tensor_count": 4391,
+      "required_present_tensor_bytes": 53241468416,
+      "visible_shard_file_bytes": 54483526352,
+      "required_shard_count": 12
+    },
+    {
+      "stage": "lower-final",
+      "rank": 1,
+      "first_layer": 12,
+      "last_layer": 22,
+      "parameter_key_count": 187,
+      "required_source_tensor_count": 4378,
+      "required_present_tensor_bytes": 51512845824,
+      "visible_shard_file_bytes": 51513391776,
+      "required_shard_count": 11
+    },
+    {
+      "stage": "upper-pre",
+      "rank": 0,
+      "first_layer": 23,
+      "last_layer": 33,
+      "parameter_key_count": 187,
+      "required_source_tensor_count": 4378,
+      "required_present_tensor_bytes": 51512845824,
+      "visible_shard_file_bytes": 51513391776,
+      "required_shard_count": 11
+    },
+    {
+      "stage": "upper-final",
+      "rank": 0,
+      "first_layer": 34,
+      "last_layer": 45,
+      "parameter_key_count": 205,
+      "required_source_tensor_count": 4777,
+      "required_present_tensor_bytes": 56195840000,
+      "visible_shard_file_bytes": 58679464056,
+      "required_shard_count": 12
+    },
+    {
+      "stage": "head",
+      "rank": 0,
+      "first_layer": null,
+      "last_layer": null,
+      "parameter_key_count": 1,
+      "required_source_tensor_count": 1,
+      "required_present_tensor_bytes": 1241513984,
+      "visible_shard_file_bytes": 7166072280,
+      "required_shard_count": 1
+    }
+  ],
+  "mlx_peak_bytes": 65022336949,
+  "pageouts_delta": 215,
+  "swapouts_delta": 0,
+  "mlx_memory_limit_bytes": null,
+  "mlx_wired_limit_bytes": null,
+  "mlx_cache_limit_bytes": 0,
+  "custom_mlx_wired_limit_override": false,
+  "system_wired_default": true,
+  "rank_metrics": [
+    {
+      "rank": 1,
+      "stage": "local_sequential_lower_pre_process",
+      "elapsed_seconds": 5.446235249997699,
+      "mlx_peak_bytes": 62067924421,
+      "pageouts_delta": 106,
+      "swapouts_delta": 0,
+      "rss_bytes": 49562992640
+    },
+    {
+      "rank": 1,
+      "stage": "local_sequential_lower_final_process",
+      "elapsed_seconds": 5.300815959002648,
+      "mlx_peak_bytes": 60339342793,
+      "pageouts_delta": 9,
+      "swapouts_delta": 0,
+      "rss_bytes": 47831924736
+    },
+    {
+      "rank": 0,
+      "stage": "local_sequential_upper_pre_process",
+      "elapsed_seconds": 5.2317304169991985,
+      "mlx_peak_bytes": 60339342793,
+      "pageouts_delta": 53,
+      "swapouts_delta": 0,
+      "rss_bytes": 47830417408
+    },
+    {
+      "rank": 0,
+      "stage": "local_sequential_upper_final_process",
+      "elapsed_seconds": 5.731264166999608,
+      "mlx_peak_bytes": 65022336949,
+      "pageouts_delta": 47,
+      "swapouts_delta": 0,
+      "rss_bytes": 52074725376
+    },
+    {
+      "rank": 0,
+      "stage": "local_sequential_head_process",
+      "elapsed_seconds": 0.25207200000295416,
+      "mlx_peak_bytes": 67256328,
+      "pageouts_delta": 0,
+      "swapouts_delta": 0,
+      "rss_bytes": 379994112
+    }
+  ],
+  "memory_delta_vs_previous_prefix": {
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-lowersplit12-uppersplit34-headproc-systemwired-rerun2-20260704.json",
+    "mlx_peak_bytes_delta": 0,
+    "pageouts_delta_delta": 23,
+    "swapouts_delta_delta": 0
+  },
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-lowersplit12-uppersplit34-stageviews-headproc-systemwired-20260704",
+  "metadata_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-lowersplit12-uppersplit34-stageviews-headproc-systemwired-20260704/metadata.jsonl",
+  "validation_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-lowersplit12-uppersplit34-stageviews-headproc-systemwired-validation-20260704.jsonl",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "direct_path_mutated": false,
+  "sudo_used": false,
+  "uc_pingpong_ran": false,
+  "distributed_cache_ran": false,
+  "notes": [
+    "Stage-specific source views materially reduced visible shard surface per child, but did not clear producer pageouts.",
+    "The run used normal system wired memory limits; no MLX wired-limit override was set.",
+    "Do not rerun this exact stage-view mechanism unchanged as a W4 cleanliness attempt."
+  ],
+  "next_recommendation": "find_a_different_single_host_residency_mechanism_or_restore_distributed_cache_path"
+}

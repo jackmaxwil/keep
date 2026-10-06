@@ -1,0 +1,32 @@
+{
+  "artifact_dir": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/train_l45_gud_math8-afbbf149/out",
+  "artifact_layer": 45,
+  "artifact_projection": "down_proj",
+  "artifact_reference_cosine": 0.9999998807907104,
+  "artifact_reference_max_abs_diff": 0.0009765625,
+  "artifact_reference_variant": "decoded_fp16_sorted_direct",
+  "benchmark_jsonl": "artifacts/benchmarks/glm45-air-e8p-component-stream-partial-down-parity-smoke-1route-20260703.jsonl",
+  "decision": "component_stream_partial_artifact_parity_pass_not_speed",
+  "finite_output": true,
+  "ms_per_iter": 33.34437499870546,
+  "notes": [
+    "diagnostic smallest-route proof for native component-stream partial-reduction scaffold",
+    "do_not_compare_to_q2_or_route_resident_auto_from_this_scalar_partial_body",
+    "larger route packets need a valid parallel/TensorOps schedule or compact scratch redesign before speed work"
+  ],
+  "output_shape": [
+    1,
+    4096
+  ],
+  "pageouts_delta": 0,
+  "projection": "down",
+  "record_type": "glm45_air_e8p_component_stream_partial_artifact_parity_smoke",
+  "schema_version": 1,
+  "speed_claim": false,
+  "swapouts_delta": 0,
+  "tokens": 1,
+  "top_k": 1,
+  "variant": "nax_e8p_component_stream_rhs_sorted_partial_raw",
+  "vq_code_bits": 16,
+  "vq_group_size": 352
+}

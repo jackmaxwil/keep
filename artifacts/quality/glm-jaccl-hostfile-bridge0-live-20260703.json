@@ -1,0 +1,4 @@
+[
+  {"ssh": "127.0.0.1", "ips": ["169.254.126.35"], "rdma": [null, "rdma_en1"]},
+  {"ssh": "jackmazac@192.168.100.191", "ips": [], "rdma": ["rdma_en1", null]}
+]

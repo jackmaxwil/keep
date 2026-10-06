@@ -1,0 +1,33 @@
+{
+  "bounded_single_host_attempt": true,
+  "cache_rows_generated": false,
+  "command": "GLM_SINGLE_HOST_FALLBACK=1 GLM_SINGLE_HOST_MODEL_PATH=/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa GLM_SINGLE_HOST_REVISION=a24ceef6ce4f3536971efe9b778bdaa1bab18daa GLM_SINGLE_HOST_TEACHER_KIND=bf16_source GLM_SINGLE_HOST_LAZY=1 GLM_SINGLE_HOST_SOURCE_MEMORY_GUARD_RATIO=1.0 GLM_NO_FULL_LOGITS=1 GLM_SKIP_LOCAL_CONSUME=1 GLM_PROMPT_IDS=capital_france GLM_TOP_K=16 GLM_MAX_POSITIONS=1 GLM_OUTPUT_DIR=artifacts/quality/glm45-air-cleanroom-single-host-runtime-source-guarded-20260704 GLM_VALIDATION_JSONL=artifacts/quality/glm45-air-cleanroom-single-host-runtime-source-guarded-20260704-validation.jsonl bash scripts/run_glm45_air_distributed_cleanroom_cache.sh",
+  "decision": "single_host_source_memory_guard_blocked",
+  "exit_code": 23,
+  "expected_source_to_physical_memory_ratio": 1.5729876319528557,
+  "full_logits_available": false,
+  "guard_source_bytes": 216189773960,
+  "max_positions": 1,
+  "metadata_jsonl_created": false,
+  "model_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "no_full_logits": true,
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-runtime-source-guarded-20260704",
+  "peer2_used": false,
+  "physical_memory_bytes": 137438953472,
+  "present_shard_bytes": 216189773960,
+  "prompt_ids": [
+    "capital_france"
+  ],
+  "rdma_jaccl_touched": false,
+  "revision": "a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "single_host_lazy": true,
+  "source_index_total_size": 110468824832,
+  "source_memory_guard_checked": true,
+  "source_memory_guard_enabled": true,
+  "source_memory_guard_pass": false,
+  "source_memory_guard_ratio": 1.0,
+  "teacher_kind": "bf16_source",
+  "teacher_logits_file_count": 0,
+  "top_k": 16,
+  "validation_ran": false
+}

@@ -1,0 +1,113 @@
+{
+  "cache_rows_generated": false,
+  "candidate_scan": {
+    "candidates": [
+      {
+        "complete_runtime_source": true,
+        "complete_source": false,
+        "decision": "single_host_teacher_runtime_source_complete_full_source_incomplete",
+        "expected_shard_count": 47,
+        "metadata_total_size": 110468824832,
+        "missing_extra_shards": [
+          "model-00047-of-00047.safetensors"
+        ],
+        "missing_required_runtime_shards": [],
+        "missing_shard_count": 1,
+        "missing_shards": [
+          "model-00047-of-00047.safetensors"
+        ],
+        "model_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+        "present_shard_bytes": 216189773960,
+        "present_shard_count": 46,
+        "source_ready_for_single_host_export": true,
+        "torch_dtype": "bfloat16"
+      }
+    ],
+    "complete_candidate_count": 1,
+    "incomplete_candidate_count": 0,
+    "local_export_candidate_ready": true,
+    "recommended_model_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+    "scan_roots": [
+      "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots"
+    ],
+    "scanned_index_count": 1
+  },
+  "complete_runtime_source": true,
+  "complete_source": false,
+  "config": {
+    "architectures": [
+      "Glm4MoeForCausalLM"
+    ],
+    "hidden_size": 4096,
+    "model_type": "glm4_moe",
+    "n_routed_experts": 128,
+    "num_hidden_layers": 46,
+    "torch_dtype": "bfloat16",
+    "vocab_size": 151552
+  },
+  "config_exists": true,
+  "config_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa/config.json",
+  "decision": "single_host_teacher_runtime_source_complete_full_source_incomplete",
+  "expected_shard_count": 47,
+  "index_exists": true,
+  "index_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa/model.safetensors.index.json",
+  "local_export_candidate_ready": true,
+  "memory_observation": {
+    "expected_source_bytes": 216189773960,
+    "expected_source_to_physical_memory_ratio": 1.5729876319528557,
+    "iogpu_wired_limit_mb": 0,
+    "physical_memory_bytes": 137438953472,
+    "source_bytes_exceed_physical_memory": true
+  },
+  "metadata_total_size": 110468824832,
+  "missing_extra_shards": [
+    "model-00047-of-00047.safetensors"
+  ],
+  "missing_extra_tensor_count": 402,
+  "missing_extra_tensor_examples": [
+    "model.layers.46.eh_proj.weight",
+    "model.layers.46.enorm.weight",
+    "model.layers.46.hnorm.weight",
+    "model.layers.46.input_layernorm.weight",
+    "model.layers.46.mlp.experts.0.down_proj.weight",
+    "model.layers.46.mlp.experts.0.gate_proj.weight",
+    "model.layers.46.mlp.experts.0.up_proj.weight",
+    "model.layers.46.mlp.experts.1.down_proj.weight",
+    "model.layers.46.mlp.experts.1.gate_proj.weight",
+    "model.layers.46.mlp.experts.1.up_proj.weight",
+    "model.layers.46.mlp.experts.10.down_proj.weight",
+    "model.layers.46.mlp.experts.10.gate_proj.weight",
+    "model.layers.46.mlp.experts.10.up_proj.weight",
+    "model.layers.46.mlp.experts.100.down_proj.weight",
+    "model.layers.46.mlp.experts.100.gate_proj.weight",
+    "model.layers.46.mlp.experts.100.up_proj.weight",
+    "model.layers.46.mlp.experts.101.down_proj.weight",
+    "model.layers.46.mlp.experts.101.gate_proj.weight",
+    "model.layers.46.mlp.experts.101.up_proj.weight",
+    "model.layers.46.mlp.experts.102.down_proj.weight"
+  ],
+  "missing_required_runtime_shard_count": 0,
+  "missing_required_runtime_shards": [],
+  "missing_required_runtime_tensor_count": 0,
+  "missing_required_runtime_tensor_examples": [],
+  "missing_shard_count": 1,
+  "missing_shards": [
+    "model-00047-of-00047.safetensors"
+  ],
+  "model_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "num_hidden_layers": 46,
+  "peer2_used": false,
+  "present_required_runtime_shard_count": 46,
+  "present_shard_bytes": 216189773960,
+  "present_shard_count": 46,
+  "rdma_jaccl_touched": false,
+  "recommended_model_path": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "record_type": "glm45_air_single_host_teacher_source_audit",
+  "required_runtime_shard_count": 46,
+  "revision": "a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "source_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "source_dir_exists": true,
+  "source_ready_for_single_host_export": true,
+  "teacher_kind": "bf16_source",
+  "weight_map_tensor_count": 18329
+}

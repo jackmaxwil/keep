@@ -1,0 +1,36 @@
+{
+  "gate_result": null,
+  "input_hashes": {},
+  "op": "qwen-family-gate-policy",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/define_qwen_family_gate_policy.py",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence.jsonl",
+    "--comparison-baseline",
+    "same_machine_qwen_source_switch_projection_control",
+    "--maximum-candidate-to-reference-ratio",
+    "3.0",
+    "--minimum-clean-rows-per-split",
+    "22",
+    "--minimum-repetitions-per-scenario",
+    "2",
+    "--minimum-total-clean-rows",
+    "64",
+    "--model-id",
+    "Qwen/Qwen3.6-35B-A3B",
+    "--revision",
+    "995ad96eacd98c81ed38be0c5b274b04031597b0"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_policy",
+  "step_key": "3a61437c9bab349d"
+}

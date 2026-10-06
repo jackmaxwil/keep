@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "record_type": "glm52_modelopt_nvfp4_materialization_interrupted_attempt",
+  "observation_provenance": {
+    "capture": "Codex PTY process result and immediate read-only filesystem inspection",
+    "note": "The process was intentionally interrupted through PTY Ctrl-C after the first atomic group file appeared. This record was transcribed immediately afterward; the materializer could not emit its normal final JSON because it was interrupted.",
+    "raw_session_record": "/Users/jack.mazac/.codex/sessions/2026/07/09/rollout-2026-07-09T16-13-26-019f4928-4ea1-7211-8095-31aca8257fe8.jsonl:17692",
+    "raw_session_timestamp_utc": "2026-07-10T12:33:09.164Z",
+    "terminal_transcript": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/interrupted-attempt-terminal.txt",
+    "terminal_transcript_sha256": "f4efd6e731e32f7a851c070bfeaeddabfee83f7be3a6cae9919ae2a3137b1a5d",
+    "git_head_before_attempt": "0a8f00e4"
+  },
+  "source_identity": {
+    "model_id": "0xSero/glm-5.2-reap-504B-v2",
+    "revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+    "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+    "source_decoder": "modelopt_nvfp4_v1"
+  },
+  "protocol": {
+    "lock_wrapper": [
+      "/usr/bin/lockf",
+      "-kn",
+      ".keep-heavy-job.lock"
+    ],
+    "artifact_affecting_argv": [
+      "env",
+      "UV_CACHE_DIR=/tmp/keep-uv-cache",
+      "uv",
+      "run",
+      "--group",
+      "dev",
+      "python",
+      "benchmarks/materialize_glm52_reap_groups.py",
+      "--profile-path",
+      "models/glm52-reap-504b-v2.yaml",
+      "--model-id",
+      "0xSero/glm-5.2-reap-504B-v2",
+      "--revision",
+      "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "--config-path",
+      "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json",
+      "--index-path",
+      "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json",
+      "--source-dir",
+      "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "--output-dir",
+      "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up",
+      "--groups",
+      "10:gate_proj,10:up_proj",
+      "--code-bits",
+      "8",
+      "--group-size",
+      "512",
+      "--scale-estimator",
+      "max_abs",
+      "--expert-workers",
+      "1",
+      "--skip-existing"
+    ],
+    "selection": [
+      "10:gate_proj",
+      "10:up_proj"
+    ],
+    "fresh_output_directory": true,
+    "expert_workers": 1,
+    "skip_existing": true,
+    "dense_checkpoint_allowed": false,
+    "production_artifact_output_path_used": false
+  },
+  "termination": {
+    "method": "PTY Ctrl-C / SIGINT",
+    "process_returncode": 130,
+    "python_terminal_exception": "KeyboardInterrupt",
+    "terminal_frame": "read_modelopt_nvfp4_weight -> read_safetensors_tensor_bytes -> handle.read(end - start)",
+    "interruption_during_second_selected_group": true,
+    "second_group_inference_basis": "The canonical selected order was gate_proj then up_proj; gate_proj was already atomically published and up_proj was absent when SIGINT interrupted source-weight reading."
+  },
+  "post_interruption_observation": {
+    "observed_at_utc": "2026-07-10T12:33:20Z",
+    "published_group_count": 1,
+    "published_groups": [
+      {
+        "group_key": "10:gate_proj",
+        "path": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up/layer-00010-gate_proj.safetensors",
+        "artifact_bytes": 272500893,
+        "artifact_sha256": "3de6e7fa06dbf4556c5d54227ab6d793a6732a2d273b7b887241f00f562c68c7",
+        "published_mtime_epoch": 1783686783,
+        "published_mtime_utc": "2026-07-10T12:33:03Z",
+        "ctime_epoch": 1783686783,
+        "inode": 109066960
+      }
+    ],
+    "missing_selected_groups": [
+      "10:up_proj"
+    ],
+    "canonical_manifest_absent": true,
+    "normal_final_evidence_absent": true,
+    "partial_files": [],
+    "heavy_job_lock_released_after_exit": true
+  }
+}

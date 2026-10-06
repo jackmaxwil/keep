@@ -1,0 +1,14 @@
+[cleanroom] local en1 status=active ip=192.168.10.1
+[cleanroom] peer  en1 status=active ip=192.168.10.2
+[cleanroom] local iogpu.wired_limit_mb=0
+[cleanroom] peer  iogpu.wired_limit_mb=0
+[cleanroom] checking mx.set_wired_limit(1 GiB) on both hosts
+{'requested_gib': 1.0, 'requested_bytes': 1073741824, 'previous': 0}
+{'requested_gib': 1.0, 'requested_bytes': 1073741824, 'previous': 0}
+[cleanroom] checking explicit two-rank JACCL
+[32m[INFO] Running /tmp/glm-mlx-python /private/tmp/glm_jaccl_cleanroom_probe.py [0m
+{"host": "mac-studio-a", "rank": 0, "size": 2, "sum0": 2.0}
+{"host": "Mac", "rank": 1, "size": 2, "sum0": 2.0}
+[32m[INFO] Node with rank 0 completed [0m
+[32m[INFO] Node with rank 1 completed [0m
+[cleanroom] GLM_PREFLIGHT_ONLY=1; skipping exporter, validation, and local consumption

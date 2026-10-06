@@ -1,0 +1,132 @@
+{
+  "claim_limit": "Layer-0 real-artifact M=1 expert projections only; residents do not exist yet, so this is not full-model or end-to-end decode evidence.",
+  "clean_rows": 9,
+  "comparison_formula": "source_mxfp4_projection_ms / production_vq_e8p_projection_ms",
+  "dirty_rows": 0,
+  "faster_clean_rows": 0,
+  "gate": "STOP",
+  "identities": {
+    "artifact": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+    "artifact_codebook_sha256": "efc2c03c60acd955dc812ff2bade9ec6cc31259807e48473506161f3a9a230ce",
+    "artifact_file_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+    "artifact_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+    "checkpoint": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+    "checkpoint_config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+    "checkpoint_index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+    "checkpoint_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+    "source_layer0_shards": {
+      "model-00002-of-00048.safetensors": {
+        "bytes": 3566321192,
+        "etag": "77b26c939a0e25b3113c8d6bb04e1901a748bd4a7d2589e3bfdaabdf1e9bba14",
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+      }
+    }
+  },
+  "kernel_identity": "nax_e8p_fp16_sorted_steel_m32n64",
+  "orders": {
+    "source_first": 4,
+    "vq_first": 5
+  },
+  "projection_total": {
+    "median_paired_source_over_vq": 0.4239291863413541,
+    "paired_source_over_vq": {
+      "max": 0.4540132868953269,
+      "median": 0.4239291863413541,
+      "min": 0.3869572634628507,
+      "q1": 0.4058239535732194,
+      "q3": 0.4296287497996471
+    },
+    "source_ms": {
+      "max": 2.60589161189273,
+      "median": 1.6277165967039764,
+      "min": 1.363508205395192,
+      "q1": 1.520000013988465,
+      "q3": 1.8297417904250324
+    },
+    "vq_ms": {
+      "max": 6.065449793823063,
+      "median": 3.9042251999489963,
+      "min": 3.2163584139198065,
+      "q1": 3.5727667971514165,
+      "q3": 4.50870820786804
+    }
+  },
+  "projections": {
+    "down_proj": {
+      "median_paired_source_over_vq": 0.44119264590744234,
+      "paired_source_over_vq": {
+        "max": 0.47743476970664295,
+        "median": 0.44119264590744234,
+        "min": 0.36985939928388023,
+        "q1": 0.42699173354502035,
+        "q3": 0.45151956956541306
+      },
+      "source_ms": {
+        "max": 0.7351417909376323,
+        "median": 0.5383832030929625,
+        "min": 0.45647500082850456,
+        "q1": 0.4942165920510888,
+        "q3": 0.7255750009790063
+      },
+      "vq_ms": {
+        "max": 1.9876250065863132,
+        "median": 1.2046499992720783,
+        "min": 1.0109750088304281,
+        "q1": 1.0636000079102814,
+        "q3": 1.6784081934019923
+      }
+    },
+    "gate_proj": {
+      "median_paired_source_over_vq": 0.42506198001457624,
+      "paired_source_over_vq": {
+        "max": 0.4632567215231554,
+        "median": 0.42506198001457624,
+        "min": 0.3927847762718737,
+        "q1": 0.4120199113948691,
+        "q3": 0.44362959238087885
+      },
+      "source_ms": {
+        "max": 0.9988750098273158,
+        "median": 0.5399334011599422,
+        "min": 0.4628082038834691,
+        "q1": 0.5260000005364418,
+        "q3": 0.5823082057759166
+      },
+      "vq_ms": {
+        "max": 2.4195831967517734,
+        "median": 1.2374665937386453,
+        "min": 1.1232665972784162,
+        "q1": 1.1957334005273879,
+        "q3": 1.3289665919728577
+      }
+    },
+    "up_proj": {
+      "median_paired_source_over_vq": 0.41051483303530856,
+      "paired_source_over_vq": {
+        "max": 0.4480102854741553,
+        "median": 0.41051483303530856,
+        "min": 0.3639878549424338,
+        "q1": 0.3820759702251174,
+        "q3": 0.42979496731693245
+      },
+      "source_ms": {
+        "max": 0.8814416010864079,
+        "median": 0.5574584007263184,
+        "min": 0.44422500068321824,
+        "q1": 0.5133918020874262,
+        "q3": 0.5645834025926888
+      },
+      "vq_ms": {
+        "max": 1.9674584036692977,
+        "median": 1.3251334079541266,
+        "min": 1.0821168078109622,
+        "q1": 1.1723833973519504,
+        "q3": 1.4883833937346935
+      }
+    }
+  },
+  "record_type": "dsv4_m1_expert_projection_summary_v1",
+  "rows": 9,
+  "scope": "component_level_m1_expert_projection_only",
+  "source_backend": "mx.gather_qmm:mxfp4"
+}

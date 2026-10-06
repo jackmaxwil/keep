@@ -1,0 +1,89 @@
+{
+  "artifact_parity_claim": false,
+  "candidate": {
+    "decode_reuse_scope": "output_tile_local_unique_codeword_lut_bounded_by_tile",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_microtiles_x_output_tiles_x_k_blocks_x_unique_codewords_then_output_rows",
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "reconstructs_e8p_values_per_fragment": false,
+    "storage_constraint": "compressed_e8p_output_tile_local_codeword_lut_scales",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_output_tile_local_codeword_lut",
+    "tensorops_rhs_source": "compressed_codeword_tiles_with_output_tile_local_activation_dot_lut",
+    "uses_decoded_b_threadgroup_staging": false,
+    "uses_lane_local_fragment_buffer": false
+  },
+  "decision": "output_tile_local_codeword_lut_design_incomplete",
+  "design_constraints": [
+    "preserve_compressed_rhs_storage_and_codeword_scale_slots",
+    "preserve_full_e8p_codeword_sign_axis",
+    "preserve_route_slot_axis_directly",
+    "avoid_route_local_full_codeword_lut",
+    "avoid_rowwise_per_output_row_codeword_dot_recompute",
+    "bound_lut_cardinality_to_output_tile_local_unique_codewords",
+    "avoid_decoded_rhs_equivalent_cache",
+    "avoid_threadgroup_decoded_b_staging",
+    "avoid_lane_local_fragment_buffer",
+    "prove_source_structure_before_native_or_speed_work"
+  ],
+  "material_difference_from_rejected_families": [
+    "avoids_route_codeword_global_lut_cardinality",
+    "avoids_rowwise_per_output_row_codeword_dot_recompute",
+    "bounds_unique_codewords_by_output_tile_local_codes",
+    "reuses_activation_codeword_dots_across_rows_inside_one_output_tile",
+    "keeps_compressed_rhs_codeword_tiles_and_scale_slots",
+    "does_not_materialize_decoded_rhs_or_decoded_b_threadgroup_cache"
+  ],
+  "native_parity_claim": false,
+  "next_track_b_action": "change_output_tile_local_codeword_lut_layout_or_kernel_family",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_trackb_output_tile_local_codeword_lut_design",
+  "rejected_next_steps": [
+    "do_not_retime_rowwise_codeword_tile_accumulate",
+    "do_not_claim_speed_from_design_artifact",
+    "do_not_route_resident_auto_before_lane_s_speed_gate",
+    "do_not_set_custom_memory_limit_override_for_this_design_slice",
+    "do_not_run_transport_or_peer_scripts_for_this_design_slice"
+  ],
+  "required_before_benchmark": [
+    "source_structure_guardrail_for_output_tile_local_codeword_lut",
+    "native_output_tile_local_codeword_lut_parity",
+    "air_down_group_size_352_artifact_parity",
+    "same_window_q2_speed_packet_after_parity_only"
+  ],
+  "rowwise_speed_packet_artifact": "artifacts/quality/glm45-air-e8p-rowwise-codeword-tile-accumulate-speed-packet-20260703.json",
+  "rowwise_speed_packet_decision": "reject_rowwise_codeword_tile_accumulate_speed_path",
+  "schema_version": 1,
+  "selector_verdict": {
+    "candidate_ready_for_source_probe": false,
+    "decision": "reject_output_tile_local_codeword_lut_speed_path",
+    "decode_reuse_scope": "output_tile_local_unique_codeword_lut_bounded_by_tile",
+    "dispatch_grid": "route_microtiles_x_output_tiles_x_k_blocks_x_unique_codewords_then_output_rows",
+    "matched_rejected_families": [
+      "output_tile_local_codeword_lut"
+    ],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_retime_output_tile_local_codeword_lut",
+      "do_not_claim_lane_s_from_rejected_output_tile_local_speed_packet",
+      "change_output_tile_local_codeword_lut_layout_or_kernel_family_before_next_speed_packet"
+    ],
+    "required_next_features": [
+      "materially_change_output_tile_local_codeword_lut_layout_or_kernel_family",
+      "avoid_output_tile_local_full_codeword_pass",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots",
+      "prove_source_structure_before_native_or_speed_work"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_output_tile_local_codeword_lut_scales",
+    "structural_reasons": [
+      "candidate overlaps rejected Track B RHS family",
+      "candidate reopens the speed-rejected output-tile-local codeword LUT schedule"
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_output_tile_local_codeword_lut",
+    "tensorops_rhs_source": "compressed_codeword_tiles_with_output_tile_local_activation_dot_lut"
+  },
+  "speed_claim": false
+}

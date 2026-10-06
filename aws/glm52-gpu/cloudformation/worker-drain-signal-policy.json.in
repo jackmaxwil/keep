@@ -1,0 +1,30 @@
+{
+  "Statement": [
+    {
+      "Action": "ssm:SendCommand",
+      "Condition": {
+        "StringEquals": {
+          "ssm:resourceTag/RunId": "glm52-sky-20260724",
+          "ssm:resourceTag/activation-id": "__ACTIVATION_ID__"
+        }
+      },
+      "Effect": "Allow",
+      "Resource": [
+        "arn:aws:ssm:us-west-2:246813579024:document/KeepGlm52GracefulStopV1",
+        "arn:aws:ec2:us-west-2:246813579024:instance/*"
+      ],
+      "Sid": "OnlyExactParameterlessWorkerDrain"
+    },
+    {
+      "Action": [
+        "ssm:StartSession",
+        "ssm:ResumeSession",
+        "ssm:TerminateSession"
+      ],
+      "Effect": "Deny",
+      "Resource": "*",
+      "Sid": "DenyEverySession"
+    }
+  ],
+  "Version": "2012-10-17"
+}

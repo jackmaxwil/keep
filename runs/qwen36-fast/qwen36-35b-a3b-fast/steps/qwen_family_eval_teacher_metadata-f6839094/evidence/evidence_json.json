@@ -1,0 +1,18 @@
+{
+  "metadata_counts_by_split": {
+    "holdout": 22,
+    "report": 22,
+    "selection": 22
+  },
+  "metadata_row_count": 66,
+  "missing_requirements": [],
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "output_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/out/qwen_teacher_cache_metadata.jsonl",
+  "record_type": "qwen_family_eval_teacher_metadata_probe",
+  "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "row_error_count": 0,
+  "row_errors": [],
+  "source_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "teacher_cache_payload_present": false,
+  "tokenizer_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0"
+}

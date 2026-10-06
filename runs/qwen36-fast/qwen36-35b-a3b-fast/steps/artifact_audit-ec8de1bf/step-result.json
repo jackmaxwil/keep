@@ -1,0 +1,30 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact": "acef91b9e3c6896c/artifact"
+  },
+  "op": "qwen-moe-artifact-audit",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/artifact_audit-ec8de1bf/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/artifact_audit-ec8de1bf/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/audit_qwen_moe_materialization.py",
+    "--artifact-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/artifact_audit-ec8de1bf/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/artifact_audit-ec8de1bf/evidence/evidence.jsonl",
+    "--expected-source-projection-groups",
+    "80",
+    "--expected-target-projection-groups",
+    "120"
+  ],
+  "status": "completed",
+  "step_id": "artifact_audit",
+  "step_key": "ec8de1bfca43a806"
+}

@@ -1,0 +1,486 @@
+{
+  "artifact": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 45,
+    "artifact_prefix": "model.layers.45.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00045-down_proj.safetensors"
+  },
+  "feasibility_by_route_tile_size": {
+    "128": {
+      "abs_component_projection_exact": true,
+      "abs_index_cap": 256,
+      "abs_index_counts_shape": [
+        128,
+        22
+      ],
+      "activation_projection_scope": "route_tile_x_expert_kblock_abs_index_component",
+      "bk": 64,
+      "bn": 64,
+      "codewords_per_bk": 8,
+      "component_axis": 8,
+      "decision_scope": "tile_cache_only_not_rowwise_exactness",
+      "decoded_dense_weight_bytes": 0,
+      "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_abs_components",
+      "experts": 128,
+      "full_codeword_cache_bytes": 52780288,
+      "full_codeword_counts_shape": [
+        128,
+        22
+      ],
+      "group_size": 352,
+      "input_dims": 1408,
+      "k_blocks": 22,
+      "max_abs_indices_per_expert_kblock": 256,
+      "max_full_codewords_per_expert_kblock": 18743,
+      "median_abs_indices_per_expert_kblock": 256.0,
+      "min_abs_indices_per_expert_kblock": 255,
+      "n_tiles": 64,
+      "output_dims": 4096,
+      "preserves_codeword_scale_slots": true,
+      "preserves_compressed_rhs_storage": true,
+      "projection_cache_byte_cap": 8388608,
+      "projection_cache_dtype": "float16",
+      "rejected_next_steps": [
+        "do_not_claim_speed_from_abs_component_cardinality_probe",
+        "do_not_route_resident_auto_before_artifact_speed_gate"
+      ],
+      "required_next_features": [
+        "source_structure_guardrail",
+        "activation_abs_component_dot_cache_parity",
+        "apply_sign_and_scale_after_cache_lookup",
+        "air_down_group_size_352_parity",
+        "same_window_q2_speed_packet_after_native_parity"
+      ],
+      "route_slot_axis_required_for_exactness": true,
+      "route_tile_count": 64,
+      "route_tile_size": 128,
+      "rowwise_cache_independent_of_route_tile_size": true,
+      "rowwise_candidate_ready_for_source_probe": false,
+      "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+      "rowwise_projection_cache_bytes": 738197504,
+      "rowwise_projection_cache_ratio_to_cap": 88.0,
+      "rowwise_projection_cache_shape": [
+        8192,
+        22,
+        256,
+        8
+      ],
+      "scale_values_apply_after_cache_lookup": true,
+      "sign_values_apply_after_cache_lookup": true,
+      "storage_constraint": "compressed_e8p_route_abs_component_projection_scales",
+      "structural_risk": "abs-index component-dot cardinality is bounded and exact because sign bytes and scales are applied after cache lookup; native work still needs source and parity gates before any timing claim.",
+      "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_projection",
+      "tile_cache_candidate_ready_for_source_probe": true,
+      "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+      "tile_projection_cache_bytes": 5767168,
+      "tile_projection_cache_shape": [
+        64,
+        22,
+        256,
+        8
+      ]
+    },
+    "256": {
+      "abs_component_projection_exact": true,
+      "abs_index_cap": 256,
+      "abs_index_counts_shape": [
+        128,
+        22
+      ],
+      "activation_projection_scope": "route_tile_x_expert_kblock_abs_index_component",
+      "bk": 64,
+      "bn": 64,
+      "codewords_per_bk": 8,
+      "component_axis": 8,
+      "decision_scope": "tile_cache_only_not_rowwise_exactness",
+      "decoded_dense_weight_bytes": 0,
+      "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_abs_components",
+      "experts": 128,
+      "full_codeword_cache_bytes": 26390144,
+      "full_codeword_counts_shape": [
+        128,
+        22
+      ],
+      "group_size": 352,
+      "input_dims": 1408,
+      "k_blocks": 22,
+      "max_abs_indices_per_expert_kblock": 256,
+      "max_full_codewords_per_expert_kblock": 18743,
+      "median_abs_indices_per_expert_kblock": 256.0,
+      "min_abs_indices_per_expert_kblock": 255,
+      "n_tiles": 64,
+      "output_dims": 4096,
+      "preserves_codeword_scale_slots": true,
+      "preserves_compressed_rhs_storage": true,
+      "projection_cache_byte_cap": 8388608,
+      "projection_cache_dtype": "float16",
+      "rejected_next_steps": [
+        "do_not_claim_speed_from_abs_component_cardinality_probe",
+        "do_not_route_resident_auto_before_artifact_speed_gate"
+      ],
+      "required_next_features": [
+        "source_structure_guardrail",
+        "activation_abs_component_dot_cache_parity",
+        "apply_sign_and_scale_after_cache_lookup",
+        "air_down_group_size_352_parity",
+        "same_window_q2_speed_packet_after_native_parity"
+      ],
+      "route_slot_axis_required_for_exactness": true,
+      "route_tile_count": 32,
+      "route_tile_size": 256,
+      "rowwise_cache_independent_of_route_tile_size": true,
+      "rowwise_candidate_ready_for_source_probe": false,
+      "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+      "rowwise_projection_cache_bytes": 738197504,
+      "rowwise_projection_cache_ratio_to_cap": 88.0,
+      "rowwise_projection_cache_shape": [
+        8192,
+        22,
+        256,
+        8
+      ],
+      "scale_values_apply_after_cache_lookup": true,
+      "sign_values_apply_after_cache_lookup": true,
+      "storage_constraint": "compressed_e8p_route_abs_component_projection_scales",
+      "structural_risk": "abs-index component-dot cardinality is bounded and exact because sign bytes and scales are applied after cache lookup; native work still needs source and parity gates before any timing claim.",
+      "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_projection",
+      "tile_cache_candidate_ready_for_source_probe": true,
+      "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+      "tile_projection_cache_bytes": 2883584,
+      "tile_projection_cache_shape": [
+        32,
+        22,
+        256,
+        8
+      ]
+    },
+    "64": {
+      "abs_component_projection_exact": true,
+      "abs_index_cap": 256,
+      "abs_index_counts_shape": [
+        128,
+        22
+      ],
+      "activation_projection_scope": "route_tile_x_expert_kblock_abs_index_component",
+      "bk": 64,
+      "bn": 64,
+      "codewords_per_bk": 8,
+      "component_axis": 8,
+      "decision_scope": "tile_cache_only_not_rowwise_exactness",
+      "decoded_dense_weight_bytes": 0,
+      "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_abs_components",
+      "experts": 128,
+      "full_codeword_cache_bytes": 105560576,
+      "full_codeword_counts_shape": [
+        128,
+        22
+      ],
+      "group_size": 352,
+      "input_dims": 1408,
+      "k_blocks": 22,
+      "max_abs_indices_per_expert_kblock": 256,
+      "max_full_codewords_per_expert_kblock": 18743,
+      "median_abs_indices_per_expert_kblock": 256.0,
+      "min_abs_indices_per_expert_kblock": 255,
+      "n_tiles": 64,
+      "output_dims": 4096,
+      "preserves_codeword_scale_slots": true,
+      "preserves_compressed_rhs_storage": true,
+      "projection_cache_byte_cap": 8388608,
+      "projection_cache_dtype": "float16",
+      "rejected_next_steps": [
+        "do_not_benchmark_route_abs_component_projection_cache",
+        "do_not_materialize_unbounded_abs_component_dot_cache",
+        "do_not_claim_speed_from_abs_component_cardinality_probe"
+      ],
+      "required_next_features": [
+        "materially_change_rhs_storage_contract_or_kernel_family",
+        "reduce_abs_component_cardinality_before_projection_cache",
+        "preserve_compressed_rhs_storage",
+        "preserve_codeword_scale_slots"
+      ],
+      "route_slot_axis_required_for_exactness": true,
+      "route_tile_count": 128,
+      "route_tile_size": 64,
+      "rowwise_cache_independent_of_route_tile_size": true,
+      "rowwise_candidate_ready_for_source_probe": false,
+      "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+      "rowwise_projection_cache_bytes": 738197504,
+      "rowwise_projection_cache_ratio_to_cap": 88.0,
+      "rowwise_projection_cache_shape": [
+        8192,
+        22,
+        256,
+        8
+      ],
+      "scale_values_apply_after_cache_lookup": true,
+      "sign_values_apply_after_cache_lookup": true,
+      "storage_constraint": "compressed_e8p_route_abs_component_projection_scales",
+      "structural_risk": "the exact abs-index component-dot cache keeps signs and scales out of storage, but its activation-side cache is still too large under the configured cap for this artifact shape.",
+      "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_projection",
+      "tile_cache_candidate_ready_for_source_probe": false,
+      "tile_cache_decision": "reject_route_abs_component_projection_cache_too_large",
+      "tile_projection_cache_bytes": 11534336,
+      "tile_projection_cache_shape": [
+        128,
+        22,
+        256,
+        8
+      ]
+    },
+    "96": {
+      "abs_component_projection_exact": true,
+      "abs_index_cap": 256,
+      "abs_index_counts_shape": [
+        128,
+        22
+      ],
+      "activation_projection_scope": "route_tile_x_expert_kblock_abs_index_component",
+      "bk": 64,
+      "bn": 64,
+      "codewords_per_bk": 8,
+      "component_axis": 8,
+      "decision_scope": "tile_cache_only_not_rowwise_exactness",
+      "decoded_dense_weight_bytes": 0,
+      "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_abs_components",
+      "experts": 128,
+      "full_codeword_cache_bytes": 70923512,
+      "full_codeword_counts_shape": [
+        128,
+        22
+      ],
+      "group_size": 352,
+      "input_dims": 1408,
+      "k_blocks": 22,
+      "max_abs_indices_per_expert_kblock": 256,
+      "max_full_codewords_per_expert_kblock": 18743,
+      "median_abs_indices_per_expert_kblock": 256.0,
+      "min_abs_indices_per_expert_kblock": 255,
+      "n_tiles": 64,
+      "output_dims": 4096,
+      "preserves_codeword_scale_slots": true,
+      "preserves_compressed_rhs_storage": true,
+      "projection_cache_byte_cap": 8388608,
+      "projection_cache_dtype": "float16",
+      "rejected_next_steps": [
+        "do_not_claim_speed_from_abs_component_cardinality_probe",
+        "do_not_route_resident_auto_before_artifact_speed_gate"
+      ],
+      "required_next_features": [
+        "source_structure_guardrail",
+        "activation_abs_component_dot_cache_parity",
+        "apply_sign_and_scale_after_cache_lookup",
+        "air_down_group_size_352_parity",
+        "same_window_q2_speed_packet_after_native_parity"
+      ],
+      "route_slot_axis_required_for_exactness": true,
+      "route_tile_count": 86,
+      "route_tile_size": 96,
+      "rowwise_cache_independent_of_route_tile_size": true,
+      "rowwise_candidate_ready_for_source_probe": false,
+      "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+      "rowwise_projection_cache_bytes": 738197504,
+      "rowwise_projection_cache_ratio_to_cap": 88.0,
+      "rowwise_projection_cache_shape": [
+        8192,
+        22,
+        256,
+        8
+      ],
+      "scale_values_apply_after_cache_lookup": true,
+      "sign_values_apply_after_cache_lookup": true,
+      "storage_constraint": "compressed_e8p_route_abs_component_projection_scales",
+      "structural_risk": "abs-index component-dot cardinality is bounded and exact because sign bytes and scales are applied after cache lookup; native work still needs source and parity gates before any timing claim.",
+      "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_projection",
+      "tile_cache_candidate_ready_for_source_probe": true,
+      "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+      "tile_projection_cache_bytes": 7749632,
+      "tile_projection_cache_shape": [
+        86,
+        22,
+        256,
+        8
+      ]
+    }
+  },
+  "native_parity_claim": false,
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_route_abs_component_tile_sweep",
+  "schema_version": 1,
+  "shape": {
+    "bk": 64,
+    "bn": 64,
+    "experts": 128,
+    "input_dims": 1408,
+    "mlx_group_size": 128,
+    "output_dims": 4096,
+    "projection": "down",
+    "route_count": 8192,
+    "tokens": 1024,
+    "top_k": 8,
+    "vq_code_bits": 16,
+    "vq_group_size": 352
+  },
+  "speed_claim": false,
+  "summary": {
+    "frontier_decision": "reject_route_abs_component_tile_cache_missing_route_slot_axis",
+    "next_required_features": [
+      "materially_different_rhs_layout_or_kernel_family",
+      "bounded_rowwise_cardinality_mechanism_below_cache_cap",
+      "preserve_route_slot_axis_or_prove_equivalent_rowwise_reconstruction",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "q2_reference_route_tile_size": 64,
+    "ready_for_native_speed_work": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_route_abs_component_tile_cache_without_route_slot_axis",
+      "do_not_claim_exactness_from_route_tile_level_cache_bytes",
+      "do_not_claim_speed_from_abs_component_cardinality_probe"
+    ],
+    "rows": [
+      {
+        "component_axis": 8,
+        "full_codeword_cache_bytes": 105560576,
+        "max_abs_indices_per_expert_kblock": 256,
+        "native_parity_claim": false,
+        "projection_cache_byte_cap": 8388608,
+        "q2_route_tile_geometry_match": true,
+        "q2_route_tile_multiple": true,
+        "route_slot_axis_required_for_exactness": true,
+        "route_tile_count": 128,
+        "route_tile_size": 64,
+        "rowwise_cache_independent_of_route_tile_size": true,
+        "rowwise_candidate_ready_for_source_probe": false,
+        "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+        "rowwise_projection_cache_bytes": 738197504,
+        "rowwise_projection_cache_ratio_to_cap": 88.0,
+        "rowwise_projection_cache_shape": [
+          8192,
+          22,
+          256,
+          8
+        ],
+        "speed_claim": false,
+        "tile_cache_candidate_ready_for_source_probe": false,
+        "tile_cache_decision": "reject_route_abs_component_projection_cache_too_large",
+        "tile_projection_cache_bytes": 11534336,
+        "tile_projection_cache_ratio_to_cap": 1.375,
+        "tile_projection_cache_shape": [
+          128,
+          22,
+          256,
+          8
+        ]
+      },
+      {
+        "component_axis": 8,
+        "full_codeword_cache_bytes": 70923512,
+        "max_abs_indices_per_expert_kblock": 256,
+        "native_parity_claim": false,
+        "projection_cache_byte_cap": 8388608,
+        "q2_route_tile_geometry_match": false,
+        "q2_route_tile_multiple": false,
+        "route_slot_axis_required_for_exactness": true,
+        "route_tile_count": 86,
+        "route_tile_size": 96,
+        "rowwise_cache_independent_of_route_tile_size": true,
+        "rowwise_candidate_ready_for_source_probe": false,
+        "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+        "rowwise_projection_cache_bytes": 738197504,
+        "rowwise_projection_cache_ratio_to_cap": 88.0,
+        "rowwise_projection_cache_shape": [
+          8192,
+          22,
+          256,
+          8
+        ],
+        "speed_claim": false,
+        "tile_cache_candidate_ready_for_source_probe": true,
+        "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+        "tile_projection_cache_bytes": 7749632,
+        "tile_projection_cache_ratio_to_cap": 0.923828125,
+        "tile_projection_cache_shape": [
+          86,
+          22,
+          256,
+          8
+        ]
+      },
+      {
+        "component_axis": 8,
+        "full_codeword_cache_bytes": 52780288,
+        "max_abs_indices_per_expert_kblock": 256,
+        "native_parity_claim": false,
+        "projection_cache_byte_cap": 8388608,
+        "q2_route_tile_geometry_match": false,
+        "q2_route_tile_multiple": true,
+        "route_slot_axis_required_for_exactness": true,
+        "route_tile_count": 64,
+        "route_tile_size": 128,
+        "rowwise_cache_independent_of_route_tile_size": true,
+        "rowwise_candidate_ready_for_source_probe": false,
+        "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+        "rowwise_projection_cache_bytes": 738197504,
+        "rowwise_projection_cache_ratio_to_cap": 88.0,
+        "rowwise_projection_cache_shape": [
+          8192,
+          22,
+          256,
+          8
+        ],
+        "speed_claim": false,
+        "tile_cache_candidate_ready_for_source_probe": true,
+        "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+        "tile_projection_cache_bytes": 5767168,
+        "tile_projection_cache_ratio_to_cap": 0.6875,
+        "tile_projection_cache_shape": [
+          64,
+          22,
+          256,
+          8
+        ]
+      },
+      {
+        "component_axis": 8,
+        "full_codeword_cache_bytes": 26390144,
+        "max_abs_indices_per_expert_kblock": 256,
+        "native_parity_claim": false,
+        "projection_cache_byte_cap": 8388608,
+        "q2_route_tile_geometry_match": false,
+        "q2_route_tile_multiple": true,
+        "route_slot_axis_required_for_exactness": true,
+        "route_tile_count": 32,
+        "route_tile_size": 256,
+        "rowwise_cache_independent_of_route_tile_size": true,
+        "rowwise_candidate_ready_for_source_probe": false,
+        "rowwise_decision": "reject_route_abs_component_rowwise_cache_too_large",
+        "rowwise_projection_cache_bytes": 738197504,
+        "rowwise_projection_cache_ratio_to_cap": 88.0,
+        "rowwise_projection_cache_shape": [
+          8192,
+          22,
+          256,
+          8
+        ],
+        "speed_claim": false,
+        "tile_cache_candidate_ready_for_source_probe": true,
+        "tile_cache_decision": "route_abs_component_projection_ready_for_source_probe",
+        "tile_projection_cache_bytes": 2883584,
+        "tile_projection_cache_ratio_to_cap": 0.34375,
+        "tile_projection_cache_shape": [
+          32,
+          22,
+          256,
+          8
+        ]
+      }
+    ],
+    "selected_matches_q2_route_tile_geometry": null,
+    "selected_projection_cache_bytes": null,
+    "selected_route_tile_count": null,
+    "selected_route_tile_size": null
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "air_thresholds_reused": false,
+  "benchmark_gate": {
+    "comparison_baseline": "qwen_source_or_qwen_control_runtime",
+    "gate_id": "qwen3_5_moe_quant_compare_v1",
+    "hard_requirements": [
+      "candidate_and_control_same_scenario",
+      "candidate_and_control_clean_pageouts_and_swapouts",
+      "finite_latency_rows",
+      "summary_reports_candidate_control_ratio"
+    ],
+    "minimum_repetitions_per_scenario": 2,
+    "required_scenarios": [
+      "prefill_1k",
+      "decode_128"
+    ]
+  },
+  "benchmark_gate_defined": true,
+  "eval_gate": {
+    "gate_id": "qwen3_5_moe_teacher_cache_eval_v1",
+    "hard_requirements": [
+      "all_rows_memory_clean",
+      "finite_nll_ppl_kld_and_top1_metrics",
+      "teacher_cache_model_id_matches_qwen_source",
+      "summary_recomputes_metrics_from_jsonl"
+    ],
+    "minimum_clean_rows_per_split": 16,
+    "quality_thresholds": {
+      "absolute_qwen_thresholds_deferred_until_source_baseline_exists": true,
+      "dirty_rows_accepted": false
+    },
+    "required_splits": [
+      "report",
+      "selection",
+      "holdout"
+    ]
+  },
+  "eval_gate_defined": true,
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "model_type": "qwen3_5_moe",
+  "policy_status": "qwen_family_policy_defined",
+  "record_type": "qwen_family_gate_policy",
+  "required_evidence": [
+    "qwen_report_eval_jsonl",
+    "qwen_selection_eval_jsonl",
+    "qwen_holdout_eval_jsonl",
+    "qwen_quant_compare_jsonl",
+    "qwen_eval_summary_json",
+    "qwen_benchmark_summary_json"
+  ],
+  "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "template_source": "docs/KEEP_NEW_MODEL_FAMILY_TEMPLATE.md"
+}

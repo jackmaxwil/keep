@@ -1,0 +1,5 @@
+[32m[INFO] Running /tmp/glm-mlx-python /private/tmp/glm_jaccl_cleanroom_probe.py [0m
+{"host": "mac-studio-a", "rank": 0, "size": 2, "sum0": 2.0}
+[32m[INFO] Node with rank 0 completed [0m
+{"host": "Mac", "rank": 1, "size": 2, "sum0": 2.0}
+[32m[INFO] Node with rank 1 completed [0m

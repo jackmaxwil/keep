@@ -1,0 +1,2 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Parse safetensors files:   0%|          | 0/26 [00:00<?, ?it/s]Parse safetensors files:   4%|▍         | 1/26 [00:00<00:21,  1.14it/s]Parse safetensors files:  23%|██▎       | 6/26 [00:01<00:03,  6.42it/s]Parse safetensors files:  92%|█████████▏| 24/26 [00:01<00:00, 25.18it/s]Parse safetensors files: 100%|██████████| 26/26 [00:01<00:00, 18.10it/s]

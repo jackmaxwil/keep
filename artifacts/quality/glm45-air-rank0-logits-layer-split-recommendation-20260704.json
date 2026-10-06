@@ -1,0 +1,956 @@
+{
+  "candidate_count": 45,
+  "candidates": [
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 1,
+      "max_required_present_tensor_bytes": 211975891456,
+      "max_required_shard_count": 45,
+      "max_visible_shard_file_bytes": 213219635784,
+      "required_present_tensor_bytes_by_rank": [
+        211975891456,
+        1728622592
+      ],
+      "required_shard_count_by_rank": [
+        45,
+        1
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        213219635784,
+        2970138176
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 2,
+      "max_required_present_tensor_bytes": 207292905472,
+      "max_required_shard_count": 44,
+      "max_visible_shard_file_bytes": 208536600568,
+      "required_present_tensor_bytes_by_rank": [
+        207292905472,
+        6411608576
+      ],
+      "required_shard_count_by_rank": [
+        44,
+        2
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        208536600568,
+        7653173392
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 3,
+      "max_required_present_tensor_bytes": 202609919488,
+      "max_required_shard_count": 43,
+      "max_visible_shard_file_bytes": 203853565352,
+      "required_present_tensor_bytes_by_rank": [
+        202609919488,
+        11094594560
+      ],
+      "required_shard_count_by_rank": [
+        43,
+        3
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        203853565352,
+        12336208608
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 4,
+      "max_required_present_tensor_bytes": 197926933504,
+      "max_required_shard_count": 42,
+      "max_visible_shard_file_bytes": 199170530136,
+      "required_present_tensor_bytes_by_rank": [
+        197926933504,
+        15777580544
+      ],
+      "required_shard_count_by_rank": [
+        42,
+        4
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        199170530136,
+        17019243824
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 5,
+      "max_required_present_tensor_bytes": 193243947520,
+      "max_required_shard_count": 41,
+      "max_visible_shard_file_bytes": 194487494920,
+      "required_present_tensor_bytes_by_rank": [
+        193243947520,
+        20460566528
+      ],
+      "required_shard_count_by_rank": [
+        41,
+        5
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        194487494920,
+        21702279040
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 6,
+      "max_required_present_tensor_bytes": 188560961536,
+      "max_required_shard_count": 40,
+      "max_visible_shard_file_bytes": 189804459704,
+      "required_present_tensor_bytes_by_rank": [
+        188560961536,
+        25143552512
+      ],
+      "required_shard_count_by_rank": [
+        40,
+        6
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        189804459704,
+        26385314256
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 7,
+      "max_required_present_tensor_bytes": 183877975552,
+      "max_required_shard_count": 39,
+      "max_visible_shard_file_bytes": 185121424488,
+      "required_present_tensor_bytes_by_rank": [
+        183877975552,
+        29826538496
+      ],
+      "required_shard_count_by_rank": [
+        39,
+        7
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        185121424488,
+        31068349472
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 8,
+      "max_required_present_tensor_bytes": 179194989568,
+      "max_required_shard_count": 38,
+      "max_visible_shard_file_bytes": 180438389272,
+      "required_present_tensor_bytes_by_rank": [
+        179194989568,
+        34509524480
+      ],
+      "required_shard_count_by_rank": [
+        38,
+        8
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        180438389272,
+        35751384688
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 9,
+      "max_required_present_tensor_bytes": 174512003584,
+      "max_required_shard_count": 37,
+      "max_visible_shard_file_bytes": 175755354056,
+      "required_present_tensor_bytes_by_rank": [
+        174512003584,
+        39192510464
+      ],
+      "required_shard_count_by_rank": [
+        37,
+        9
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        175755354056,
+        40434419904
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 10,
+      "max_required_present_tensor_bytes": 169829017600,
+      "max_required_shard_count": 36,
+      "max_visible_shard_file_bytes": 171072318840,
+      "required_present_tensor_bytes_by_rank": [
+        169829017600,
+        43875496448
+      ],
+      "required_shard_count_by_rank": [
+        36,
+        10
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        171072318840,
+        45117455120
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 11,
+      "max_required_present_tensor_bytes": 165146031616,
+      "max_required_shard_count": 35,
+      "max_visible_shard_file_bytes": 166389283224,
+      "required_present_tensor_bytes_by_rank": [
+        165146031616,
+        48558482432
+      ],
+      "required_shard_count_by_rank": [
+        35,
+        11
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        166389283224,
+        49800490736
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 12,
+      "max_required_present_tensor_bytes": 160463045632,
+      "max_required_shard_count": 34,
+      "max_visible_shard_file_bytes": 161706247608,
+      "required_present_tensor_bytes_by_rank": [
+        160463045632,
+        53241468416
+      ],
+      "required_shard_count_by_rank": [
+        34,
+        12
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        161706247608,
+        54483526352
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 13,
+      "max_required_present_tensor_bytes": 155780059648,
+      "max_required_shard_count": 33,
+      "max_visible_shard_file_bytes": 157023211992,
+      "required_present_tensor_bytes_by_rank": [
+        155780059648,
+        57924454400
+      ],
+      "required_shard_count_by_rank": [
+        33,
+        13
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        157023211992,
+        59166561968
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 14,
+      "max_required_present_tensor_bytes": 151097073664,
+      "max_required_shard_count": 32,
+      "max_visible_shard_file_bytes": 152340176376,
+      "required_present_tensor_bytes_by_rank": [
+        151097073664,
+        62607440384
+      ],
+      "required_shard_count_by_rank": [
+        32,
+        14
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        152340176376,
+        63849597584
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 15,
+      "max_required_present_tensor_bytes": 146414087680,
+      "max_required_shard_count": 31,
+      "max_visible_shard_file_bytes": 147657140760,
+      "required_present_tensor_bytes_by_rank": [
+        146414087680,
+        67290426368
+      ],
+      "required_shard_count_by_rank": [
+        31,
+        15
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        147657140760,
+        68532633200
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 16,
+      "max_required_present_tensor_bytes": 141731101696,
+      "max_required_shard_count": 30,
+      "max_visible_shard_file_bytes": 142974105144,
+      "required_present_tensor_bytes_by_rank": [
+        141731101696,
+        71973412352
+      ],
+      "required_shard_count_by_rank": [
+        30,
+        16
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        142974105144,
+        73215668816
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 17,
+      "max_required_present_tensor_bytes": 137048115712,
+      "max_required_shard_count": 29,
+      "max_visible_shard_file_bytes": 138291069528,
+      "required_present_tensor_bytes_by_rank": [
+        137048115712,
+        76656398336
+      ],
+      "required_shard_count_by_rank": [
+        29,
+        17
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        138291069528,
+        77898704432
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 18,
+      "max_required_present_tensor_bytes": 132365129728,
+      "max_required_shard_count": 28,
+      "max_visible_shard_file_bytes": 133608033912,
+      "required_present_tensor_bytes_by_rank": [
+        132365129728,
+        81339384320
+      ],
+      "required_shard_count_by_rank": [
+        28,
+        18
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        133608033912,
+        82581740048
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 19,
+      "max_required_present_tensor_bytes": 127682143744,
+      "max_required_shard_count": 27,
+      "max_visible_shard_file_bytes": 128924998296,
+      "required_present_tensor_bytes_by_rank": [
+        127682143744,
+        86022370304
+      ],
+      "required_shard_count_by_rank": [
+        27,
+        19
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        128924998296,
+        87264775664
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": false,
+      "layer_split": 20,
+      "max_required_present_tensor_bytes": 122999157760,
+      "max_required_shard_count": 26,
+      "max_visible_shard_file_bytes": 124241962680,
+      "required_present_tensor_bytes_by_rank": [
+        122999157760,
+        90705356288
+      ],
+      "required_shard_count_by_rank": [
+        26,
+        20
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        124241962680,
+        91947811280
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 21,
+      "max_required_present_tensor_bytes": 118316171776,
+      "max_required_shard_count": 25,
+      "max_visible_shard_file_bytes": 119558927064,
+      "required_present_tensor_bytes_by_rank": [
+        118316171776,
+        95388342272
+      ],
+      "required_shard_count_by_rank": [
+        25,
+        21
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        119558927064,
+        96630846896
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 22,
+      "max_required_present_tensor_bytes": 113633185792,
+      "max_required_shard_count": 24,
+      "max_visible_shard_file_bytes": 114875891448,
+      "required_present_tensor_bytes_by_rank": [
+        113633185792,
+        100071328256
+      ],
+      "required_shard_count_by_rank": [
+        24,
+        22
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        114875891448,
+        101313882512
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 23,
+      "max_required_present_tensor_bytes": 108950199808,
+      "max_required_shard_count": 23,
+      "max_visible_shard_file_bytes": 110192855832,
+      "required_present_tensor_bytes_by_rank": [
+        108950199808,
+        104754314240
+      ],
+      "required_shard_count_by_rank": [
+        23,
+        23
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        110192855832,
+        105996918128
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 24,
+      "max_required_present_tensor_bytes": 109437300224,
+      "max_required_shard_count": 24,
+      "max_visible_shard_file_bytes": 110679953744,
+      "required_present_tensor_bytes_by_rank": [
+        104267213824,
+        109437300224
+      ],
+      "required_shard_count_by_rank": [
+        22,
+        24
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        105509820216,
+        110679953744
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 25,
+      "max_required_present_tensor_bytes": 114120286208,
+      "max_required_shard_count": 25,
+      "max_visible_shard_file_bytes": 115362989360,
+      "required_present_tensor_bytes_by_rank": [
+        99584227840,
+        114120286208
+      ],
+      "required_shard_count_by_rank": [
+        21,
+        25
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        100826784600,
+        115362989360
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": true,
+      "fits_visible_shard_budget": true,
+      "layer_split": 26,
+      "max_required_present_tensor_bytes": 118803272192,
+      "max_required_shard_count": 26,
+      "max_visible_shard_file_bytes": 120046024976,
+      "required_present_tensor_bytes_by_rank": [
+        94901241856,
+        118803272192
+      ],
+      "required_shard_count_by_rank": [
+        20,
+        26
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        96143748984,
+        120046024976
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 27,
+      "max_required_present_tensor_bytes": 123486258176,
+      "max_required_shard_count": 27,
+      "max_visible_shard_file_bytes": 124729060592,
+      "required_present_tensor_bytes_by_rank": [
+        90218255872,
+        123486258176
+      ],
+      "required_shard_count_by_rank": [
+        19,
+        27
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        91460713368,
+        124729060592
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 28,
+      "max_required_present_tensor_bytes": 128169244160,
+      "max_required_shard_count": 28,
+      "max_visible_shard_file_bytes": 129412096208,
+      "required_present_tensor_bytes_by_rank": [
+        85535269888,
+        128169244160
+      ],
+      "required_shard_count_by_rank": [
+        18,
+        28
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        86777677752,
+        129412096208
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 29,
+      "max_required_present_tensor_bytes": 132852230144,
+      "max_required_shard_count": 29,
+      "max_visible_shard_file_bytes": 134095131824,
+      "required_present_tensor_bytes_by_rank": [
+        80852283904,
+        132852230144
+      ],
+      "required_shard_count_by_rank": [
+        17,
+        29
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        82094642136,
+        134095131824
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 30,
+      "max_required_present_tensor_bytes": 137535216128,
+      "max_required_shard_count": 30,
+      "max_visible_shard_file_bytes": 138778167440,
+      "required_present_tensor_bytes_by_rank": [
+        76169297920,
+        137535216128
+      ],
+      "required_shard_count_by_rank": [
+        16,
+        30
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        77411606520,
+        138778167440
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 31,
+      "max_required_present_tensor_bytes": 142218202112,
+      "max_required_shard_count": 31,
+      "max_visible_shard_file_bytes": 143461203056,
+      "required_present_tensor_bytes_by_rank": [
+        71486311936,
+        142218202112
+      ],
+      "required_shard_count_by_rank": [
+        15,
+        31
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        72728570904,
+        143461203056
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 32,
+      "max_required_present_tensor_bytes": 146901188096,
+      "max_required_shard_count": 32,
+      "max_visible_shard_file_bytes": 148144238672,
+      "required_present_tensor_bytes_by_rank": [
+        66803325952,
+        146901188096
+      ],
+      "required_shard_count_by_rank": [
+        14,
+        32
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        68045535288,
+        148144238672
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 33,
+      "max_required_present_tensor_bytes": 151584174080,
+      "max_required_shard_count": 33,
+      "max_visible_shard_file_bytes": 152827274288,
+      "required_present_tensor_bytes_by_rank": [
+        62120339968,
+        151584174080
+      ],
+      "required_shard_count_by_rank": [
+        13,
+        33
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        63362499672,
+        152827274288
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 34,
+      "max_required_present_tensor_bytes": 156267160064,
+      "max_required_shard_count": 34,
+      "max_visible_shard_file_bytes": 157510309904,
+      "required_present_tensor_bytes_by_rank": [
+        57437353984,
+        156267160064
+      ],
+      "required_shard_count_by_rank": [
+        12,
+        34
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        58679464056,
+        157510309904
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 35,
+      "max_required_present_tensor_bytes": 160950146048,
+      "max_required_shard_count": 35,
+      "max_visible_shard_file_bytes": 162193345520,
+      "required_present_tensor_bytes_by_rank": [
+        52754368000,
+        160950146048
+      ],
+      "required_shard_count_by_rank": [
+        11,
+        35
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        53996428440,
+        162193345520
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 36,
+      "max_required_present_tensor_bytes": 165633132032,
+      "max_required_shard_count": 36,
+      "max_visible_shard_file_bytes": 166876381136,
+      "required_present_tensor_bytes_by_rank": [
+        48071382016,
+        165633132032
+      ],
+      "required_shard_count_by_rank": [
+        10,
+        36
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        49313392824,
+        166876381136
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 37,
+      "max_required_present_tensor_bytes": 170316118016,
+      "max_required_shard_count": 37,
+      "max_visible_shard_file_bytes": 171559416752,
+      "required_present_tensor_bytes_by_rank": [
+        43388396032,
+        170316118016
+      ],
+      "required_shard_count_by_rank": [
+        9,
+        37
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        44630357208,
+        171559416752
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 38,
+      "max_required_present_tensor_bytes": 174999104000,
+      "max_required_shard_count": 38,
+      "max_visible_shard_file_bytes": 176242452368,
+      "required_present_tensor_bytes_by_rank": [
+        38705410048,
+        174999104000
+      ],
+      "required_shard_count_by_rank": [
+        8,
+        38
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        39947321592,
+        176242452368
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 39,
+      "max_required_present_tensor_bytes": 179682089984,
+      "max_required_shard_count": 39,
+      "max_visible_shard_file_bytes": 180925487984,
+      "required_present_tensor_bytes_by_rank": [
+        34022424064,
+        179682089984
+      ],
+      "required_shard_count_by_rank": [
+        7,
+        39
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        35264285976,
+        180925487984
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 40,
+      "max_required_present_tensor_bytes": 184365075968,
+      "max_required_shard_count": 40,
+      "max_visible_shard_file_bytes": 185608523600,
+      "required_present_tensor_bytes_by_rank": [
+        29339438080,
+        184365075968
+      ],
+      "required_shard_count_by_rank": [
+        6,
+        40
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        30581250360,
+        185608523600
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 41,
+      "max_required_present_tensor_bytes": 189048061952,
+      "max_required_shard_count": 41,
+      "max_visible_shard_file_bytes": 190291559216,
+      "required_present_tensor_bytes_by_rank": [
+        24656452096,
+        189048061952
+      ],
+      "required_shard_count_by_rank": [
+        5,
+        41
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        25898214744,
+        190291559216
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 42,
+      "max_required_present_tensor_bytes": 193731047936,
+      "max_required_shard_count": 42,
+      "max_visible_shard_file_bytes": 194974594832,
+      "required_present_tensor_bytes_by_rank": [
+        19973466112,
+        193731047936
+      ],
+      "required_shard_count_by_rank": [
+        4,
+        42
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        21215179128,
+        194974594832
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 43,
+      "max_required_present_tensor_bytes": 198414033920,
+      "max_required_shard_count": 43,
+      "max_visible_shard_file_bytes": 199657630448,
+      "required_present_tensor_bytes_by_rank": [
+        15290480128,
+        198414033920
+      ],
+      "required_shard_count_by_rank": [
+        3,
+        43
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        16532143512,
+        199657630448
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 44,
+      "max_required_present_tensor_bytes": 203097019904,
+      "max_required_shard_count": 44,
+      "max_visible_shard_file_bytes": 204340666064,
+      "required_present_tensor_bytes_by_rank": [
+        10607494144,
+        203097019904
+      ],
+      "required_shard_count_by_rank": [
+        2,
+        44
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        11849107896,
+        204340666064
+      ]
+    },
+    {
+      "complete_required_source": true,
+      "fits_required_tensor_budget": false,
+      "fits_visible_shard_budget": false,
+      "layer_split": 45,
+      "max_required_present_tensor_bytes": 207780005888,
+      "max_required_shard_count": 45,
+      "max_visible_shard_file_bytes": 209023701680,
+      "required_present_tensor_bytes_by_rank": [
+        5924508160,
+        207780005888
+      ],
+      "required_shard_count_by_rank": [
+        1,
+        45
+      ],
+      "visible_shard_file_bytes_by_rank": [
+        7166072280,
+        209023701680
+      ]
+    }
+  ],
+  "optimization_target": "minimize_max_required_present_tensor_bytes_then_visible_shard_file_bytes",
+  "recommended_layer_split": 23,
+  "source_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+  "scan_command": "uv run python benchmarks/materialize_glm45_air_pipeline_views.py --source-dir /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa --pipeline-size 2 --layer-split 24 --rank-budget-gb 115 --rank0-only-logits-views",
+  "previous_legacy_recipe_layer_split": 24,
+  "updated_legacy_recipe_layer_split": 23
+}

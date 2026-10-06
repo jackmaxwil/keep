@@ -1,0 +1,58 @@
+{
+  "all_memory_clean": false,
+  "allow_dirty_cache": true,
+  "bounded_single_host_attempt": true,
+  "cache_row_count": 1,
+  "cache_rows_generated": true,
+  "decision": "single_host_cache_prefix_generated_dirty_memory_chunk4096_no_improvement",
+  "direct_path_mutated": false,
+  "distributed_backend": "local_sequential",
+  "elapsed_seconds": 187.02560029200686,
+  "exit_code": 0,
+  "full_logits_available": false,
+  "kld_modes": {
+    "teacher_topk_lower_bound": 1
+  },
+  "layer_split": 23,
+  "lm_head_chunk_rows": 4096,
+  "max_positions": 1,
+  "memory_delta_vs_previous_prefix": {
+    "mlx_peak_bytes_delta": 0,
+    "pageouts_delta_delta": 233,
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-gc-20260704.json",
+    "swapouts_delta_delta": 1062430
+  },
+  "metadata_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-chunk4096-20260704/metadata.jsonl",
+  "mlx_cache_limit_bytes": 0,
+  "mlx_peak_bytes": 116535330997,
+  "mlx_wired_limit_bytes": 1073741824,
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-chunk4096-20260704",
+  "pageouts_delta": 1807,
+  "peer2_used": false,
+  "pipeline_size": 2,
+  "prompt_ids": [
+    "capital_france"
+  ],
+  "rank_view_roots": {
+    "0": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-0",
+    "1": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-1"
+  },
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_single_host_cache_prefix_attempt",
+  "schema_version": 1,
+  "single_host_pipeline_local": true,
+  "sudo_touched": false,
+  "swapouts_delta": 3025562,
+  "teacher_logit_files": [
+    "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-chunk4096-20260704/teacher_logits/capital_france.safetensors"
+  ],
+  "top_k": 16,
+  "uc_pingpong_touched": false,
+  "validation_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-chunk4096-validation-20260704.jsonl",
+  "validation_ok": true,
+  "validation_ran": true,
+  "warnings": [
+    "pageouts_delta is nonzero: 1807",
+    "swapouts_delta is nonzero: 3025562"
+  ]
+}

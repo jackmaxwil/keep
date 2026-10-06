@@ -1,0 +1,1047 @@
+{
+  "baseline": {
+    "holdout": {
+      "all_memory_clean": true,
+      "clean_record_count": 128,
+      "domains": {
+        "code": {
+          "all_memory_clean": true,
+          "clean_record_count": 44,
+          "max_ppl_ratio": 1.6331451045061094,
+          "mean_kld": 0.4401735049285835,
+          "mean_ppl_ratio": 1.1227963915424348,
+          "mean_top1_agreement": 0.8077555767597634,
+          "p999_kld": 4.428695458161231,
+          "record_count": 44
+        },
+        "control": {
+          "all_memory_clean": true,
+          "clean_record_count": 12,
+          "max_ppl_ratio": 1.2814026079334848,
+          "mean_kld": 0.3112778739903135,
+          "mean_ppl_ratio": 1.1127766534292605,
+          "mean_top1_agreement": 0.8257575757575758,
+          "p999_kld": 4.12978160756271,
+          "record_count": 12
+        },
+        "instruction": {
+          "all_memory_clean": true,
+          "clean_record_count": 20,
+          "max_ppl_ratio": 1.378797882816498,
+          "mean_kld": 0.3851888491140321,
+          "mean_ppl_ratio": 1.1305706843986925,
+          "mean_top1_agreement": 0.7344040247678019,
+          "p999_kld": 4.528802305078663,
+          "record_count": 20
+        },
+        "long": {
+          "all_memory_clean": true,
+          "clean_record_count": 16,
+          "max_ppl_ratio": 1.0729404494008665,
+          "mean_kld": 0.05447166363641656,
+          "mean_ppl_ratio": 1.0373911522346284,
+          "mean_top1_agreement": 0.9619140625,
+          "p999_kld": 4.27076483180716,
+          "record_count": 16
+        },
+        "math": {
+          "all_memory_clean": true,
+          "clean_record_count": 28,
+          "max_ppl_ratio": 1.007004448929997,
+          "mean_kld": 0.4393467997094391,
+          "mean_ppl_ratio": 0.7869487930019347,
+          "mean_top1_agreement": 0.7219871281846073,
+          "p999_kld": 4.430145454030516,
+          "record_count": 28
+        },
+        "route": {
+          "all_memory_clean": true,
+          "clean_record_count": 8,
+          "max_ppl_ratio": 0.9314489424707212,
+          "mean_kld": 0.2326193925320923,
+          "mean_ppl_ratio": 0.9111319857836793,
+          "mean_top1_agreement": 0.686046511627907,
+          "p999_kld": 4.612546822034927,
+          "record_count": 8
+        }
+      },
+      "max_ppl_ratio": 1.6331451045061094,
+      "mean_kld": 0.3581324831041076,
+      "mean_ppl_ratio": 1.0257004318989826,
+      "mean_top1_agreement": 0.7908832301880374,
+      "p999_kld": 4.612546822034927,
+      "path": "artifacts/quality/glm45-air-dynamic3p0-r26-lora-l45-gud-math8-r4-init0p05-s12-lr0p5-w2-m1-nll0p5-holdout128-20260701.jsonl",
+      "record_count": 128
+    },
+    "report": {
+      "all_memory_clean": true,
+      "clean_record_count": 128,
+      "domains": {
+        "code": {
+          "all_memory_clean": true,
+          "clean_record_count": 44,
+          "max_ppl_ratio": 1.741945696079789,
+          "mean_kld": 0.44182446451638757,
+          "mean_ppl_ratio": 1.1588147882779796,
+          "mean_top1_agreement": 0.8313756518601015,
+          "p999_kld": 4.428695458161231,
+          "record_count": 44
+        },
+        "control": {
+          "all_memory_clean": true,
+          "clean_record_count": 12,
+          "max_ppl_ratio": 1.2677712996203472,
+          "mean_kld": 0.35451123151418146,
+          "mean_ppl_ratio": 1.1593265082392226,
+          "mean_top1_agreement": 0.768939393939394,
+          "p999_kld": 4.12978160756271,
+          "record_count": 12
+        },
+        "instruction": {
+          "all_memory_clean": true,
+          "clean_record_count": 20,
+          "max_ppl_ratio": 1.3831607561795307,
+          "mean_kld": 0.383563273482899,
+          "mean_ppl_ratio": 1.1756237131951237,
+          "mean_top1_agreement": 0.7404895510835913,
+          "p999_kld": 4.528802305078663,
+          "record_count": 20
+        },
+        "long": {
+          "all_memory_clean": true,
+          "clean_record_count": 16,
+          "max_ppl_ratio": 1.061720798874956,
+          "mean_kld": 0.06271302811795432,
+          "mean_ppl_ratio": 1.0354337021408435,
+          "mean_top1_agreement": 0.95458984375,
+          "p999_kld": 4.27076483180716,
+          "record_count": 16
+        },
+        "math": {
+          "all_memory_clean": true,
+          "clean_record_count": 28,
+          "max_ppl_ratio": 0.954983687009525,
+          "mean_kld": 0.4624847587087932,
+          "mean_ppl_ratio": 0.7510211749846168,
+          "mean_top1_agreement": 0.7253034547152195,
+          "p999_kld": 4.430145454030516,
+          "record_count": 28
+        },
+        "route": {
+          "all_memory_clean": true,
+          "clean_record_count": 8,
+          "max_ppl_ratio": 0.9490465949049243,
+          "mean_kld": 0.23242272577084422,
+          "mean_ppl_ratio": 0.9214201385728595,
+          "mean_top1_agreement": 0.6976744186046511,
+          "p999_kld": 4.612546822034927,
+          "record_count": 8
+        }
+      },
+      "max_ppl_ratio": 1.741945696079789,
+      "mean_kld": 0.3685784389566362,
+      "mean_ppl_ratio": 1.0420245022610146,
+      "mean_top1_agreement": 0.7951634532160341,
+      "p999_kld": 4.612546822034927,
+      "path": "artifacts/quality/glm45-air-dynamic3p0-r26-lora-l45-gud-math8-r4-init0p05-s12-lr0p5-w2-m1-nll0p5-report128-20260701.jsonl",
+      "record_count": 128
+    },
+    "selection": {
+      "all_memory_clean": true,
+      "clean_record_count": 128,
+      "domains": {
+        "code": {
+          "all_memory_clean": true,
+          "clean_record_count": 44,
+          "max_ppl_ratio": 1.8031652085601624,
+          "mean_kld": 0.46890680414901864,
+          "mean_ppl_ratio": 1.1616205835224986,
+          "mean_top1_agreement": 0.81855666263561,
+          "p999_kld": 4.428695458161231,
+          "record_count": 44
+        },
+        "control": {
+          "all_memory_clean": true,
+          "clean_record_count": 12,
+          "max_ppl_ratio": 1.247194475220003,
+          "mean_kld": 0.2913292593422302,
+          "mean_ppl_ratio": 1.0937629844852532,
+          "mean_top1_agreement": 0.7936507936507935,
+          "p999_kld": 4.12978160756271,
+          "record_count": 12
+        },
+        "instruction": {
+          "all_memory_clean": true,
+          "clean_record_count": 20,
+          "max_ppl_ratio": 1.4729309452461832,
+          "mean_kld": 0.39315062405980344,
+          "mean_ppl_ratio": 1.2486863707800455,
+          "mean_top1_agreement": 0.7324305555555556,
+          "p999_kld": 4.528802305078663,
+          "record_count": 20
+        },
+        "long": {
+          "all_memory_clean": true,
+          "clean_record_count": 16,
+          "max_ppl_ratio": 1.0655122990736117,
+          "mean_kld": 0.051073719809958576,
+          "mean_ppl_ratio": 1.0407467559214187,
+          "mean_top1_agreement": 0.96435546875,
+          "p999_kld": 4.27076483180716,
+          "record_count": 16
+        },
+        "math": {
+          "all_memory_clean": true,
+          "clean_record_count": 28,
+          "max_ppl_ratio": 0.9036706897336891,
+          "mean_kld": 0.4754650431012028,
+          "mean_ppl_ratio": 0.7735089405374899,
+          "mean_top1_agreement": 0.7798044217687075,
+          "p999_kld": 4.430145454030516,
+          "record_count": 28
+        },
+        "route": {
+          "all_memory_clean": true,
+          "clean_record_count": 8,
+          "max_ppl_ratio": 0.8941016570290362,
+          "mean_kld": 0.24127101242273927,
+          "mean_ppl_ratio": 0.8364138715639539,
+          "mean_top1_agreement": 0.7261904761904763,
+          "p999_kld": 4.612546822034927,
+          "record_count": 8
+        }
+      },
+      "max_ppl_ratio": 1.8031652085601624,
+      "mean_kld": 0.3754002484299577,
+      "mean_ppl_ratio": 1.048528893021234,
+      "mean_top1_agreement": 0.806739444608868,
+      "p999_kld": 4.612546822034927,
+      "path": "artifacts/quality/glm45-air-dynamic3p0-r26-lora-l45-gud-math8-r4-init0p05-s12-lr0p5-w2-m1-nll0p5-select128-20260701.jsonl",
+      "record_count": 128
+    }
+  },
+  "bump_non_expert_precision_1": {
+    "audit_evidence": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/audit_bump_non_expert_precision_1-2d9e7ca5/evidence/evidence.jsonl",
+    "auto_prefill_all_layers_nax_fast_compatible": true,
+    "compose_triggered": false,
+    "continuous_sidecar_count": 8,
+    "counted_resident_total_gib": 26.046170711517334,
+    "decision": "reject_catastrophic_fullsplit_top1_collapse",
+    "deltas_vs_baseline": {
+      "holdout": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": 3916.955350619576,
+            "mean_kld": 9.025604722948378,
+            "mean_ppl_ratio": 1598.615297961833,
+            "mean_top1_agreement": -0.8077555767597634,
+            "p999_kld": 10.072267007112107
+          },
+          "control": {
+            "max_ppl_ratio": 1495.6508443010994,
+            "mean_kld": 8.131625807417782,
+            "mean_ppl_ratio": 1333.0529375023452,
+            "mean_top1_agreement": -0.8257575757575758,
+            "p999_kld": 9.441325220987636
+          },
+          "instruction": {
+            "max_ppl_ratio": 503.2803085813671,
+            "mean_kld": 8.050683467547929,
+            "mean_ppl_ratio": 269.1134284524259,
+            "mean_top1_agreement": -0.7344040247678019,
+            "p999_kld": 7.530493609397409
+          },
+          "long": {
+            "max_ppl_ratio": 48847.60419824108,
+            "mean_kld": 10.697265136844075,
+            "mean_ppl_ratio": 37323.499792321,
+            "mean_top1_agreement": -0.9619140625,
+            "p999_kld": 10.345855855428773
+          },
+          "math": {
+            "max_ppl_ratio": 5810.414198425353,
+            "mean_kld": 8.731291451958551,
+            "mean_ppl_ratio": 3766.204714807959,
+            "mean_top1_agreement": -0.7219871281846073,
+            "p999_kld": 8.19658203235873
+          },
+          "route": {
+            "max_ppl_ratio": 515.1215584864533,
+            "mean_kld": 9.175295822077954,
+            "mean_ppl_ratio": 482.4339915876852,
+            "mean_top1_agreement": -0.686046511627907,
+            "p999_kld": 8.161651147700708
+          }
+        },
+        "max_ppl_ratio": 48847.043993585976,
+        "mean_kld": 8.9433949708646,
+        "mean_ppl_ratio": 6235.993574639513,
+        "mean_top1_agreement": -0.7908832301880374,
+        "p999_kld": 9.980594057123088
+      },
+      "report": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": 3618.7623322472764,
+            "mean_kld": 8.84138588606335,
+            "mean_ppl_ratio": 1409.2459455715762,
+            "mean_top1_agreement": -0.8313756518601015,
+            "p999_kld": 8.928022694301099
+          },
+          "control": {
+            "max_ppl_ratio": 1973.3250698083343,
+            "mean_kld": 8.27951966655315,
+            "mean_ppl_ratio": 1565.2218617423932,
+            "mean_top1_agreement": -0.768939393939394,
+            "p999_kld": 8.856410864847817
+          },
+          "instruction": {
+            "max_ppl_ratio": 844.7517277573634,
+            "mean_kld": 8.267252203880778,
+            "mean_ppl_ratio": 437.8069783089505,
+            "mean_top1_agreement": -0.7404895510835913,
+            "p999_kld": 7.121297469969738
+          },
+          "long": {
+            "max_ppl_ratio": 99849.14157077775,
+            "mean_kld": 11.384640353241766,
+            "mean_ppl_ratio": 74003.52168352234,
+            "mean_top1_agreement": -0.95458984375,
+            "p999_kld": 9.911255456520749
+          },
+          "math": {
+            "max_ppl_ratio": 4743.474175526494,
+            "mean_kld": 8.408509822968806,
+            "mean_ppl_ratio": 2531.2268917802357,
+            "mean_top1_agreement": -0.7253034547152195,
+            "p999_kld": 7.158201222025184
+          },
+          "route": {
+            "max_ppl_ratio": 350.93314009416576,
+            "mean_kld": 8.725117160786914,
+            "mean_ppl_ratio": 323.3539485025283,
+            "mean_top1_agreement": -0.6976744186046511,
+            "p999_kld": 7.77836645125614
+          }
+        },
+        "max_ppl_ratio": 99848.46134588054,
+        "mean_kld": 8.914950914408834,
+        "mean_ppl_ratio": 10523.930898487979,
+        "mean_top1_agreement": -0.7951634532160341,
+        "p999_kld": 9.536800474309308
+      },
+      "selection": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": 12327.054583292755,
+            "mean_kld": 9.614736373044499,
+            "mean_ppl_ratio": 3174.05624729462,
+            "mean_top1_agreement": -0.81855666263561,
+            "p999_kld": 10.24330521789471
+          },
+          "control": {
+            "max_ppl_ratio": 1745.8500259828295,
+            "mean_kld": 8.229486466267801,
+            "mean_ppl_ratio": 1267.2127496027776,
+            "mean_top1_agreement": -0.7936507936507935,
+            "p999_kld": 8.748817631247373
+          },
+          "instruction": {
+            "max_ppl_ratio": 1073.1975343559702,
+            "mean_kld": 8.834243711453928,
+            "mean_ppl_ratio": 700.6585168957316,
+            "mean_top1_agreement": -0.7324305555555556,
+            "p999_kld": 6.994284686848783
+          },
+          "long": {
+            "max_ppl_ratio": 81678.45136178084,
+            "mean_kld": 11.205812563521151,
+            "mean_ppl_ratio": 60130.21181581397,
+            "mean_top1_agreement": -0.96435546875,
+            "p999_kld": 9.785130157609345
+          },
+          "math": {
+            "max_ppl_ratio": 11049.186782287961,
+            "mean_kld": 9.05090371026304,
+            "mean_ppl_ratio": 6256.254052637828,
+            "mean_top1_agreement": -0.7798044217687075,
+            "p999_kld": 8.456597639916192
+          },
+          "route": {
+            "max_ppl_ratio": 546.604896471299,
+            "mean_kld": 9.095991827778057,
+            "mean_ppl_ratio": 507.8889543991167,
+            "mean_top1_agreement": -0.7261904761904763,
+            "p999_kld": 8.503257068590095
+          }
+        },
+        "max_ppl_ratio": 81677.71370887135,
+        "mean_kld": 9.40604181065764,
+        "mean_ppl_ratio": 10235.93603418896,
+        "mean_top1_agreement": -0.806739444608868,
+        "p999_kld": 9.673655521684616
+      }
+    },
+    "dtype": "bf16",
+    "memory_clean_caveat": {
+      "holdout": {
+        "all_memory_clean": true,
+        "clean_record_count": 128,
+        "record_count": 128
+      },
+      "report": {
+        "all_memory_clean": false,
+        "clean_record_count": 125,
+        "record_count": 128
+      },
+      "selection": {
+        "all_memory_clean": false,
+        "clean_record_count": 124,
+        "record_count": 128
+      }
+    },
+    "precision_log": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/bump_non_expert_precision_1-56c34f62/evidence/precision_log.jsonl",
+    "rejection_basis": "report_selection_holdout full split mean_top1_agreement collapsed to 0.0 with large KLD/PPL regression; report and selection repairs still have partial memory-clean caveats, which do not change the rejection",
+    "resident_byte_audit": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/resident_byte_audit_bump_non_expert_precision_1-98b82ba3/evidence/evidence.jsonl",
+    "resident_byte_check_failures": [],
+    "resident_byte_check_pass": true,
+    "resident_byte_reduction_ratio": 0.2972090079634571,
+    "source_non_expert_complete": true,
+    "summaries": {
+      "holdout": {
+        "all_memory_clean": true,
+        "clean_record_count": 128,
+        "domains": {
+          "code": {
+            "all_memory_clean": true,
+            "clean_record_count": 44,
+            "max_ppl_ratio": 3918.5884957240823,
+            "mean_kld": 9.465778227876962,
+            "mean_ppl_ratio": 1599.7380943533753,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 14.500962465273338,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1496.9322469090328,
+            "mean_kld": 8.442903681408096,
+            "mean_ppl_ratio": 1334.1657141557746,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 13.571106828550347,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 504.6591064641836,
+            "mean_kld": 8.43587231666196,
+            "mean_ppl_ratio": 270.24399913682464,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.059295914476072,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": true,
+            "clean_record_count": 16,
+            "max_ppl_ratio": 48848.67713869048,
+            "mean_kld": 10.751736800480492,
+            "mean_ppl_ratio": 37324.537183473236,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 14.616620687235933,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 5811.421202874283,
+            "mean_kld": 9.17063825166799,
+            "mean_ppl_ratio": 3766.991663600961,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.626727486389246,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 516.053007428924,
+            "mean_kld": 9.407915214610046,
+            "mean_ppl_ratio": 483.3451235734689,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.774197969735635,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 48848.67713869048,
+        "mean_kld": 9.301527453968708,
+        "mean_ppl_ratio": 6237.019275071412,
+        "mean_top1_agreement": 0.0,
+        "p999_kld": 14.593140879158016,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_holdout_bump_non_expert_precision_1_full_repair-ecf06568/evidence/evidence.jsonl",
+        "record_count": 128
+      },
+      "report": {
+        "all_memory_clean": false,
+        "clean_record_count": 125,
+        "domains": {
+          "code": {
+            "all_memory_clean": true,
+            "clean_record_count": 44,
+            "max_ppl_ratio": 3620.504277943356,
+            "mean_kld": 9.283210350579736,
+            "mean_ppl_ratio": 1410.4047603598542,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 13.35671815246233,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1974.5928411079547,
+            "mean_kld": 8.63403089806733,
+            "mean_ppl_ratio": 1566.3811882506325,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.986192472410528,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 846.1348885135429,
+            "mean_kld": 8.650815477363677,
+            "mean_ppl_ratio": 438.9826020221456,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 11.650099775048401,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": false,
+            "clean_record_count": 13,
+            "max_ppl_ratio": 99850.20329157662,
+            "mean_kld": 11.44735338135972,
+            "mean_ppl_ratio": 74004.55711722448,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 14.182020288327909,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 4744.429159213503,
+            "mean_kld": 8.8709945816776,
+            "mean_ppl_ratio": 2531.9779129552203,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 11.5883466760557,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 351.8821866890707,
+            "mean_kld": 8.957539886557758,
+            "mean_ppl_ratio": 324.2753686411011,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.390913273291067,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 99850.20329157662,
+        "mean_kld": 9.28352935336547,
+        "mean_ppl_ratio": 10524.97292299024,
+        "mean_top1_agreement": 0.0,
+        "p999_kld": 14.149347296344235,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_report_bump_non_expert_precision_1_full_repair-9f823b05/evidence/evidence.jsonl",
+        "record_count": 128
+      },
+      "selection": {
+        "all_memory_clean": false,
+        "clean_record_count": 124,
+        "domains": {
+          "code": {
+            "all_memory_clean": false,
+            "clean_record_count": 43,
+            "max_ppl_ratio": 12328.857748501316,
+            "mean_kld": 10.083643177193517,
+            "mean_ppl_ratio": 3175.2178678781424,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 14.67200067605594,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1747.0972204580496,
+            "mean_kld": 8.520815725610031,
+            "mean_ppl_ratio": 1268.306512587263,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.878599238810084,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 1074.6704653012164,
+            "mean_kld": 9.227394335513731,
+            "mean_ppl_ratio": 701.9072032665117,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 11.523086991927446,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": false,
+            "clean_record_count": 13,
+            "max_ppl_ratio": 81679.51687407991,
+            "mean_kld": 11.25688628333111,
+            "mean_ppl_ratio": 60131.25256256989,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 14.055894989416505,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 11050.090452977694,
+            "mean_kld": 9.526368753364242,
+            "mean_ppl_ratio": 6257.027561578366,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 12.886743093946707,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 547.498998128328,
+            "mean_kld": 9.337262840200797,
+            "mean_ppl_ratio": 508.72536827068063,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": 13.115803890625022,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 81679.51687407991,
+        "mean_kld": 9.781442059087599,
+        "mean_ppl_ratio": 10236.984563081982,
+        "mean_top1_agreement": 0.0,
+        "p999_kld": 14.286202343719543,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_selection_bump_non_expert_precision_1_full_repair-587650b3/evidence/evidence.jsonl",
+        "record_count": 128
+      }
+    },
+    "surfaces": [
+      "embed_tokens",
+      "lm_head",
+      "router_gates"
+    ]
+  },
+  "compose_thresholds": {
+    "global_top1_delta": 0.01,
+    "route_domain_top1_delta": 0.05
+  },
+  "created_date": "2026-07-03",
+  "decision": "reject_free_p1_levers_metric_backed",
+  "full_split_record_count_satisfied": true,
+  "heavy_slice_caveat": "Both levers have 128-row report/selection/holdout evidence; bump report/selection are not fully memory-clean but are rejected catastrophically rather than promoted or composed.",
+  "heavy_slice_rule_satisfied": true,
+  "next_recommendation": "do_not_compose_either_free_lever; continue P1 with a different top1 mechanism while keeping Peer 2 untouched until user explicitly resumes transport work",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "recipe": "recipes/glm45air__dmx2p0__sc-l45__r26__20260701.yaml",
+  "record_type": "glm45_air_workstream1_free_levers_fullsplit_verdict",
+  "repair_evidence_allowed": true,
+  "train_router_kd_1": {
+    "compose_triggered": false,
+    "correction_count": 1,
+    "decision": "reject_metric_flat_fullsplit_router_kd",
+    "deltas_vs_baseline": {
+      "holdout": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": -0.0023440150303999374,
+            "mean_kld": -0.0007038336091529374,
+            "mean_ppl_ratio": -0.0008806591768080185,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.006644946305044641
+          },
+          "control": {
+            "max_ppl_ratio": -0.0011995467293686168,
+            "mean_kld": -0.00021284616410227608,
+            "mean_ppl_ratio": -0.0007171214215748734,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.0032376381845518054
+          },
+          "instruction": {
+            "max_ppl_ratio": 0.0011458938353525738,
+            "mean_kld": -0.0003441422999913568,
+            "mean_ppl_ratio": -0.00015609643634650894,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.007168911531160838
+          },
+          "long": {
+            "max_ppl_ratio": 0.0002611788871702547,
+            "mean_kld": -5.613344271977044e-05,
+            "mean_ppl_ratio": -4.1013585298177446e-05,
+            "mean_top1_agreement": -0.00048828125,
+            "p999_kld": -0.005782859412128083
+          },
+          "math": {
+            "max_ppl_ratio": -0.00020934574057651645,
+            "mean_kld": 0.0003692906522338446,
+            "mean_ppl_ratio": -0.000705584903864187,
+            "mean_top1_agreement": -0.006884003601440591,
+            "p999_kld": -0.004599128601771696
+          },
+          "route": {
+            "max_ppl_ratio": 0.00039545526765227823,
+            "mean_kld": 0.00032235568743596565,
+            "mean_ppl_ratio": 0.00017950697375668234,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.0024605010416713924
+          }
+        },
+        "max_ppl_ratio": -0.0023440150303999374,
+        "mean_kld": -0.0002217564851035858,
+        "mean_ppl_ratio": -0.000542601003502341,
+        "mean_top1_agreement": -0.0015669109440651363,
+        "p999_kld": -0.0024605010416713924
+      },
+      "report": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": 0.0022062585723914285,
+            "mean_kld": -0.0006823222564500409,
+            "mean_ppl_ratio": -0.0011493722294688702,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.006644946305044641
+          },
+          "control": {
+            "max_ppl_ratio": -0.005818095745139917,
+            "mean_kld": -2.7333157052666923e-05,
+            "mean_ppl_ratio": -0.0004458002330265387,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.0032376381845518054
+          },
+          "instruction": {
+            "max_ppl_ratio": -0.013320976339804336,
+            "mean_kld": -0.00044454632231449853,
+            "mean_ppl_ratio": -0.0007154253844157132,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.007168911531160838
+          },
+          "long": {
+            "max_ppl_ratio": 0.00014226479495782485,
+            "mean_kld": -3.561180168693001e-05,
+            "mean_ppl_ratio": 3.036350406571131e-05,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.005782859412128083
+          },
+          "math": {
+            "max_ppl_ratio": -0.00016091686456332077,
+            "mean_kld": 0.00029660482801174837,
+            "mean_ppl_ratio": -0.0010836488708000358,
+            "mean_top1_agreement": -0.0001700680272108679,
+            "p999_kld": -0.004599128601771696
+          },
+          "route": {
+            "max_ppl_ratio": 0.0016885996551677662,
+            "mean_kld": -0.000125279719945387,
+            "mean_ppl_ratio": 0.0027451415103190158,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.0024605010416713924
+          }
+        },
+        "max_ppl_ratio": 0.0022062585723914285,
+        "mean_kld": -0.0002539702735698812,
+        "mean_ppl_ratio": -0.0006103571001254693,
+        "mean_top1_agreement": -3.7202380952283676e-05,
+        "p999_kld": -0.0024605010416713924
+      },
+      "selection": {
+        "domains": {
+          "code": {
+            "max_ppl_ratio": -0.004532482166938356,
+            "mean_kld": -0.0008192050439719267,
+            "mean_ppl_ratio": -0.001223136885992293,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.006644946305044641
+          },
+          "control": {
+            "max_ppl_ratio": 0.006313811416899684,
+            "mean_kld": -0.0001365636893367883,
+            "mean_ppl_ratio": 0.00031362777846433154,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.0032376381845518054
+          },
+          "instruction": {
+            "max_ppl_ratio": -0.0011128717470507699,
+            "mean_kld": -0.0004012991814903999,
+            "mean_ppl_ratio": -0.00045242776802356666,
+            "mean_top1_agreement": 0.0,
+            "p999_kld": -0.007168911531160838
+          },
+          "long": {
+            "max_ppl_ratio": 0.00016530123739766367,
+            "mean_kld": -5.9873990996280047e-05,
+            "mean_ppl_ratio": 1.1935903252879854e-05,
+            "mean_top1_agreement": 0.00048828125,
+            "p999_kld": -0.005782859412128083
+          },
+          "math": {
+            "max_ppl_ratio": -0.0020062133837976948,
+            "mean_kld": -8.221573095179568e-05,
+            "mean_ppl_ratio": 0.0006420127383527374,
+            "mean_top1_agreement": -0.0022321428571429047,
+            "p999_kld": -0.004599128601771696
+          },
+          "route": {
+            "max_ppl_ratio": -0.0013650772691569113,
+            "mean_kld": 0.0004378334390077454,
+            "mean_ppl_ratio": 0.00037731982329558544,
+            "mean_top1_agreement": -0.0029761904761905766,
+            "p999_kld": -0.0024605010416713924
+          }
+        },
+        "max_ppl_ratio": -0.004532482166938356,
+        "mean_kld": -0.0003552119269308318,
+        "mean_ppl_ratio": -0.0002962277757054821,
+        "mean_top1_agreement": -0.0006132579985119735,
+        "p999_kld": -0.0024605010416713924
+      }
+    },
+    "global_top1_compose_triggered": false,
+    "layers": [
+      36
+    ],
+    "max_abs_delta": 0.125,
+    "max_global_top1_delta": -3.7202380952283676e-05,
+    "max_route_domain_top1_delta": 0.0,
+    "num_experts": 128,
+    "rejection_basis": "full split router-KD is near-flat and does not hit global +0.01 or route +0.05 top1 compose trigger",
+    "route_top1_compose_triggered": false,
+    "router_kd_log": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/train_router_kd_1-996f1e3d/evidence/router_kd_log.jsonl",
+    "scale": 1.0,
+    "source_disagreement_json": "artifacts/quality/glm45-air-route-trace-disagreement-report-route000-layer36-split18-gatestop-wired83-dirty-20260701.json",
+    "summaries": {
+      "holdout": {
+        "all_memory_clean": true,
+        "clean_record_count": 128,
+        "domains": {
+          "code": {
+            "all_memory_clean": true,
+            "clean_record_count": 44,
+            "max_ppl_ratio": 1.6308010894757095,
+            "mean_kld": 0.43946967131943054,
+            "mean_ppl_ratio": 1.1219157323656268,
+            "mean_top1_agreement": 0.8077555767597634,
+            "p999_kld": 4.422050511856186,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1.2802030612041162,
+            "mean_kld": 0.3110650278262112,
+            "mean_ppl_ratio": 1.1120595320076856,
+            "mean_top1_agreement": 0.8257575757575758,
+            "p999_kld": 4.126543969378158,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 1.3799437766518505,
+            "mean_kld": 0.38484470681404076,
+            "mean_ppl_ratio": 1.130414587962346,
+            "mean_top1_agreement": 0.7344040247678019,
+            "p999_kld": 4.521633393547503,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": true,
+            "clean_record_count": 16,
+            "max_ppl_ratio": 1.0732016282880368,
+            "mean_kld": 0.05441553019369679,
+            "mean_ppl_ratio": 1.0373501386493302,
+            "mean_top1_agreement": 0.96142578125,
+            "p999_kld": 4.264981972395032,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 1.0067951031894204,
+            "mean_kld": 0.4397160903616729,
+            "mean_ppl_ratio": 0.7862432080980705,
+            "mean_top1_agreement": 0.7151031245831667,
+            "p999_kld": 4.425546325428744,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 0.9318443977383735,
+            "mean_kld": 0.23294174821952826,
+            "mean_ppl_ratio": 0.911311492757436,
+            "mean_top1_agreement": 0.686046511627907,
+            "p999_kld": 4.610086320993256,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 1.6308010894757095,
+        "mean_kld": 0.357910726619004,
+        "mean_ppl_ratio": 1.0251578308954803,
+        "mean_top1_agreement": 0.7893163192439723,
+        "p999_kld": 4.610086320993256,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_holdout_train_router_kd_1_full_repair-b55d0982/evidence/evidence.jsonl",
+        "record_count": 128
+      },
+      "report": {
+        "all_memory_clean": true,
+        "clean_record_count": 128,
+        "domains": {
+          "code": {
+            "all_memory_clean": true,
+            "clean_record_count": 44,
+            "max_ppl_ratio": 1.7441519546521804,
+            "mean_kld": 0.44114214225993753,
+            "mean_ppl_ratio": 1.1576654160485107,
+            "mean_top1_agreement": 0.8313756518601015,
+            "p999_kld": 4.422050511856186,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1.2619532038752073,
+            "mean_kld": 0.3544838983571288,
+            "mean_ppl_ratio": 1.158880708006196,
+            "mean_top1_agreement": 0.768939393939394,
+            "p999_kld": 4.126543969378158,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 1.3698397798397264,
+            "mean_kld": 0.3831187271605845,
+            "mean_ppl_ratio": 1.174908287810708,
+            "mean_top1_agreement": 0.7404895510835913,
+            "p999_kld": 4.521633393547503,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": true,
+            "clean_record_count": 16,
+            "max_ppl_ratio": 1.0618630636699138,
+            "mean_kld": 0.06267741631626739,
+            "mean_ppl_ratio": 1.0354640656449092,
+            "mean_top1_agreement": 0.95458984375,
+            "p999_kld": 4.264981972395032,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 0.9548227701449616,
+            "mean_kld": 0.46278136353680493,
+            "mean_ppl_ratio": 0.7499375261138168,
+            "mean_top1_agreement": 0.7251333866880086,
+            "p999_kld": 4.425546325428744,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 0.950735194560092,
+            "mean_kld": 0.23229744605089883,
+            "mean_ppl_ratio": 0.9241652800831786,
+            "mean_top1_agreement": 0.6976744186046511,
+            "p999_kld": 4.610086320993256,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 1.7441519546521804,
+        "mean_kld": 0.36832446868306634,
+        "mean_ppl_ratio": 1.0414141451608891,
+        "mean_top1_agreement": 0.7951262508350818,
+        "p999_kld": 4.610086320993256,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_report_train_router_kd_1_full_repair-c851c3c5/evidence/evidence.jsonl",
+        "record_count": 128
+      },
+      "selection": {
+        "all_memory_clean": true,
+        "clean_record_count": 128,
+        "domains": {
+          "code": {
+            "all_memory_clean": true,
+            "clean_record_count": 44,
+            "max_ppl_ratio": 1.798632726393224,
+            "mean_kld": 0.4680875991050467,
+            "mean_ppl_ratio": 1.1603974466365063,
+            "mean_top1_agreement": 0.81855666263561,
+            "p999_kld": 4.422050511856186,
+            "record_count": 44
+          },
+          "control": {
+            "all_memory_clean": true,
+            "clean_record_count": 12,
+            "max_ppl_ratio": 1.2535082866369027,
+            "mean_kld": 0.2911926956528934,
+            "mean_ppl_ratio": 1.0940766122637176,
+            "mean_top1_agreement": 0.7936507936507935,
+            "p999_kld": 4.126543969378158,
+            "record_count": 12
+          },
+          "instruction": {
+            "all_memory_clean": true,
+            "clean_record_count": 20,
+            "max_ppl_ratio": 1.4718180734991324,
+            "mean_kld": 0.39274932487831304,
+            "mean_ppl_ratio": 1.248233943012022,
+            "mean_top1_agreement": 0.7324305555555556,
+            "p999_kld": 4.521633393547503,
+            "record_count": 20
+          },
+          "long": {
+            "all_memory_clean": true,
+            "clean_record_count": 16,
+            "max_ppl_ratio": 1.0656776003110093,
+            "mean_kld": 0.051013845818962296,
+            "mean_ppl_ratio": 1.0407586918246716,
+            "mean_top1_agreement": 0.96484375,
+            "p999_kld": 4.264981972395032,
+            "record_count": 16
+          },
+          "math": {
+            "all_memory_clean": true,
+            "clean_record_count": 28,
+            "max_ppl_ratio": 0.9016644763498914,
+            "mean_kld": 0.475382827370251,
+            "mean_ppl_ratio": 0.7741509532758426,
+            "mean_top1_agreement": 0.7775722789115646,
+            "p999_kld": 4.425546325428744,
+            "record_count": 28
+          },
+          "route": {
+            "all_memory_clean": true,
+            "clean_record_count": 8,
+            "max_ppl_ratio": 0.8927365797598793,
+            "mean_kld": 0.241708845861747,
+            "mean_ppl_ratio": 0.8367911913872494,
+            "mean_top1_agreement": 0.7232142857142857,
+            "p999_kld": 4.610086320993256,
+            "record_count": 8
+          }
+        },
+        "max_ppl_ratio": 1.798632726393224,
+        "mean_kld": 0.37504503650302684,
+        "mean_ppl_ratio": 1.0482326652455285,
+        "mean_top1_agreement": 0.8061261866103561,
+        "p999_kld": 4.610086320993256,
+        "path": "artifacts/build/glm45air__dmx2p0__sc-l45__r26__20260701/steps/eval_selection_train_router_kd_1_full_repair-4a903b42/evidence/evidence.jsonl",
+        "record_count": 128
+      }
+    }
+  },
+  "transport_scope": "local_artifact_summary_only_after_user_stopped_peer2_use"
+}

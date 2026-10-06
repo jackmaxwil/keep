@@ -1,0 +1,49 @@
+{
+  "decision": "indexed_update_inverse_faster_in_isolation",
+  "lane_s_claim": false,
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_inverse_permutation_microbench",
+  "resident_auto_claim": false,
+  "rows": [
+    {
+      "iterations": 50,
+      "method": "argsort_inverse",
+      "ms_per_iter": 0.4073858400079189,
+      "route_count": 8192
+    },
+    {
+      "iterations": 50,
+      "method": "indexed_update_inverse",
+      "ms_per_iter": 0.25417999997443985,
+      "route_count": 8192
+    },
+    {
+      "iterations": 50,
+      "method": "argsort_inverse",
+      "ms_per_iter": 0.3750441799638793,
+      "route_count": 32768
+    },
+    {
+      "iterations": 50,
+      "method": "indexed_update_inverse",
+      "ms_per_iter": 0.19540166002116166,
+      "route_count": 32768
+    },
+    {
+      "iterations": 50,
+      "method": "argsort_inverse",
+      "ms_per_iter": 0.48920665998593904,
+      "route_count": 131072
+    },
+    {
+      "iterations": 50,
+      "method": "indexed_update_inverse",
+      "ms_per_iter": 0.2289066599769285,
+      "route_count": 131072
+    }
+  ],
+  "same_window_q2_speed_packet": false,
+  "schema_version": 1,
+  "speed_claim": false
+}

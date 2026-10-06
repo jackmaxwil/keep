@@ -1,0 +1,60 @@
+schema_version: 1
+strict_inputs: true
+name: glm52_reap_504b_family_evidence_v2_20260710
+description: >
+  Compose the GLM-5.2 REAP schema-v2 family gate checkpoint from the exact
+  existing policy, prompt, teacher metadata, full-bind, runtime, synthetic,
+  non-VQ package, composite audit, and production generation evidence files.
+external_inputs:
+  family_policy_json:
+    kind: file
+    path: artifacts/quality/glm52-family-policy-20260709-v2.json
+    expect_hash: 0975f7dc1117c5fba7532e9166f4767546fd691a6cb52520a40f09874f972ce2
+  eval_prompt_pack_json:
+    kind: file
+    path: artifacts/quality/glm52-family-eval-prompts-20260709-v2.json
+    expect_hash: 697677a4949f4ee7e370ac5e9a55e9631b0a1385f95a07dfd3a3f2b87d8edf31
+  teacher_metadata_json:
+    kind: file
+    path: artifacts/quality/glm52-teacher-metadata-20260709.json
+    expect_hash: 621a013eb37f617409ec568340976e769610b3b6c8cae346639762d816a7fd7a
+  full_bind_preflight_json:
+    kind: file
+    path: artifacts/quality/glm52-wave6-full-bind-preflight-20260709.json
+    expect_hash: 9078a36c683a2487ef5d99f4c8fecc72f086689b8aa1e249ffaa34639b5946a3
+  indexshare_runtime_json:
+    kind: file
+    path: artifacts/quality/glm52-indexshare-runtime-20260709.json
+    expect_hash: 94785cf0884ce5ac955a09b535c0b2ef00ad3cb742da7769bf504a4c9143ad25
+  synthetic_generation_json:
+    kind: file
+    path: artifacts/quality/glm52-synthetic-generation-contract-20260709.json
+    expect_hash: baa9c8214553c6af391c6a671a5b0185b8d7eb1746c3e6c52586f512536662a9
+  non_vq_evidence_json:
+    kind: file
+    path: artifacts/build/glm52_reap_504b_materialization_probe_20260709/steps/non_vq_pack-a678bc3c/evidence/evidence_json.json
+    expect_hash: ccbedd87f72f032bd86fd9d5a89fb75641595f30cf2a80fd7c84636d594e80d2
+  composite_artifact_audit_json:
+    kind: file
+    path: artifacts/quality/glm52-wave6-full-artifact-audit-20260709.json
+    expect_hash: 8026322a533606ed451d13b029d83836fefbf1a938b33529de535f3fc778591a
+  production_generation_json:
+    kind: file
+    path: artifacts/quality/glm52-wave6-production-generation-bounded-prefill-warm-resident-20260710.json
+    expect_hash: 758b5bbebbb365cdf69998a034cf3791a6210d2723d5bec6c022336eceadcc82
+steps:
+  - id: family_gate
+    op: glm52-family-gate-check
+    class: diagnostic
+    gate:
+      profile: glm52_family
+    inputs:
+      family_policy_json: external:family_policy_json
+      eval_prompt_pack_json: external:eval_prompt_pack_json
+      teacher_metadata_json: external:teacher_metadata_json
+      full_bind_preflight_json: external:full_bind_preflight_json
+      indexshare_runtime_json: external:indexshare_runtime_json
+      synthetic_generation_json: external:synthetic_generation_json
+      non_vq_evidence_json: external:non_vq_evidence_json
+      composite_artifact_audit_json: external:composite_artifact_audit_json
+      production_generation_json: external:production_generation_json

@@ -1,0 +1,225 @@
+# Fast recipe fixture for supervised smoke validation on memory-dirty hosts.
+# It preserves the accepted balanced-RC lineage and training shape, but limits
+# eval splits to 16 rows and uses deliberately loose smoke-only gate overrides.
+# Do not use this recipe for RC promotion.
+schema_version: 1
+name: glm45air__dmx2p0__sc-l45__r26__20260701-smoke16
+description: >-
+  r26 seed -> L45 gud rank-4 low-rank sidecar (math8) -> 16-row smoke verify
+
+external_inputs:
+  seed_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-dynamic3p0-target23-joint-gate-up-down-nextcycle-r25-r26-s48-lr1-w2-m1-nll0p5-20260701
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+  lane_s_q2_control:
+    kind: file
+    path: artifacts/benchmarks/glm45-air-target23-nextcycle-r26-q2-control-prefill1k-quiet-20260701.jsonl
+
+steps:
+  - id: train_l45_gud_math8
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: external:seed_artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 45
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 12
+      learning_rate: 0.5
+      target_nll_weight: 0.5
+      teacher_top1_margin_weight: 2
+      teacher_top1_margin: 1
+      loss_scope: final_layer_selected
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: both
+      max_train_rows: 8
+      train_row_indices: [44, 45, 46, 47, 48, 49, 50, 51]
+      max_positions: 16
+    gate: {profile: train_sane}
+
+  - id: audit
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate:
+      profile: balanced_rc_split
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        allow_dirty_rows: true
+
+  - id: eval_selection
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate:
+      profile: balanced_rc_split
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        allow_dirty_rows: true
+
+  - id: eval_holdout
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 16
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate:
+      profile: balanced_rc_split
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        allow_dirty_rows: true
+
+  - id: lane_s_candidate
+    op: benchmark-lane-s
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      control_evidence: external:lane_s_q2_control
+    params:
+      engine: vq_e1_routed_nax_e8p
+      scenario: prefill_1k
+      repetitions: 3
+      timing_stability_max_relative_spread: 999
+      parent_vm_stat_diagnostics: true
+    gate:
+      profile: lane_s
+      thresholds:
+        allow_dirty_rows: true
+        lane_s_ratio_max: 999
+        effective_bpw_max: 999
+        timing_relative_spread_max: 999
+
+  - id: attribute_tail
+    op: attribute
+    class: diagnostic
+    inputs:
+      baseline_evidence: step:eval_report_repair/evidence
+
+promotion:
+  artifact_step: train_l45_gud_math8
+  gates:
+    - evidence_step: eval_report_repair
+      profile: community_wow
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        mean_kld_max: 999
+        p999_kld_max: 999
+        top1_min: 0
+        domain_top1_min: 0
+        allow_dirty_rows: true
+    - evidence_step: eval_selection_repair
+      profile: community_wow
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        mean_kld_max: 999
+        p999_kld_max: 999
+        top1_min: 0
+        domain_top1_min: 0
+        allow_dirty_rows: true
+    - evidence_step: eval_holdout_repair
+      profile: community_wow
+      thresholds:
+        clean_rows: 0
+        mean_ppl_ratio_max: 999
+        mean_kld_max: 999
+        p999_kld_max: 999
+        top1_min: 0
+        domain_top1_min: 0
+        allow_dirty_rows: true
+    - evidence_step: lane_s_candidate
+      profile: lane_s
+      thresholds:
+        allow_dirty_rows: true
+        lane_s_ratio_max: 999
+        effective_bpw_max: 999
+        timing_relative_spread_max: 999
+  target_metric_profile: community_wow

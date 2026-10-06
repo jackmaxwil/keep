@@ -1,0 +1,22 @@
+{
+  "description": "KeepGlm52GracefulStopV1",
+  "mainSteps": [
+    {
+      "action": "aws:runShellScript",
+      "inputs": {
+        "runCommand": [
+          "set -eu",
+          "install -d -m 0755 /run/keep-glm52",
+          "umask 022",
+        ": > /run/keep-glm52/STOP.tmp",
+        "mv -f /run/keep-glm52/STOP.tmp /run/keep-glm52/STOP",
+        "systemctl stop keep-glm52-campaign.service",
+        "/opt/keep-campaign/repo/aws/glm52-gpu/scripts/collect_task10_ssm_graceful_stop.py"
+      ]
+      },
+      "name": "fixedGracefulStop"
+    }
+  ],
+  "parameters": {},
+  "schemaVersion": "2.2"
+}

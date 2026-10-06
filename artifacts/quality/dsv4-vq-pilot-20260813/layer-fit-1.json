@@ -1,0 +1,52 @@
+{
+  "checkpoint": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+  "decode_seconds": 40.368788008461706,
+  "environment": {
+    "e8p_backend_env": null,
+    "platform": "macOS-26.4-arm64-arm-64bit",
+    "python": "3.12.13",
+    "wired_limit_env": {
+      "GLM_MLX_WIRED_LIMIT_GB": null,
+      "MLX_WIRED_LIMIT_GB": null
+    }
+  },
+  "error": {
+    "down": {
+      "expected_cosine_route_weighted": 0.9609402909909873,
+      "weighted_relative_mse_max": 0.08489849832628191,
+      "weighted_relative_mse_route_weighted": 0.0765831956229677
+    },
+    "gate": {
+      "expected_cosine_route_weighted": 0.9536945686732159,
+      "weighted_relative_mse_max": 0.09164896192514123,
+      "weighted_relative_mse_route_weighted": 0.09046665936525768
+    },
+    "up": {
+      "expected_cosine_route_weighted": 0.9537007153797754,
+      "weighted_relative_mse_max": 0.09169032607155465,
+      "weighted_relative_mse_route_weighted": 0.09045493692547081
+    }
+  },
+  "experts_fitted": 256,
+  "fit_seconds": 766.7547978130169,
+  "layer": 1,
+  "peak_rss_gb": 4.31448064,
+  "policy": {
+    "code_bits_policy": {
+      "down": 16,
+      "gate": 16,
+      "up": 16
+    },
+    "group_size_policy": {
+      "down": 128,
+      "gate": 256,
+      "up": 256
+    }
+  },
+  "policy_bpw": 2.0833333333333335,
+  "projections_fitted": 768,
+  "read_seconds": 0.5413830420002341,
+  "record_type": "dsv4_vq_pilot_layer_fit_v1",
+  "unaccounted_seconds": 80.85283534543123,
+  "wall_seconds": 887.9764211669099
+}

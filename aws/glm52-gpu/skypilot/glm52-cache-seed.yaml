@@ -1,0 +1,85 @@
+name: glm52-cache-seed
+
+num_nodes: 1
+
+resources:
+  infra: aws/us-west-2
+  instance_type: p5.48xlarge
+  memory: '2048.0'
+  use_spot: false
+  disk_size: 300
+  disk_tier: high
+  max_hourly_cost: 55.04
+  labels:
+    project: keep-glm52
+    owner: jack.mazac
+    model: glm-5.2
+  job_recovery:
+    strategy: FAILOVER
+    max_restarts_on_errors: 0
+
+api_server_access: false
+
+envs:
+  GLM52_CAMPAIGN_DESCRIPTOR_S3_URI: REQUIRED_AT_SUBMISSION
+  GLM52_CAMPAIGN_DESCRIPTOR_SHA256: REQUIRED_AT_SUBMISSION
+  GLM52_MANAGED_MODE: cache-seed
+
+setup: |
+  set -euo pipefail
+  DESCRIPTOR=/tmp/glm52-cache-seed-campaign.json
+  REPO=/opt/keep-campaign/repo
+  ARCHIVE=/tmp/keep-campaign.tar.gz
+  test "$GLM52_MANAGED_MODE" = cache-seed
+  test -n "$GLM52_CAMPAIGN_DESCRIPTOR_S3_URI"
+  test "$GLM52_CAMPAIGN_DESCRIPTOR_S3_URI" != REQUIRED_AT_SUBMISSION
+  test -n "$GLM52_CAMPAIGN_DESCRIPTOR_SHA256"
+  test "$GLM52_CAMPAIGN_DESCRIPTOR_SHA256" != REQUIRED_AT_SUBMISSION
+  test "$(aws sts get-caller-identity --query Account --output text)" = 246813579024
+  sudo install -d -m 0755 /etc/keep-glm52 "$REPO" /run/keep-glm52
+  aws s3 cp "$GLM52_CAMPAIGN_DESCRIPTOR_S3_URI" "$DESCRIPTOR" \
+    --region us-west-2 --only-show-errors
+  test "$(sha256sum "$DESCRIPTOR" | awk '{print $1}')" = \
+    "$GLM52_CAMPAIGN_DESCRIPTOR_SHA256"
+  test "$(jq -er .account_id "$DESCRIPTOR")" = 246813579024
+  test "$(jq -er .region "$DESCRIPTOR")" = us-west-2
+  test "$(jq -er .instance_type "$DESCRIPTOR")" = p5.48xlarge
+  test "$(jq -er .instance_count "$DESCRIPTOR")" = 1
+  test "$(jq -er .use_spot "$DESCRIPTOR")" = false
+  test "$(jq -er .artifacts.qualification_cache_manifest_sha256 "$DESCRIPTOR")" = \
+    0000000000000000000000000000000000000000000000000000000000000000
+  REPO_KEY=$(jq -er .repo_tar_key "$DESCRIPTOR")
+  REPO_SHA=$(jq -er .repo_tar_sha256 "$DESCRIPTOR")
+  BUCKET=$(jq -er .bucket "$DESCRIPTOR")
+  aws s3 cp "s3://$BUCKET/$REPO_KEY" "$ARCHIVE" \
+    --region us-west-2 --only-show-errors
+  test "$(sha256sum "$ARCHIVE" | awk '{print $1}')" = "$REPO_SHA"
+  sudo tar -xzf "$ARCHIVE" -C "$REPO"
+  sudo install -m 0644 "$DESCRIPTOR" /etc/keep-glm52/campaign.json
+  sudo "$REPO/aws/glm52-gpu/skypilot/prepare_nvme_storage.sh"
+  sudo /usr/bin/env -i \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    HOME=/root \
+    AWS_DEFAULT_REGION=us-west-2 \
+    BUCKET="$BUCKET" \
+    ROOT=/mnt/nvme/glm52-campaign \
+    CAMPAIGN_DESCRIPTOR=/etc/keep-glm52/campaign.json \
+    KEEP_REPO_DIR="$REPO" \
+    KEEP_REPO_PRESTAGED=1 \
+    GLM52_MANAGED_MODE=cache-seed \
+    "$REPO/aws/glm52-gpu/scripts/gpu_env_setup.sh"
+
+run: |
+  set -euo pipefail
+  DEADLINE=$(date -u -d '+6 hours' +%FT%TZ)
+  exec sudo /usr/bin/env -i \
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    HOME=/root \
+    AWS_DEFAULT_REGION=us-west-2 \
+    PYTHONUNBUFFERED=1 \
+    GLM52_MANAGED_MODE=cache-seed \
+    GLM52_EXECUTION_DEADLINE="$DEADLINE" \
+    CAMPAIGN_DESCRIPTOR=/etc/keep-glm52/campaign.json \
+    ROOT=/mnt/nvme/glm52-campaign \
+    KEEP_REPO_DIR=/opt/keep-campaign/repo \
+    /opt/keep-campaign/repo/aws/glm52-gpu/skypilot/run_qualification_cache_seed.sh

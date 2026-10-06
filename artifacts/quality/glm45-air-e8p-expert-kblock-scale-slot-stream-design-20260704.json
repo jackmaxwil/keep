@@ -1,0 +1,120 @@
+{
+  "artifact_parity_claim": false,
+  "candidate": {
+    "decode_reuse_scope": "expert_kblock_scale_slot_streams_reuse_codeword_scale_slots_across_output_tiles",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "experts_x_k_blocks_x_scale_groups_x_route_tiles_x_output_tiles",
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "reconstructs_e8p_values_per_fragment": false,
+    "storage_constraint": "compressed_e8p_expert_kblock_scale_slot_streams",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_expert_kblock_scale_slot_stream",
+    "tensorops_rhs_source": "compressed_e8p_codeword_tiles_with_expert_kblock_scale_slot_streams",
+    "uses_decoded_b_threadgroup_staging": false,
+    "uses_lane_local_fragment_buffer": false
+  },
+  "decision": "expert_kblock_scale_slot_stream_ready_for_source_structure_probe",
+  "design_constraints": [
+    "preserve_compressed_rhs_storage_and_codeword_scale_slots",
+    "preserve_full_e8p_codeword_sign_axis",
+    "preserve_scale_group_indices_for_group_size_352",
+    "make_expert_kblock_scale_group_streaming_the_visible_contract",
+    "avoid_token_route_output_stripe_pipeline_schedule",
+    "avoid_decoded_rhs_equivalent_cache",
+    "avoid_threadgroup_decoded_b_staging",
+    "avoid_lane_local_fragment_buffer",
+    "prove_source_structure_before_native_or_speed_work"
+  ],
+  "material_difference_from_rejected_families": [
+    "expert_kblock_major_dispatch_not_token_route_output_stripe_major",
+    "streams_scale_groups_inside_expert_kblock_work_not_token_route_slots",
+    "reuses_codeword_scale_slots_across_output_tiles_without_decoded_rhs_cache",
+    "keeps_scale_group_indices_visible_for_group_size_352_crossings",
+    "does_not_bucket_expert_sorted_routes_back_to_token_route_slots",
+    "does_not_accumulate_full_token_route_output_stripes",
+    "keeps_compressed_rhs_codeword_tiles_and_scale_slots",
+    "does_not_materialize_decoded_rhs_or_decoded_b_threadgroup_cache",
+    "does_not_use_lane_local_fragment_buffer"
+  ],
+  "native_parity_claim": false,
+  "next_track_b_action": "implement_source_structure_guardrail_for_expert_kblock_scale_slot_stream",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_trackb_expert_kblock_scale_slot_stream_design",
+  "rejected_family_inputs": [
+    {
+      "artifact": "artifacts/quality/glm45-air-e8p-token-route-output-stripe-pipeline-speed-packet-20260704.json",
+      "decision": "reject_token_route_output_stripe_pipeline_speed_path",
+      "family": "token_route_output_stripe_pipeline"
+    }
+  ],
+  "rejected_next_steps": [
+    "do_not_retime_token_route_output_stripe_pipeline",
+    "do_not_claim_speed_from_design_artifact",
+    "do_not_route_resident_auto_before_lane_s_speed_gate",
+    "do_not_set_custom_memory_limit_override_for_this_design_slice",
+    "do_not_run_transport_or_peer_scripts_for_this_design_slice"
+  ],
+  "required_before_benchmark": [
+    "source_structure_guardrail_for_expert_kblock_scale_slot_stream",
+    "native_expert_kblock_scale_slot_stream_parity",
+    "air_down_group_size_352_artifact_parity",
+    "same_window_q2_speed_packet_after_parity_only"
+  ],
+  "schema_version": 1,
+  "selector_verdict": {
+    "candidate_ready_for_source_probe": true,
+    "decision": "candidate_family_ready_for_source_structure_probe",
+    "decode_reuse_scope": "expert_kblock_scale_slot_streams_reuse_codeword_scale_slots_across_output_tiles",
+    "dispatch_grid": "experts_x_k_blocks_x_scale_groups_x_route_tiles_x_output_tiles",
+    "matched_rejected_families": [],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_make_speed_claim_from_contract_only",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_before_benchmark": [
+      "source_structure_guardrail",
+      "native_scalar_oracle_parity",
+      "air_down_group_size_352_parity",
+      "same_window_q2_speed_packet"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_expert_kblock_scale_slot_streams",
+    "structural_reasons": [],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_expert_kblock_scale_slot_stream",
+    "tensorops_rhs_source": "compressed_e8p_codeword_tiles_with_expert_kblock_scale_slot_streams"
+  },
+  "speed_claim": false,
+  "token_route_same_window_q2_speed_packet": true,
+  "token_route_speed_packet_artifact": "artifacts/quality/glm45-air-e8p-token-route-output-stripe-pipeline-speed-packet-20260704.json",
+  "token_route_speed_packet_decision": "reject_token_route_output_stripe_pipeline_speed_path",
+  "token_route_worst_ratio": {
+    "artifact_projection": "down_proj",
+    "candidate_memory_clean": true,
+    "candidate_ms_per_iter": 966.2808330031112,
+    "candidate_output_shape": [
+      8192,
+      4096
+    ],
+    "candidate_timed_out": false,
+    "candidate_variant": "nax_e8p_token_route_output_stripe_pipeline_rhs_sorted_raw",
+    "lane_s_pass": false,
+    "lane_s_ratio": 1.15,
+    "parity_pass": false,
+    "parity_ratio": 1.25,
+    "projection": "down",
+    "q2_memory_clean": true,
+    "q2_ms_per_iter": 4.628749998422184,
+    "q2_output_shape": [
+      1024,
+      8,
+      4096
+    ],
+    "q2_variant": "mlx_q2",
+    "ratio_is_timeout_lower_bound": false,
+    "ratio_to_q2": 208.75632370132115,
+    "timeout_observed_seconds": null,
+    "tokens": 1024
+  }
+}

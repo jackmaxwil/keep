@@ -1,0 +1,35 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact_audit_json": "ec8de1bfca43a806/evidence_json",
+    "family_policy_json": "3a61437c9bab349d/evidence_json",
+    "non_expert_bind_json": "4f38067338ae7c47/evidence_json"
+  },
+  "op": "qwen-family-benchmark-invariant-probe",
+  "output_paths": {
+    "candidate_invariant_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/out/qwen_candidate_benchmark_invariants.jsonl",
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/prepare_qwen_family_benchmark_invariants.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--artifact-audit-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/artifact_audit-ec8de1bf/evidence/evidence_json.json",
+    "--non-expert-bind-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/non_expert_bind_probe-4f380673/evidence/evidence_json.json",
+    "--output-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/evidence/evidence.jsonl"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_benchmark_invariants",
+  "step_key": "91f5780d41547965"
+}

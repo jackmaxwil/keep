@@ -1,0 +1,71 @@
+{
+  "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+  "code_bits": 16,
+  "comparison": "sorted_steel_e8p_vs_decoded_fp16_sorted_direct",
+  "cosine": 1.0000001192092896,
+  "decision": "sorted_steel_e8p_decode_parity_pass",
+  "decode_parity_claim": true,
+  "experts": 128,
+  "finite_output": true,
+  "group_size": 352,
+  "input_dims": 1408,
+  "layer_index": 1,
+  "max_abs_diff": 0.0009765625,
+  "max_abs_diff_threshold": 0.006,
+  "max_routes_per_tile": 64,
+  "memory_clean": true,
+  "min_cosine": 0.999999,
+  "mlx_active_bytes": 1668648480,
+  "mlx_cache_bytes": 743783627,
+  "mlx_peak_bytes": 2406845972,
+  "native_elapsed_seconds_diagnostic": 0.012882375001936452,
+  "next_track_b_hypothesis": "wire_sorted_steel_e8p_dispatch_and_run_routed_forward_parity",
+  "nonempty_tile_count": 1,
+  "output_dims": 4096,
+  "output_shape": [
+    64,
+    4096
+  ],
+  "pageouts_delta": 0,
+  "pageouts_total": 1869,
+  "passes_decode_parity": true,
+  "peer2_used": false,
+  "projection": "down_proj",
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_sorted_steel_decode_parity",
+  "reference_shape": [
+    64,
+    4096
+  ],
+  "rejected_next_steps": [
+    "do_not_claim_speed_from_decode_parity",
+    "do_not_add_a_new_kernel_family_for_this_milestone",
+    "do_not_use_peer2_for_this_local_trackb_slice"
+  ],
+  "resident_auto_claim": false,
+  "route_count": 64,
+  "rss_bytes": 3550314496,
+  "schema_version": 1,
+  "seed": 20260706,
+  "single_expert_tile": true,
+  "source_metadata": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 1,
+    "artifact_prefix": "model.layers.1.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00001-down_proj.safetensors"
+  },
+  "speed_claim": false,
+  "swapouts_delta": 0,
+  "swapouts_total": 0,
+  "tile_shape": {
+    "bk": 64,
+    "bn": 64,
+    "route_tile": 64,
+    "wm": 2,
+    "wn": 2
+  },
+  "tokens": 64,
+  "top_k": 1,
+  "variant": "nax_e8p_fp16_sorted_steel_raw"
+}

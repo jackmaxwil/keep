@@ -1,0 +1,433 @@
+schema_version: 1
+name: qwen36_35b_a3b_materialization_probe_20260702
+description: >
+  Diagnostic Qwen 3.6 MoE source-to-artifact probe for onboarding the current
+  small open Qwen MoE target before KEEP/RAMP conversion support. This bounded
+  chain requires a local payload-bearing Hugging Face snapshot for real
+  execution; it can be planned and dry-run against the pinned metadata snapshot.
+external_inputs:
+  source_dir:
+    kind: artifact_dir
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0
+  index_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0/model.safetensors.index.json
+  config_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0/config.json
+steps:
+  - id: source_audit
+    op: qwen-moe-source-audit
+    class: diagnostic
+    params:
+      model_id: Qwen/Qwen3.6-35B-A3B
+      revision: 995ad96eacd98c81ed38be0c5b274b04031597b0
+      expected_model_type: qwen3_5_moe
+      expected_language_layers: 40
+      expected_expert_tensors: 80
+      verify_hf_shapes: true
+
+  - id: source_payload_audit
+    op: qwen-moe-source-payload-audit
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      model_id: Qwen/Qwen3.6-35B-A3B
+      revision: 995ad96eacd98c81ed38be0c5b274b04031597b0
+      expected_language_layers: 40
+      max_groups: 80
+      code_bits: 8
+      group_size: 512
+
+  - id: materialize_groups
+    op: qwen-moe-materialize-groups
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      model_id: Qwen/Qwen3.6-35B-A3B
+      revision: 995ad96eacd98c81ed38be0c5b274b04031597b0
+      expected_language_layers: 40
+      max_groups: 80
+      skip_existing: true
+      code_bits: 8
+      group_size: 512
+
+  - id: artifact_audit
+    op: qwen-moe-artifact-audit
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+    params:
+      expected_source_projection_groups: 80
+      expected_target_projection_groups: 120
+
+  - id: bind_probe
+    op: qwen-moe-bind-probe
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+    params:
+      expected_layers:
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+        ]
+      model_layer_count: 40
+
+  - id: non_expert_bind_probe
+    op: qwen-non-expert-bind-probe
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      expected_layers:
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+        ]
+      layer_only: true
+      max_tensors: 700
+
+  - id: runtime_bind_forward_probe
+    op: qwen-runtime-bind-forward-probe
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      expected_layers:
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+        ]
+      model_layer_count: 40
+      forward_layers: [0, 39]
+      forward_top_k: 8
+      input_scale: 0.125
+      layer_only: true
+      max_tensors: 700
+
+  - id: runtime_global_logit_probe
+    op: qwen-runtime-bind-forward-probe
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      expected_layers: []
+      model_layer_count: 40
+      max_tensors: 2
+      logit_probe_token_id: 0
+      logit_probe_top_k: 5
+
+  - id: upstream_transformer_probe
+    op: qwen-upstream-transformer-bind-probe
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+      config_path: external:config_path
+    params:
+      expected_layers: [0, 39]
+
+  - id: tokenizer_readiness_probe
+    op: qwen-tokenizer-readiness-probe
+    class: diagnostic
+    inputs:
+      tokenizer_dir: external:source_dir
+    params:
+      prompt: The capital of France is
+      min_token_count: 1
+      expected_vocab_size: 248320
+
+  - id: tokenized_logits_probe
+    op: qwen-runtime-bind-forward-probe
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+      source_dir: external:source_dir
+      index_path: external:index_path
+      tokenizer_dir: external:source_dir
+    params:
+      expected_layers: []
+      model_layer_count: 40
+      max_tensors: 2
+      tokenizer_prompt: The capital of France is
+      tokenized_logit_position: last
+      tokenized_logit_top_k: 5
+
+  - id: qwen_family_eval_prompts
+    op: qwen-family-eval-prompt-probe
+    class: diagnostic
+    inputs:
+      tokenizer_dir: external:source_dir
+    params:
+      model_id: Qwen/Qwen3.6-35B-A3B
+      revision: 995ad96eacd98c81ed38be0c5b274b04031597b0
+      min_prompts_per_split: 22
+      min_tokens_per_prompt: 2
+      expected_vocab_size: 248320
+
+  - id: qwen_family_policy
+    op: qwen-family-gate-policy
+    class: diagnostic
+    params:
+      model_id: Qwen/Qwen3.6-35B-A3B
+      revision: 995ad96eacd98c81ed38be0c5b274b04031597b0
+      minimum_clean_rows_per_split: 22
+      minimum_total_clean_rows: 64
+      minimum_repetitions_per_scenario: 2
+      comparison_baseline: same_machine_qwen_source_switch_projection_control
+      maximum_candidate_to_reference_ratio: 3.0
+
+  - id: qwen_family_eval_teacher_metadata
+    op: qwen-family-eval-teacher-metadata-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      tokenizer_dir: external:source_dir
+      source_dir: external:source_dir
+
+  - id: qwen_family_eval_teacher_logits
+    op: qwen-family-eval-teacher-logits-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      selected_token_position: last
+      top_k: 32
+
+  - id: qwen_family_eval_candidate_logits
+    op: qwen-family-eval-candidate-logits-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      source_dir: external:source_dir
+      index_path: external:index_path
+      teacher_logits_jsonl: step:qwen_family_eval_teacher_logits/teacher_logits_jsonl
+    params:
+      selected_token_position: last
+      top_k: 32
+
+  - id: qwen_family_eval_metrics
+    op: qwen-family-eval-metric-row-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      candidate_logits_jsonl: step:qwen_family_eval_candidate_logits/candidate_logits_jsonl
+      teacher_logits_jsonl: step:qwen_family_eval_teacher_logits/teacher_logits_jsonl
+
+  - id: qwen_family_eval_rows
+    op: qwen-family-eval-row-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      eval_metric_jsonl: step:qwen_family_eval_metrics/metric_jsonl
+      teacher_cache_metadata_jsonl: step:qwen_family_eval_teacher_metadata/metadata_jsonl
+
+  - id: qwen_family_eval_gate
+    op: qwen-family-eval-gate-check
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      eval_jsonl: step:qwen_family_eval_rows/eval_jsonl
+      eval_row_probe_json: step:qwen_family_eval_rows/evidence_json
+
+  - id: qwen_family_benchmark_invariants
+    op: qwen-family-benchmark-invariant-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      artifact_audit_json: step:artifact_audit/evidence_json
+      non_expert_bind_json: step:non_expert_bind_probe/evidence_json
+
+  - id: qwen_family_candidate_benchmark_latency
+    op: qwen-family-candidate-benchmark-latency-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      artifact: step:materialize_groups/artifact
+    params:
+      layer: 0
+      repetitions: 2
+      warmup_repetitions: 0
+      top_k: 8
+
+  - id: qwen_family_control_benchmark_latency
+    op: qwen-family-control-benchmark-latency-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      source_dir: external:source_dir
+      index_path: external:index_path
+    params:
+      layer: 0
+      repetitions: 2
+      warmup_repetitions: 0
+      top_k: 8
+
+  - id: qwen_family_benchmark_rows
+    op: qwen-family-benchmark-row-probe
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      candidate_latency_jsonl: step:qwen_family_candidate_benchmark_latency/latency_jsonl
+      control_latency_jsonl: step:qwen_family_control_benchmark_latency/latency_jsonl
+      candidate_invariant_jsonl: step:qwen_family_benchmark_invariants/candidate_invariant_jsonl
+
+  - id: qwen_family_benchmark_gate
+    op: qwen-family-benchmark-gate-check
+    class: diagnostic
+    inputs:
+      family_policy_json: step:qwen_family_policy/evidence_json
+      benchmark_jsonl: step:qwen_family_benchmark_rows/benchmark_jsonl
+      benchmark_row_probe_json: step:qwen_family_benchmark_rows/evidence_json
+
+  - id: qwen_family_gate
+    op: qwen-family-gate-check
+    class: diagnostic
+    inputs:
+      source_audit_json: step:source_audit/evidence_json
+      source_payload_audit_json: step:source_payload_audit/evidence_json
+      artifact_audit_json: step:artifact_audit/evidence_json
+      bind_probe_json: step:bind_probe/evidence_json
+      non_expert_bind_probe_json: step:non_expert_bind_probe/evidence_json
+      runtime_forward_json: step:runtime_bind_forward_probe/evidence_json
+      runtime_global_logit_json: step:runtime_global_logit_probe/evidence_json
+      upstream_transformer_json: step:upstream_transformer_probe/evidence_json
+      tokenizer_json: step:tokenizer_readiness_probe/evidence_json
+      tokenized_logits_json: step:tokenized_logits_probe/evidence_json
+      family_policy_json: step:qwen_family_policy/evidence_json
+      eval_prompt_pack_json: step:qwen_family_eval_prompts/evidence_json
+      family_eval_gate_json: step:qwen_family_eval_gate/evidence_json
+      family_benchmark_gate_json: step:qwen_family_benchmark_gate/evidence_json
+    params:
+      expected_layer_count: 40

@@ -1,0 +1,14 @@
+{
+ "ts": "2026-07-15T13:41:03Z",
+ "elapsed_s": 27158.2,
+ "sessions_done": 0,
+ "total_sessions": 257,
+ "supervised_done": 0,
+ "total_supervised": 2500735,
+ "forward_tokens_done": 0,
+ "forward_tokens_per_s": 0.0,
+ "peak_gb": 116.58,
+ "phase": "layer-forward",
+ "chunk": "1/96",
+ "layer": "39/78"
+}

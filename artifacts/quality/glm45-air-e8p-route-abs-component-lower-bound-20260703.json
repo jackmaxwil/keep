@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 45,
+    "artifact_prefix": "model.layers.45.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00045-down_proj.safetensors"
+  },
+  "feasibility": {
+    "abs_index_cap": 256,
+    "bk": 64,
+    "bn": 64,
+    "candidate_ready_for_source_probe": false,
+    "codewords_per_bk": 8,
+    "component_axis": 8,
+    "decision": "reject_exact_route_abs_component_projection_lower_bound_over_cap",
+    "decoded_dense_weight_bytes": 0,
+    "exact_lower_bound_cache_bytes": 92274688,
+    "exact_lower_bound_cache_elements": 46137344,
+    "experts": 128,
+    "families_blocked_by_lower_bound": [
+      "route_abs_component_projection",
+      "route_abs_component_tile_cache",
+      "route_abs_component_token_reuse",
+      "route_abs_component_token_active_expert_reuse"
+    ],
+    "group_size": 352,
+    "input_dims": 1408,
+    "k_blocks": 22,
+    "lower_bound_preserves_e8p_sign_axis": true,
+    "lower_bound_preserves_route_slot_exactness": true,
+    "lower_bound_ratio_to_cap": 11.0,
+    "lower_bound_requires_no_decoded_rhs_storage": true,
+    "lower_bound_scope": "token_topk_active_expert_kblock_abs_index_component_union",
+    "max_abs_indices_per_token_kblock": 256,
+    "median_abs_indices_per_token_kblock": 256.0,
+    "min_abs_indices_per_token_kblock": 256,
+    "n_tiles": 64,
+    "output_dims": 4096,
+    "p95_abs_indices_per_token_kblock": 256.0,
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "projection_cache_byte_cap": 8388608,
+    "projection_cache_dtype": "float16",
+    "reduction_vs_rowwise": 8.0,
+    "rejected_next_steps": [
+      "do_not_benchmark_exact_route_abs_component_projection_family",
+      "do_not_add_more_route_abs_component_cache_accounting_variants",
+      "do_not_claim_speed_from_lower_bound_cardinality_probe"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "prove_new_exact_compression_below_abs_component_lower_bound",
+      "preserve_route_slot_axis_or_exact_token_indirection",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "route_count": 8192,
+    "rowwise_projection_cache_bytes": 738197504,
+    "storage_constraint": "compressed_e8p_route_abs_component_exact_lower_bound",
+    "structural_risk": "the cheapest exact abs-component route-projection cache exceeds the configured cap, so further variants in this family need a different RHS layout/kernel family or a new exact compression argument rather than another timing run.",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_exact_lower_bound",
+    "token_count": 1024,
+    "token_kblock_abs_index_count_shape": [
+      1024,
+      22
+    ],
+    "top_k": 8
+  },
+  "native_parity_claim": false,
+  "next_family_selector_verdict": {
+    "candidate_ready_for_source_probe": false,
+    "decision": "reject_route_abs_component_projection_lower_bound_over_cap",
+    "decode_reuse_scope": "token_topk_active_expert_kblock_abs_index_component_union",
+    "dispatch_grid": "tokens_x_topk_active_experts_x_k_blocks_x_abs_components",
+    "matched_rejected_families": [
+      "route_abs_component_projection"
+    ],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_exact_route_abs_component_projection_family",
+      "do_not_add_more_route_abs_component_cache_accounting_variants",
+      "do_not_claim_speed_from_lower_bound_cardinality_probe"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "prove_new_exact_compression_below_abs_component_lower_bound",
+      "preserve_route_slot_axis_or_exact_token_indirection",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_route_abs_component_exact_lower_bound",
+    "structural_reasons": [
+      "candidate overlaps rejected Track B RHS family",
+      "candidate is closed by exact abs-component route-projection lower bound"
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_projection",
+    "tensorops_rhs_source": "activation_side_abs_component_dot_lookup_sign_scale_after_lookup"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_route_abs_component_lower_bound",
+  "schema_version": 1,
+  "shape": {
+    "bk": 64,
+    "bn": 64,
+    "experts": 128,
+    "input_dims": 1408,
+    "mlx_group_size": 128,
+    "output_dims": 4096,
+    "projection": "down",
+    "route_count": 8192,
+    "tokens": 1024,
+    "top_k": 8,
+    "vq_code_bits": 16,
+    "vq_group_size": 352
+  },
+  "speed_claim": false
+}

@@ -1,0 +1,15 @@
+=== 2026-07-14T21:13:02Z verifying fix on the actual crashing session ===
+Traceback (most recent call last):
+  File "/Users/jack.mazac/Developer/keep/benchmarks/produce_glm52_teich_teacher_cache.py", line 106, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/jack.mazac/Developer/keep/benchmarks/produce_glm52_teich_teacher_cache.py", line 89, in main
+    result = run_teich_teacher_production(
+        snapshot_dir=args.snapshot_dir,
+    ...<8 lines>...
+        session_filter=session_filter,
+    )
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/quality/glm52_teich_teacher_producer.py", line 604, in run_teich_teacher_production
+    os.replace(tmp, target)
+    ~~~~~~~~~~^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'runs/teich-teacher-full-metal-20260714/verify-fix/out/teich_cursor_cursor-391780b9-c147-49c0-adc7-239d7454a411.npz.tmp' -> 'runs/teich-teacher-full-metal-20260714/verify-fix/out/teich_cursor_cursor-391780b9-c147-49c0-adc7-239d7454a411.npz'

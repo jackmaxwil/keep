@@ -1,0 +1,82 @@
+{
+  "candidate": {
+    "decode_reuse_scope": "route_slot_output_tile_mma_codeword_tile_accumulation",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_tiles_x_output_tiles_x_k_blocks_x_codeword_tiles",
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "reconstructs_e8p_values_per_fragment": false,
+    "storage_constraint": "compressed_e8p_route_slot_mma_codeword_tiles",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_slot_mma_codeword_tile",
+    "tensorops_rhs_source": "mma_codeword_basis_dot_accumulation_from_compressed_uint16",
+    "uses_decoded_b_threadgroup_staging": false,
+    "uses_lane_local_fragment_buffer": false
+  },
+  "decision": "route_slot_mma_codeword_tile_design_incomplete",
+  "design_constraints": [
+    "preserve_compressed_uint16_codewords_and_codeword_scale_slots",
+    "avoid_decoded_rhs_equivalent_cache",
+    "avoid_lane_local_fragment_buffer",
+    "avoid_threadgroup_decoded_b_staging",
+    "prove_source_structure_before_native_or_speed_work"
+  ],
+  "frontier_artifact": "artifacts/quality/glm45-air-e8p-trackb-frontier-summary-20260703.json",
+  "frontier_decision": "track_b_current_frontier_requires_new_rhs_or_kernel_family",
+  "material_difference_from_rejected_route_slot_stream": [
+    "dispatch_batches_output_tiles_instead_of_one_output_column_per_thread",
+    "uses_mma_codeword_tile_accumulation_not_scalar_route_output_loop",
+    "keeps_route_slot_axis_without_route_projection_cache_accounting",
+    "does_not_reopen_compressed_e8p_route_slot_codeword_stream_scales_storage"
+  ],
+  "native_parity_claim": false,
+  "next_track_b_action": "change_route_slot_mma_codeword_tile_layout_or_kernel_family",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_trackb_route_slot_mma_codeword_tile_design",
+  "rejected_next_steps": [
+    "do_not_retime_scalar_route_slot_codeword_stream",
+    "do_not_claim_speed_from_design_artifact",
+    "do_not_route_resident_auto_before_lane_s_speed_gate",
+    "do_not_use_peer2_for_this_local_trackb_slice"
+  ],
+  "required_before_benchmark": [
+    "source_structure_guardrail_for_route_slot_mma_codeword_tile",
+    "native_scalar_oracle_parity",
+    "air_down_group_size_352_artifact_parity",
+    "same_window_q2_speed_packet_after_parity_only"
+  ],
+  "schema_version": 1,
+  "selector_verdict": {
+    "candidate_ready_for_source_probe": false,
+    "decision": "reject_route_slot_mma_codeword_tile_speed_path",
+    "decode_reuse_scope": "route_slot_output_tile_mma_codeword_tile_accumulation",
+    "dispatch_grid": "route_tiles_x_output_tiles_x_k_blocks_x_codeword_tiles",
+    "matched_rejected_families": [
+      "route_slot_mma_codeword_tile"
+    ],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_retime_route_slot_mma_codeword_tile",
+      "do_not_claim_lane_s_from_rejected_route_slot_mma_speed_packet",
+      "change_route_slot_layout_or_kernel_family_before_next_speed_packet"
+    ],
+    "required_next_features": [
+      "materially_change_route_slot_layout_or_kernel_family",
+      "avoid_output_tile_mma_codeword_tile_schedule",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots",
+      "prove_source_structure_before_native_or_speed_work"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_route_slot_mma_codeword_tiles",
+    "structural_reasons": [
+      "candidate overlaps rejected Track B RHS family",
+      "candidate reopens the speed-rejected route-slot MMA codeword-tile schedule"
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_slot_mma_codeword_tile",
+    "tensorops_rhs_source": "mma_codeword_basis_dot_accumulation_from_compressed_uint16"
+  },
+  "speed_claim": false,
+  "speed_packet_artifact": "artifacts/quality/glm45-air-e8p-route-slot-codeword-stream-speed-packet-20260703.json",
+  "speed_packet_decision": "reject_route_slot_codeword_stream_speed_path"
+}

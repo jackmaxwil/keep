@@ -1,0 +1,23 @@
+{
+ "record_type": "glm52_teich_topk_teacher_cache",
+ "top_k": 2048,
+ "lm_head_slice": 4096,
+ "max_batch_tokens": 131072,
+ "pack_path": "/private/tmp/claude-502/-Users-jack-mazac-Developer-keep/b4d50550-2788-47d9-b001-3dbad2f173e6/scratchpad/teich-corpus-v2/initial-cut/glm52-coding-agent-initial-v2-20260713.json",
+ "identities": {
+  "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+  "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+  "non_vq_manifest_sha256": "5113750fdaf009b2174a2772dd2e3bccf490cfff354f082e5e0ad8af8771f8c8",
+  "snapshot_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+  "non_vq_package_dir": "artifacts/build/glm52_reap_504b_materialization_probe_20260709/steps/non_vq_pack-a678bc3c/out",
+  "model_id": "0xSero/glm-5.2-reap-504B-v2",
+  "source_revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d"
+ },
+ "sessions": {
+  "teich_cursor_cursor-391780b9-c147-49c0-adc7-239d7454a411": {
+   "token_count": 65487,
+   "supervised": 58196,
+   "token_ids_sha256": "06b99a894a91fc085613a5c449b433801acf65e69d1baa5d50a8173d191467f3"
+  }
+ }
+}

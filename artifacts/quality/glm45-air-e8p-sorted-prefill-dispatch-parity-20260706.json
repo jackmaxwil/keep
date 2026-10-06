@@ -1,0 +1,139 @@
+{
+  "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+  "call_implementations": [
+    "nax_e8p",
+    "nax_e8p",
+    "nax_e8p"
+  ],
+  "call_projections": [
+    "gate_up",
+    "gate_up",
+    "down"
+  ],
+  "can_use_shared_sorted_prefill": true,
+  "comparison": "auto_nax_e8p_sorted_prefill_vs_vq_metal_sorted_prefill",
+  "cosine": 0.9999916553497314,
+  "decision": "sorted_prefill_e8p_dispatch_parity_pass",
+  "decode_parity_claim": true,
+  "dispatch_calls": [
+    {
+      "implementation": "nax_e8p",
+      "input_dims": 4096,
+      "lhs_shape": [
+        64
+      ],
+      "output_dims": 1408,
+      "projection": "gate_up",
+      "route_count": 64,
+      "x_shape": [
+        8,
+        4096
+      ]
+    },
+    {
+      "implementation": "nax_e8p",
+      "input_dims": 4096,
+      "lhs_shape": [
+        64
+      ],
+      "output_dims": 1408,
+      "projection": "gate_up",
+      "route_count": 64,
+      "x_shape": [
+        8,
+        4096
+      ]
+    },
+    {
+      "implementation": "nax_e8p",
+      "input_dims": 1408,
+      "lhs_shape": [
+        64
+      ],
+      "output_dims": 4096,
+      "projection": "down",
+      "route_count": 64,
+      "x_shape": [
+        64,
+        1408
+      ]
+    }
+  ],
+  "finite_output": true,
+  "layer_index": 1,
+  "max_abs_diff": 0.005859375,
+  "max_abs_diff_threshold": 0.02,
+  "memory_clean": true,
+  "min_cosine": 0.99998,
+  "mlx_active_bytes": 564202760,
+  "mlx_cache_bytes": 2314723,
+  "mlx_peak_bytes": 566386409,
+  "native_elapsed_seconds_diagnostic": 0.03217929200036451,
+  "next_track_b_hypothesis": "run_first_device_benchmark_vs_q2",
+  "output_shape": [
+    8,
+    8,
+    4096
+  ],
+  "pageouts_delta": 0,
+  "pageouts_total": 1869,
+  "passes_routed_forward_parity": true,
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_sorted_prefill_dispatch_parity",
+  "reference_elapsed_seconds_diagnostic": 0.003718959000252653,
+  "reference_shape": [
+    8,
+    8,
+    4096
+  ],
+  "rejected_next_steps": [
+    "do_not_claim_speed_from_dispatch_parity",
+    "do_not_add_a_new_kernel_family_for_this_milestone",
+    "do_not_use_peer2_for_this_local_trackb_slice"
+  ],
+  "resident_auto_claim": true,
+  "route_count": 64,
+  "rss_bytes": 677937152,
+  "schema_version": 1,
+  "seed": 20260706,
+  "selected_implementation": "nax_e8p",
+  "source_metadata": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 1,
+    "artifact_shards": {
+      "down_proj": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00001-down_proj.safetensors",
+      "gate_proj": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00001-gate_proj.safetensors",
+      "up_proj": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00001-up_proj.safetensors"
+    },
+    "projection_metadata": {
+      "down_proj": {
+        "code_bits": 16,
+        "experts": 128,
+        "group_size": 352,
+        "input_dims": 1408,
+        "output_dims": 4096
+      },
+      "gate_proj": {
+        "code_bits": 16,
+        "experts": 128,
+        "group_size": 512,
+        "input_dims": 4096,
+        "output_dims": 1408
+      },
+      "up_proj": {
+        "code_bits": 16,
+        "experts": 128,
+        "group_size": 512,
+        "input_dims": 4096,
+        "output_dims": 1408
+      }
+    }
+  },
+  "speed_claim": false,
+  "swapouts_delta": 0,
+  "swapouts_total": 0,
+  "tokens": 8,
+  "top_k": 8,
+  "variant": "nax_e8p_sorted_prefill_dispatch"
+}

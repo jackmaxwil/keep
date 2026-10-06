@@ -1,0 +1,117 @@
+{
+  "calibration_layer": 0,
+  "file_stem": "layer-00000",
+  "files": [
+    {
+      "bpw": 2.03125,
+      "bytes": 545261632,
+      "checkpoint_tensor": "w1",
+      "code_bits": 16,
+      "codes_dtype": "uint16",
+      "codes_shape": [
+        256,
+        2048,
+        512
+      ],
+      "codes_tensor": "model.layers.0.ffn.switch_mlp.gate_proj.codes",
+      "group_size": 512,
+      "path": "layer-00000-gate_proj.safetensors",
+      "projection": "gate_proj",
+      "scales_dtype": "float16",
+      "scales_shape": [
+        256,
+        2048,
+        8
+      ],
+      "scales_tensor": "model.layers.0.ffn.switch_mlp.gate_proj.scales",
+      "sha256": "cfa0965c1edd182de4117c617b3bc9adf20e3cb12754bcb544b51be969376610"
+    },
+    {
+      "bpw": 2.03125,
+      "bytes": 545261632,
+      "checkpoint_tensor": "w3",
+      "code_bits": 16,
+      "codes_dtype": "uint16",
+      "codes_shape": [
+        256,
+        2048,
+        512
+      ],
+      "codes_tensor": "model.layers.0.ffn.switch_mlp.up_proj.codes",
+      "group_size": 512,
+      "path": "layer-00000-up_proj.safetensors",
+      "projection": "up_proj",
+      "scales_dtype": "float16",
+      "scales_shape": [
+        256,
+        2048,
+        8
+      ],
+      "scales_tensor": "model.layers.0.ffn.switch_mlp.up_proj.scales",
+      "sha256": "d84e4e30a1a5cdeab8a27af04b27cb73f9643c16d9bba88f6ace68920895eaa9"
+    },
+    {
+      "bpw": 2.03125,
+      "bytes": 545261632,
+      "checkpoint_tensor": "w2",
+      "code_bits": 16,
+      "codes_dtype": "uint16",
+      "codes_shape": [
+        256,
+        4096,
+        256
+      ],
+      "codes_tensor": "model.layers.0.ffn.switch_mlp.down_proj.codes",
+      "group_size": 512,
+      "path": "layer-00000-down_proj.safetensors",
+      "projection": "down_proj",
+      "scales_dtype": "float16",
+      "scales_shape": [
+        256,
+        4096,
+        4
+      ],
+      "scales_tensor": "model.layers.0.ffn.switch_mlp.down_proj.scales",
+      "sha256": "85b73e199cb1538fd5463a85d31c1fa6c4ed4105d69de397a4dabd3abfedc183"
+    }
+  ],
+  "fit_backend": "mlx-exact",
+  "fit_metrics": {
+    "down_proj": {
+      "expected_cosine_route_weighted": 0.9694370777304466,
+      "weighted_relative_mse_max": 0.0736526780762577,
+      "weighted_relative_mse_mean": 0.06104860826046063,
+      "weighted_relative_mse_route_weighted": 0.06017484690487583
+    },
+    "gate_proj": {
+      "expected_cosine_route_weighted": 0.9565349493048063,
+      "weighted_relative_mse_max": 0.08664284347373051,
+      "weighted_relative_mse_mean": 0.08515459150069483,
+      "weighted_relative_mse_route_weighted": 0.08504232601833421
+    },
+    "up_proj": {
+      "expected_cosine_route_weighted": 0.9557930851079898,
+      "weighted_relative_mse_max": 0.08779190262069998,
+      "weighted_relative_mse_mean": 0.08662216544588805,
+      "weighted_relative_mse_route_weighted": 0.08646123142235605
+    }
+  },
+  "importance_sources": {
+    "measured": 768
+  },
+  "index": 0,
+  "key": "layers.0",
+  "kind": "backbone",
+  "num_experts": 256,
+  "record_type": "dsv4_vq_block_record_v1",
+  "tensor_prefix": "model.layers.0.ffn.switch_mlp",
+  "timing": {
+    "decode_seconds": 9.277096009813249,
+    "fit_seconds": 74.30117964162491,
+    "peak_rss_gb": 5.507825664,
+    "read_seconds": 0.2910035829991102,
+    "source_span_bytes": 3422552064,
+    "wall_seconds": 99.86939729203004,
+    "write_seconds": 0.11562675004824996
+  }
+}

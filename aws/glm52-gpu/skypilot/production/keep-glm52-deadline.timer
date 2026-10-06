@@ -1,0 +1,9 @@
+[Unit]
+Description=Persistent immutable GLM-5.2 deadline timer
+
+[Timer]
+Persistent=true
+Unit=keep-glm52-deadline.service
+
+[Install]
+WantedBy=timers.target

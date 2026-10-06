@@ -1,0 +1,61 @@
+{
+  "air_shape": {
+    "bk": 64,
+    "bn": 64,
+    "component_count_per_kblock": 64,
+    "experts": 2,
+    "group_size": 352,
+    "input_dims": 704,
+    "k_blocks": 11,
+    "n_tiles": 3,
+    "output_dims": 130
+  },
+  "contract": {
+    "decode_reuse_scope": "component_pair_kblock_shared_across_n_tiles",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_component_pairs",
+    "output_accumulation_grid": "route_tiles_x_n_tiles",
+    "preserved_storage_contract": "compressed_e8p_component_stream_scales",
+    "rejected_next_steps": [
+      "do_not_retime_component_stream_tensorops_unchanged",
+      "do_not_fill_tensorops_b_fragment_from_e8p_values",
+      "do_not_use_scalar_component_stream_partial_body_as_speed_path",
+      "do_not_materialize_decoded_dense_rhs"
+    ],
+    "required_next_features": [
+      "native_shared_decode_cache_source_guardrail",
+      "prove_shared_decode_cache_matches_component_stream_oracle",
+      "prove_artifact_shared_decode_cache_parity",
+      "same_window_q2_speed_packet_after_parity_only"
+    ],
+    "shared_decode_bytes": 540672,
+    "shared_decode_dtype": "float16",
+    "shared_decode_shape": [
+      3,
+      2,
+      11,
+      16,
+      64,
+      4
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_shared_decode"
+  },
+  "decision": "track_b_shared_decode_contract_ready_for_source_guardrail",
+  "input_context": {
+    "previous_next_track_b_hypothesis": "change_component_stream_tensorops_layout_or_kernel_family",
+    "previous_rejection_artifact": "artifacts/quality/glm45-air-e8p-component-stream-tensorops-m1024-m4096-structure-rejection-20260703.json",
+    "previous_speed_decision": "reject_component_stream_tensorops_speed_path"
+  },
+  "invariants": {
+    "changes_reuse_scope_after_tensorops_rejection": true,
+    "decoded_dense_rhs_materialization": false,
+    "preserves_compressed_component_stream_storage": true,
+    "rejects_unchanged_tensorops_retime": true,
+    "requires_parity_before_speed": true
+  },
+  "next_track_b_hypothesis": "implement_shared_decode_cache_source_guardrail_then_native_parity",
+  "passes_contract": true,
+  "peer2_used": false,
+  "schema_version": 1,
+  "speed_claim": false
+}

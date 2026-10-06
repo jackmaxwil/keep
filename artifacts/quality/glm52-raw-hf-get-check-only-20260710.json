@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "record_type": "glm52_raw_hf_get_check_only_proof",
+  "captured_at_utc": "2026-07-10T12:21:39Z",
+  "code_commit_under_test": "95715c8e2f85bdb76f9327505370b8882306bd53",
+  "model_id": "0xSero/glm-5.2-reap-504B-v2",
+  "requested_revision": "main",
+  "resolved_revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+  "source_snapshot": {
+    "path": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "refs_main_sha256": "cdde4af2b5a65557f732d7e4102a33b3d0aacc76e4f5e076934bea8e7391352b",
+    "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+    "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+    "source_snapshot_mutated": false,
+    "source_cache_write_actions_performed": false
+  },
+  "environment": {
+    "platform": "macOS 26.4 (25E246)",
+    "architecture": "arm64",
+    "hf_hub_offline": true,
+    "downloads_allowed": false,
+    "model_loaded": false
+  },
+  "cache_view_setup": {
+    "source_cache_root": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2",
+    "temporary_view_entries_created": true,
+    "complete_view_commands": [
+      "mkdir -p /tmp/keep-glm52-get-proof-20260710-complete/models--0xSero--glm-5.2-reap-504B-v2/refs /tmp/keep-glm52-get-proof-20260710-complete/models--0xSero--glm-5.2-reap-504B-v2/snapshots",
+      "cp /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/refs/main /tmp/keep-glm52-get-proof-20260710-complete/models--0xSero--glm-5.2-reap-504B-v2/refs/main",
+      "ln -s /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d /tmp/keep-glm52-get-proof-20260710-complete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d"
+    ],
+    "incomplete_view_commands": [
+      "mkdir -p /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/refs /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "cp /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/refs/main /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/refs/main",
+      "ln -s /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json",
+      "ln -s /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json",
+      "ln -s /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model-00000.safetensors /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model-00000.safetensors"
+    ],
+    "manifest": {
+      "complete_view": {
+        "regular_files": {
+          "refs/main": {
+            "copied_from": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/refs/main",
+            "sha256": "cdde4af2b5a65557f732d7e4102a33b3d0aacc76e4f5e076934bea8e7391352b"
+          }
+        },
+        "symlinks": {
+          "snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d"
+        }
+      },
+      "incomplete_view": {
+        "regular_files": {
+          "refs/main": {
+            "copied_from": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/refs/main",
+            "sha256": "cdde4af2b5a65557f732d7e4102a33b3d0aacc76e4f5e076934bea8e7391352b"
+          }
+        },
+        "symlinks": {
+          "snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json",
+          "snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json",
+          "snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model-00000.safetensors": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model-00000.safetensors"
+        }
+      }
+    }
+  },
+  "complete_view": {
+    "cache_root": "/tmp/keep-glm52-get-proof-20260710-complete",
+    "source_snapshot_reused_by_symlink": true,
+    "command": "HF_HUB_CACHE=/tmp/keep-glm52-get-proof-20260710-complete HF_HUB_OFFLINE=1 UV_CACHE_DIR=/tmp/keep-uv-cache uv run keep get 0xSero/glm-5.2-reap-504B-v2 --check-only",
+    "exit_code": 0,
+    "config_present": true,
+    "index_present": true,
+    "shards_present": 63,
+    "shards_total": 63,
+    "total_bytes": 308829060264,
+    "ready": true,
+    "stdout_lines": [
+      "model: 0xSero/glm-5.2-reap-504B-v2",
+      "revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "snapshot: /tmp/keep-glm52-get-proof-20260710-complete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "config.json: present",
+      "model.safetensors.index.json: present",
+      "shards: 63/63 present",
+      "total: 308.829060 GB",
+      "ready: yes"
+    ],
+    "stderr_lines": []
+  },
+  "incomplete_view": {
+    "cache_root": "/tmp/keep-glm52-get-proof-20260710-incomplete",
+    "source_files_reused_by_symlink": true,
+    "exposed_source_shards": 1,
+    "command": "HF_HUB_CACHE=/tmp/keep-glm52-get-proof-20260710-incomplete HF_HUB_OFFLINE=1 UV_CACHE_DIR=/tmp/keep-uv-cache uv run keep get 0xSero/glm-5.2-reap-504B-v2 --check-only",
+    "exit_code": 1,
+    "config_present": true,
+    "index_present": true,
+    "shards_present": 1,
+    "shards_total": 63,
+    "missing_shards": 62,
+    "total_bytes": 5061128344,
+    "ready": false,
+    "stdout_lines": [
+      "model: 0xSero/glm-5.2-reap-504B-v2",
+      "revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "snapshot: /tmp/keep-glm52-get-proof-20260710-incomplete/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+      "config.json: present",
+      "model.safetensors.index.json: present",
+      "shards: 1/63 present",
+      "total: 5.061128 GB",
+      "missing: model-00001.safetensors, model-00002.safetensors, model-00003.safetensors, model-00004.safetensors, model-00005.safetensors, model-00006.safetensors, model-00007.safetensors, model-00008.safetensors, model-00009.safetensors, model-00010.safetensors",
+      "ready: no"
+    ],
+    "stderr_lines": []
+  },
+  "checks": {
+    "raw_hf_id_accepted": true,
+    "symbolic_main_resolved_to_immutable_revision": true,
+    "complete_cached_snapshot_reported_ready": true,
+    "complete_check_only_exit_zero": true,
+    "incomplete_cached_snapshot_reported_not_ready": true,
+    "incomplete_check_only_exit_nonzero": true,
+    "offline_no_download_proof": true,
+    "pinned_payload_reused_without_copy": true
+  },
+  "limitations": [
+    "This proves offline raw-ID cache discovery and readiness behavior only.",
+    "It does not prove a fresh network download or the end-to-end high-level build."
+  ]
+}

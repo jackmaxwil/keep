@@ -1,0 +1,24 @@
+allowed_clouds:
+  - aws
+
+aws:
+  use_ssm: true
+  vpc_name: keep-glm52-vpc
+  security_group_name: keep-glm52-gpu-sg
+  labels:
+    project: keep-glm52
+    owner: jack.mazac
+    model: glm-5.2
+    campaign-run-id: __RUN_ID__
+    cost-allocation: glm52-sky-campaign
+  remote_identity:
+    - "sky-jobs-controller-*": keep-glm52-skypilot-controller
+    - "*": keep-glm52-gpu-worker
+
+jobs:
+  bucket: s3://__JOBS_BUCKET__/
+  controller:
+    resources:
+      infra: aws/us-west-2
+      instance_type: c6a.xlarge
+      disk_size: 50

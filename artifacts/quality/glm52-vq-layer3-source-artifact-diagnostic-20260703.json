@@ -1,0 +1,206 @@
+{
+  "artifact_dir": "artifacts/glm-5.2-vq",
+  "artifact_quantization": {
+    "down_proj": {
+      "code_bits": 8,
+      "codebook_name": "quip_e8",
+      "codebook_sha256": "b78586631069e239d29c146538722d763f4a0040d59a800e8c918ecef03e2180",
+      "codes_dtype": "U8",
+      "group_size": 512,
+      "input_dims": 2048,
+      "num_experts": 256,
+      "output_dims": 6144,
+      "path": "artifacts/glm-5.2-vq/layer-00003-down_proj.safetensors",
+      "projection": "down_proj",
+      "rht": null,
+      "rht_seed": null,
+      "scale_estimator": null,
+      "scales_dtype": "F16"
+    },
+    "gate_proj": {
+      "code_bits": 8,
+      "codebook_name": "quip_e8",
+      "codebook_sha256": "b78586631069e239d29c146538722d763f4a0040d59a800e8c918ecef03e2180",
+      "codes_dtype": "U8",
+      "group_size": 512,
+      "input_dims": 6144,
+      "num_experts": 256,
+      "output_dims": 2048,
+      "path": "artifacts/glm-5.2-vq/layer-00003-gate_proj.safetensors",
+      "projection": "gate_proj",
+      "rht": null,
+      "rht_seed": null,
+      "scale_estimator": null,
+      "scales_dtype": "F16"
+    },
+    "up_proj": {
+      "code_bits": 8,
+      "codebook_name": "quip_e8",
+      "codebook_sha256": "b78586631069e239d29c146538722d763f4a0040d59a800e8c918ecef03e2180",
+      "codes_dtype": "U8",
+      "group_size": 512,
+      "input_dims": 6144,
+      "num_experts": 256,
+      "output_dims": 2048,
+      "path": "artifacts/glm-5.2-vq/layer-00003-up_proj.safetensors",
+      "projection": "up_proj",
+      "rht": null,
+      "rht_seed": null,
+      "scale_estimator": null,
+      "scales_dtype": "F16"
+    }
+  },
+  "hidden_size": 6144,
+  "layer": 3,
+  "metrics": {
+    "artifact_gate_proj": {
+      "actual_finite": true,
+      "cosine": 0.999999945084498,
+      "expected_finite": true,
+      "max_abs": 0.0014988183975219727,
+      "mean_abs": 0.00020239237346686423,
+      "rel_l2": 0.0003315163776278496
+    },
+    "artifact_routed_glu": {
+      "actual_finite": true,
+      "cosine": 0.999999873626852,
+      "expected_finite": true,
+      "max_abs": 0.0009263306856155396,
+      "mean_abs": 0.00015370763139799237,
+      "rel_l2": 0.0005027638399042189
+    },
+    "artifact_up_proj": {
+      "actual_finite": true,
+      "cosine": 0.9999999458885952,
+      "expected_finite": true,
+      "max_abs": 0.0015932321548461914,
+      "mean_abs": 0.00019989139400422573,
+      "rel_l2": 0.0003289744781795889
+    },
+    "artifact_weighted_routed": {
+      "actual_finite": true,
+      "cosine": 0.9999998848650653,
+      "expected_finite": true,
+      "max_abs": 0.0007063001394271851,
+      "mean_abs": 0.00014058206579647958,
+      "rel_l2": 0.00048000412061810493
+    },
+    "source_gate_proj": {
+      "actual_finite": true,
+      "cosine": 0.8186093422791137,
+      "expected_finite": true,
+      "max_abs": 2.933281421661377,
+      "mean_abs": 0.40336430072784424,
+      "rel_l2": 0.5772281885147095
+    },
+    "source_routed_glu": {
+      "actual_finite": true,
+      "cosine": 0.664846999739726,
+      "expected_finite": true,
+      "max_abs": 2.5848069190979004,
+      "mean_abs": 0.3847614824771881,
+      "rel_l2": 0.750429630279541
+    },
+    "source_up_proj": {
+      "actual_finite": true,
+      "cosine": 0.8166578426938426,
+      "expected_finite": true,
+      "max_abs": 2.9812891483306885,
+      "mean_abs": 0.39819222688674927,
+      "rel_l2": 0.5814104080200195
+    },
+    "source_weighted_routed": {
+      "actual_finite": true,
+      "cosine": 0.7213468768618208,
+      "expected_finite": true,
+      "max_abs": 2.5283689498901367,
+      "mean_abs": 0.3683781623840332,
+      "rel_l2": 0.7098551392555237
+    }
+  },
+  "model_id": "zai-org/GLM-5.2",
+  "moe_intermediate_size": 2048,
+  "peak_source_tensor_bytes": 50331648,
+  "routed_indices": [
+    [
+      117,
+      58,
+      37,
+      202,
+      2,
+      41,
+      181,
+      163
+    ]
+  ],
+  "router_scores": [
+    [
+      0.31700897216796875,
+      0.32235264778137207,
+      0.3082506060600281,
+      0.328911691904068,
+      0.33354684710502625,
+      0.28509217500686646,
+      0.319072961807251,
+      0.28576406836509705
+    ]
+  ],
+  "routes": 8,
+  "rss_after_oracles_bytes": 1842823168,
+  "rss_after_runtime_bytes": 1398620160,
+  "rss_after_vq_load_bytes": 1397571584,
+  "rss_start_bytes": 97468416,
+  "selected_experts": [
+    2,
+    37,
+    41,
+    58,
+    117,
+    163,
+    181,
+    202
+  ],
+  "source_artifact_diagnosis": "vq1_artifact_reconstruction_gap_not_runtime_or_source_binding_failure",
+  "source_artifact_metrics": {
+    "gate_proj": {
+      "actual_finite": true,
+      "cosine": 0.8186082123701063,
+      "expected_finite": true,
+      "max_abs": 2.932950496673584,
+      "mean_abs": 0.4033653140068054,
+      "rel_l2": 0.5772306323051453
+    },
+    "routed_glu": {
+      "actual_finite": true,
+      "cosine": 0.6648406613455963,
+      "expected_finite": true,
+      "max_abs": 2.5848729610443115,
+      "mean_abs": 0.3847639262676239,
+      "rel_l2": 0.750434935092926
+    },
+    "up_proj": {
+      "actual_finite": true,
+      "cosine": 0.8166625801434951,
+      "expected_finite": true,
+      "max_abs": 2.9817450046539307,
+      "mean_abs": 0.3981884717941284,
+      "rel_l2": 0.5814032554626465
+    },
+    "weighted_routed": {
+      "actual_finite": true,
+      "cosine": 0.7213389609526274,
+      "expected_finite": true,
+      "max_abs": 2.5286338329315186,
+      "mean_abs": 0.36838313937187195,
+      "rel_l2": 0.7098628282546997
+    }
+  },
+  "source_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-5.2/snapshots/f2263102df303b2faa54a6861a29d1770ce846c0",
+  "source_tensors_read": 26,
+  "thresholds": {
+    "min_artifact_cosine": 0.999,
+    "min_source_weighted_cosine": null
+  },
+  "tokens": 1,
+  "top_k": 8
+}

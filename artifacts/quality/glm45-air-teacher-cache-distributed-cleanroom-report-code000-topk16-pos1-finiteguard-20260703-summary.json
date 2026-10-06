@@ -1,0 +1,33 @@
+{
+  "decision": "finite_guard_stopped_nonfinite_topk_before_cache_write",
+  "exporter_error": "topk_logprobs values must be finite",
+  "jaccl_preflight_pass": true,
+  "launch_log_dir": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-finiteguard-20260703-launch-logs",
+  "launch_logs": [
+    "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-finiteguard-20260703-launch-logs/launch-1.log",
+    "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-finiteguard-20260703-launch-logs/launch-2.log"
+  ],
+  "layer_split": 24,
+  "max_positions": 1,
+  "metadata_written": false,
+  "mlx_wired_limit_gb": 1,
+  "next_required": [
+    "do_not_accept_low_wired_no_full_logits_attempt_as_cache",
+    "retry_with_real_iogpu_wired_limit_gate_or_diagnose_streamed_hidden_nan_source",
+    "keep_glm_launch_log_dir_enabled_for_next_distributed_cache_retry"
+  ],
+  "no_full_logits": true,
+  "output_dir": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-finiteguard-20260703",
+  "prompt_ids": [
+    "report_code_000"
+  ],
+  "prompt_set": "air_vq_ladder_report_v1",
+  "rank_exit_observed": {
+    "rank_0_exit_code": -15,
+    "rank_1_exit_code": 255
+  },
+  "record_type": "glm45_air_distributed_cleanroom_cache_attempt",
+  "required_wired_mb": 0,
+  "shard_written": false,
+  "top_k": 16
+}

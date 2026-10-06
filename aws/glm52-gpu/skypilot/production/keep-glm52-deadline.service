@@ -1,0 +1,8 @@
+[Unit]
+Description=Immutable GLM-5.2 T-50 graceful-stop edge
+Requires=keep-glm52-deadline.timer
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/keep-campaign/repo
+ExecStart=/opt/keep-campaign/repo/aws/glm52-gpu/scripts/glm52_deadline_guard.py timer

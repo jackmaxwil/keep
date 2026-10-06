@@ -1,0 +1,212 @@
+schema_version: 1
+campaign: glm52-recovery-v1-20260711
+model:
+  id: 0xSero/glm-5.2-reap-504B-v2
+  revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+  source_dir: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+  index_path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json
+  config_sha256: 5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b
+  index_sha256: bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f
+  full_source_blob_inventory_sha256: ace08e87dcbce3a22249e54196a27c0045992f8d5b8ca07f342899fa7a53fc8d
+  routed_source_blob_inventory_sha256: 5dbacc9b0ec3deee829027fe739ebca9d0a77e8cd0016977b799e3a52539e2da
+tuning:
+  split: selection
+  prompt_count: 22
+  position_count: 255
+  holdout_used_for_tuning: false
+  report_used_for_tuning: false
+budget:
+  accepted_payload_bytes: 98433923808
+  e8p_increment_per_projection_bytes: 264241152
+  payload_limit_bytes: 112000000000
+authorities:
+  - name: recovery-stats
+    path: artifacts/quality/glm52-recovery-wave1-stats-20260710/glm52-recovery-stats-manifest.json
+    sha256: 9c743281c358332b4ff473d87e17b796275007f4662cc9363cbfd59da56196d7
+    role: tuning
+    split: selection
+  - name: layer-attribution
+    path: artifacts/quality/glm52-recovery-wave1-attribution-20260710.json
+    sha256: 81986872f6243e30739306868fbb7316fd7f2da6135740155e0e22de884f0b88
+    role: tuning
+    split: selection
+  - name: full75-recovered-attribution
+    path: artifacts/quality/glm52-recovery-wave1-reattribution75-20260711.json
+    sha256: f4db48e00e32b6b1df502bfa7e91902b3a9c008160dd45285d49a66e97d67ee8
+    role: tuning
+    split: selection
+  - name: accepted-seed-manifest
+    path: artifacts/quality/glm52-wave6-full-materialization-20260709/e8-full-w1/conversion-manifest.json
+    sha256: ba1d3135ef8901f1a69ead28b5f9d330ef40d015ac31fdb4d2dcfe678c41f0a4
+    role: artifact
+    split: null
+  - name: accepted-composite-audit
+    path: artifacts/quality/glm52-wave6-full-artifact-audit-20260709.json
+    sha256: 8026322a533606ed451d13b029d83836fefbf1a938b33529de535f3fc778591a
+    role: artifact
+    split: null
+  - name: family-prompt-pack
+    path: artifacts/quality/glm52-family-eval-prompts-20260709-v2.json
+    sha256: 697677a4949f4ee7e370ac5e9a55e9631b0a1385f95a07dfd3a3f2b87d8edf31
+    role: artifact
+    split: null
+  - name: family-policy
+    path: artifacts/quality/glm52-family-policy-20260709-v2.json
+    sha256: 0975f7dc1117c5fba7532e9166f4767546fd691a6cb52520a40f09874f972ce2
+    role: artifact
+    split: null
+  - name: tokenizer-readiness
+    path: artifacts/quality/glm52-tokenizer-readiness-20260709.json
+    sha256: 27a372e67a59b264c73939311097f9f273971c7401c4f74763e3dfb4c2220f6b
+    role: artifact
+    split: null
+experiments:
+  - name: full75-e8
+    kind: selection-hessian-reround
+    depends_on: []
+    tuning_authorities: [recovery-stats, layer-attribution]
+    output_path: artifacts/quality/glm52-recovery-wave1-mixed75-artifact-20260710
+    recovered_layers: [77, 75, 74, 70, 76, 72, 73, 71, 69, 68, 67, 66, 64, 65, 63, 62, 60, 61, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 8, 14, 13, 12, 9, 11, 10, 7, 6, 5, 4, 3]
+    projection_rates: {}
+    recovery_levers: [selection_diagonal_hessian_importance_weighted_reround_v1]
+    expected_payload_bytes: 98433923808
+    transition: full75-rematerialize
+  - name: worst8-e8p
+    kind: per-layer-mixed-rate
+    depends_on: [full75-e8]
+    tuning_authorities: [recovery-stats, full75-recovered-attribution]
+    output_path: artifacts/quality/glm52-recovery-worst8-e8p-artifact-20260711
+    recovered_layers: [75, 74, 76, 72, 73, 77, 71, 70]
+    projection_rates:
+      "75": {gate: 16, up: 16, down: 16}
+      "74": {gate: 16, up: 16, down: 16}
+      "76": {gate: 16, up: 16, down: 16}
+      "72": {gate: 16, up: 16, down: 16}
+      "73": {gate: 16, up: 16, down: 16}
+      "77": {gate: 16, up: 16, down: 16}
+      "71": {gate: 16, up: 16, down: 16}
+      "70": {gate: 16, up: 16, down: 16}
+    recovery_levers: [selection_diagonal_hessian_importance_weighted_reround_v1, per_layer_e8p_rate_v1]
+    expected_payload_bytes: 104775711456
+    transition: worst8-e8p-rematerialize
+  - name: ebss
+    kind: selection-guided-ebss
+    depends_on: [worst8-e8p]
+    tuning_authorities: [recovery-stats, full75-recovered-attribution]
+    output_path: artifacts/quality/glm52-recovery-ebss-candidate-20260711
+    recovered_layers: [75, 74, 76, 72, 73, 77, 71, 70]
+    projection_rates:
+      "75": {gate: 16, up: 16, down: 16}
+      "74": {gate: 16, up: 16, down: 16}
+      "76": {gate: 16, up: 16, down: 16}
+      "72": {gate: 16, up: 16, down: 16}
+      "73": {gate: 16, up: 16, down: 16}
+      "77": {gate: 16, up: 16, down: 16}
+      "71": {gate: 16, up: 16, down: 16}
+      "70": {gate: 16, up: 16, down: 16}
+    recovery_levers: [selection_guided_ebss]
+    expected_payload_bytes: 104775711456
+    transition: null
+  - name: rotations
+    kind: selection-guided-learned-rotations
+    depends_on: [ebss]
+    tuning_authorities: [recovery-stats, full75-recovered-attribution]
+    output_path: artifacts/quality/glm52-recovery-rotations-candidate-20260711
+    recovered_layers: [75, 74, 76, 72, 73, 77, 71, 70]
+    projection_rates:
+      "75": {gate: 16, up: 16, down: 16}
+      "74": {gate: 16, up: 16, down: 16}
+      "76": {gate: 16, up: 16, down: 16}
+      "72": {gate: 16, up: 16, down: 16}
+      "73": {gate: 16, up: 16, down: 16}
+      "77": {gate: 16, up: 16, down: 16}
+      "71": {gate: 16, up: 16, down: 16}
+      "70": {gate: 16, up: 16, down: 16}
+    recovery_levers: [selection_guided_ebss, learned_orthogonal_rotation]
+    expected_payload_bytes: 104775711456
+    transition: null
+transitions:
+  - name: full75-rematerialize
+    experiment: full75-e8
+    action: rematerialize
+    heavy: true
+    argv:
+      - .venv/bin/python
+      - benchmarks/run_glm52_recovery_wave1.py
+      - rematerialize
+      - --source-dir
+      - /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      - --index-path
+      - /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json
+      - --seed-artifact-dir
+      - artifacts/quality/glm52-wave6-full-materialization-20260709/e8-full-w1
+      - --stats-dir
+      - artifacts/quality/glm52-recovery-wave1-stats-20260710
+      - --attribution-json
+      - artifacts/quality/glm52-recovery-wave1-attribution-20260710.json
+      - --output-dir
+      - artifacts/quality/glm52-recovery-wave1-mixed75-artifact-20260710
+      - --worst-layer-count
+      - "75"
+      - --resume
+      - --expected-stats-manifest-sha256
+      - 9c743281c358332b4ff473d87e17b796275007f4662cc9363cbfd59da56196d7
+      - --expected-attribution-sha256
+      - 81986872f6243e30739306868fbb7316fd7f2da6135740155e0e22de884f0b88
+      - --expected-seed-manifest-sha256
+      - ba1d3135ef8901f1a69ead28b5f9d330ef40d015ac31fdb4d2dcfe678c41f0a4
+      - --expected-full-source-blob-inventory-sha256
+      - ace08e87dcbce3a22249e54196a27c0045992f8d5b8ca07f342899fa7a53fc8d
+      - --expected-routed-source-blob-inventory-sha256
+      - 5dbacc9b0ec3deee829027fe739ebca9d0a77e8cd0016977b799e3a52539e2da
+      - --accepted-composite-audit-json
+      - artifacts/quality/glm52-wave6-full-artifact-audit-20260709.json
+      - --expected-composite-audit-sha256
+      - 8026322a533606ed451d13b029d83836fefbf1a938b33529de535f3fc778591a
+      - --heavy-lock-path
+      - .keep-heavy-job.lock
+    expected_artifacts:
+      - artifacts/quality/glm52-recovery-wave1-mixed75-artifact-20260710/conversion-manifest.json
+  - name: worst8-e8p-rematerialize
+    experiment: worst8-e8p
+    action: rematerialize
+    heavy: true
+    argv:
+      - .venv/bin/python
+      - benchmarks/run_glm52_recovery_wave1.py
+      - rematerialize
+      - --source-dir
+      - /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      - --index-path
+      - /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json
+      - --seed-artifact-dir
+      - artifacts/quality/glm52-wave6-full-materialization-20260709/e8-full-w1
+      - --stats-dir
+      - artifacts/quality/glm52-recovery-wave1-stats-20260710
+      - --attribution-json
+      - artifacts/quality/glm52-recovery-wave1-reattribution75-20260711.json
+      - --output-dir
+      - artifacts/quality/glm52-recovery-worst8-e8p-artifact-20260711
+      - --worst-layer-count
+      - "8"
+      - --e8p-worst-layer-count
+      - "8"
+      - --resume
+      - --expected-stats-manifest-sha256
+      - 9c743281c358332b4ff473d87e17b796275007f4662cc9363cbfd59da56196d7
+      - --expected-attribution-sha256
+      - f4db48e00e32b6b1df502bfa7e91902b3a9c008160dd45285d49a66e97d67ee8
+      - --expected-seed-manifest-sha256
+      - ba1d3135ef8901f1a69ead28b5f9d330ef40d015ac31fdb4d2dcfe678c41f0a4
+      - --expected-full-source-blob-inventory-sha256
+      - ace08e87dcbce3a22249e54196a27c0045992f8d5b8ca07f342899fa7a53fc8d
+      - --expected-routed-source-blob-inventory-sha256
+      - 5dbacc9b0ec3deee829027fe739ebca9d0a77e8cd0016977b799e3a52539e2da
+      - --accepted-composite-audit-json
+      - artifacts/quality/glm52-wave6-full-artifact-audit-20260709.json
+      - --expected-composite-audit-sha256
+      - 8026322a533606ed451d13b029d83836fefbf1a938b33529de535f3fc778591a
+      - --heavy-lock-path
+      - .keep-heavy-job.lock
+    expected_artifacts:
+      - artifacts/quality/glm52-recovery-worst8-e8p-artifact-20260711/conversion-manifest.json

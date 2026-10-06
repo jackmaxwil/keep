@@ -1,0 +1,63 @@
+{
+  "component_stream_outer_product_candidate": {
+    "candidate_ready_for_source_probe": true,
+    "decision": "candidate_family_ready_for_source_structure_probe",
+    "decode_reuse_scope": "component_stream_before_accumulation",
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_component_pairs",
+    "matched_rejected_families": [],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_make_speed_claim_from_contract_only",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_before_benchmark": [
+      "source_structure_guardrail",
+      "native_scalar_oracle_parity",
+      "air_down_group_size_352_parity",
+      "same_window_q2_speed_packet"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_component_stream_scales",
+    "structural_reasons": [],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_component_stream",
+    "tensorops_rhs_source": "streamed_component_outer_product_no_b_fragment"
+  },
+  "component_stream_shared_decode_candidate": {
+    "candidate_ready_for_source_probe": false,
+    "decision": "reject_component_stream_shared_decode_cross_ntile_cache",
+    "decode_reuse_scope": "component_pair_kblock_shared_across_n_tiles",
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_component_pairs",
+    "matched_rejected_families": [
+      "component_stream_shared_decode"
+    ],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_scalar_shared_decode_cache_scaffold",
+      "do_not_claim_cross_ntile_shared_decode_from_component_stream_storage",
+      "do_not_retime_component_stream_tensorops_unchanged"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "avoid_cross_ntile_component_stream_decode_cache",
+      "avoid_decoded_rhs_equivalent_cache",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_component_stream_scales",
+    "structural_reasons": [
+      "candidate overlaps rejected Track B RHS family",
+      "candidate depends on invalid component-stream cross-N-tile decode reuse"
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_component_stream_shared_decode",
+    "tensorops_rhs_source": "component_decode_cache_reused_across_n_tiles"
+  },
+  "created_date": "2026-07-03",
+  "decision": "reject_component_stream_shared_decode_candidate_keep_selector_on_materially_new_rhs_layouts",
+  "next_track_b_hypothesis": "propose_materially_different_rhs_layout_or_kernel_family_before_source_probe",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_next_family_selector",
+  "selection_scope": "local_track_b_candidate_guardrail_after_shared_decode_layout_rejection",
+  "speed_claim": false
+}

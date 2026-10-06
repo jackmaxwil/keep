@@ -1,0 +1,90 @@
+{
+  "contract": {
+    "decode_reuse_scope": "component_pair_kblock_shared_across_n_tiles",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks_x_component_pairs",
+    "output_accumulation_grid": "route_tiles_x_n_tiles",
+    "preserved_storage_contract": "compressed_e8p_component_stream_scales",
+    "rejected_next_steps": [
+      "do_not_retime_component_stream_tensorops_unchanged",
+      "do_not_fill_tensorops_b_fragment_from_e8p_values",
+      "do_not_use_scalar_component_stream_partial_body_as_speed_path",
+      "do_not_materialize_decoded_dense_rhs"
+    ],
+    "required_next_features": [
+      "native_shared_decode_cache_source_guardrail",
+      "prove_shared_decode_cache_matches_component_stream_oracle",
+      "prove_artifact_shared_decode_cache_parity",
+      "same_window_q2_speed_packet_after_parity_only"
+    ],
+    "shared_decode_bytes": 540672,
+    "shared_decode_dtype": "float16",
+    "shared_decode_shape": [
+      3,
+      2,
+      11,
+      16,
+      64,
+      4
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_shared_decode"
+  },
+  "created_date": "2026-07-03",
+  "current_source_guardrail": {
+    "decision": "component_stream_shared_decode_scalar_cache_scaffold_present",
+    "has_tensorops_matmul": false,
+    "kernel_name": "nax_e8p_component_stream_rhs_sorted_shared_decode_matmul",
+    "kernel_present": true,
+    "materializes_decoded_dense_rhs": false,
+    "primitive_binding_present": true,
+    "reconstructs_components_per_fragment": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_scalar_shared_decode_cache_scaffold",
+      "do_not_route_resident_auto_before_parallel_schedule",
+      "do_not_claim_speed_without_same_window_q2_packet"
+    ],
+    "required_next_features": [
+      "prove_native_shared_decode_cache_parity",
+      "replace_scalar_shared_decode_body_with_valid_parallel_schedule",
+      "prove_artifact_shared_decode_cache_parity_after_schedule_change"
+    ],
+    "shared_decode_cache_present": true,
+    "speed_claim": false,
+    "stages_decoded_b": false,
+    "structural_risk": "component-stream shared decode cache source is present as a scalar parity scaffold; it must be replaced by a valid parallel schedule before q2 timing",
+    "uses_component_stream_storage": true
+  },
+  "decision": "reject_component_stream_shared_decode_cross_ntile_cache",
+  "feasibility": {
+    "component_values_depend_on_output_column": true,
+    "correct_cache_bytes": 540672,
+    "correct_cache_dtype": "float16",
+    "correct_cache_is_decoded_rhs_equivalent": true,
+    "correct_cache_shape": [
+      2,
+      3,
+      11,
+      64,
+      64
+    ],
+    "decision": "reject_component_stream_shared_decode_cross_ntile_cache",
+    "n_tile_reuse_feasible": false,
+    "next_track_b_hypothesis": "change_component_stream_rhs_layout_or_kernel_family",
+    "rejected_next_steps": [
+      "do_not_benchmark_scalar_shared_decode_cache_scaffold",
+      "do_not_claim_cross_ntile_shared_decode_from_component_stream_storage",
+      "do_not_materialize_decoded_rhs_equivalent_cache",
+      "do_not_retime_component_stream_tensorops_unchanged"
+    ],
+    "scale_values_depend_on_output_column": true,
+    "structural_risk": "component-stream signs, abs indices, and scales are keyed by expert/n_tile/k_block/output_column/codeword, so a cache reused across N tiles is not correct; adding the missing n_tile and output-column axes produces decoded-RHS-equivalent storage",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_shared_decode"
+  },
+  "interpretation": "The scalar shared-decode scaffold has artifact parity, but the current component-stream RHS storage is output-column dependent. A cache that truly preserves correctness must include n_tile and output-column axes, making it decoded-RHS-equivalent storage; do not benchmark the scalar scaffold or retime the rejected TensorOps family.",
+  "next_track_b_hypothesis": "change_component_stream_rhs_layout_or_kernel_family",
+  "peer2_used": false,
+  "prior_speed_rejection_evidence": "artifacts/quality/glm45-air-e8p-component-stream-tensorops-m1024-m4096-analysis-20260703.json",
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_component_stream_shared_decode_feasibility",
+  "speed_claim": false
+}

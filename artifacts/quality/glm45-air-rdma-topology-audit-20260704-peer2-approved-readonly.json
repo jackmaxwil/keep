@@ -1,0 +1,113 @@
+{
+  "record_type": "glm45_air_rdma_topology_audit",
+  "schema_version": 1,
+  "observed_at": "2026-07-04T00:00:00-07:00",
+  "decision": "rdma_link_down",
+  "link_layer_ready": false,
+  "direct_path_ready": false,
+  "direct_ip_ready": false,
+  "direct_route_ready": false,
+  "direct_arp_ready": false,
+  "rdma_ipv4_gid_ready": false,
+  "ready_for_uc_pingpong": false,
+  "ready_for_jaccl_preflight": false,
+  "peer2_used": true,
+  "peer2_use_mode": "read_only_control_ssh",
+  "rdma_jaccl_touched": false,
+  "custom_memory_limit_override": false,
+  "dangerous_commands_run": false,
+  "mutations_run": false,
+  "sudo_run": false,
+  "scripts_run": false,
+  "ping_run": false,
+  "uc_pingpong_run": false,
+  "jaccl_run": false,
+  "reason_ping_uc_jaccl_skipped": "direct path preconditions were red: both en1 links inactive, no direct /30 IP visible, no direct ARP, routes not on en1, and both rdma_en1 ports down",
+  "local": {
+    "host": "local_m5",
+    "control": "local",
+    "interface": {
+      "device": "en1",
+      "hardware_port": "Thunderbolt 1",
+      "mac": "36:13:f1:c0:85:80",
+      "status": "inactive",
+      "ipv4": null,
+      "expected_ipv4": "192.168.10.1/30",
+      "ifconfig_evidence": "en1 status: inactive; no inet 192.168.10.1 line observed"
+    },
+    "route": {
+      "target": "192.168.10.2",
+      "interface": "en0",
+      "gateway": "192.168.100.1",
+      "ready": false
+    },
+    "arp": {
+      "target": "192.168.10.2",
+      "expected_mac": "36:a7:c5:18:04:80",
+      "present": false,
+      "evidence": "192.168.10.2 -- no entry"
+    },
+    "rdma": {
+      "device": "rdma_en1",
+      "port_state": "PORT_DOWN",
+      "port_active": false,
+      "gid0": "fe80::3413:f1ff:fec0:8580",
+      "expected_ipv4_gid": "::ffff:192.168.10.1",
+      "ipv4_gid_ready": false
+    }
+  },
+  "peer": {
+    "host": "MAXBOOK",
+    "control": "jackmazac@192.168.100.191",
+    "interface": {
+      "device": "en1",
+      "hardware_port": "Thunderbolt 1",
+      "mac": "36:a7:c5:18:04:80",
+      "status": "inactive",
+      "ipv4": null,
+      "expected_ipv4": "192.168.10.2/30",
+      "ifconfig_evidence": "en1 status: inactive; no inet 192.168.10.2 line observed"
+    },
+    "route": {
+      "target": "192.168.10.1",
+      "interface": "utun13",
+      "gateway": null,
+      "ready": false
+    },
+    "arp": {
+      "target": "192.168.10.1",
+      "expected_mac": "36:13:f1:c0:85:80",
+      "present": false,
+      "evidence": "192.168.10.1 -- no entry"
+    },
+    "rdma": {
+      "device": "rdma_en1",
+      "port_state": "PORT_DOWN",
+      "port_active": false,
+      "gid0": "fe80::34a7:c5ff:fe18:480",
+      "expected_ipv4_gid": "::ffff:192.168.10.2",
+      "ipv4_gid_ready": false
+    }
+  },
+  "commands": [
+    "ifconfig en1",
+    "networksetup -listallhardwareports",
+    "route -n get 192.168.10.2",
+    "arp -n 192.168.10.2",
+    "ibv_devinfo -d rdma_en1 -v",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 ifconfig en1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 networksetup -listallhardwareports",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 route -n get 192.168.10.1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 arp -n 192.168.10.1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 ibv_devinfo -d rdma_en1 -v"
+  ],
+  "next_required_before_distributed_cache": [
+    "restore active en1 link on both hosts without relying on direct path for control",
+    "verify direct /30 IPs on en1 on both hosts",
+    "verify route to peer direct IP uses en1 on both hosts",
+    "verify ARP maps direct peer IPs to the opposite en1 MACs",
+    "verify rdma_en1 PORT_ACTIVE and IPv4-mapped GID[1] on both hosts",
+    "run UC pingpong only after the direct topology gates are green",
+    "run JACCL cleanroom preflight only after UC pingpong is green"
+  ]
+}

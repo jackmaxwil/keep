@@ -1,0 +1,25 @@
+=== 2026-07-14T19:19:23Z starting full 257-session teacher-gen (Metal) ===
+Traceback (most recent call last):
+  File "/Users/jack.mazac/Developer/keep/benchmarks/produce_glm52_teich_teacher_cache.py", line 92, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/jack.mazac/Developer/keep/benchmarks/produce_glm52_teich_teacher_cache.py", line 76, in main
+    result = run_teich_teacher_production(
+        snapshot_dir=args.snapshot_dir,
+    ...<7 lines>...
+        session_filter=session_filter,
+    )
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/quality/glm52_teich_teacher_producer.py", line 602, in run_teich_teacher_production
+    for prompt_id, capture in _run_chunk_forward(
+                              ~~~~~~~~~~~~~~~~~~^
+        workload,
+        ^^^^^^^^^
+    ...<3 lines>...
+        on_layer=on_layer,
+        ^^^^^^^^^^^^^^^^^^
+    ):
+    ^
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/quality/glm52_teich_teacher_producer.py", line 471, in _run_chunk_forward
+    mx.eval(hidden)
+    ~~~~~~~^^^^^^^^
+RuntimeError: [metal::malloc] Attempting to allocate 548917273088 bytes which is greater than the maximum allowed buffer size of 86586540032 bytes.

@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "record_type": "glm45_air_single_host_cache_prefix_attempt",
+  "decision": "single_host_cache_prefix_generated_dirty_upper_split_not_clean",
+  "bounded_single_host_attempt": true,
+  "distributed_backend": "local_sequential",
+  "single_host_pipeline_local": true,
+  "local_sequential_stage_processes": true,
+  "local_sequential_head_process": true,
+  "local_sequential_upper_split_layer": 34,
+  "pipeline_size": 2,
+  "layer_split": 23,
+  "lm_head_chunk_rows": 8192,
+  "top_k": 16,
+  "max_positions": 1,
+  "prompt_ids": [
+    "capital_france"
+  ],
+  "full_logits_available": false,
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-uppersplit34-headproc-systemwired-20260704",
+  "metadata_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-uppersplit34-headproc-systemwired-20260704/metadata.jsonl",
+  "validation_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-uppersplit34-headproc-systemwired-validation-20260704.jsonl",
+  "teacher_logit_files": [
+    "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-uppersplit34-headproc-systemwired-20260704/teacher_logits/capital_france.safetensors"
+  ],
+  "exit_code": 0,
+  "validation_ran": true,
+  "validation_ok": true,
+  "allow_dirty_cache": true,
+  "cache_rows_generated": true,
+  "cache_row_count": 1,
+  "kld_modes": {
+    "teacher_topk_lower_bound": 1
+  },
+  "all_memory_clean": false,
+  "mlx_cache_limit_bytes": 0,
+  "mlx_memory_limit_bytes": null,
+  "mlx_wired_limit_bytes": null,
+  "previous_mlx_wired_limit_bytes": null,
+  "custom_mlx_wired_limit_override": false,
+  "system_wired_default": true,
+  "local_sequential_lower_hidden_host_spill": true,
+  "local_sequential_lower_hidden_host_dtype": "bfloat16",
+  "local_sequential_lower_hidden_host_shape": [
+    1,
+    5,
+    4096
+  ],
+  "local_sequential_lower_hidden_host_nbytes": 81920,
+  "local_sequential_upper_pre_hidden_host_spill": true,
+  "local_sequential_upper_pre_hidden_host_dtype": "bfloat16",
+  "local_sequential_upper_pre_hidden_host_shape": [
+    1,
+    5,
+    4096
+  ],
+  "local_sequential_upper_pre_hidden_host_nbytes": 81920,
+  "local_sequential_upper_hidden_host_spill": true,
+  "local_sequential_upper_hidden_host_dtype": "bfloat16",
+  "local_sequential_upper_hidden_host_shape": [
+    1,
+    5,
+    4096
+  ],
+  "local_sequential_upper_hidden_host_nbytes": 81920,
+  "mlx_peak_bytes": 113580860357,
+  "pageouts_delta": 695,
+  "swapouts_delta": 378736,
+  "elapsed_seconds": 58.26005074999557,
+  "rank_metrics": [
+    {
+      "elapsed_seconds": 43.72890133399778,
+      "mlx_active_bytes": 12,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 113580860357,
+      "pageouts_delta": 687,
+      "pageouts_total": 28006,
+      "rank": 1,
+      "rss_bytes": 57792577536,
+      "stage": "local_sequential_lower_process",
+      "swapouts_delta": 378736,
+      "swapouts_total": 29776771
+    },
+    {
+      "elapsed_seconds": 5.17522600000666,
+      "mlx_active_bytes": 12,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 60339342773,
+      "pageouts_delta": 0,
+      "pageouts_total": 28006,
+      "rank": 0,
+      "rss_bytes": 47872704512,
+      "stage": "local_sequential_upper_pre_process",
+      "swapouts_delta": 0,
+      "swapouts_total": 29776771
+    },
+    {
+      "elapsed_seconds": 5.743710583003121,
+      "mlx_active_bytes": 12,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 65022336949,
+      "pageouts_delta": 8,
+      "pageouts_total": 28014,
+      "rank": 0,
+      "rss_bytes": 52071677952,
+      "stage": "local_sequential_upper_final_process",
+      "swapouts_delta": 0,
+      "swapouts_total": 29776771
+    },
+    {
+      "elapsed_seconds": 0.25610274999780813,
+      "mlx_active_bytes": 8,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 67256328,
+      "pageouts_delta": 0,
+      "pageouts_total": 28014,
+      "rank": 0,
+      "rss_bytes": 379551744,
+      "stage": "local_sequential_head_process",
+      "swapouts_delta": 0,
+      "swapouts_total": 29776771
+    }
+  ],
+  "memory_delta_vs_previous_head_process": {
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-20260704.json",
+    "mlx_peak_bytes_delta": -2954412528,
+    "pageouts_delta_delta": 141,
+    "swapouts_delta_delta": -517540
+  },
+  "memory_delta_vs_previous_prefix": {
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-20260704.json",
+    "mlx_peak_bytes_delta": -2954412528,
+    "pageouts_delta_delta": 141,
+    "swapouts_delta_delta": -517540
+  },
+  "rank_view_roots": {
+    "0": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-0",
+    "1": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-1"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "sudo_touched": false,
+  "direct_path_mutated": false,
+  "uc_pingpong_touched": false,
+  "warnings": [
+    "pageouts_delta is nonzero: 695",
+    "swapouts_delta is nonzero: 378736"
+  ]
+}

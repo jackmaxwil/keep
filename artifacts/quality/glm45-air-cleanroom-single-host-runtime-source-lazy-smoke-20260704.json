@@ -1,0 +1,29 @@
+{
+  "bounded_single_host_attempt": true,
+  "cache_rows_generated": false,
+  "command_summary": "GLM_SINGLE_HOST_FALLBACK=1 GLM_SINGLE_HOST_LAZY=1 GLM_NO_FULL_LOGITS=1 GLM_SKIP_LOCAL_CONSUME=1 GLM_PROMPT_IDS=capital_france GLM_TOP_K=16 GLM_MAX_POSITIONS=1 bash scripts/run_glm45_air_distributed_cleanroom_cache.sh",
+  "decision": "single_host_cache_prefix_killed_exit137",
+  "exit_code": 137,
+  "max_positions": 1,
+  "no_full_logits": true,
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-runtime-source-lazy-smoke-20260704",
+  "peer2_used": false,
+  "prompt_ids": [
+    "capital_france"
+  ],
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_single_host_cache_prefix_smoke",
+  "schema_version": 1,
+  "single_host_lazy": true,
+  "skip_local_consume": true,
+  "stderr_observation": [
+    "[cleanroom] GLM_SINGLE_HOST_FALLBACK=1; skipping peer, direct-link, and JACCL preflight",
+    "[cleanroom] launching single-host teacher-cache exporter",
+    "[cleanroom] GLM_NO_FULL_LOGITS=1; single-host exporter will emit top-k-only lower-bound rows"
+  ],
+  "teacher_logits_dir_created": true,
+  "teacher_metadata_jsonl_created": false,
+  "top_k": 16,
+  "validation_ran": false,
+  "wall_clock_alarm_seconds": 600
+}

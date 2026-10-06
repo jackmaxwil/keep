@@ -1,0 +1,38 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "candidate_invariant_jsonl": "91f5780d41547965/candidate_invariant_jsonl",
+    "candidate_latency_jsonl": "d53af6a129b75746/latency_jsonl",
+    "control_latency_jsonl": "182d14cd8f0eb199/latency_jsonl",
+    "family_policy_json": "3a61437c9bab349d/evidence_json"
+  },
+  "op": "qwen-family-benchmark-row-probe",
+  "output_paths": {
+    "benchmark_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/out/qwen_family_benchmark_rows.jsonl",
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/prepare_qwen_family_benchmark_rows.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--latency-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/out/qwen_candidate_benchmark_latency_rows.jsonl",
+    "--latency-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/out/qwen_control_benchmark_latency_rows.jsonl",
+    "--candidate-invariant-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_invariants-91f5780d/out/qwen_candidate_benchmark_invariants.jsonl",
+    "--output-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/evidence/evidence.jsonl"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_benchmark_rows",
+  "step_key": "714d4d550f0cc45e"
+}

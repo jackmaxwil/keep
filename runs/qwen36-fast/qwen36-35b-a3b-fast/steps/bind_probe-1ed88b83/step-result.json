@@ -1,0 +1,30 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact": "acef91b9e3c6896c/artifact"
+  },
+  "op": "qwen-moe-bind-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/bind_probe-1ed88b83/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/bind_probe-1ed88b83/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/probe_qwen_moe_binding.py",
+    "--artifact-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/bind_probe-1ed88b83/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/bind_probe-1ed88b83/evidence/evidence.jsonl",
+    "--expected-layers",
+    "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39",
+    "--model-layer-count",
+    "40"
+  ],
+  "status": "completed",
+  "step_id": "bind_probe",
+  "step_key": "1ed88b83aef568df"
+}

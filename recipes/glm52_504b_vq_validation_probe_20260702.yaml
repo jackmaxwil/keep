@@ -1,0 +1,51 @@
+schema_version: 1
+name: glm52_504b_vq_validation_probe_20260702
+description: >
+  Diagnostic GLM-5.2 layer-local VQ validation probe. This keeps the parked
+  504B target recipe-addressable without attempting resident generation on the
+  128 GB local host.
+external_inputs:
+  source_dir:
+    kind: artifact_dir
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-5.2/snapshots/f2263102df303b2faa54a6861a29d1770ce846c0
+  config_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-5.2/snapshots/f2263102df303b2faa54a6861a29d1770ce846c0/config.json
+  index_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-5.2/snapshots/f2263102df303b2faa54a6861a29d1770ce846c0/model.safetensors.index.json
+  artifact:
+    kind: artifact_dir
+    path: artifacts/glm-5.2-vq
+steps:
+  - id: validate_layer3
+    op: glm52-vq-validate
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      config_path: external:config_path
+      index_path: external:index_path
+      artifact: external:artifact
+    params:
+      model_id: zai-org/GLM-5.2
+      revision: f2263102df303b2faa54a6861a29d1770ce846c0
+      layer: 3
+      tokens: 1
+      seed: 20260624
+      min_artifact_cosine: 0.999
+
+  - id: validate_layer77
+    op: glm52-vq-validate
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      config_path: external:config_path
+      index_path: external:index_path
+      artifact: external:artifact
+    params:
+      model_id: zai-org/GLM-5.2
+      revision: f2263102df303b2faa54a6861a29d1770ce846c0
+      layer: 77
+      tokens: 1
+      seed: 20260624
+      min_artifact_cosine: 0.999

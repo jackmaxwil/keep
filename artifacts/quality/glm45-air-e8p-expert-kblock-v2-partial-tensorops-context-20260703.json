@@ -1,0 +1,25 @@
+{
+  "all_lane_s_pass": false,
+  "all_parity_pass": false,
+  "comparisons": [
+    {
+      "candidate_ms_per_iter": 28.52349999981622,
+      "candidate_variant": "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_raw",
+      "projection": "down",
+      "ratio_to_q2": 6.255
+    }
+  ],
+  "expert_kblock_schedule_requirements": {
+    "decision": "probe_expert_kblock_factor_decode_reuse",
+    "factor_signal": "expert_kblock_factor_reuse_present",
+    "required_kernel_features": [
+      "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+      "avoid_per_fragment_factor_reconstruction",
+      "avoid_lane_local_barrier_fragment_buffer",
+      "account_for_output_column_scale_groups"
+    ]
+  },
+  "record_type": "glm45_air_e8p_expert_kblock_v2_partial_tensorops_context",
+  "schema_version": 1,
+  "source_benchmark_jsonl": "artifacts/benchmarks/glm45-air-e8p-expert-kblock-tensorops-benchmark-20260701.jsonl"
+}

@@ -1,0 +1,27 @@
+[Unit]
+Description=Immutable GLM-5.2 production campaign
+After=network-online.target keep-glm52-deadline.timer
+Wants=network-online.target keep-glm52-deadline.timer
+
+[Service]
+Type=notify
+NotifyAccess=main
+TimeoutStartSec=300
+WorkingDirectory=/opt/keep-campaign/repo
+Environment=CAMPAIGN_DESCRIPTOR=/etc/keep-glm52/campaign.json
+Environment=ROOT=/mnt/nvme/glm52-campaign
+Environment=KEEP_REPO_DIR=/opt/keep-campaign/repo
+Environment=GLM52_DEADLINE_STATE=/var/lib/keep-glm52/deadline-state.json
+Environment=GLM52_HEAVY_JOB_LOCK=/mnt/nvme/glm52-campaign/runtime/heavy-job.lock
+Environment=GLM52_ENV_PREPARED=1
+Environment=GLM52_MANAGED_MODE=production
+ExecStartPre=/opt/keep-campaign/repo/aws/glm52-gpu/scripts/glm52_deadline_guard.py pre-start
+ExecStart=/opt/keep-campaign/repo/aws/glm52-gpu/scripts/run_campaign.sh --descriptor /etc/keep-glm52/campaign.json --deadline-state /var/lib/keep-glm52/deadline-state.json
+KillSignal=SIGTERM
+KillMode=control-group
+TimeoutStopSec=1200
+SendSIGKILL=no
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

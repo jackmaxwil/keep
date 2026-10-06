@@ -1,0 +1,45 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact": "acef91b9e3c6896c/artifact",
+    "index_path": "41b9356101ebf8e7519e150dc811f80c4226e727301fbb032b890f006ed0be83",
+    "source_dir": "b513616c55d1144366e6a8d7728692ea5e8dbaac9105eabeeda3b15246a28e3d"
+  },
+  "op": "qwen-runtime-bind-forward-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/runtime_bind_forward_probe-c80a8b46/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/runtime_bind_forward_probe-c80a8b46/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/probe_qwen_runtime_binding.py",
+    "--artifact-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+    "--source-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--index-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0/model.safetensors.index.json",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/runtime_bind_forward_probe-c80a8b46/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/runtime_bind_forward_probe-c80a8b46/evidence/evidence.jsonl",
+    "--expected-layers",
+    "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39",
+    "--forward-layers",
+    "0,39",
+    "--forward-top-k",
+    "8",
+    "--input-scale",
+    "0.125",
+    "--layer-only",
+    "--max-tensors",
+    "700",
+    "--model-layer-count",
+    "40"
+  ],
+  "status": "completed",
+  "step_id": "runtime_bind_forward_probe",
+  "step_key": "c80a8b462512bc34"
+}

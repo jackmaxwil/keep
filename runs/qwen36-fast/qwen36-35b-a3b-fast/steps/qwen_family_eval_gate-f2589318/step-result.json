@@ -1,0 +1,35 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "eval_jsonl": "67fc6e496a80116f/eval_jsonl",
+    "eval_prompt_pack_json": "c622c3d25018c7ec/evidence_json",
+    "eval_row_probe_json": "67fc6e496a80116f/evidence_json",
+    "family_policy_json": "3a61437c9bab349d/evidence_json"
+  },
+  "op": "qwen-family-eval-gate-check",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_gate-f2589318/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_gate-f2589318/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/check_qwen_family_eval_gate.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--eval-prompt-pack-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence_json.json",
+    "--eval-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_rows-67fc6e49/out/qwen_family_eval_rows.jsonl",
+    "--eval-row-probe-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_rows-67fc6e49/evidence/evidence_json.json",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_gate-f2589318/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_gate-f2589318/evidence/evidence.jsonl"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_eval_gate",
+  "step_key": "f25893186d4b9542"
+}

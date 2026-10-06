@@ -1,0 +1,61 @@
+{
+  "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+  "artifact_parity_claim": true,
+  "artifact_reference_variant": "decoded_fp16_sorted_direct",
+  "code_bits": 16,
+  "comparison": "route_microtile_codeword_block_reduce_artifact_vs_decoded_fp16_sorted_direct",
+  "contract": {
+    "dispatch_grid": "route_microtiles_x_k_blocks_x_codeword_blocks_then_output_tiles",
+    "materializes_decoded_dense_rhs": false,
+    "materializes_output_tile_local_full_lut": false,
+    "storage_constraint": "compressed_e8p_route_microtile_codeword_block_reductions"
+  },
+  "cosine": 0.9999998807907104,
+  "decision": "route_microtile_codeword_block_reduce_air_artifact_parity_pass",
+  "diagnostic_note": "artifact-backed native route-microtile codeword block-reduce RHS E8P FP16 parity candidate over prepacked bn64/bk64 code/scale tiles and pre-sorted contiguous route activations; route-microtile descriptors preserve exact route-slot indirection, codeword-block partials are reduced before output-tile writeback inside the native wrapper, dense RHS is never materialized, and same-window q2 timing is still required before any speed claim",
+  "diagnostic_phase": "nax_e8p_route_microtile_codeword_block_reduce_rhs_sorted_raw",
+  "experts": 128,
+  "finite_output": true,
+  "group_size": 352,
+  "input_dims": 1408,
+  "layer_index": 1,
+  "max_abs_diff": 0.0009765625,
+  "max_abs_diff_threshold": 0.006,
+  "memory_clean": true,
+  "min_cosine": 0.999999,
+  "ms_per_iter_diagnostic": 10.417290999612305,
+  "native_parity_claim": false,
+  "next_track_b_hypothesis": "run_route_microtile_codeword_block_reduce_same_window_q2_speed_packet",
+  "output_dims": 4096,
+  "output_shape": [
+    2,
+    4096
+  ],
+  "pageouts_delta": 0,
+  "passes_artifact_parity": true,
+  "peer2_used": false,
+  "projection": "down_proj",
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_route_microtile_codeword_block_reduce_artifact_parity",
+  "rejected_next_steps": [
+    "do_not_claim_speed_from_artifact_parity_smoke",
+    "do_not_route_resident_auto_before_same_window_q2_speed_packet",
+    "do_not_use_peer2_for_this_local_trackb_slice"
+  ],
+  "route_count": 2,
+  "route_microtile_size": 8,
+  "schema_version": 1,
+  "seed": 20261004,
+  "source_metadata": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 1,
+    "artifact_prefix": "model.layers.1.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00001-down_proj.safetensors"
+  },
+  "speed_claim": false,
+  "swapouts_delta": 0,
+  "tokens": 2,
+  "top_k": 1,
+  "variant": "nax_e8p_route_microtile_codeword_block_reduce_rhs_sorted_raw"
+}

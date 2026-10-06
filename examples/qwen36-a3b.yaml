@@ -1,0 +1,26 @@
+# KEEP high-level recipe: Qwen3.6-35B-A3B diagnostic conversion probe.
+#
+# This beginner-friendly file compiles to the existing low-level diagnostic
+# step graph from recipes/qwen36_35b_a3b_materialization_probe_20260702.yaml.
+# It does not run model work by itself; `keep build --dry-run --no-hash` only
+# prints the planned commands.
+model: qwen36-35b-a3b
+
+# fast keeps the current bounded Qwen probe policy. Use balanced or wow when
+# you want stricter generated family gate policy knobs.
+quality: fast
+
+# Compiled build artifacts will be planned under this root unless --build-root
+# is supplied on the CLI.
+output: runs/qwen36-fast
+
+# default uses the model profile's prompt/eval defaults. Qwen v1 currently uses
+# the family diagnostic prompt pack baked into the template.
+calibration: default
+
+# Qwen recovery is off in v1 because there is not a Qwen KD trainer yet.
+recovery: off
+
+# Escape hatch for advanced users. Keys are low-level step ids; values merge
+# into that step's params after compilation.
+overrides: {}

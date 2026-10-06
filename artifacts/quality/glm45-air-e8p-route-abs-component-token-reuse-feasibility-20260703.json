@@ -1,0 +1,117 @@
+{
+  "artifact": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 45,
+    "artifact_prefix": "model.layers.45.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00045-down_proj.safetensors"
+  },
+  "feasibility": {
+    "abs_index_cap": 256,
+    "abs_index_counts_shape": [
+      128,
+      22
+    ],
+    "activation_projection_scope": "token_x_expert_kblock_abs_index_component_with_route_slot_indirection",
+    "bk": 64,
+    "bn": 64,
+    "cache_reduction_vs_rowwise": 8.0,
+    "candidate_ready_for_source_probe": false,
+    "codewords_per_bk": 8,
+    "component_axis": 8,
+    "decision": "reject_route_abs_component_token_reuse_cache_too_large",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "tokens_x_experts_x_k_blocks_x_abs_components_plus_route_slots",
+    "experts": 128,
+    "group_size": 352,
+    "input_dims": 1408,
+    "k_blocks": 22,
+    "max_abs_indices_per_expert_kblock": 256,
+    "median_abs_indices_per_expert_kblock": 256.0,
+    "min_abs_indices_per_expert_kblock": 255,
+    "n_tiles": 64,
+    "output_dims": 4096,
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "projection_cache_byte_cap": 8388608,
+    "projection_cache_dtype": "float16",
+    "rejected_next_steps": [
+      "do_not_benchmark_token_reuse_abs_component_cache",
+      "do_not_claim_exactness_without_route_slot_indirection",
+      "do_not_claim_speed_from_token_reuse_cardinality_probe"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "find_bounded_rowwise_cardinality_mechanism_below_cache_cap",
+      "preserve_route_slot_axis_or_exact_token_indirection",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "route_count": 8192,
+    "route_slot_axis_preserved_by_indirection": true,
+    "route_slot_reuse_factor": 8,
+    "rowwise_projection_cache_bytes": 738197504,
+    "rowwise_projection_cache_shape": [
+      8192,
+      22,
+      256,
+      8
+    ],
+    "storage_constraint": "compressed_e8p_route_abs_component_token_reuse_scales",
+    "structural_risk": "top-k token reuse is exact and reduces the rowwise abs-component cache by the route reuse factor, but the token-keyed cache still exceeds the configured cap on this artifact shape.",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_token_reuse",
+    "token_count": 1024,
+    "token_projection_cache_bytes": 92274688,
+    "token_projection_cache_shape": [
+      1024,
+      22,
+      256,
+      8
+    ],
+    "token_reuse_exact_for_topk_routes": true,
+    "top_k": 8
+  },
+  "native_parity_claim": false,
+  "next_family_selector_verdict": {
+    "candidate_ready_for_source_probe": true,
+    "decision": "candidate_family_ready_for_source_structure_probe",
+    "decode_reuse_scope": "token_keyed_route_activation_abs_component_dot_cache",
+    "dispatch_grid": "tokens_x_experts_x_k_blocks_x_abs_components_plus_route_slots",
+    "matched_rejected_families": [],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_make_speed_claim_from_contract_only",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_before_benchmark": [
+      "source_structure_guardrail",
+      "native_scalar_oracle_parity",
+      "air_down_group_size_352_parity",
+      "same_window_q2_speed_packet"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_route_abs_component_token_reuse_scales",
+    "structural_reasons": [],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_abs_component_token_reuse",
+    "tensorops_rhs_source": "token_activation_abs_component_dot_lookup_route_slot_indirection"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_route_abs_component_token_reuse_feasibility",
+  "schema_version": 1,
+  "shape": {
+    "bk": 64,
+    "bn": 64,
+    "experts": 128,
+    "input_dims": 1408,
+    "mlx_group_size": 128,
+    "output_dims": 4096,
+    "projection": "down",
+    "route_count": 8192,
+    "tokens": 1024,
+    "top_k": 8,
+    "vq_code_bits": 16,
+    "vq_group_size": 352
+  },
+  "speed_claim": false
+}

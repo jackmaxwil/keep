@@ -1,0 +1,68 @@
+{
+  "command_errors": [],
+  "decision": "rdma_direct_path_ready",
+  "direct_arp_ready": true,
+  "direct_ip_ready": true,
+  "direct_path_ready": true,
+  "direct_route_ready": true,
+  "link_layer_ready": true,
+  "local": {
+    "arp": {
+      "expected_mac": "36:a7:c5:18:04:80",
+      "has_expected_mac": true,
+      "mac": "36:a7:c5:18:04:80"
+    },
+    "interface": {
+      "has_expected_ip": true,
+      "inet": [
+        "192.168.10.1"
+      ],
+      "mac": "36:13:f1:c0:85:80",
+      "status": "active"
+    },
+    "rdma": {
+      "has_ipv4_gid": true,
+      "port_active": true
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": null,
+      "interface": "en1",
+      "uses_expected_interface": true
+    }
+  },
+  "peer": {
+    "arp": {
+      "expected_mac": "36:13:f1:c0:85:80",
+      "has_expected_mac": true,
+      "mac": "36:13:f1:c0:85:80"
+    },
+    "interface": {
+      "has_expected_ip": true,
+      "inet": [
+        "192.168.10.2"
+      ],
+      "mac": "36:a7:c5:18:04:80",
+      "status": "active"
+    },
+    "rdma": {
+      "has_ipv4_gid": true,
+      "port_active": true
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": null,
+      "interface": "en1",
+      "uses_expected_interface": true
+    }
+  },
+  "rdma_ipv4_gid_ready": true,
+  "ready_for_jaccl_preflight": true,
+  "ready_for_uc_pingpong": true,
+  "record_type": "glm45_air_rdma_topology_audit",
+  "recovery": {
+    "local_commands": "sudo ifconfig bridge0 down && sudo ifconfig en1 inet 192.168.10.1 netmask 255.255.255.252 up",
+    "notes": "Do not add host routes. If stale host routes exist, delete them, clear ARP, then verify route, ARP, RDMA GID[1], UC pingpong, and clean-room JACCL.",
+    "peer_commands": "ssh jackmazac@192.168.100.191 'sudo ifconfig bridge0 down && sudo ifconfig en1 inet 192.168.10.2 netmask 255.255.255.252 up'"
+  }
+}

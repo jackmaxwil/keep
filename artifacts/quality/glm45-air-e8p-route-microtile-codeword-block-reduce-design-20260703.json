@@ -1,0 +1,83 @@
+{
+  "artifact_parity_claim": false,
+  "candidate": {
+    "decode_reuse_scope": "route_microtile_codeword_block_partials_before_output_tile_writeback",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_microtiles_x_k_blocks_x_codeword_blocks_then_output_tiles",
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "reconstructs_e8p_values_per_fragment": false,
+    "storage_constraint": "compressed_e8p_route_microtile_codeword_block_reductions",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_microtile_codeword_block_reduce",
+    "tensorops_rhs_source": "compressed_codeword_tiles_with_route_microtile_activation_block_partials",
+    "uses_decoded_b_threadgroup_staging": false,
+    "uses_lane_local_fragment_buffer": false
+  },
+  "decision": "route_microtile_codeword_block_reduce_ready_for_source_structure_probe",
+  "design_constraints": [
+    "preserve_compressed_rhs_storage_and_codeword_scale_slots",
+    "preserve_full_e8p_codeword_sign_axis",
+    "preserve_route_slot_axis_directly",
+    "avoid_route_local_full_codeword_lut",
+    "avoid_rowwise_per_output_row_codeword_dot_recompute",
+    "avoid_output_tile_local_full_codeword_pass",
+    "reduce_route_microtile_codeword_block_partials_before_output_tile_writeback",
+    "avoid_decoded_rhs_equivalent_cache",
+    "avoid_threadgroup_decoded_b_staging",
+    "avoid_lane_local_fragment_buffer",
+    "prove_source_structure_before_native_or_speed_work"
+  ],
+  "material_difference_from_rejected_families": [
+    "avoids_output_tile_local_full_codeword_pass",
+    "avoids_output_tile_local_per_output_row_writeback_loop",
+    "moves_partial_reduction_to_route_microtile_codeword_blocks",
+    "keeps_output_tile_writeback_after_route_microtile_block_partials",
+    "keeps_compressed_rhs_codeword_tiles_and_scale_slots",
+    "does_not_materialize_decoded_rhs_or_decoded_b_threadgroup_cache"
+  ],
+  "native_parity_claim": false,
+  "next_track_b_action": "implement_source_structure_guardrail_for_route_microtile_codeword_block_reduce",
+  "output_tile_speed_packet_artifact": "artifacts/quality/glm45-air-e8p-output-tile-local-codeword-lut-speed-packet-20260703.json",
+  "output_tile_speed_packet_decision": "reject_output_tile_local_codeword_lut_speed_path",
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_trackb_route_microtile_codeword_block_reduce_design",
+  "rejected_next_steps": [
+    "do_not_retime_output_tile_local_codeword_lut",
+    "do_not_claim_speed_from_design_artifact",
+    "do_not_route_resident_auto_before_lane_s_speed_gate",
+    "do_not_set_custom_memory_limit_override_for_this_design_slice",
+    "do_not_run_transport_or_peer_scripts_for_this_design_slice"
+  ],
+  "required_before_benchmark": [
+    "source_structure_guardrail_for_route_microtile_codeword_block_reduce",
+    "native_route_microtile_codeword_block_reduce_parity",
+    "air_down_group_size_352_artifact_parity",
+    "same_window_q2_speed_packet_after_parity_only"
+  ],
+  "schema_version": 1,
+  "selector_verdict": {
+    "candidate_ready_for_source_probe": true,
+    "decision": "candidate_family_ready_for_source_structure_probe",
+    "decode_reuse_scope": "route_microtile_codeword_block_partials_before_output_tile_writeback",
+    "dispatch_grid": "route_microtiles_x_k_blocks_x_codeword_blocks_then_output_tiles",
+    "matched_rejected_families": [],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_make_speed_claim_from_contract_only",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_before_benchmark": [
+      "source_structure_guardrail",
+      "native_scalar_oracle_parity",
+      "air_down_group_size_352_parity",
+      "same_window_q2_speed_packet"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_route_microtile_codeword_block_reductions",
+    "structural_reasons": [],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_microtile_codeword_block_reduce",
+    "tensorops_rhs_source": "compressed_codeword_tiles_with_route_microtile_activation_block_partials"
+  },
+  "speed_claim": false
+}

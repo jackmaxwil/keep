@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "record_type": "dsv4_task3_measured_size_summary_v1",
+  "resident_artifact": {
+    "path": "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+    "manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+    "payload_bytes": 9441141496,
+    "tree_bytes": 9442336557,
+    "tree_gb": 9.442336557,
+    "tree_gib": 8.793861192651093
+  },
+  "routed_artifact": {
+    "path": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+    "manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+    "payload_bytes": 75246105792,
+    "payload_gb": 75.246105792,
+    "payload_gib": 70.07839697599411
+  },
+  "combined": {
+    "payload_bytes": 84687247288,
+    "payload_gb": 84.687247288,
+    "payload_gib": 78.87114518135786,
+    "resident_tree_plus_routed_payload_bytes": 84688442349,
+    "resident_tree_plus_routed_payload_gb": 84.688442349,
+    "prior_estimate_gb": [82.5, 85.1],
+    "within_prior_estimate": true
+  },
+  "scope_note": "Routed bytes use manifest audit.artifact_payload_bytes (the 138 runtime safetensors files), excluding calibration caches and logs stored beside the routed payload."
+}

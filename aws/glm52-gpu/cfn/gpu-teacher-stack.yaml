@@ -1,0 +1,2768 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  KEEP GLM-5.2 GPU teacher-gen stack (R&D sandbox 246813579024). Templatized,
+  reusable infra for running the bf16 source-teacher forward on NVIDIA GPUs via
+  MLX-CUDA, pulling the model fast from S3. Deploying this stack is $0 (VPC, S3
+  gateway endpoint, retained bucket, IAM, SG, launch template) — GPU cost is only
+  incurred when an instance is launched from the LaunchTemplate (see launch_instance.sh).
+
+Parameters:
+  ProjectTag:
+    Type: String
+    Default: keep-glm52
+    AllowedPattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+    Description: Tag applied to all resources for cost attribution.
+  OwnerTag:
+    Type: String
+    Default: jack.mazac
+    AllowedPattern: '^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,126}[A-Za-z0-9])?$'
+  GpuAmiId:
+    # Evergreen: resolves the AWS Deep Learning Base OSS NVIDIA driver GPU AMI
+    # (Ubuntu 22.04) at deploy time. Override with a pinned ami-id for repeatability.
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
+  GpuInstanceType:
+    Type: String
+    Default: p5.48xlarge
+    AllowedValues:
+      - p5.48xlarge       # 8x H100 80GB (640GB) — full run, fastest
+      - p5en.48xlarge     # 8x H200 141GB (1128GB) — bf16-resident
+      - p4de.24xlarge     # 8x A100 80GB (640GB) — cheaper on-demand
+      - g6e.48xlarge      # 8x L40S 48GB (384GB) — cheapest 8-GPU, slower
+      - g6e.12xlarge      # 4x L40S (192GB)
+      - g6e.2xlarge       # 1x L40S 48GB, 450GB NVMe — SEEDER/SPIKE (fits full snapshot)
+      - g6e.xlarge        # 1x L40S 48GB, 250GB NVMe — small spike only
+    Description: Default is the full-run box; use g6e.xlarge for the spike/seed.
+  AvailabilityZone:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2c
+    Description: Primary AZ (default us-west-2c — cheapest p5 spot at design time).
+  AvailabilityZoneAlt:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2a
+    Description: Fallback AZ #2 for GPU capacity retries.
+  AvailabilityZone3:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2b
+    Description: Fallback AZ #3 for GPU capacity retries.
+  AvailabilityZone4:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-west-2d
+    Description: Fallback AZ #4 for GPU capacity retries.
+  AvailabilityZone5:
+    Type: String
+    Default: ""
+    Description: Optional fallback AZ #5 (blank = skip; regions with >4 AZs, e.g. us-east-1e).
+  AvailabilityZone6:
+    Type: String
+    Default: ""
+    Description: Optional fallback AZ #6 (blank = skip; e.g. us-east-1f).
+  RootVolumeGiB:
+    Type: Number
+    Default: 300
+    Description: gp3 root EBS size. Model data lands on instance-store NVMe, not here.
+  EnableCampaignController:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  EnableSkyPilotSupport:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Enable AWS-only SkyPilot IAM, watchdog, alerts, and cost backstops.
+  EnableSkyWorkerStartV2Coordinator:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+  EnableSkyMustStartCancel:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: >-
+      Explicit opt-in for exact-ID must-start cancellation. Leave false until
+      the observe-only binding has passed independent review.
+  EnableSkyMustStartObserve:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: >-
+      Deploy the exact must-start coordinator in observation-only mode. This
+      cannot cancel a job and is the required gate before active mode.
+  CampaignRunId:
+    Type: String
+    Default: disabled
+  CapacityReservationId:
+    Type: String
+    Default: ""
+  CampaignDescriptorParameterName:
+    Type: String
+    Default: /keep-glm52/campaign/active
+  CampaignDescriptorJson:
+    Type: String
+    Default: "{}"
+    NoEcho: true
+  ControllerCodeS3Key:
+    Type: String
+    Default: disabled/not-deployed-controller.zip
+  SkyCampaignRunId:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$'
+  SkyCampaignDescriptorKey:
+    Type: String
+    Default: ""
+    AllowedPattern: '^$|^campaigns/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?/submissions/(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*\.json$'
+  SkyWatchdogCodeS3Key:
+    Type: String
+    Default: disabled/not-deployed-sky-watchdog.zip
+  SkyWorkerStartV2FoundationRevision:
+    Type: String
+    Default: disabled
+    AllowedValues: [disabled, versioned-code-v1]
+  SkyWorkerStartV2CodeSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyWorkerStartV2CodeVersionId:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^(?!null$)(?!None$)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._~+/=-]{1,1024}$'
+  SkyWorkerStartV2DescriptorRelativeKey:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^submissions/qualification/(?:[A-Za-z0-9][A-Za-z0-9._-]{0,255}/)*[A-Za-z0-9][A-Za-z0-9._-]{0,250}\.json$'
+  SkyWorkerStartV2DescriptorFileSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyWorkerStartV2IntentFileSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyWorkerStartV2IntentBodySha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyWorkerStartV2ControllerInstanceId:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^i-[0-9a-f]{17}$'
+  SkyWorkerStartV2ControllerClusterName:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^sky-jobs-controller-[A-Za-z0-9._-]+$'
+  SkyMustStartCancelCodeSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyMustStartCancelCodeVersionId:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^(?!null$)(?!None$)(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9._~+/=-]{1,1024}$'
+    Description: >-
+      Exact immutable S3 VersionId for the content-addressed must-start Lambda
+      ZIP. Capture this from the reviewed versioned upload; never use latest.
+  SkyMustStartFoundationRevision:
+    Type: String
+    Default: disabled
+    AllowedValues: [disabled, versioned-code-v1]
+    Description: >-
+      Durable proof that the reviewed bucket-versioning and runtime-deny
+      foundation was installed before coordinator code may be consumed.
+  SkyMustStartActivationJobBindingSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyMustStartActivationObservationSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+  SkyMustStartDescriptorRelativeKey:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^submissions/(?!.*(?:^|/)\.\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*\.json$'
+    Description: >-
+      Descriptor key relative to campaigns/<SkyCampaignRunId>/; the stack
+      derives the run prefix so IAM cannot be pointed at a foreign run.
+  SkyMustStartSubmissionBodySha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+    Description: Exact authenticated submission body SHA-256 used in marker paths.
+  SkyMustStartControllerBaselineBodySha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[0-9a-f]{64}$'
+    Description: >-
+      Exact authenticated controller-baseline body SHA-256 reviewed by the
+      submission join before coordinator activation.
+  SkyMustStartTargetJobId:
+    Type: String
+    Default: "-1"
+    AllowedPattern: "^-1$|^[1-9][0-9]*$"
+    Description: >-
+      Explicitly observed controller job ID for current-job compatibility;
+      -1 permits fail-closed unique nonterminal discovery for future bundles.
+  SkyMustStartManagedMode:
+    Type: String
+    Default: cache-seed
+    AllowedValues:
+      - production
+      - qualification
+      - cache-seed
+  SkyMustStartJobName:
+    Type: String
+    Default: disabled-cache-seed
+    AllowedPattern: '^[a-z0-9](?:[a-z0-9-]{0,126}[a-z0-9])?$'
+  SkyMustStartBy:
+    Type: String
+    Default: "1970-01-01T00:00:00Z"
+    AllowedPattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+  SkyMustStartPrimaryWakeAt:
+    Type: String
+    Default: "1970-01-01T00:00:00Z"
+    AllowedPattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    Description: >-
+      Canonical UTC primary wake time derived as exactly one minute before
+      SkyMustStartBy by the guarded deployment workflow.
+  SkyMustStartWorkspace:
+    Type: String
+    Default: default
+    AllowedValues: [default]
+  SkyMustStartDescriptorFileSha256:
+    Type: String
+    Default: disabled
+    AllowedPattern: "^disabled$|^[0-9a-f]{64}$"
+  SkyMustStartSubmissionSubmittedAt:
+    Type: String
+    Default: "1970-01-01T00:00:00Z"
+    AllowedPattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?Z$'
+  SkyMustStartControllerInstanceId:
+    Type: String
+    Default: disabled
+    AllowedPattern: "^disabled$|^i-[0-9a-f]{8,32}$"
+  SkyMustStartControllerInstanceType:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^[a-z0-9][a-z0-9.-]{1,31}$'
+  SkyMustStartControllerProfileArn:
+    Type: String
+    Default: disabled
+    AllowedPattern: '^disabled$|^arn:aws:iam::246813579024:instance-profile/[A-Za-z0-9+=,.@_-]{1,128}$'
+  SkyMustStartControllerClusterName:
+    Type: String
+    Default: disabled
+    AllowedPattern: "^disabled$|^sky-jobs-controller-[A-Za-z0-9._-]+$"
+  SkyMustStartStartingGraceSeconds:
+    Type: Number
+    Default: 20
+    MinValue: 15
+    MaxValue: 30
+  CampaignAlertEmail:
+    Type: String
+    Default: operator@example.com
+    Description: Email endpoint for controller and campaign watchdog alerts.
+  SkyWatchdogRuleState:
+    Type: String
+    AllowedValues:
+      - ENABLED
+      - DISABLED
+    Default: DISABLED
+    Description: >-
+      State of the campaign watchdog schedule. DISABLED since the GLM-5.2
+      retirement (2026-08-11); set ENABLED when a live campaign needs it.
+
+Rules:
+  SkyWorkerStartV2RequiresExactAuthority:
+    RuleCondition: !Equals
+      - !Ref EnableSkyWorkerStartV2Coordinator
+      - "true"
+    Assertions:
+      - Assert: !Equals [!Ref EnableSkyPilotSupport, "true"]
+        AssertDescription: Worker-start-v2 requires SkyPilot support.
+      - Assert: !Equals [!Ref AWS::AccountId, "246813579024"]
+        AssertDescription: Worker-start-v2 requires the approved AWS account.
+      - Assert: !Equals [!Ref AWS::Region, "us-west-2"]
+        AssertDescription: Worker-start-v2 requires the approved AWS region.
+      - Assert: !Not [!Equals [!Ref SkyCampaignRunId, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact campaign run.
+      - Assert: !Equals
+          - !Ref SkyWorkerStartV2FoundationRevision
+          - versioned-code-v1
+        AssertDescription: Worker-start-v2 requires the versioned code foundation.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2CodeSha256, disabled]]
+        AssertDescription: Worker-start-v2 requires exact Lambda code bytes.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2CodeVersionId, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact S3 code version.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2DescriptorRelativeKey, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact descriptor key.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2DescriptorFileSha256, disabled]]
+        AssertDescription: Worker-start-v2 requires exact descriptor bytes.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2IntentFileSha256, disabled]]
+        AssertDescription: Worker-start-v2 requires exact intent file bytes.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2IntentBodySha256, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact intent body.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2ControllerInstanceId, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact controller instance.
+      - Assert: !Not [!Equals [!Ref SkyWorkerStartV2ControllerClusterName, disabled]]
+        AssertDescription: Worker-start-v2 requires an exact controller cluster.
+  SkyMustStartCoordinatorRequiresExactAuthority:
+    RuleCondition: !Or
+      - !Equals [!Ref EnableSkyMustStartObserve, "true"]
+      - !Equals [!Ref EnableSkyMustStartCancel, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref SkyCampaignRunId, disabled]]
+        AssertDescription: Must-start coordination requires an exact campaign run.
+      - Assert: !Not [!Equals [!Ref SkyMustStartFoundationRevision, disabled]]
+        AssertDescription: >-
+          Must-start coordination requires the reviewed versioned-code
+          foundation to be installed first.
+      - Assert: !Not [!Equals [!Ref SkyMustStartCancelCodeSha256, disabled]]
+        AssertDescription: Must-start coordination requires exact Lambda code bytes.
+      - Assert: !Not [!Equals [!Ref SkyMustStartCancelCodeVersionId, disabled]]
+        AssertDescription: Must-start coordination requires an exact S3 code version.
+      - Assert: !Not [!Equals [!Ref SkyMustStartDescriptorRelativeKey, disabled]]
+        AssertDescription: Must-start coordination requires an exact descriptor key.
+      - Assert: !Not [!Equals [!Ref SkyMustStartSubmissionBodySha256, disabled]]
+        AssertDescription: Must-start coordination requires an exact submission.
+      - Assert: !Not [!Equals [!Ref SkyMustStartControllerBaselineBodySha256, disabled]]
+        AssertDescription: >-
+          Must-start coordination requires the exact reviewed controller
+          baseline body SHA-256.
+      - Assert: !Not [!Equals [!Ref SkyMustStartTargetJobId, "-1"]]
+        AssertDescription: Must-start coordination requires an exact controller job ID.
+      - Assert: !Not [!Equals [!Ref SkyMustStartJobName, disabled-cache-seed]]
+        AssertDescription: Must-start coordination requires an exact SkyPilot job name.
+      - Assert: !Not [!Equals [!Ref SkyMustStartBy, "1970-01-01T00:00:00Z"]]
+        AssertDescription: Must-start coordination requires an exact deadline.
+      - Assert: !Not [!Equals [!Ref SkyMustStartPrimaryWakeAt, "1970-01-01T00:00:00Z"]]
+        AssertDescription: Must-start coordination requires an exact primary wake.
+      - Assert: !Not [!Equals [!Ref SkyMustStartDescriptorFileSha256, disabled]]
+        AssertDescription: Must-start coordination requires exact descriptor bytes.
+      - Assert: !Not [!Equals [!Ref SkyMustStartSubmissionSubmittedAt, "1970-01-01T00:00:00Z"]]
+        AssertDescription: Must-start coordination requires exact submission time.
+      - Assert: !Not [!Equals [!Ref SkyMustStartControllerInstanceId, disabled]]
+        AssertDescription: Must-start coordination requires an exact controller instance.
+      - Assert: !Not [!Equals [!Ref SkyMustStartControllerInstanceType, disabled]]
+        AssertDescription: Must-start coordination requires exact controller type.
+      - Assert: !Not [!Equals [!Ref SkyMustStartControllerProfileArn, disabled]]
+        AssertDescription: Must-start coordination requires exact controller identity.
+      - Assert: !Not [!Equals [!Ref SkyMustStartControllerClusterName, disabled]]
+        AssertDescription: Must-start coordination requires exact controller cluster.
+  SkyMustStartCancelRequiresObservedTarget:
+    RuleCondition: !Or
+      - !Equals [!Ref EnableSkyMustStartObserve, "true"]
+      - !Equals [!Ref EnableSkyMustStartCancel, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref SkyMustStartTargetJobId, "-1"]]
+        AssertDescription: >-
+          Must-start observation or cancellation requires an explicitly
+          observed exact controller job ID.
+  SkyMustStartCancelRequiresObservationGate:
+    RuleCondition: !Equals [!Ref EnableSkyMustStartCancel, "true"]
+    Assertions:
+      - Assert: !Equals [!Ref EnableSkyMustStartObserve, "true"]
+        AssertDescription: >-
+          Active must-start cancellation requires the observation deployment
+          gate to remain enabled.
+  SkyMustStartCancelRequiresAuthenticatedObservation:
+    RuleCondition: !Equals [!Ref EnableSkyMustStartCancel, "true"]
+    Assertions:
+      - Assert: !Not
+          - !Equals
+            - !Ref SkyMustStartActivationJobBindingSha256
+            - disabled
+        AssertDescription: >-
+          Active cancellation requires the exact authenticated prior
+          JOB_BINDING.json body SHA-256.
+      - Assert: !Not
+          - !Equals
+            - !Ref SkyMustStartActivationObservationSha256
+            - disabled
+        AssertDescription: >-
+          Active cancellation requires the exact content-addressed prior
+          controller observation SHA-256.
+
+Conditions:
+  Az5Enabled: !Not [!Equals [!Ref AvailabilityZone5, ""]]
+  Az6Enabled: !Not [!Equals [!Ref AvailabilityZone6, ""]]
+  CampaignControllerEnabled: !Equals [!Ref EnableCampaignController, "true"]
+  SkyPilotSupportEnabled: !Equals [!Ref EnableSkyPilotSupport, "true"]
+  SkyWorkerStartV2CoordinatorEnabled: !And
+    - !Condition SkyPilotSupportEnabled
+    - !Equals [!Ref EnableSkyWorkerStartV2Coordinator, "true"]
+    - !Equals [!Ref AWS::AccountId, "246813579024"]
+    - !Equals [!Ref AWS::Region, "us-west-2"]
+  SkyMustStartCoordinatorEnabled: !And
+    - !Condition SkyPilotSupportEnabled
+    - !Or
+      - !Equals [!Ref EnableSkyMustStartObserve, "true"]
+      - !Equals [!Ref EnableSkyMustStartCancel, "true"]
+  SkyMustStartCancelEnabled: !And
+    - !Condition SkyPilotSupportEnabled
+    - !Equals [!Ref EnableSkyMustStartCancel, "true"]
+  CampaignAlertsEnabled: !Or
+    - !Equals [!Ref EnableCampaignController, "true"]
+    - !Equals [!Ref EnableSkyPilotSupport, "true"]
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.20.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-vpc" }
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-igw" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  IgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.1.0/24
+      AvailabilityZone: !Ref AvailabilityZone
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-a" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  # Second AZ so a launch can fall back when the primary AZ has no GPU
+  # capacity (hit InsufficientInstanceCapacity for g6e.2xlarge in us-west-2c).
+  PublicSubnetAltAz:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.2.0/24
+      AvailabilityZone: !Ref AvailabilityZoneAlt
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-alt-az" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  SubnetAltAzRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetAltAz
+      RouteTableId: !Ref PublicRouteTable
+
+  # p5/p5en capacity is genuinely scarce; two more AZs to try on launch.
+  PublicSubnetAz3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.3.0/24
+      AvailabilityZone: !Ref AvailabilityZone3
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-az3" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  SubnetAz3RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetAz3
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetAz4:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.4.0/24
+      AvailabilityZone: !Ref AvailabilityZone4
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-az4" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  SubnetAz4RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetAz4
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetAz5:
+    Type: AWS::EC2::Subnet
+    Condition: Az5Enabled
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.5.0/24
+      AvailabilityZone: !Ref AvailabilityZone5
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-az5" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  SubnetAz5RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: Az5Enabled
+    Properties:
+      SubnetId: !Ref PublicSubnetAz5
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetAz6:
+    Type: AWS::EC2::Subnet
+    Condition: Az6Enabled
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.20.6.0/24
+      AvailabilityZone: !Ref AvailabilityZone6
+      MapPublicIpOnLaunch: true
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-az6" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  SubnetAz6RouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: Az6Enabled
+    Properties:
+      SubnetId: !Ref PublicSubnetAz6
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-public-rt" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IgwAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # Free, high-throughput S3 access from EC2 without NAT or public egress cost.
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds:
+        - !Ref PublicRouteTable
+
+  # No inbound. Access is via SSM Session Manager (no SSH keys to manage).
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: keep-glm52-gpu-sg
+      GroupDescription: !Sub "${ProjectTag} GPU node - egress only, SSM access"
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+          Description: Allow all egress (PyPI, HuggingFace, S3, SSM)
+      Tags:
+        - { Key: Name, Value: !Sub "${ProjectTag}-gpu-sg" }
+        - { Key: project, Value: !Ref ProjectTag }
+
+  # Model/artifact bucket. RETAINED on stack delete so teardown never nukes ~250GB.
+  ModelBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "keep-glm52-models-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration: !If
+        - SkyWorkerStartV2CoordinatorEnabled
+        - EventBridgeConfiguration:
+            EventBridgeEnabled: true
+        - !Ref AWS::NoValue
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  S3BatchChecksumRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: keep-glm52-s3-checksum-auditor
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: batchoperations.s3.amazonaws.com }
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: checksum-campaign-artifacts
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadAuditInputs
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:RestoreObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/*"
+              - Sid: WriteAuditReports
+                Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaign-audits/*"
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: cost-allocation, Value: glm52-sky-campaign }
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      # IAM roles are account-global, not region-scoped — include region so a
+      # second stack (e.g. us-east-1) doesn't collide with an existing one.
+      RoleName: !Sub "${ProjectTag}-gpu-node-role-${AWS::Region}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: model-bucket-rw
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [ s3:ListBucket, s3:GetBucketLocation ]
+                Resource: !GetAtt ModelBucket.Arn
+              - Effect: Allow
+                Action: [ s3:GetObject, s3:PutObject, s3:DeleteObject ]
+                Resource: !Sub "${ModelBucket.Arn}/*"
+              - Sid: DenyWritesToCoordinatorMustStartEvidence
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+              - Sid: DenyWritesToMustStartLambdaCode
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-must-start-cancel/*"
+              - Sid: DenyWritesToSkyWorkerStartV2Evidence
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*"
+              - Sid: DenyWritesToSkyWorkerStartV2LambdaCode
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-worker-start-v2/*"
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${CampaignDescriptorParameterName}"
+              - Effect: Allow
+                Action: [ ec2:DescribeInstances, ec2:DescribeTags ]
+                Resource: "*"
+              - Effect: Allow
+                Action: ec2:TerminateInstances
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+                Condition:
+                  StringEquals:
+                    ec2:ResourceTag/campaign-run-id: !Ref CampaignRunId
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${ProjectTag}-gpu-node-profile-${AWS::Region}"
+      Roles: [ !Ref InstanceRole ]
+
+  GpuLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub "${ProjectTag}-gpu-node"
+      LaunchTemplateData:
+        ImageId: !Ref GpuAmiId
+        InstanceType: !Ref GpuInstanceType
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            AssociatePublicIpAddress: true
+            SubnetId: !Ref PublicSubnet
+            Groups: [ !Ref InstanceSecurityGroup ]
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: !Ref RootVolumeGiB
+              VolumeType: gp3
+              DeleteOnTermination: true
+              Encrypted: true
+        MetadataOptions:
+          HttpTokens: required        # IMDSv2 only
+          HttpEndpoint: enabled
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - { Key: Name, Value: !Sub "${ProjectTag}-gpu-node" }
+              - { Key: project, Value: !Ref ProjectTag }
+              - { Key: owner, Value: !Ref OwnerTag }
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            # No `set -e`: a single failed step must not silently kill the bootstrap.
+            set -uxo pipefail
+            exec > /var/log/keep-bootstrap.log 2>&1
+            mkdir -p /mnt/nvme
+            # The Deep Learning AMI pre-claims ALL instance-store NVMe as an LVM
+            # volume (vg.01-lv_ephemeral) mounted at /opt/dlami/nvme — raw mkfs
+            # fails with "device busy". Prefer the AMI-managed volume; fall back
+            # to raw NVMe RAID0 only on non-DLAMI images.
+            for i in $(seq 1 12); do
+              mountpoint -q /opt/dlami/nvme && break
+              sleep 5
+            done
+            if mountpoint -q /opt/dlami/nvme; then
+              mkdir -p /opt/dlami/nvme/staging
+              mount --bind /opt/dlami/nvme/staging /mnt/nvme
+            else
+              NVME=$(lsblk -dn -o NAME,MODEL | awk '/Instance Storage/ {print "/dev/"$1}')
+              COUNT=$(echo "$NVME" | grep -c . || true)
+              if [ "$COUNT" -ge 2 ]; then
+                mdadm --create /dev/md0 --level=0 --raid-devices="$COUNT" $NVME || true
+                mkfs.xfs -f /dev/md0 && mount /dev/md0 /mnt/nvme
+              elif [ "$COUNT" -eq 1 ]; then
+                mkfs.xfs -f $NVME && mount $NVME /mnt/nvme
+              fi
+            fi
+            chmod 777 /mnt/nvme || true
+            # --- s5cmd for parallel S3 transfer ---
+            curl -sSL https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz \
+              | tar -xz -C /usr/local/bin s5cmd || true
+            # --- signal readiness marker for operators ---
+            echo "ready $(date -u +%FT%TZ) nvme_count=$COUNT" > /mnt/nvme/BOOTSTRAP_READY || true
+            CAMPAIGN_PARAMETER='${CampaignDescriptorParameterName}'
+            if aws ssm get-parameter --name "$CAMPAIGN_PARAMETER" --query Parameter.Value --output text \
+              > /tmp/keep-campaign-parameter.json 2>/dev/null; then
+              install -d -m 0755 /etc/keep-glm52 /opt/keep-campaign/repo /run/keep-glm52
+              mv /tmp/keep-campaign-parameter.json /etc/keep-glm52/campaign.json
+              python3 - /etc/keep-glm52/campaign.json <<'PY'
+            import hashlib, json, sys
+            path = sys.argv[1]
+            value = json.load(open(path))
+            digest = value.pop("descriptor_body_sha256")
+            raw = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+            if hashlib.sha256(raw).hexdigest() != digest:
+                raise SystemExit("campaign descriptor identity mismatch")
+            value["descriptor_body_sha256"] = digest
+            open(path, "w").write(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
+            PY
+              BUCKET=$(python3 -c 'import json; print(json.load(open("/etc/keep-glm52/campaign.json"))["bucket"])')
+              DESCRIPTOR_KEY=$(python3 -c 'import json; print(json.load(open("/etc/keep-glm52/campaign.json"))["campaign_descriptor_key"])')
+              REPO_KEY=$(python3 -c 'import json; print(json.load(open("/etc/keep-glm52/campaign.json"))["repo_tar_key"])')
+              REPO_SHA=$(python3 -c 'import json; print(json.load(open("/etc/keep-glm52/campaign.json"))["repo_tar_sha256"])')
+              aws s3 cp "s3://$BUCKET/$DESCRIPTOR_KEY" /tmp/campaign-from-s3.json
+              cmp /etc/keep-glm52/campaign.json /tmp/campaign-from-s3.json
+              aws s3 cp "s3://$BUCKET/$REPO_KEY" /tmp/keep-campaign.tar.gz
+              echo "$REPO_SHA  /tmp/keep-campaign.tar.gz" | sha256sum -c -
+              tar -xzf /tmp/keep-campaign.tar.gz -C /opt/keep-campaign/repo
+              cat >/etc/systemd/system/keep-glm52-campaign.service <<'UNIT'
+            [Unit]
+            Description=Durable GLM-5.2 teacher-to-training campaign
+            After=network-online.target
+            Wants=network-online.target
+
+            [Service]
+            Type=simple
+            WorkingDirectory=/opt/keep-campaign/repo
+            Environment=CAMPAIGN_DESCRIPTOR=/etc/keep-glm52/campaign.json
+            Environment=PYTHONUNBUFFERED=1
+            ExecStart=/opt/keep-campaign/repo/aws/glm52-gpu/scripts/run_campaign.sh
+            KillSignal=SIGTERM
+            SuccessExitStatus=75
+            TimeoutStopSec=1800
+            Restart=on-failure
+            RestartSec=60
+
+            [Install]
+            WantedBy=multi-user.target
+            UNIT
+              systemctl daemon-reload
+              systemctl enable --now keep-glm52-campaign.service
+            fi
+      TagSpecifications:
+        - ResourceType: launch-template
+          Tags:
+            - { Key: project, Value: !Ref ProjectTag }
+
+  SkyPilotWorkerRole:
+    Type: AWS::IAM::Role
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      RoleName: keep-glm52-gpu-worker
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: sky-worker-campaign-artifacts
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: s3:GetBucketLocation
+                Resource: !GetAtt ModelBucket.Arn
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ModelBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - !Sub "campaigns/${SkyCampaignRunId}/*"
+                      - source-snapshot/*
+                      - non-vq-package/*
+                      - teich-pack/*
+                      - quality/*
+                      - training-baseline/*
+                      - qualification-cache/*
+                      - validation/*
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/*"
+                  - !Sub "${ModelBucket.Arn}/source-snapshot/*"
+                  - !Sub "${ModelBucket.Arn}/non-vq-package/*"
+                  - !Sub "${ModelBucket.Arn}/teich-pack/*"
+                  - !Sub "${ModelBucket.Arn}/quality/*"
+                  - !Sub "${ModelBucket.Arn}/training-baseline/*"
+                  - !Sub "${ModelBucket.Arn}/qualification-cache/*"
+                  - !Sub "${ModelBucket.Arn}/validation/*"
+              - Effect: Allow
+                Action: [s3:PutObject, s3:AbortMultipartUpload]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/*"
+                  - !Sub "${ModelBucket.Arn}/qualification-cache/seeds/${SkyCampaignRunId}/*"
+              - Sid: DenyGenerationTerminalPublication
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject, s3:DeleteObjectVersion]
+                Resource: !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/submissions/production/generations/*/terminal/CAMPAIGN_DRAINED.json"
+              - Sid: DenyWritesToCoordinatorMustStartEvidence
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+              - Sid: DenyWritesToMustStartLambdaCode
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-must-start-cancel/*"
+              - Sid: DenyWritesToSkyWorkerStartV2Evidence
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*"
+              - Sid: DenyWritesToSkyWorkerStartV2LambdaCode
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-worker-start-v2/*"
+              - Effect: Allow
+                Action: [ec2:DescribeInstances, ec2:DescribeTags]
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/keep-glm52/*"
+              - Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: KEEP/GLM52
+              - Sid: DenyUnapprovedGpuMarketsAndSelfTermination
+                Effect: Deny
+                Action:
+                  - ec2:PurchaseCapacityBlock
+                  - ec2:PurchaseCapacityBlockExtension
+                  - ec2:RequestSpotInstances
+                  - ec2:CreateFleet
+                  - ec2:TerminateInstances
+                Resource: "*"
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+        - { Key: cost-allocation, Value: glm52-sky-campaign }
+
+  SkyPilotWorkerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      InstanceProfileName: keep-glm52-gpu-worker
+      Roles: [!Ref SkyPilotWorkerRole]
+
+  SkyPilotControllerRole:
+    Type: AWS::IAM::Role
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      RoleName: keep-glm52-skypilot-controller
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: sky-controller-one-p5
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SkyPilotRegionDiscovery
+                Effect: Allow
+                Action: ec2:DescribeRegions
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: us-east-1
+              - Sid: ReadApprovedRegion
+                Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - ssm:DescribeInstanceInformation
+                  - ssm:GetConnectionStatus
+                  - ssm:DescribeSessions
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: RunApprovedImage
+                Effect: Allow
+                Action: ec2:RunInstances
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}::image/ami-*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: RunOneTaggedP5Instance
+                Effect: Allow
+                Action: ec2:RunInstances
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+                Condition:
+                  StringEquals:
+                    ec2:InstanceType: p5.48xlarge
+                    aws:RequestedRegion: !Ref AWS::Region
+                    aws:RequestTag/project: !Ref ProjectTag
+                    aws:RequestTag/owner: !Ref OwnerTag
+                    aws:RequestTag/model: glm-5.2
+                    aws:RequestTag/campaign-run-id: !Ref SkyCampaignRunId
+                    aws:RequestTag/cost-allocation: glm52-sky-campaign
+              - Sid: UseApprovedP5LaunchDependencies
+                Effect: Allow
+                Action: ec2:RunInstances
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:network-interface/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:volume/*"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/${PublicSubnet}"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/${PublicSubnetAltAz}"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/${PublicSubnetAz3}"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:subnet/${PublicSubnetAz4}"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:security-group/${InstanceSecurityGroup.GroupId}"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: TagApprovedResourcesAtLaunch
+                Effect: Allow
+                Action: ec2:CreateTags
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:*/*"
+                Condition:
+                  StringEquals:
+                    ec2:CreateAction: RunInstances
+                    aws:RequestTag/project: !Ref ProjectTag
+                    aws:RequestTag/owner: !Ref OwnerTag
+                    aws:RequestTag/model: glm-5.2
+                    aws:RequestTag/campaign-run-id: !Ref SkyCampaignRunId
+                    aws:RequestTag/cost-allocation: glm52-sky-campaign
+              - Sid: ManageOnlyCampaignWorkers
+                Effect: Allow
+                Action:
+                  - ec2:TerminateInstances
+                  - ec2:StopInstances
+                  - ec2:StartInstances
+                  - ec2:DeleteTags
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+                Condition:
+                  StringEquals:
+                    ec2:ResourceTag/project: !Ref ProjectTag
+                    ec2:ResourceTag/campaign-run-id: !Ref SkyCampaignRunId
+                    ec2:ResourceTag/cost-allocation: glm52-sky-campaign
+              - Sid: PassOnlyWorkerIdentity
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt SkyPilotWorkerRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: ec2.amazonaws.com
+              - Sid: ReadWorkerIdentity
+                Effect: Allow
+                Action:
+                  - iam:GetRole
+                  - iam:GetInstanceProfile
+                Resource:
+                  - !GetAtt SkyPilotWorkerRole.Arn
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:instance-profile/keep-glm52-gpu-worker"
+              - Sid: ConnectToWorkerThroughSsm
+                Effect: Allow
+                Action:
+                  - ssm:StartSession
+                  - ssm:TerminateSession
+                  - ssm:ResumeSession
+                  - ssm:SendCommand
+                  - ssm:GetCommandInvocation
+                Resource: "*"
+              - Sid: ManagedJobBucket
+                Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:AbortMultipartUpload
+                Resource:
+                  - !GetAtt ModelBucket.Arn
+                  - !Sub "${ModelBucket.Arn}/*"
+              - Sid: DenyWritesToCoordinatorMustStartEvidence
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+              - Sid: DenyWritesToMustStartLambdaCode
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-must-start-cancel/*"
+              - Sid: DenyWritesToSkyWorkerStartV2Evidence
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*"
+              - Sid: DenyWritesToSkyWorkerStartV2LambdaCode
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-worker-start-v2/*"
+              - Sid: DenyUnapprovedPurchaseAndSpot
+                Effect: Deny
+                Action:
+                  - ec2:PurchaseCapacityBlock
+                  - ec2:PurchaseCapacityBlockExtension
+                  - ec2:RequestSpotInstances
+                  - ec2:CreateFleet
+                Resource: "*"
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+        - { Key: cost-allocation, Value: glm52-sky-campaign }
+
+  SkyPilotControllerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      InstanceProfileName: keep-glm52-skypilot-controller
+      Roles: [!Ref SkyPilotControllerRole]
+
+  SkyMustStartCancelDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      QueueName: !Sub "${ProjectTag}-sky-must-start-cancel-dlq"
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyMustStartCancelRole:
+    Type: AWS::IAM::Role
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: sky-must-start-cancel-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadMustStartAuthority
+                Effect: Allow
+                Action: s3:GetObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/${SkyMustStartDescriptorRelativeKey}"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/submission-locks/${SkyMustStartDescriptorFileSha256}-${SkyMustStartManagedMode}.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_LATCH.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/worker-latches/*"
+              - Sid: ListExactMustStartEvidenceNamespace
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ModelBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix: !Sub "campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/*"
+              - Sid: WriteMustStartMarkers
+                Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+              - Sid: FindTaggedSkyJobsController
+                Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: UsePinnedRunShellDocument
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript"
+              - Sid: CancelOnlyThroughTaggedSkyJobsController
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${SkyMustStartControllerInstanceId}"
+                Condition:
+                  StringEquals:
+                    ssm:resourceTag/project: !Ref ProjectTag
+                    ssm:resourceTag/owner: !Ref OwnerTag
+                    ssm:resourceTag/model: glm-5.2
+                    ssm:resourceTag/campaign-run-id: !Ref SkyCampaignRunId
+                    ssm:resourceTag/cost-allocation: glm52-sky-campaign
+                  StringLike:
+                    ssm:resourceTag/ray-cluster-name: !Ref SkyMustStartControllerClusterName
+              - Sid: VerifyControllerSsmOnline
+                Effect: Allow
+                Action: ssm:DescribeInstanceInformation
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: ReconcilePinnedCancellationCommand
+                Effect: Allow
+                Action: ssm:GetCommandInvocation
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: PublishMustStartAlert
+                Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref CampaignAlertTopic
+              - Sid: SendMustStartDeadLetter
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+              - Sid: DisableExactMustStartReconciliation
+                Effect: Allow
+                Action: events:DisableRule
+                Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-sky-must-start-cancel"
+
+  SkyMustStartCancelFunction:
+    Type: AWS::Lambda::Function
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      FunctionName: !Sub "${ProjectTag}-sky-must-start-cancel"
+      Runtime: python3.13
+      Handler: handler.lambda_handler
+      Role: !GetAtt SkyMustStartCancelRole.Arn
+      ReservedConcurrentExecutions: 1
+      DeadLetterConfig:
+        TargetArn: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+      Timeout: 300
+      MemorySize: 256
+      Environment:
+        Variables:
+          EXPECTED_ACCOUNT_ID: "246813579024"
+          CAMPAIGN_BUCKET: !Ref ModelBucket
+          CAMPAIGN_DESCRIPTOR_KEY: !Sub "campaigns/${SkyCampaignRunId}/${SkyMustStartDescriptorRelativeKey}"
+          IMMUTABLE_SUBMISSION_KEY: !Sub "campaigns/${SkyCampaignRunId}/monitor/submission-locks/${SkyMustStartDescriptorFileSha256}-${SkyMustStartManagedMode}.json"
+          SUBMISSION_BODY_SHA256: !Ref SkyMustStartSubmissionBodySha256
+          EXPECTED_CONTROLLER_BASELINE_BODY_SHA256: !Ref SkyMustStartControllerBaselineBodySha256
+          EXPECTED_TARGET_JOB_ID: !Ref SkyMustStartTargetJobId
+          OBSERVE_ONLY: !If [SkyMustStartCancelEnabled, "false", "true"]
+          EXPECTED_WORKSPACE: !Ref SkyMustStartWorkspace
+          EXPECTED_DESCRIPTOR_FILE_SHA256: !Ref SkyMustStartDescriptorFileSha256
+          EXPECTED_SUBMISSION_SUBMITTED_AT: !Ref SkyMustStartSubmissionSubmittedAt
+          EXPECTED_CONTROLLER_INSTANCE_ID: !Ref SkyMustStartControllerInstanceId
+          EXPECTED_CONTROLLER_INSTANCE_TYPE: !Ref SkyMustStartControllerInstanceType
+          EXPECTED_CONTROLLER_PROFILE_ARN: !Ref SkyMustStartControllerProfileArn
+          EXPECTED_CONTROLLER_CLUSTER_NAME: !Ref SkyMustStartControllerClusterName
+          STARTING_GRACE_SECONDS: !Ref SkyMustStartStartingGraceSeconds
+          PRIMARY_WAKE_MAX_WAIT_SECONDS: "120"
+          RECONCILIATION_RULE_NAME: !Sub "${ProjectTag}-sky-must-start-cancel"
+          EXPECTED_ACTIVATION_JOB_BINDING_SHA256: !Ref SkyMustStartActivationJobBindingSha256
+          EXPECTED_ACTIVATION_OBSERVATION_SHA256: !Ref SkyMustStartActivationObservationSha256
+          CAMPAIGN_RUN_ID: !Ref SkyCampaignRunId
+          MANAGED_MODE: !Ref SkyMustStartManagedMode
+          SKY_JOB_NAME: !Ref SkyMustStartJobName
+          MUST_START_BY: !Ref SkyMustStartBy
+          ALERT_TOPIC_ARN: !Ref CampaignAlertTopic
+      Code:
+        S3Bucket: !Ref ModelBucket
+        S3Key: !Sub "lambda/sky-must-start-cancel/${SkyMustStartCancelCodeSha256}.zip"
+        S3ObjectVersion: !Ref SkyMustStartCancelCodeVersionId
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyMustStartCancelLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectTag}-sky-must-start-cancel"
+      RetentionInDays: 14
+
+  SkyMustStartCancelDeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      Queues: [!Ref SkyMustStartCancelDeadLetterQueue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-sky-must-start-cancel"
+          - Effect: Allow
+            Principal: { Service: scheduler.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/${ProjectTag}-sky-must-start-deadline"
+
+  SkyMustStartCancelRule:
+    Type: AWS::Events::Rule
+    Condition: SkyMustStartCoordinatorEnabled
+    DependsOn: SkyMustStartCancelDeadLetterQueuePolicy
+    Properties:
+      Name: !Sub "${ProjectTag}-sky-must-start-cancel"
+      Description: !Sub "KEEP GLM52 must-start cancellation for ${SkyCampaignRunId} ${SkyMustStartManagedMode}"
+      ScheduleExpression: rate(1 minute)
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SkyMustStartCancelFunction.Arn
+          Id: sky-must-start-cancel
+          Input: !Sub '{"campaign_run_id":"${SkyCampaignRunId}","managed_mode":"${SkyMustStartManagedMode}","sky_job_name":"${SkyMustStartJobName}","must_start_by":"${SkyMustStartBy}","trigger":"reconcile"}'
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 300
+            MaximumRetryAttempts: 2
+          DeadLetterConfig:
+            Arn: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+
+  SkyMustStartCancelInvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SkyMustStartCancelFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SkyMustStartCancelRule.Arn
+
+  SkyMustStartSchedulerRole:
+    Type: AWS::IAM::Role
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: scheduler.amazonaws.com }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:scheduler:${AWS::Region}:${AWS::AccountId}:schedule-group/default"
+      Policies:
+        - PolicyName: invoke-exact-must-start-deadline
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: InvokeExactMustStartFunction
+                Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt SkyMustStartCancelFunction.Arn
+              - Sid: SendExactMustStartDeadLetter
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+
+  SkyMustStartDeadlineSchedule:
+    Type: AWS::Scheduler::Schedule
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      Name: !Sub "${ProjectTag}-sky-must-start-deadline"
+      Description: !Sub "Exact must-start deadline for ${SkyCampaignRunId} ${SkyMustStartManagedMode}"
+      ScheduleExpression: !Join
+        - ""
+        - - "at("
+          - !Select [0, !Split ["Z", !Ref SkyMustStartPrimaryWakeAt]]
+          - ")"
+      ScheduleExpressionTimezone: UTC
+      FlexibleTimeWindow: { Mode: "OFF" }
+      State: ENABLED
+      Target:
+        Arn: !GetAtt SkyMustStartCancelFunction.Arn
+        RoleArn: !GetAtt SkyMustStartSchedulerRole.Arn
+        Input: !Sub '{"campaign_run_id":"${SkyCampaignRunId}","managed_mode":"${SkyMustStartManagedMode}","sky_job_name":"${SkyMustStartJobName}","must_start_by":"${SkyMustStartBy}","trigger":"primary-deadline"}'
+        RetryPolicy:
+          MaximumEventAgeInSeconds: 300
+          MaximumRetryAttempts: 2
+        DeadLetterConfig:
+          Arn: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+
+  # AWS::Scheduler::Schedule does not expose the Scheduler API's
+  # ActionAfterCompletion property. This exact-schedule custom resource applies
+  # DELETE through UpdateSchedule after CloudFormation creates or updates it.
+  SkyMustStartScheduleAutoDeleteRole:
+    Type: AWS::IAM::Role
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: update-exact-must-start-schedule-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: UpdateExactMustStartSchedule
+                Effect: Allow
+                Action: scheduler:UpdateSchedule
+                Resource: !Sub "arn:${AWS::Partition}:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/default/${ProjectTag}-sky-must-start-deadline"
+              - Sid: PassExactSchedulerExecutionRole
+                Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt SkyMustStartSchedulerRole.Arn
+                Condition:
+                  StringEquals:
+                    iam:PassedToService: scheduler.amazonaws.com
+
+  SkyMustStartScheduleAutoDeleteFunction:
+    Type: AWS::Lambda::Function
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      FunctionName: !Sub "${ProjectTag}-sky-must-start-schedule-auto-delete"
+      Runtime: python3.13
+      Handler: index.handler
+      Role: !GetAtt SkyMustStartScheduleAutoDeleteRole.Arn
+      Timeout: 60
+      Code:
+        ZipFile: |
+          import time
+
+          import boto3
+          import cfnresponse
+          from botocore.exceptions import ClientError
+
+
+          def handler(event, context):
+              properties = event["ResourceProperties"]
+              physical_id = (
+                  "must-start-schedule-auto-delete:"
+                  + properties["ScheduleName"]
+              )
+              try:
+                  if event["RequestType"] != "Delete":
+                      scheduler = boto3.client("scheduler")
+                      request = {
+                          "Name": properties["ScheduleName"],
+                          "GroupName": "default",
+                          "ActionAfterCompletion": "DELETE",
+                          "FlexibleTimeWindow": {"Mode": "OFF"},
+                          "ScheduleExpression": properties[
+                              "ScheduleExpression"
+                          ],
+                          "ScheduleExpressionTimezone": "UTC",
+                          "State": "ENABLED",
+                          "Target": {
+                              "Arn": properties["TargetArn"],
+                              "RoleArn": properties["TargetRoleArn"],
+                              "Input": properties["TargetInput"],
+                              "RetryPolicy": {
+                                  "MaximumEventAgeInSeconds": 300,
+                                  "MaximumRetryAttempts": 2,
+                              },
+                              "DeadLetterConfig": {
+                                  "Arn": properties["DeadLetterArn"]
+                              },
+                          },
+                      }
+                      for attempt in range(5):
+                          try:
+                              scheduler.update_schedule(**request)
+                              break
+                          except ClientError as error:
+                              code = error.response.get("Error", {}).get(
+                                  "Code"
+                              )
+                              if code != "ResourceNotFoundException" or (
+                                  attempt == 4
+                              ):
+                                  raise
+                              time.sleep(2)
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.SUCCESS,
+                      {},
+                      physical_id,
+                  )
+              except Exception as error:
+                  cfnresponse.send(
+                      event,
+                      context,
+                      cfnresponse.FAILED,
+                      {"Error": str(error)},
+                      physical_id,
+                  )
+
+  SkyMustStartDeadlineScheduleAutoDelete:
+    Type: Custom::SchedulerActionAfterCompletion
+    Condition: SkyMustStartCoordinatorEnabled
+    Properties:
+      ServiceToken: !GetAtt SkyMustStartScheduleAutoDeleteFunction.Arn
+      ActionAfterCompletion: DELETE
+      ScheduleName: !Ref SkyMustStartDeadlineSchedule
+      ScheduleExpression: !Join
+        - ""
+        - - "at("
+          - !Select [0, !Split ["Z", !Ref SkyMustStartPrimaryWakeAt]]
+          - ")"
+      TargetArn: !GetAtt SkyMustStartCancelFunction.Arn
+      TargetRoleArn: !GetAtt SkyMustStartSchedulerRole.Arn
+      TargetInput: !Sub '{"campaign_run_id":"${SkyCampaignRunId}","managed_mode":"${SkyMustStartManagedMode}","sky_job_name":"${SkyMustStartJobName}","must_start_by":"${SkyMustStartBy}","trigger":"primary-deadline"}'
+      DeadLetterArn: !GetAtt SkyMustStartCancelDeadLetterQueue.Arn
+
+  SkyMustStartCancelErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyMustStartCoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-must-start-cancel-errors"
+      AlarmDescription: Must-start cancellation Lambda returned an error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyMustStartCancelFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyMustStartCancelAgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyMustStartCoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-must-start-cancel-age"
+      AlarmDescription: Must-start cancellation asynchronous invocation is delayed.
+      Namespace: AWS/Lambda
+      MetricName: AsyncEventAge
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyMustStartCancelFunction
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 120000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyMustStartCancelDlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyMustStartCoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-must-start-cancel-dlq-visible"
+      AlarmDescription: Must-start cancellation entered the dead-letter queue.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt SkyMustStartCancelDeadLetterQueue.QueueName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyMustStartCancelFailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyMustStartCoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-must-start-cancel-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke must-start cancellation.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref SkyMustStartCancelRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWorkerStartV2DeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      QueueName: !Sub "${ProjectTag}-sky-worker-start-v2-dlq"
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyWorkerStartV2Role:
+    Type: AWS::IAM::Role
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: sky-worker-start-v2-only
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadExactWorkerStartV2Authority
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/${SkyWorkerStartV2DescriptorRelativeKey}"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/submissions/qualification/intents/${SkyWorkerStartV2IntentBodySha256}/SKYPILOT_SUBMISSION_INTENT.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/submissions/qualification/acquisitions/${SkyWorkerStartV2DescriptorFileSha256}/SUBMISSION_ACQUIRED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/qualification/controller-baselines/*/CONTROLLER_BASELINE.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/submissions/qualification/accepted/*/SKYPILOT_SUBMISSION_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/DYNAMIC_JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/observations/*.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-latches/*/*.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*/*.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*/*/WORKER_START_ACCEPTED.json"
+              - Sid: ListExactWorkerStartV2Authority
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ModelBucket.Arn
+                Condition:
+                  StringEquals:
+                    s3:prefix:
+                      - !Sub "campaigns/${SkyCampaignRunId}/submissions/qualification/accepted/"
+                      - !Sub "campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/"
+                      - !Sub "campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/"
+              - Sid: WriteWorkerStartV2Evidence
+                Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*/*.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*/*/WORKER_START_ACCEPTED.json"
+              - Sid: FindWorkerStartV2Controller
+                Effect: Allow
+                Action: ec2:DescribeInstances
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: InspectWorkerStartV2Controller
+                Effect: Allow
+                Action:
+                  - ssm:DescribeInstanceInformation
+                  - ssm:GetCommandInvocation
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Sid: UseWorkerStartV2RunShellDocument
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript"
+              - Sid: SendWorkerStartV2ControllerCommand
+                Effect: Allow
+                Action: ssm:SendCommand
+                Resource: !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${SkyWorkerStartV2ControllerInstanceId}"
+                Condition:
+                  StringEquals:
+                    ssm:resourceTag/project: !Ref ProjectTag
+                    ssm:resourceTag/owner: !Ref OwnerTag
+                    ssm:resourceTag/model: glm-5.2
+                    ssm:resourceTag/campaign-run-id: !Ref SkyCampaignRunId
+                    ssm:resourceTag/cost-allocation: glm52-sky-campaign
+                    ssm:resourceTag/ray-cluster-name: !Ref SkyWorkerStartV2ControllerClusterName
+              - Sid: SendWorkerStartV2DeadLetter
+                Effect: Allow
+                Action: sqs:SendMessage
+                Resource: !GetAtt SkyWorkerStartV2DeadLetterQueue.Arn
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyWorkerStartV2Function:
+    Type: AWS::Lambda::Function
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      FunctionName: !Sub "${ProjectTag}-sky-worker-start-v2"
+      Runtime: python3.13
+      Handler: handler.lambda_handler
+      Role: !GetAtt SkyWorkerStartV2Role.Arn
+      ReservedConcurrentExecutions: 1
+      Timeout: 300
+      MemorySize: 256
+      DeadLetterConfig:
+        TargetArn: !GetAtt SkyWorkerStartV2DeadLetterQueue.Arn
+      Code:
+        S3Bucket: !Ref ModelBucket
+        S3Key: !Sub "lambda/sky-worker-start-v2/${SkyWorkerStartV2CodeSha256}.zip"
+        S3ObjectVersion: !Ref SkyWorkerStartV2CodeVersionId
+      Environment:
+        Variables:
+          WORKER_START_EXPECTED_ACCOUNT_ID: "246813579024"
+          WORKER_START_BUCKET: !Ref ModelBucket
+          WORKER_START_DESCRIPTOR_KEY: !Sub "campaigns/${SkyCampaignRunId}/${SkyWorkerStartV2DescriptorRelativeKey}"
+          WORKER_START_DESCRIPTOR_FILE_SHA256: !Ref SkyWorkerStartV2DescriptorFileSha256
+          WORKER_START_INTENT_KEY: !Sub "campaigns/${SkyCampaignRunId}/submissions/qualification/intents/${SkyWorkerStartV2IntentBodySha256}/SKYPILOT_SUBMISSION_INTENT.json"
+          WORKER_START_INTENT_FILE_SHA256: !Ref SkyWorkerStartV2IntentFileSha256
+          WORKER_START_INTENT_BODY_SHA256: !Ref SkyWorkerStartV2IntentBodySha256
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyWorkerStartV2EventInvokeConfig:
+    Type: AWS::Lambda::EventInvokeConfig
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      FunctionName: !Ref SkyWorkerStartV2Function
+      Qualifier: "$LATEST"
+      MaximumRetryAttempts: 2
+      MaximumEventAgeInSeconds: 900
+
+  SkyWorkerStartV2LogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectTag}-sky-worker-start-v2"
+      RetentionInDays: 14
+
+  SkyWorkerStartV2DeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      Queues: [!Ref SkyWorkerStartV2DeadLetterQueue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt SkyWorkerStartV2DeadLetterQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-sky-worker-start-v2"
+
+  SkyWorkerStartV2ObjectCreatedRule:
+    Type: AWS::Events::Rule
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: SkyWorkerStartV2DeadLetterQueuePolicy
+    Properties:
+      Name: !Sub "${ProjectTag}-sky-worker-start-v2"
+      State: ENABLED
+      EventPattern:
+        account: [!Ref AWS::AccountId]
+        region: [!Ref AWS::Region]
+        source: [aws.s3]
+        detail-type: ["Object Created"]
+        resources: [!GetAtt ModelBucket.Arn]
+        detail:
+          bucket:
+            name: [!Ref ModelBucket]
+          reason: [PutObject]
+          object:
+            key:
+              - wildcard: !Sub "campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-latches/i-*/*.json"
+            version-id:
+              - exists: true
+      Targets:
+        - Arn: !GetAtt SkyWorkerStartV2Function.Arn
+          Id: sky-worker-start-v2
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 900
+            MaximumRetryAttempts: 2
+          DeadLetterConfig:
+            Arn: !GetAtt SkyWorkerStartV2DeadLetterQueue.Arn
+          InputTransformer:
+            InputPathsMap:
+              account_id: "$.account"
+              region: "$.region"
+              bucket: "$.detail.bucket.name"
+              worker_latch_key: "$.detail.object.key"
+              worker_latch_version_id: "$.detail.object.version-id"
+            InputTemplate: !Sub '{"schema_version":1,"record_type":"glm52_sky_worker_start_v2_invocation_v1","account_id":<account_id>,"region":<region>,"bucket":<bucket>,"descriptor_key":"campaigns/${SkyCampaignRunId}/${SkyWorkerStartV2DescriptorRelativeKey}","descriptor_file_sha256":"${SkyWorkerStartV2DescriptorFileSha256}","intent_key":"campaigns/${SkyCampaignRunId}/submissions/qualification/intents/${SkyWorkerStartV2IntentBodySha256}/SKYPILOT_SUBMISSION_INTENT.json","intent_file_sha256":"${SkyWorkerStartV2IntentFileSha256}","intent_body_sha256":"${SkyWorkerStartV2IntentBodySha256}","worker_latch_key":<worker_latch_key>,"worker_latch_version_id":<worker_latch_version_id>}'
+
+  SkyWorkerStartV2InvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SkyWorkerStartV2Function
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SkyWorkerStartV2ObjectCreatedRule.Arn
+      SourceAccount: !Ref AWS::AccountId
+
+  SkyWorkerStartV2AuthorityBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Properties:
+      Bucket: !Ref ModelBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyNonCoordinatorWorkerStartV2EvidenceWrites
+            Effect: Deny
+            Principal: "*"
+            Action:
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+            Resource:
+              - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*"
+              - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*"
+            Condition:
+              ArnNotEquals:
+                aws:PrincipalArn: !GetAtt SkyWorkerStartV2Role.Arn
+
+  SkyWorkerStartV2ErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-worker-start-v2-errors"
+      AlarmDescription: Worker-start-v2 Lambda returned an error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyWorkerStartV2Function
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 5
+      DatapointsToAlarm: 3
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWorkerStartV2ThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-worker-start-v2-throttles"
+      AlarmDescription: Worker-start-v2 Lambda was throttled.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyWorkerStartV2Function
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWorkerStartV2AgeAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-worker-start-v2-age"
+      AlarmDescription: Worker-start-v2 asynchronous invocation is delayed.
+      Namespace: AWS/Lambda
+      MetricName: AsyncEventAge
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyWorkerStartV2Function
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 120000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWorkerStartV2DlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-worker-start-v2-dlq-visible"
+      AlarmDescription: Worker-start-v2 entered the dead-letter queue.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt SkyWorkerStartV2DeadLetterQueue.QueueName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWorkerStartV2FailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-worker-start-v2-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke worker-start-v2.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref SkyWorkerStartV2ObjectCreatedRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWatchdogDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      QueueName: !Sub "${ProjectTag}-sky-watchdog-dlq"
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyWatchdogRole:
+    Type: AWS::IAM::Role
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: sky-watchdog-read-and-alert
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceStatus
+                  - ssm:DescribeInstanceInformation
+                  - ssm:SendCommand
+                  - ssm:GetCommandInvocation
+                  - cloudwatch:DescribeAlarms
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestedRegion: !Ref AWS::Region
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject]
+                Resource: !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/*"
+              - Sid: DenyWritesToCoordinatorMustStartEvidence
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_REQUESTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_COMPLETED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TARGET_BOUND.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/JOB_BINDING.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/TIMELY_START_ACCEPTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/CANCEL_SUPERSEDED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/REQUEST_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/COMPLETION_ALERTED.json"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/${SkyMustStartManagedMode}/${SkyMustStartSubmissionBodySha256}/observations/*"
+              - Sid: DenyWritesToMustStartLambdaCode
+                Effect: Deny
+                Action: [s3:PutObject, s3:DeleteObject]
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-must-start-cancel/*"
+              - Sid: DenyWritesToSkyWorkerStartV2Evidence
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-controller-observations/*"
+                  - !Sub "${ModelBucket.Arn}/campaigns/${SkyCampaignRunId}/monitor/must-start/qualification/${SkyWorkerStartV2IntentBodySha256}/worker-acceptances/*"
+              - Sid: DenyWritesToSkyWorkerStartV2LambdaCode
+                Effect: Deny
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:DeleteObjectVersion
+                Resource:
+                  - !Sub "${ModelBucket.Arn}/lambda/sky-worker-start-v2/*"
+              - Sid: ListCampaignMarkers
+                Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt ModelBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - !Sub "campaigns/${SkyCampaignRunId}"
+                      - !Sub "campaigns/${SkyCampaignRunId}/*"
+              - Effect: Allow
+                Action: [sqs:GetQueueAttributes, sqs:SendMessage]
+                Resource: !GetAtt SkyWatchdogDeadLetterQueue.Arn
+              - Effect: Allow
+                Action: sns:Publish
+                Resource: !Ref CampaignAlertTopic
+              - Effect: Allow
+                Action: events:DisableRule
+                Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-sky-watchdog"
+
+  SkyWatchdogFunction:
+    Type: AWS::Lambda::Function
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      FunctionName: !Sub "${ProjectTag}-sky-watchdog"
+      Runtime: python3.13
+      Handler: handler.lambda_handler
+      Role: !GetAtt SkyWatchdogRole.Arn
+      DeadLetterConfig:
+        TargetArn: !GetAtt SkyWatchdogDeadLetterQueue.Arn
+      Timeout: 120
+      MemorySize: 256
+      Environment:
+        Variables:
+          CAMPAIGN_BUCKET: !Ref ModelBucket
+          CAMPAIGN_DESCRIPTOR_KEY: !Ref SkyCampaignDescriptorKey
+          ALERT_TOPIC_ARN: !Ref CampaignAlertTopic
+          WATCHDOG_DLQ_URL: !Ref SkyWatchdogDeadLetterQueue
+          WATCHDOG_RULE_NAME: !Sub "${ProjectTag}-sky-watchdog"
+      Code:
+        S3Bucket: !Ref ModelBucket
+        S3Key: !Ref SkyWatchdogCodeS3Key
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+        - { Key: model, Value: glm-5.2 }
+        - { Key: campaign-run-id, Value: !Ref SkyCampaignRunId }
+
+  SkyWatchdogLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectTag}-sky-watchdog"
+      RetentionInDays: 14
+
+  SkyWatchdogDeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      Queues: [!Ref SkyWatchdogDeadLetterQueue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt SkyWatchdogDeadLetterQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnEquals:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-sky-watchdog"
+
+  SkyWatchdogRule:
+    Type: AWS::Events::Rule
+    Condition: SkyPilotSupportEnabled
+    DependsOn: SkyWatchdogDeadLetterQueuePolicy
+    Properties:
+      Name: !Sub "${ProjectTag}-sky-watchdog"
+      ScheduleExpression: rate(10 minutes)
+      State: !Ref SkyWatchdogRuleState
+      Targets:
+        - Arn: !GetAtt SkyWatchdogFunction.Arn
+          Id: sky-watchdog
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 600
+            MaximumRetryAttempts: 2
+          DeadLetterConfig:
+            Arn: !GetAtt SkyWatchdogDeadLetterQueue.Arn
+
+  SkyWatchdogInvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SkyWatchdogFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt SkyWatchdogRule.Arn
+
+  SkyWatchdogErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyPilotSupportEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-watchdog-errors"
+      AlarmDescription: Sky campaign watchdog Lambda returned an error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyWatchdogFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWatchdogThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyPilotSupportEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-watchdog-throttles"
+      AlarmDescription: Sky campaign watchdog Lambda was throttled.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref SkyWatchdogFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWatchdogDlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyPilotSupportEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-watchdog-dlq-visible"
+      AlarmDescription: Sky watchdog delivery entered the SQS dead-letter queue.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt SkyWatchdogDeadLetterQueue.QueueName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyWatchdogFailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: SkyPilotSupportEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-sky-watchdog-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke the Sky watchdog target.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref SkyWatchdogRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  SkyGpuBudget:
+    Type: AWS::Budgets::Budget
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      Budget:
+        BudgetName: !Sub "${ProjectTag}-${SkyCampaignRunId}-gpu"
+        BudgetLimit: { Amount: 1320.96, Unit: USD }
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        CostFilters:
+          TagKeyValue:
+            - "user:cost-allocation$glm52-sky-campaign"
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CampaignAlertEmail
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+            ThresholdType: PERCENTAGE
+          Subscribers:
+            - SubscriptionType: EMAIL
+              Address: !Ref CampaignAlertEmail
+
+  SkyCostAnomalyMonitor:
+    Type: AWS::CE::AnomalyMonitor
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      MonitorName: !Sub "${ProjectTag}-${SkyCampaignRunId}"
+      MonitorType: DIMENSIONAL
+      MonitorDimension: SERVICE
+      ResourceTags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  SkyCostAnomalySubscription:
+    Type: AWS::CE::AnomalySubscription
+    Condition: SkyPilotSupportEnabled
+    Properties:
+      SubscriptionName: !Sub "${ProjectTag}-${SkyCampaignRunId}"
+      Frequency: DAILY
+      MonitorArnList: [!Ref SkyCostAnomalyMonitor]
+      ThresholdExpression: >-
+        {"Dimensions":{"Key":"ANOMALY_TOTAL_IMPACT_ABSOLUTE","MatchOptions":["GREATER_THAN_OR_EQUAL"],"Values":["25"]}}
+      Subscribers:
+        - Type: EMAIL
+          Address: !Ref CampaignAlertEmail
+
+  CampaignDescriptorParameter:
+    Type: AWS::SSM::Parameter
+    Condition: CampaignControllerEnabled
+    Properties:
+      Name: !Ref CampaignDescriptorParameterName
+      Type: String
+      Value: !Ref CampaignDescriptorJson
+      Description: Authenticated active GLM-5.2 Capacity Block campaign descriptor
+      Tags:
+        project: !Ref ProjectTag
+        owner: !Ref OwnerTag
+
+  CampaignControllerRole:
+    Type: AWS::IAM::Role
+    Condition: CampaignControllerEnabled
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: capacity-block-controller
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ssm:GetParameter
+                Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${CampaignDescriptorParameterName}"
+              - Effect: Allow
+                Action: [ ec2:DescribeCapacityReservations, ec2:DescribeInstances ]
+                Resource: "*"
+              - Effect: Allow
+                Action: [ ec2:RunInstances, ec2:CreateTags ]
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    aws:RequestTag/campaign-run-id: !Ref CampaignRunId
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt InstanceRole.Arn
+              - Effect: Allow
+                Action: ssm:SendCommand
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}::document/AWS-RunShellScript"
+                  - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+
+  CampaignControllerFunction:
+    Type: AWS::Lambda::Function
+    Condition: CampaignControllerEnabled
+    Properties:
+      FunctionName: !Sub "${ProjectTag}-capacity-block-controller"
+      Runtime: python3.13
+      Handler: handler.lambda_handler
+      Role: !GetAtt CampaignControllerRole.Arn
+      Timeout: 60
+      MemorySize: 256
+      Environment:
+        Variables:
+          CAMPAIGN_DESCRIPTOR_PARAMETER: !Ref CampaignDescriptorParameterName
+      Code:
+        S3Bucket: !Ref ModelBucket
+        S3Key: !Ref ControllerCodeS3Key
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  CampaignControllerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: CampaignControllerEnabled
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectTag}-capacity-block-controller"
+      RetentionInDays: 14
+
+  CampaignAlertTopic:
+    Type: AWS::SNS::Topic
+    Condition: CampaignAlertsEnabled
+    Properties:
+      TopicName: !Sub "${ProjectTag}-campaign-alerts"
+      DisplayName: KEEP GLM52 alerts
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  CampaignAlertTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Condition: CampaignAlertsEnabled
+    Properties:
+      Topics: [!Ref CampaignAlertTopic]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AccountAdministration
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+            Action:
+              - sns:GetTopicAttributes
+              - sns:SetTopicAttributes
+              - sns:AddPermission
+              - sns:RemovePermission
+              - sns:DeleteTopic
+              - sns:Subscribe
+              - sns:ListSubscriptionsByTopic
+              - sns:Publish
+            Resource: !Ref CampaignAlertTopic
+          - Sid: CloudWatchAlarmPublish
+            Effect: Allow
+            Principal: { Service: cloudwatch.amazonaws.com }
+            Action: sns:Publish
+            Resource: !Ref CampaignAlertTopic
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:${ProjectTag}-*"
+
+  CampaignAlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: CampaignAlertsEnabled
+    Properties:
+      TopicArn: !Ref CampaignAlertTopic
+      Protocol: email
+      Endpoint: !Ref CampaignAlertEmail
+
+  CampaignControllerDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Condition: CampaignControllerEnabled
+    Properties:
+      QueueName: !Sub "${ProjectTag}-controller-dlq"
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - { Key: project, Value: !Ref ProjectTag }
+        - { Key: owner, Value: !Ref OwnerTag }
+
+  CampaignControllerDeadLetterQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: CampaignControllerEnabled
+    Properties:
+      Queues: [!Ref CampaignControllerDeadLetterQueue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowEventBridgeDeadLetters
+            Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt CampaignControllerDeadLetterQueue.Arn
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+              ArnLike:
+                aws:SourceArn: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${ProjectTag}-*"
+
+  CapacityBlockDeliveredRule:
+    Type: AWS::Events::Rule
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignControllerDeadLetterQueuePolicy
+    Properties:
+      EventPattern:
+        source: [aws.ec2]
+        detail-type: ["Capacity Block Reservation Delivered"]
+        detail:
+          capacity-reservation-id: [!Ref CapacityReservationId]
+      Targets:
+        - Arn: !GetAtt CampaignControllerFunction.Arn
+          Id: campaign-controller
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 20
+          DeadLetterConfig:
+            Arn: !GetAtt CampaignControllerDeadLetterQueue.Arn
+
+  CapacityBlockExpirationRule:
+    Type: AWS::Events::Rule
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignControllerDeadLetterQueuePolicy
+    Properties:
+      EventPattern:
+        source: [aws.ec2]
+        detail-type: ["Capacity Block Reservation Expiration Warning"]
+        detail:
+          capacity-reservation-id: [!Ref CapacityReservationId]
+      Targets:
+        - Arn: !GetAtt CampaignControllerFunction.Arn
+          Id: campaign-controller
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 20
+          DeadLetterConfig:
+            Arn: !GetAtt CampaignControllerDeadLetterQueue.Arn
+
+  CapacityBlockInterruptionRule:
+    Type: AWS::Events::Rule
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignControllerDeadLetterQueuePolicy
+    Properties:
+      EventPattern:
+        source: [aws.ec2]
+        detail-type:
+          - "EC2 Capacity Reservation Instance Interruption Warning"
+      Targets:
+        - Arn: !GetAtt CampaignControllerFunction.Arn
+          Id: campaign-controller
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 20
+          DeadLetterConfig:
+            Arn: !GetAtt CampaignControllerDeadLetterQueue.Arn
+
+  CampaignControllerErrorsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-controller-errors"
+      AlarmDescription: Capacity Block controller Lambda returned an error.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CampaignControllerFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CampaignControllerThrottlesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-controller-throttles"
+      AlarmDescription: Capacity Block controller Lambda was throttled.
+      Namespace: AWS/Lambda
+      MetricName: Throttles
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CampaignControllerFunction
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CampaignControllerDlqAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-controller-dlq-visible"
+      AlarmDescription: EventBridge could not deliver a controller event.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt CampaignControllerDeadLetterQueue.QueueName
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CapacityBlockDeliveredFailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-delivery-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke the delivery controller target.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref CapacityBlockDeliveredRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CapacityBlockExpirationFailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-expiration-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke the expiration controller target.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref CapacityBlockExpirationRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CapacityBlockInterruptionFailedInvocationsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Condition: CampaignControllerEnabled
+    DependsOn: CampaignAlertTopicPolicy
+    Properties:
+      AlarmName: !Sub "${ProjectTag}-interruption-failed-invocations"
+      AlarmDescription: EventBridge failed to invoke the interruption controller target.
+      Namespace: AWS/Events
+      MetricName: FailedInvocations
+      Dimensions:
+        - Name: RuleName
+          Value: !Ref CapacityBlockInterruptionRule
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref CampaignAlertTopic]
+
+  CampaignControllerInvokePermission:
+    Type: AWS::Lambda::Permission
+    Condition: CampaignControllerEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CampaignControllerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CapacityBlockDeliveredRule.Arn
+
+  CampaignControllerExpirationPermission:
+    Type: AWS::Lambda::Permission
+    Condition: CampaignControllerEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CampaignControllerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CapacityBlockExpirationRule.Arn
+
+  CampaignControllerInterruptionPermission:
+    Type: AWS::Lambda::Permission
+    Condition: CampaignControllerEnabled
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CampaignControllerFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CapacityBlockInterruptionRule.Arn
+
+Outputs:
+  VpcId:
+    Value: !Ref Vpc
+  SubnetId:
+    Value: !Ref PublicSubnet
+  SubnetIdAltAz:
+    Value: !Ref PublicSubnetAltAz
+  SubnetIdAz3:
+    Value: !Ref PublicSubnetAz3
+  SubnetIdAz4:
+    Value: !Ref PublicSubnetAz4
+  SubnetIdAz5:
+    Condition: Az5Enabled
+    Value: !Ref PublicSubnetAz5
+  SubnetIdAz6:
+    Condition: Az6Enabled
+    Value: !Ref PublicSubnetAz6
+  SecurityGroupId:
+    Value: !Ref InstanceSecurityGroup
+  ModelBucketName:
+    Value: !Ref ModelBucket
+    Export: { Name: !Sub "${AWS::StackName}-ModelBucket" }
+  S3BatchChecksumRoleArn:
+    Value: !GetAtt S3BatchChecksumRole.Arn
+  LaunchTemplateId:
+    Value: !Ref GpuLaunchTemplate
+    Export: { Name: !Sub "${AWS::StackName}-LaunchTemplate" }
+  InstanceProfileArn:
+    Value: !GetAtt InstanceProfile.Arn
+  CampaignDescriptorParameter:
+    Condition: CampaignControllerEnabled
+    Value: !Ref CampaignDescriptorParameter
+  CampaignControllerFunctionArn:
+    Condition: CampaignControllerEnabled
+    Value: !GetAtt CampaignControllerFunction.Arn
+  CampaignControllerDeadLetterQueueUrl:
+    Condition: CampaignControllerEnabled
+    Value: !Ref CampaignControllerDeadLetterQueue
+  CampaignControllerDeadLetterQueueArn:
+    Condition: CampaignControllerEnabled
+    Value: !GetAtt CampaignControllerDeadLetterQueue.Arn
+  CampaignAlertTopicArn:
+    Condition: CampaignAlertsEnabled
+    Value: !Ref CampaignAlertTopic
+  CampaignAlertEmail:
+    Condition: CampaignAlertsEnabled
+    Value: !Ref CampaignAlertEmail
+  SkyPilotControllerRoleArn:
+    Condition: SkyPilotSupportEnabled
+    Value: !GetAtt SkyPilotControllerRole.Arn
+  SkyPilotWorkerRoleArn:
+    Condition: SkyPilotSupportEnabled
+    Value: !GetAtt SkyPilotWorkerRole.Arn
+  SkyWatchdogFunctionArn:
+    Condition: SkyPilotSupportEnabled
+    Value: !GetAtt SkyWatchdogFunction.Arn
+  SkyWatchdogDeadLetterQueueUrl:
+    Condition: SkyPilotSupportEnabled
+    Value: !Ref SkyWatchdogDeadLetterQueue
+  SkyWatchdogRuleName:
+    Condition: SkyPilotSupportEnabled
+    Value: !Ref SkyWatchdogRule
+  SkyMustStartCancelFunctionArn:
+    Condition: SkyMustStartCoordinatorEnabled
+    Value: !GetAtt SkyMustStartCancelFunction.Arn
+  SkyMustStartCancelDeadLetterQueueUrl:
+    Condition: SkyMustStartCoordinatorEnabled
+    Value: !Ref SkyMustStartCancelDeadLetterQueue
+  SkyMustStartCancelRuleName:
+    Condition: SkyMustStartCoordinatorEnabled
+    Value: !Ref SkyMustStartCancelRule
+  SkyWorkerStartV2FunctionArn:
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Value: !GetAtt SkyWorkerStartV2Function.Arn
+  SkyWorkerStartV2DeadLetterQueueUrl:
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Value: !Ref SkyWorkerStartV2DeadLetterQueue
+  SkyWorkerStartV2ObjectCreatedRuleName:
+    Condition: SkyWorkerStartV2CoordinatorEnabled
+    Value: !Ref SkyWorkerStartV2ObjectCreatedRule
+  SkyGpuBudgetName:
+    Condition: SkyPilotSupportEnabled
+    Value: !Ref SkyGpuBudget

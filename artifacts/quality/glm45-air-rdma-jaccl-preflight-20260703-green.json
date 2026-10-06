@@ -1,0 +1,18 @@
+{
+  "all_sum_expected_sum0": 2.0,
+  "decision": "jaccl_preflight_pass",
+  "hostfile": "/tmp/glm-jaccl-hostfile-en1.json",
+  "local_direct_if": "en1",
+  "local_direct_ip": "192.168.10.1",
+  "log_path": "artifacts/quality/glm45-air-rdma-jaccl-preflight-20260703-green.log",
+  "mlx_wired_limit_gb": 1,
+  "peer_direct_if": "en1",
+  "peer_direct_ip": "192.168.10.2",
+  "peer_ssh": "jackmazac@192.168.100.191",
+  "preflight_only": true,
+  "rank0_sum0_seen": true,
+  "rank1_sum0_seen": true,
+  "rank_count": 2,
+  "record_type": "glm45_air_cleanroom_jaccl_preflight",
+  "required_wired_mb": 0
+}

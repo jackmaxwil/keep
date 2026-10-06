@@ -1,0 +1,48 @@
+{
+  "record_type": "glm45_air_rdma_bridge_jaccl_preflight",
+  "date": "2026-07-03",
+  "decision": "bridge_ip_live_jaccl_rtr_failed",
+  "link_layer_ready": true,
+  "bridge_ip_forward_ping_ready": true,
+  "bridge_ip_reverse_ping_ready": false,
+  "direct_path_ready": false,
+  "ready_for_uc_pingpong": false,
+  "ready_for_jaccl_preflight": false,
+  "local": {
+    "interface": "bridge0",
+    "ip": "169.254.126.35",
+    "rdma_device": "rdma_en1",
+    "rdma_gid_index": 0,
+    "rdma_gid": "fe80::3413:f1ff:fec0:8580"
+  },
+  "peer": {
+    "ssh": "jackmazac@192.168.100.191",
+    "interface": "bridge0",
+    "ip": "169.254.22.4",
+    "rdma_device": "rdma_en1",
+    "rdma_gid_index": 0,
+    "rdma_gid": "fe80::34a7:c5ff:fe18:480"
+  },
+  "direct_recovery_attempt": {
+    "local_sudo_noninteractive": "sudo: a password is required",
+    "peer_sudo_noninteractive": "sudo: a password is required"
+  },
+  "uc_pingpong_attempt": {
+    "peer_server_command": "ssh jackmazac@192.168.100.191 /usr/bin/ibv_uc_pingpong -d rdma_en1 -n 100 -g 0",
+    "local_client_command": "/usr/bin/ibv_uc_pingpong -d rdma_en1 -n 100 -g 0 169.254.22.4",
+    "local_error": "client read/write: Operation not permitted",
+    "peer_error": "Failed to modify QP to RTR"
+  },
+  "cleanroom_bridge_attempt": {
+    "hostfile": "artifacts/quality/glm-jaccl-hostfile-bridge0-live-20260703.json",
+    "command": "GLM_JACCL_HOSTFILE=artifacts/quality/glm-jaccl-hostfile-bridge0-live-20260703.json GLM_LOCAL_DIRECT_IF=bridge0 GLM_PEER_DIRECT_IF=bridge0 GLM_LOCAL_DIRECT_IP=169.254.126.35 GLM_PEER_DIRECT_IP=169.254.22.4 GLM_PEER_SSH=jackmazac@192.168.100.191 GLM_REQUIRED_WIRED_MB=0 GLM_MLX_WIRED_LIMIT_GB=1 GLM_PREFLIGHT_ONLY=1 scripts/run_glm45_air_distributed_cleanroom_cache.sh",
+    "exit_code_after_runner_fix": 1,
+    "rank_error": "ValueError: [jaccl] Changing queue pair to RTR failed with errno 22",
+    "runner_guardrail": "mlx_launch_checked promotes MLX rank warnings and Python tracebacks to a nonzero shell exit"
+  },
+  "next_required_setup": [
+    "disable Thunderbolt Bridge with sudo on both hosts",
+    "assign the documented 192.168.10.1/30 and 192.168.10.2/30 addresses to en1",
+    "verify direct routes, ARP peer MACs, IPv4-mapped GID[1], UC pingpong, and clean-room JACCL all-sum"
+  ]
+}

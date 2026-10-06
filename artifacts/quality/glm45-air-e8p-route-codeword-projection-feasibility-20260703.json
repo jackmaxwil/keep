@@ -1,0 +1,106 @@
+{
+  "artifact": {
+    "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+    "artifact_layer": 45,
+    "artifact_prefix": "model.layers.45.mlp.switch_mlp.down_proj",
+    "artifact_projection": "down_proj",
+    "artifact_shard": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8/layer-00045-down_proj.safetensors"
+  },
+  "feasibility": {
+    "activation_projection_scope": "route_tile_x_expert_kblock_full_codeword",
+    "bk": 64,
+    "bn": 64,
+    "candidate_ready_for_source_probe": false,
+    "codewords_per_bk": 8,
+    "decision": "reject_route_codeword_projection_cache_too_large",
+    "decoded_dense_weight_bytes": 0,
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks",
+    "experts": 128,
+    "group_size": 352,
+    "input_dims": 1408,
+    "k_blocks": 22,
+    "max_unique_codewords_per_expert_kblock": 18743,
+    "max_unique_ratio_per_expert_kblock": 0.571990966796875,
+    "median_unique_codewords_per_expert_kblock": 17880.5,
+    "min_unique_codewords_per_expert_kblock": 11533,
+    "n_tiles": 64,
+    "output_dims": 4096,
+    "p95_unique_codewords_per_expert_kblock": 18371.25,
+    "preserves_codeword_scale_slots": true,
+    "preserves_compressed_rhs_storage": true,
+    "projection_cache_byte_cap": 8388608,
+    "projection_cache_bytes": 105560576,
+    "projection_cache_dtype": "float16",
+    "projection_cache_shape": [
+      128,
+      22,
+      18743
+    ],
+    "rejected_next_steps": [
+      "do_not_benchmark_route_codeword_projection_cache",
+      "do_not_materialize_unbounded_activation_codeword_dot_cache",
+      "do_not_claim_speed_from_unique_count_probe"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "reduce_full_codeword_cardinality_before_projection_cache",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "route_tile_count": 128,
+    "route_tile_size": 64,
+    "storage_constraint": "compressed_e8p_route_codeword_projection_scales",
+    "structural_risk": "full-codeword cardinality makes the activation-side route cache too large under the configured cap; this avoids spending a native timing slice on another unbounded RHS-derived cache.",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_codeword_projection",
+    "unique_codeword_cap": 4096,
+    "unique_codeword_counts_shape": [
+      128,
+      22
+    ]
+  },
+  "native_parity_claim": false,
+  "next_family_selector_verdict": {
+    "candidate_ready_for_source_probe": true,
+    "decision": "candidate_family_ready_for_source_structure_probe",
+    "decode_reuse_scope": "route_activation_codeword_dot_cache",
+    "dispatch_grid": "route_tiles_x_experts_x_k_blocks",
+    "matched_rejected_families": [],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_make_speed_claim_from_contract_only",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_before_benchmark": [
+      "source_structure_guardrail",
+      "native_scalar_oracle_parity",
+      "air_down_group_size_352_parity",
+      "same_window_q2_speed_packet"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_route_codeword_projection_scales",
+    "structural_reasons": [],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_route_codeword_projection",
+    "tensorops_rhs_source": "activation_side_codeword_dot_lookup_no_b_fragment"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_route_codeword_projection_feasibility",
+  "schema_version": 1,
+  "shape": {
+    "bk": 64,
+    "bn": 64,
+    "experts": 128,
+    "input_dims": 1408,
+    "mlx_group_size": 128,
+    "output_dims": 4096,
+    "projection": "down",
+    "route_count": 8192,
+    "route_tile_count": 128,
+    "route_tile_size": 64,
+    "tokens": 1024,
+    "top_k": 8,
+    "vq_code_bits": 16,
+    "vq_group_size": 352
+  },
+  "speed_claim": false
+}

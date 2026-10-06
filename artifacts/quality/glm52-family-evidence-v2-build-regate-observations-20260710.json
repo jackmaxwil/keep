@@ -1,0 +1,126 @@
+{
+  "accepted_tensor_payload_bytes": 98433923808,
+  "accepted_whole_main_bpw": 1.5934433,
+  "byte_identity_verified": true,
+  "checked_authority_json": "artifacts/quality/glm52-family-gate-raw-evidence-20260710.json",
+  "checked_authority_sha256": "5f8918ed1c7a554bc15ca747b6cbc643df06f3386126b10be3d4ca1c1c3ea9ad",
+  "common_artifact_identity_sha256": "ef9d2e49d4a9d113a13d8b8e6c6ce7ebe60a7e9c7fb7b1b7784357d3efee5067",
+  "commands": {
+    "build": {
+      "argv": [
+        "/usr/bin/time",
+        "-l",
+        "env",
+        "UV_CACHE_DIR=/tmp/keep-uv-cache",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "uv",
+        "run",
+        "keep",
+        "build",
+        "recipes/glm52_reap_504b_family_evidence_v2_20260710.yaml"
+      ],
+      "exit_code": 1,
+      "maximum_resident_set_size_bytes": 105562112,
+      "real_seconds": 1.38,
+      "subprocess_returncode": 2,
+      "swaps": 0,
+      "system_seconds": 0.35,
+      "terminal_step_status": "gate_failed",
+      "user_seconds": 0.99
+    },
+    "dry_run": {
+      "argv": [
+        "env",
+        "UV_CACHE_DIR=/tmp/keep-uv-cache",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "uv",
+        "run",
+        "keep",
+        "build",
+        "recipes/glm52_reap_504b_family_evidence_v2_20260710.yaml",
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "input_hashes": {
+        "composite_artifact_audit_json": "8026322a533606ed451d13b029d83836fefbf1a938b33529de535f3fc778591a",
+        "eval_prompt_pack_json": "697677a4949f4ee7e370ac5e9a55e9631b0a1385f95a07dfd3a3f2b87d8edf31",
+        "family_policy_json": "0975f7dc1117c5fba7532e9166f4767546fd691a6cb52520a40f09874f972ce2",
+        "full_bind_preflight_json": "9078a36c683a2487ef5d99f4c8fecc72f086689b8aa1e249ffaa34639b5946a3",
+        "indexshare_runtime_json": "94785cf0884ce5ac955a09b535c0b2ef00ad3cb742da7769bf504a4c9143ad25",
+        "non_vq_evidence_json": "ccbedd87f72f032bd86fd9d5a89fb75641595f30cf2a80fd7c84636d594e80d2",
+        "production_generation_json": "758b5bbebbb365cdf69998a034cf3791a6210d2723d5bec6c022336eceadcc82",
+        "synthetic_generation_json": "baa9c8214553c6af391c6a671a5b0185b8d7eb1746c3e6c52586f512536662a9",
+        "teacher_metadata_json": "621a013eb37f617409ec568340976e769610b3b6c8cae346639762d816a7fd7a"
+      },
+      "step_key": "48146c10b53be9db"
+    },
+    "regate": {
+      "argv": [
+        "/usr/bin/time",
+        "-l",
+        "env",
+        "UV_CACHE_DIR=/tmp/keep-uv-cache",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "uv",
+        "run",
+        "keep",
+        "build",
+        "recipes/glm52_reap_504b_family_evidence_v2_20260710.yaml",
+        "--regate"
+      ],
+      "exit_code": 1,
+      "ledger_event": "regated",
+      "maximum_resident_set_size_bytes": 101744640,
+      "real_seconds": 0.74,
+      "recorded_subprocess_returncode": 2,
+      "swaps": 0,
+      "system_seconds": 0.2,
+      "user_seconds": 0.51
+    },
+    "validate": {
+      "argv": [
+        "env",
+        "UV_CACHE_DIR=/tmp/keep-uv-cache",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "uv",
+        "run",
+        "keep",
+        "validate",
+        "recipes/glm52_reap_504b_family_evidence_v2_20260710.yaml"
+      ],
+      "exit_code": 0,
+      "output": "ok: glm52_reap_504b_family_evidence_v2_20260710 (1 steps)"
+    }
+  },
+  "evidence_after_regate": {
+    "inode": 109115103,
+    "modification_time_epoch": 1783690572,
+    "sha256": "5f8918ed1c7a554bc15ca747b6cbc643df06f3386126b10be3d4ca1c1c3ea9ad",
+    "size_bytes": 5675
+  },
+  "evidence_before_regate": {
+    "inode": 109115103,
+    "modification_time_epoch": 1783690572,
+    "sha256": "5f8918ed1c7a554bc15ca747b6cbc643df06f3386126b10be3d4ca1c1c3ea9ad",
+    "size_bytes": 5675
+  },
+  "evidence_json": "artifacts/build/glm52_reap_504b_family_evidence_v2_20260710/steps/family_gate-48146c10/evidence/evidence_json.json",
+  "evidence_unchanged_by_regate": true,
+  "executor_ledger_jsonl": "artifacts/build/glm52_reap_504b_family_evidence_v2_20260710/ledger.jsonl",
+  "family_gate_pass": false,
+  "gate_contract_sha256": "12864b7e82cf172d102d0469a228f2a96b68e8f7ed2698fbaae62dc4b970c8a5",
+  "ledger_timestamps": {
+    "gate_failed": "2026-07-10T13:36:12+00:00",
+    "regated": "2026-07-10T13:36:40+00:00",
+    "started": "2026-07-10T13:36:11+00:00"
+  },
+  "missing_requirements": [
+    "dequantized_source_teacher_cache_payload",
+    "full_vocabulary_source_relative_family_eval",
+    "route_math_diagnostics",
+    "same_machine_pinned_fp4_benchmark"
+  ],
+  "recipe": "recipes/glm52_reap_504b_family_evidence_v2_20260710.yaml",
+  "record_type": "glm52_family_evidence_v2_executor_observation",
+  "schema_version": 1
+}

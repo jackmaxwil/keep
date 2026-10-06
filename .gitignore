@@ -1,0 +1,16 @@
+codedb.snapshot
+.env
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.benchmarks/
+artifacts/
+.repos/
+native/vq_nax_ext/build/
+traces/
+docs/loop-transcript
+docs/prompts
+*.safetensors
+

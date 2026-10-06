@@ -1,0 +1,1304 @@
+{
+ "record_type": "glm52_teich_topk_teacher_cache",
+ "top_k": 2048,
+ "lm_head_slice": 4096,
+ "query_chunk_size": 256,
+ "max_batch_tokens": 131072,
+ "pack_path": "/private/tmp/claude-502/-Users-jack-mazac-Developer-keep/b4d50550-2788-47d9-b001-3dbad2f173e6/scratchpad/teich-corpus-v2/initial-cut/glm52-coding-agent-initial-v2-20260713.json",
+ "identities": {
+  "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+  "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+  "non_vq_manifest_sha256": "5113750fdaf009b2174a2772dd2e3bccf490cfff354f082e5e0ad8af8771f8c8",
+  "snapshot_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+  "non_vq_package_dir": "artifacts/build/glm52_reap_504b_materialization_probe_20260709/steps/non_vq_pack-a678bc3c/out",
+  "model_id": "0xSero/glm-5.2-reap-504B-v2",
+  "source_revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d"
+ },
+ "sessions": {
+  "teich_cursor_cursor-90e8d99d-0d2e-4822-a323-179a5c917772": {
+   "token_count": 28001,
+   "supervised": 11049,
+   "token_ids_sha256": "95b8d953cecf1611f2f170b4840e349874595ca4bed641bb25721d3fdb045820"
+  },
+  "teich_cursor_cursor-b2e9872b-2973-4c24-809c-ba31fa92fd09": {
+   "token_count": 39679,
+   "supervised": 17225,
+   "token_ids_sha256": "09b0fbbb43b3e7567023f607d864ed390fcf053fa9e1344cc0efd54a8893bf9d"
+  },
+  "teich_cursor_cursor-0f6163e7-8ecc-4fd5-9a97-c08fc3d9e44b": {
+   "token_count": 64734,
+   "supervised": 26276,
+   "token_ids_sha256": "a5562d24e91a1ec90725898de3001d5699fad2b183fda2757f0225c2a8532d41"
+  },
+  "teich_codex_rollout-2026-06-30T18-22-00-019f1b44-c804-7472-afe2-5d746eab652b": {
+   "token_count": 54693,
+   "supervised": 8130,
+   "token_ids_sha256": "701a876022ccd496c012971ba46fee42e92c3939cbf6b693e67542eccef47faa"
+  },
+  "teich_cursor_cursor-acce8974-9698-4489-881a-e16d1fd6a659": {
+   "token_count": 41008,
+   "supervised": 18029,
+   "token_ids_sha256": "a55c5b2554aa126f1bb1ff37406a23dc58673b5a7e524e9157350585327a41b1"
+  },
+  "teich_cursor_cursor-54d2e672-40d4-45b8-a82e-f1c796d903fe": {
+   "token_count": 64954,
+   "supervised": 27427,
+   "token_ids_sha256": "f949564b746b4576952a8a929baed38ff897c92c38bc21eadafe3dfad9bdcce2"
+  },
+  "teich_cursor_cursor-62728afe-8589-4312-9c7a-14faa5e06023": {
+   "token_count": 65109,
+   "supervised": 21181,
+   "token_ids_sha256": "e6246cafd4bda558e59996fea43074d34dff2792807391f98ae396c3f9465855"
+  },
+  "teich_codex_rollout-2026-07-10T11-33-11-019f4d4e-189a-7cb2-b9d6-860eefc36ed1": {
+   "token_count": 65437,
+   "supervised": 31999,
+   "token_ids_sha256": "46248014667aee0d5be710cef44d432d8eb4ec6c29d9b9b42c538785e03e858c"
+  },
+  "teich_cursor_cursor-d9877542-e480-44c0-9ef3-9d2a481def66": {
+   "token_count": 59601,
+   "supervised": 15759,
+   "token_ids_sha256": "2758d40884cffbbc702b7228ba96a349a7792cd2b95471a70966b4f70fe720f3"
+  },
+  "teich_cursor_cursor-efff29f2-85eb-44c1-a9b4-6b060e96d6e9": {
+   "token_count": 61586,
+   "supervised": 22329,
+   "token_ids_sha256": "681d79d0e4bfa1ce15b45b7f8ec37a6cd2a0a263e7000c0c7cd1d5b26dc9ce98"
+  },
+  "teich_cursor_cursor-d41e2cd4-9cab-49da-a4c4-9a6596cc08e0": {
+   "token_count": 57599,
+   "supervised": 26565,
+   "token_ids_sha256": "16e3e52440836744581436a35bbdc1fb47be0fcf2cb25c523a9e5e2c343b6aee"
+  },
+  "teich_cursor_cursor-fe0fc881-69e5-4e6f-ba3a-eeac7f1c38d5": {
+   "token_count": 14586,
+   "supervised": 3654,
+   "token_ids_sha256": "45b3e97647a466caefd7b523e97a1619e5869f8e7ead5abf96a29425b71ffeb6"
+  },
+  "teich_cursor_cursor-07fe6a9d-cf01-4e65-b892-2bb82d540832": {
+   "token_count": 29340,
+   "supervised": 9077,
+   "token_ids_sha256": "835d89bd5864144243a02a0ac706d16e6e74f6b10edbbed61af1b7661f32fb4a"
+  },
+  "teich_cursor_cursor-ab9f1b32-3f4f-4c69-8f67-1afea679dabf": {
+   "token_count": 56754,
+   "supervised": 15471,
+   "token_ids_sha256": "efaa8192e87a6ea542b88c2a47af05cb148340b8d9d4bf9f16ed35646019a1f9"
+  },
+  "teich_claude_agent-a182ac2f96eb72b51": {
+   "token_count": 51388,
+   "supervised": 1137,
+   "token_ids_sha256": "afede621eaef47f8d703aed2fe6a2a4bc00abf908bcab28d453d28c744803800"
+  },
+  "teich_cursor_cursor-7daeb396-2167-4059-9cf4-ed42e3c3312c": {
+   "token_count": 14734,
+   "supervised": 3001,
+   "token_ids_sha256": "7ba6049589dd1aa2725e1269f72b6723366d4d09f83da2df59e18bcd85da0b30"
+  },
+  "teich_cursor_cursor-ef8d31d7-cd26-42d0-9052-ff18a0ae2091": {
+   "token_count": 6945,
+   "supervised": 4603,
+   "token_ids_sha256": "eac13b104acb9d273ede6db7c1aea202973b292c4428c6d5d784a09b084b70d7"
+  },
+  "teich_cursor_cursor-9ee79c7b-7c79-46d9-9ee2-3be146300959": {
+   "token_count": 24055,
+   "supervised": 7443,
+   "token_ids_sha256": "82b807a137cc434cfd729069080732bf22c5f4e8e8cd2a2de844380961738a94"
+  },
+  "teich_cursor_cursor-068c421c-6419-440b-a271-a8e4a78bc836": {
+   "token_count": 53613,
+   "supervised": 18409,
+   "token_ids_sha256": "8097085484c437539cda5366ac7028c0dbb8044febe8787793f92ab001f83484"
+  },
+  "teich_cursor_cursor-8b8633ef-264a-4d0c-b3ff-3fa5b71723c2": {
+   "token_count": 25269,
+   "supervised": 13151,
+   "token_ids_sha256": "6045fbba940d8779718e29fec93dd256eb0305e640ed461876809f9ea20e6c29"
+  },
+  "teich_codex_rollout-2026-05-20T17-34-21-019e47f4-6e0a-73b0-8d3b-5b25fa97e52f": {
+   "token_count": 43529,
+   "supervised": 14183,
+   "token_ids_sha256": "32ff5cbca8f0e6518e8112a49d03240ad84d18f7c7a6791b8a117ead90b11908"
+  },
+  "teich_cursor_cursor-c78ef21e-9362-4263-8e40-2307f660a3cf": {
+   "token_count": 52472,
+   "supervised": 13547,
+   "token_ids_sha256": "d86b851e6029b55f13fb0e4ed5796b7abe284fd42a41c9e61da99de6395d69b5"
+  },
+  "teich_claude_agent-af2e4f86977c2f89c": {
+   "token_count": 5698,
+   "supervised": 2646,
+   "token_ids_sha256": "195ce31bea6e26fe69144f879520374a4d3344963d734b69e88c6d95ed7d41c7"
+  },
+  "teich_cursor_cursor-8e82795a-96c8-4a14-a555-226cd64277a4": {
+   "token_count": 60625,
+   "supervised": 23237,
+   "token_ids_sha256": "09317c3843dae4e562a2041686ea3e93929fbef6fc805f737fbf0f0671d77b15"
+  },
+  "teich_cursor_cursor-73ae5d73-08cb-41cd-8946-eabb8f56e8c3": {
+   "token_count": 40048,
+   "supervised": 13842,
+   "token_ids_sha256": "a538285bec5d6fcd8b7433a784f2af4e0d5eae749109016a1693600180e52d7d"
+  },
+  "teich_cursor_cursor-a0289fe0-0df8-46d9-ac81-83b42ad4a44e": {
+   "token_count": 53753,
+   "supervised": 15500,
+   "token_ids_sha256": "4f4a618e1011d450136400c05c0033387f97f725d10a0fdd8ba54df33eb1f287"
+  },
+  "teich_cursor_cursor-ac50b6a9-ed79-4471-9091-fe6806e207dc": {
+   "token_count": 49279,
+   "supervised": 17322,
+   "token_ids_sha256": "9788781e0d50edbf42e15d821eb5b4c93127332c1de323207229edb97f9d328d"
+  },
+  "teich_cursor_cursor-3be5f51d-8b07-486a-990e-2b0f16835615": {
+   "token_count": 51290,
+   "supervised": 28664,
+   "token_ids_sha256": "04c40ec662a61ac48672afe18651342bb3730352494d913ad4ea21a3500cf2b3"
+  },
+  "teich_cursor_cursor-b426fdfb-4aa5-47b7-9120-280da61712aa": {
+   "token_count": 54102,
+   "supervised": 26857,
+   "token_ids_sha256": "050248ada6afaad6f6d03239e49167f30ee5b061b47f01f6bd1b090797bd27e2"
+  },
+  "teich_cursor_cursor-4ef5916d-bd2d-47a2-b5b3-18e06136d916": {
+   "token_count": 4389,
+   "supervised": 1682,
+   "token_ids_sha256": "e8666b7b629bb4a307445a06ef150cf9a80578a8ba21bb05f8c189895302f008"
+  },
+  "teich_cursor_cursor-56a307a4-7deb-49cf-a63d-4b278d749658": {
+   "token_count": 41181,
+   "supervised": 8042,
+   "token_ids_sha256": "061126895abad96ee5f8f1f6ce5d9a43dcb4cb19750b115d5d944339a3532614"
+  },
+  "teich_cursor_cursor-f463826c-f033-4583-87c2-77a1587b7c2e": {
+   "token_count": 47356,
+   "supervised": 24257,
+   "token_ids_sha256": "9b269858bba9f434a5ece06c8fb269a1df2bd9ce25b28a656e8dbcb28a5ddaec"
+  },
+  "teich_cursor_cursor-5039d192-ce50-4b53-83d2-efbb53fc8b6c": {
+   "token_count": 57882,
+   "supervised": 22151,
+   "token_ids_sha256": "67bd802f567da37d332f459811945550c9bbd930b9d6f51f189b1d172c4473a8"
+  },
+  "teich_cursor_cursor-6230cd47-ac3e-47e1-9cdc-acf6131aa71d": {
+   "token_count": 60393,
+   "supervised": 17025,
+   "token_ids_sha256": "9f0ff66c56a455110b8dc1ed16a6ffabdac6ee6b7dbdcfcf263e02034f4166ca"
+  },
+  "teich_codex_rollout-2026-07-12T12-58-28-019f57e8-e640-7913-9cf5-f84ad8f09714": {
+   "token_count": 54424,
+   "supervised": 7606,
+   "token_ids_sha256": "8ba26c307c0990f2f36a56a32ae2b1ec3b36482d882fef499dde5d14e997a230"
+  },
+  "teich_cursor_cursor-2d149dac-4a50-4fd7-b630-42bab2633796": {
+   "token_count": 35021,
+   "supervised": 16935,
+   "token_ids_sha256": "23205b1d537434ec90b93b7d31380455863da68fc4f398cac66a03dd5957c0f9"
+  },
+  "teich_cursor_cursor-0d7a7eef-70dd-4bbc-ab3b-a327e3eec922": {
+   "token_count": 10881,
+   "supervised": 1775,
+   "token_ids_sha256": "871846dc74fec978d94df10c1015bb149e9d002756a321f66501e4c5ee6f908c"
+  },
+  "teich_cursor_cursor-a3cd7288-de9d-48ca-bc55-b92ad3ddcea7": {
+   "token_count": 7108,
+   "supervised": 1948,
+   "token_ids_sha256": "fcf59de618abf5e56e3c1dfd8d47c677a90c75667cd98cc1818a4c295bde63a9"
+  },
+  "teich_codex_rollout-2026-06-17T16-25-30-019ed7e7-7217-7ba0-a8fd-2062878168c2": {
+   "token_count": 59694,
+   "supervised": 20351,
+   "token_ids_sha256": "ea401fb8018b71d6402e561085fc0bc51bb4976895ce919f10021d362b5befba"
+  },
+  "teich_cursor_cursor-19229e0e-d10f-4a9e-9325-079fc93f66fe": {
+   "token_count": 39532,
+   "supervised": 11813,
+   "token_ids_sha256": "0898bc54e3a294efd8c4f99357497a95164e3d21cf6a6270ba79045d70b9f4f9"
+  },
+  "teich_cursor_cursor-c16af578-80e6-44bf-b058-5b6ca3dec491": {
+   "token_count": 36149,
+   "supervised": 8194,
+   "token_ids_sha256": "1f1632d0f45da507944a8ff369bb79cbf14f8a90b21ab37bc52d9ca158d5e3b2"
+  },
+  "teich_cursor_cursor-5c59ad53-f286-458b-a574-9b4381d809b7": {
+   "token_count": 13181,
+   "supervised": 2517,
+   "token_ids_sha256": "639a27731ae221a24e3e04750783cdb8ee003f31c5cc5e55884b4c5a25137bc8"
+  },
+  "teich_cursor_cursor-35b83855-6669-4dbd-bd7e-92330ee11525": {
+   "token_count": 7090,
+   "supervised": 2465,
+   "token_ids_sha256": "9fce2c833b7763dae2024b00bcb0ef9577ef68ba3390791d3152250bb30702a8"
+  },
+  "teich_claude_agent-ae29da199a0147a8e": {
+   "token_count": 61949,
+   "supervised": 1893,
+   "token_ids_sha256": "84dcef06109d6e5ce4b02426c6e39559564b6951ac933cc40586c018b3cb8619"
+  },
+  "teich_cursor_cursor-0b7613e1-13f2-42f5-9f94-74ae94b83779": {
+   "token_count": 48947,
+   "supervised": 13631,
+   "token_ids_sha256": "0a8b47aaaf6bbb833c189dfab60693f498156b3a5346aa4c23a2baac5619f371"
+  },
+  "teich_cursor_cursor-5814f579-6011-4eee-be47-29e0c02a7fdb": {
+   "token_count": 3609,
+   "supervised": 1788,
+   "token_ids_sha256": "e3a1fa83a20d4f33b93e46ef64befa925bbce1dc57c93aca960f41c58d567dd6"
+  },
+  "teich_cursor_cursor-b12ee2d2-d324-46e3-957a-b4a0001541a0": {
+   "token_count": 42057,
+   "supervised": 8521,
+   "token_ids_sha256": "d7087b697ed64dd0a9a9f93acab7b2d23479779145965c2636fc60a39dcd24c9"
+  },
+  "teich_cursor_cursor-c39e8715-98a3-45fc-af18-4000f41ee059": {
+   "token_count": 43254,
+   "supervised": 10477,
+   "token_ids_sha256": "fa5795626add775c6edfd007b876e8bd623c52472c7516338126b62ea2b260cc"
+  },
+  "teich_cursor_cursor-bd30e779-8a44-4d88-803f-3f6dd1e74c41": {
+   "token_count": 31826,
+   "supervised": 11107,
+   "token_ids_sha256": "004781a07b0c24a94e5bee55040885d5ad83e21ee08c76d792c2e8efa907b928"
+  },
+  "teich_cursor_cursor-1f12a171-1745-4bab-8e0b-d82e48fdabfd": {
+   "token_count": 57135,
+   "supervised": 24962,
+   "token_ids_sha256": "863457ac584833c39be0450dbd9a47d2bbf425ba0a07b699644c9b9cfae9b6b9"
+  },
+  "teich_cursor_cursor-1cd2714a-3deb-4264-988a-4c2f2f86869a": {
+   "token_count": 17884,
+   "supervised": 7719,
+   "token_ids_sha256": "2610b7e523fff6403dfc17460deb7c36f821afdd2732d8cd4a5b508381ea4936"
+  },
+  "teich_cursor_cursor-b8279205-3572-4d12-a22d-c70a753a0951": {
+   "token_count": 58447,
+   "supervised": 19287,
+   "token_ids_sha256": "1316988611fd4e4dd89e7964f4000a921781a72b00137dc1046bed97a9d5580b"
+  },
+  "teich_cursor_cursor-eeede6bc-d965-4f07-9001-e6ff6c4971bf": {
+   "token_count": 59658,
+   "supervised": 18912,
+   "token_ids_sha256": "d96d4bfeeb2a7540e1093ef7893054b3c55aa081efb6fe4b21325ebd42015136"
+  },
+  "teich_cursor_cursor-321527a5-29a6-4f58-b333-e807180be11f": {
+   "token_count": 19723,
+   "supervised": 5095,
+   "token_ids_sha256": "a1af0dfced370f405823824d0b1444472e4727807c2f00bea50674e11026ca02"
+  },
+  "teich_cursor_cursor-90fa6152-2fc5-416e-9183-727cabd11864": {
+   "token_count": 46461,
+   "supervised": 26150,
+   "token_ids_sha256": "df181eea9b1aba3daa24c4276c66a644c2aa348dbdb5334cee91d82ff50f4e63"
+  },
+  "teich_claude_agent-ac82196d69fc97e75": {
+   "token_count": 4010,
+   "supervised": 1517,
+   "token_ids_sha256": "c9c670148d8c475a9bded1d2e3b477a77cfa1a43205143da8b5d3decb64d598b"
+  },
+  "teich_cursor_cursor-15f1f300-d9c2-4e6f-b1ff-b6fff26c2521": {
+   "token_count": 23857,
+   "supervised": 8650,
+   "token_ids_sha256": "4b76a5d48c2659d9d7e4f82efe1af6ed2f74be5ad9033cbdb1dcfafb3b33c2ef"
+  },
+  "teich_cursor_cursor-d6a82929-4a8f-4f30-a20c-51aacdb7f9ef": {
+   "token_count": 18000,
+   "supervised": 5289,
+   "token_ids_sha256": "83c9fa3f65d73581d87efa28f5c00bbcfc7737262badf39c5b65469841cf08d5"
+  },
+  "teich_cursor_cursor-6a32ac42-24ff-4565-a934-f96d63862f73": {
+   "token_count": 36347,
+   "supervised": 11402,
+   "token_ids_sha256": "eefc8589b076ee8852c454ce1546555103b2b7fcca852d087b01e4b39fcdc2b5"
+  },
+  "teich_cursor_cursor-2911928b-ae9d-4eaf-9d4d-6807f3a8438b": {
+   "token_count": 40223,
+   "supervised": 17692,
+   "token_ids_sha256": "59a0d70e30173462c2e4ab67221fbd7a10b0ac9321e541084e42eb7704c18dc5"
+  },
+  "teich_cursor_cursor-50d76d0d-19a0-4918-a5b8-6162125571a3": {
+   "token_count": 17077,
+   "supervised": 6440,
+   "token_ids_sha256": "56d3481425a7d0ea8de42f05efd08edf85ae69d0e2c9b4f92b7e6af3b5b60f4e"
+  },
+  "teich_cursor_cursor-2abe228c-a4f7-4ee1-b506-596b6b5938e4": {
+   "token_count": 64522,
+   "supervised": 21169,
+   "token_ids_sha256": "7d1998bdb264ad63df63fd365b6908d18b2fb7539c62311dbbf33be77538f9c5"
+  },
+  "teich_cursor_cursor-e7050422-2cdc-49a8-8ee7-c4a5c7df02c8": {
+   "token_count": 58148,
+   "supervised": 42484,
+   "token_ids_sha256": "ce95064650d53717f1583dedebb068409375f06e4dc779a8377159bcb29dfa73"
+  },
+  "teich_claude_agent-a8960ed5c78f6fe4f": {
+   "token_count": 55542,
+   "supervised": 2641,
+   "token_ids_sha256": "22461ecc07bd914df626b80ab6dc58026c153902d96d89746042e8cb21e76092"
+  },
+  "teich_cursor_cursor-197891d3-32d4-4d7e-810d-3a681ea7e25a": {
+   "token_count": 18089,
+   "supervised": 6249,
+   "token_ids_sha256": "97e7039d0f728b8fdf40d4133e5400983930ccd2ef2051098144eabc9318b788"
+  },
+  "teich_codex_rollout-2026-05-23T19-11-01-019e57bf-ff46-7bb3-bdf0-9f79ae87945e": {
+   "token_count": 60311,
+   "supervised": 11115,
+   "token_ids_sha256": "d048729ab8800081a6a6808c7ec3282b0b33751521304e392472c59bdf8a579d"
+  },
+  "teich_cursor_cursor-0665233e-1f93-4db3-a2b2-50bfa22297ad": {
+   "token_count": 17169,
+   "supervised": 6032,
+   "token_ids_sha256": "18478bfa8189de72e80d9d3896eef7d733efc99385c5ccb84e093791372ee483"
+  },
+  "teich_cursor_cursor-a374d14b-0d3f-424e-a52e-d65d64248bf5": {
+   "token_count": 10765,
+   "supervised": 3942,
+   "token_ids_sha256": "ca5dd4be9dbb7fa8cb841e2ec405e836bc78af765037991f4517d9325ea77234"
+  },
+  "teich_cursor_cursor-391780b9-c147-49c0-adc7-239d7454a411": {
+   "token_count": 65487,
+   "supervised": 58196,
+   "token_ids_sha256": "06b99a894a91fc085613a5c449b433801acf65e69d1baa5d50a8173d191467f3"
+  },
+  "teich_cursor_cursor-d0e808f3-8774-4bbe-8bf5-15a4dedad681": {
+   "token_count": 10402,
+   "supervised": 4408,
+   "token_ids_sha256": "0fd65d0ed51aa57c1f0fbd8835af4da9901060ac63f1ae0b7a6880c8f0d80447"
+  },
+  "teich_cursor_cursor-279a95f3-72eb-40db-87f1-adef62cc3cf6": {
+   "token_count": 58565,
+   "supervised": 11973,
+   "token_ids_sha256": "4748154c97f98f5512360632cb75830efb59e04f0fb644c26e8c1aa8a2a945f8"
+  },
+  "teich_cursor_cursor-6767733d-b95f-4096-b4ba-a206f913797e": {
+   "token_count": 14808,
+   "supervised": 4871,
+   "token_ids_sha256": "dd7f30648fcdbb07fb42ed2981487b7eb4eae847e0c2abacba966a0f2fb0e268"
+  },
+  "teich_cursor_cursor-2653bf2e-cf55-4d8b-85e7-a912a206400b": {
+   "token_count": 22565,
+   "supervised": 7710,
+   "token_ids_sha256": "e550cfa52c8e8f875beee878dc86b8755914dee91a40c8d630639f597dfeaf30"
+  },
+  "teich_cursor_cursor-fc14c54a-6954-411d-bb5f-63a094ce478a": {
+   "token_count": 49291,
+   "supervised": 16432,
+   "token_ids_sha256": "b55a9e62bf9452434bf23a5d1646ea15fb9c5780ab476a1d951340674dd44093"
+  },
+  "teich_cursor_cursor-d720e67e-8b38-4aba-83a9-935e7ba38d26": {
+   "token_count": 6934,
+   "supervised": 1974,
+   "token_ids_sha256": "ce9f29337e5f70b4632ab666d205e01e8083f212af3da4752109deb90382d98e"
+  },
+  "teich_cursor_cursor-d9e5b579-d8e6-480c-b022-8e49f06fe884": {
+   "token_count": 21077,
+   "supervised": 6364,
+   "token_ids_sha256": "33e70c8c81bfabb565e9258df477bf8090bc38dd445e44f3b55d0e7d3df77465"
+  },
+  "teich_cursor_cursor-f9373ece-dfc1-4ac8-8d1a-152b2f5735f1": {
+   "token_count": 16888,
+   "supervised": 3591,
+   "token_ids_sha256": "6596841cd3b0a53980078235ca093c57e5feae6accc4b24a2066b18f230ada62"
+  },
+  "teich_cursor_cursor-2f7f8f3e-956e-48de-bf54-6a6bc3d6e252": {
+   "token_count": 35934,
+   "supervised": 9317,
+   "token_ids_sha256": "e41e1ed59b651e9174fe6212f050fa835d407e36519d5bebc97a9b4f38b24fe2"
+  },
+  "teich_cursor_cursor-12a500a9-1513-4aa9-b9d4-d3022b36c4dc": {
+   "token_count": 37189,
+   "supervised": 8276,
+   "token_ids_sha256": "bf0570b2c5e20f2ed21ba79681d4c2108d7ff41392a50033031585ecf8a40a45"
+  },
+  "teich_cursor_cursor-8092e3fb-a358-46c9-8208-dcad115b60cb": {
+   "token_count": 39108,
+   "supervised": 18461,
+   "token_ids_sha256": "cdd27217b04a757a97753747a917e87e6b7bf36e4b408b49023437df87de10e2"
+  },
+  "teich_cursor_cursor-d8dd3544-46a1-4951-a5e0-dc7177b699fb": {
+   "token_count": 57530,
+   "supervised": 14403,
+   "token_ids_sha256": "a0fd9c41a3c6420ea9a7a69457f47a5169b0cdc6490bd8df45baf6352b09815d"
+  },
+  "teich_cursor_cursor-dd3a2724-66af-4e20-a251-4d0362067ff4": {
+   "token_count": 52249,
+   "supervised": 14544,
+   "token_ids_sha256": "e248fd9ec7a8f6f6b8f49072ef90ed5d32255a3cc596a1c3ddd8e5ffa6239fb7"
+  },
+  "teich_cursor_cursor-4362b917-5ad2-43c0-b372-2194fd4d2302": {
+   "token_count": 39646,
+   "supervised": 16510,
+   "token_ids_sha256": "7ccd1430f0f2b6bbf5d7a531cd99649a61f3b527ac5bf54324ca3fc0b9cf3cff"
+  },
+  "teich_cursor_cursor-d4316fdf-5c4e-4a22-b6cf-44dfd4922bb3": {
+   "token_count": 15677,
+   "supervised": 5450,
+   "token_ids_sha256": "a8f24a2a5ec12263b7cb1c931b3d5e31189375e97f4e78f2a98f06574e2ee198"
+  },
+  "teich_cursor_cursor-c47e2157-19ad-421c-9dd0-890a83777dd8": {
+   "token_count": 6216,
+   "supervised": 2060,
+   "token_ids_sha256": "851ba629f64b9abc7bd16d91ce7d098a435790975146db5dfe1b719ffa528d6a"
+  },
+  "teich_claude_agent-a927a05a108fefae4": {
+   "token_count": 4258,
+   "supervised": 1521,
+   "token_ids_sha256": "538d5a31ca395fb2d14061320141a5d21510cd014771ac8459dabf3ddce48cff"
+  },
+  "teich_codex_rollout-2026-06-24T21-10-23-019efcf8-c875-75d1-8920-a4fb27d6c094": {
+   "token_count": 56170,
+   "supervised": 19861,
+   "token_ids_sha256": "5458fd48e3c5898e0241440f5cc40746009b155bf9310715c3559bf4d4038ffb"
+  },
+  "teich_codex_rollout-2026-07-01T08-35-53-019f1e52-8a2b-7740-9426-87ceeb29d697": {
+   "token_count": 41841,
+   "supervised": 6044,
+   "token_ids_sha256": "f598c6eda295c292aa8bff6cac0a3118e91fd0c4883165a65e46c31564a7559c"
+  },
+  "teich_codex_rollout-2026-07-10T23-00-06-019f4fc2-fe1f-7332-ba88-7ac04d4e1cb8": {
+   "token_count": 57374,
+   "supervised": 23986,
+   "token_ids_sha256": "5edb356c5b3291960b6babbd50a3c9b081a8191696c2d83fcbc4a905cc676af5"
+  },
+  "teich_codex_rollout-2026-05-27T21-21-35-019e6cd0-f8a6-7ae0-a3ee-5d1d9110165c": {
+   "token_count": 49442,
+   "supervised": 9631,
+   "token_ids_sha256": "24f42ecfe5b5538578b2c64432c2c68f2039e133b7619bb9400338304d83d822"
+  },
+  "teich_claude_agent-a3ce831cd6c1f25fe": {
+   "token_count": 5134,
+   "supervised": 2155,
+   "token_ids_sha256": "19708ac992da8de62529e6cc1491da2541ecd8924dcf195c3574177f8e1740c6"
+  },
+  "teich_codex_rollout-2026-07-12T14-09-33-019f5829-f76c-7462-b2b8-3a7fedab482f": {
+   "token_count": 40380,
+   "supervised": 5287,
+   "token_ids_sha256": "665fce992b2091d30a62404cf70d9931bee6ef4310bdadf90b5210dcb0501a2b"
+  },
+  "teich_codex_rollout-2026-06-17T16-25-55-019ed7e7-d660-73b0-87f3-d6ebb350aee4": {
+   "token_count": 64230,
+   "supervised": 18567,
+   "token_ids_sha256": "ac19aca93271e43e06118b002dbc5a36e030121c39adaa78724e4a7c8935128e"
+  },
+  "teich_claude_agent-ab6dc2ab37c3c2c34": {
+   "token_count": 4196,
+   "supervised": 1499,
+   "token_ids_sha256": "598b2c9861886f434a4973784044af7fcc0a9574b7b2df65b4052a056c460649"
+  },
+  "teich_codex_rollout-2026-05-24T03-55-53-019e59a0-87c3-7be1-b171-bd06cdaf0bf2": {
+   "token_count": 50902,
+   "supervised": 6548,
+   "token_ids_sha256": "ae0a87eb472d4449089cd9adce968703110c863ef21b76325e9175d69cd4e8d6"
+  },
+  "teich_codex_rollout-2026-06-19T10-50-52-019ee101-d002-7ae0-a1d9-22c16ba7ff3c": {
+   "token_count": 57389,
+   "supervised": 16677,
+   "token_ids_sha256": "fd74a82b3853c0f605f149a89c2548b4b8830f1006ce9bf8fa5855933f7805bf"
+  },
+  "teich_codex_rollout-2026-07-10T09-26-55-019f4cda-7ff5-79b1-b36f-b5bd3da06803": {
+   "token_count": 51780,
+   "supervised": 21543,
+   "token_ids_sha256": "0f368e1a000ac45fde89d86c00c6d8bf4ec484d95720f4b411f3fe894fb6c0fa"
+  },
+  "teich_codex_rollout-2026-05-22T01-23-47-019e4ec8-8e53-72e2-a9f8-35de3ef2ddf6": {
+   "token_count": 55890,
+   "supervised": 9231,
+   "token_ids_sha256": "7b5ca750ad5d1a5c668968601de75e7bc6bafdbcd43246bc92dfb30091248b60"
+  },
+  "teich_claude_agent-a174f22b7204a616f": {
+   "token_count": 5011,
+   "supervised": 2124,
+   "token_ids_sha256": "40f954acad18c2dce648084702ad2f4437ba9dc5053aa118c406386c256b1ff9"
+  },
+  "teich_codex_rollout-2026-07-03T15-31-42-019f2a1b-f3ce-7071-920f-e3f04bae1a03": {
+   "token_count": 63724,
+   "supervised": 16391,
+   "token_ids_sha256": "0ec540300b7e1b5a866a467d50e783445d6f2047917497e4423a48bcf398648e"
+  },
+  "teich_claude_agent-a1038c1c61b71a164": {
+   "token_count": 3959,
+   "supervised": 1434,
+   "token_ids_sha256": "a59340f3eb38890c15d5de748f5784776e951726b1b8cb14392afce18ca46fd7"
+  },
+  "teich_codex_rollout-2026-05-26T14-13-48-019e6622-f8a8-7cc3-b60a-bc8a1b875b2d": {
+   "token_count": 42319,
+   "supervised": 5259,
+   "token_ids_sha256": "367236ea090f02d132322d961b8fab2935dd2ecac6f89a21d35f726581645050"
+  },
+  "teich_codex_rollout-2026-06-30T15-22-08-019f1aa0-1b42-7091-9649-a2e2a356e198": {
+   "token_count": 52045,
+   "supervised": 16626,
+   "token_ids_sha256": "55db4264bc843502546817078dc9e1d5b831bf9974abb35da851f6fe76811106"
+  },
+  "teich_codex_rollout-2026-07-11T19-52-01-019f543d-2788-7410-b51c-62cb7672de37": {
+   "token_count": 64859,
+   "supervised": 21088,
+   "token_ids_sha256": "33fd71d83ca0bba05bba96432117a56d8b25056429f8f818c2d685ef633ffcf2"
+  },
+  "teich_codex_rollout-2026-06-11T12-52-06-019eb83d-ea54-7111-9cb8-dadf27d12ad3": {
+   "token_count": 49631,
+   "supervised": 9222,
+   "token_ids_sha256": "fa63acbebb264f8e28e9d08f5aac35628fbf74647581b1697902ab86384b7430"
+  },
+  "teich_claude_agent-a4ff8a10fdcb915b3": {
+   "token_count": 4594,
+   "supervised": 1900,
+   "token_ids_sha256": "dde76760fc66ff46a360c0b042b11adf900c07184b53e114cddc8453e6437875"
+  },
+  "teich_codex_rollout-2026-06-17T12-51-06-019ed723-2afa-7ca3-a3ca-902e011ce7b7": {
+   "token_count": 55283,
+   "supervised": 16106,
+   "token_ids_sha256": "41fd97cffa3760eb77dfa5f58ddee6eecbcc8e460386080900d1c9a4b0feca42"
+  },
+  "teich_codex_rollout-2026-05-26T13-14-56-019e65ed-12ad-7350-9c8d-6b5ab5007c4f": {
+   "token_count": 42316,
+   "supervised": 4967,
+   "token_ids_sha256": "3d4f4ad3c791d78a467c154cbdf31da275ad404f9c8ec600ef8bae69b1019b68"
+  },
+  "teich_codex_rollout-2026-07-10T20-42-17-019f4f44-cf0e-7df1-8fa9-4be5c23d3195": {
+   "token_count": 63354,
+   "supervised": 16095,
+   "token_ids_sha256": "6ed0405f15f8ef56320dfa96853446ce201a909853af228f31a192c69f99bb0b"
+  },
+  "teich_codex_rollout-2026-07-10T20-04-21-019f4f22-13f7-7be0-9727-330399ba0e8e": {
+   "token_count": 48185,
+   "supervised": 20733,
+   "token_ids_sha256": "11fe6f6f4e6dc7f0c689f76012b47ec1f7fec83a9f4b16cde9be2d59cab8ef58"
+  },
+  "teich_codex_rollout-2026-06-02T03-31-37-019e87e3-8c2f-7250-8802-e8fdcc31eedb": {
+   "token_count": 52758,
+   "supervised": 8121,
+   "token_ids_sha256": "15e6fc9d551afccff02c5670ea10c84b86463b8a454afa87d6feac189bd139ad"
+  },
+  "teich_claude_agent-a8c95aae55d5ee2d8": {
+   "token_count": 4735,
+   "supervised": 1851,
+   "token_ids_sha256": "b8792e221279f61356b6c21ce54794f9d11f24ebd014f2d1ba22bb8e121842a2"
+  },
+  "teich_codex_rollout-2026-06-22T22-32-36-019ef2f7-557f-7b70-a9a5-3385126bcfac": {
+   "token_count": 60139,
+   "supervised": 14508,
+   "token_ids_sha256": "96f62d34dd2dbfb7c1932722f365d5053fce32215330592ebc47be56480e8063"
+  },
+  "teich_codex_rollout-2026-05-22T17-01-56-019e5223-7643-76f1-a3ee-752aee380fa6": {
+   "token_count": 41811,
+   "supervised": 4883,
+   "token_ids_sha256": "9c2d002d22609f7d8dae6b90af86f2ac2f2a44105c9c9b1a294a945dd99d13a4"
+  },
+  "teich_codex_rollout-2026-07-11T23-49-24-019f5516-7bcc-7373-a0c1-805a49eea831": {
+   "token_count": 60830,
+   "supervised": 16050,
+   "token_ids_sha256": "b39da8ae3b6b342c1150a6b7ad7f7eb479582c4c66f1012d02aabe6f463ce517"
+  },
+  "teich_codex_rollout-2026-07-11T05-51-08-019f513b-4cbb-7760-abd4-d24ea91a2f4c": {
+   "token_count": 61063,
+   "supervised": 20667,
+   "token_ids_sha256": "9cce438135f0b9e0f017cad60d022c7a7fcee336fb0bb84dbdc94fd124e9d87c"
+  },
+  "teich_codex_rollout-2026-06-12T03-53-13-019ebb76-ebe0-7e53-92c4-8845fb3a5c06": {
+   "token_count": 55861,
+   "supervised": 7298,
+   "token_ids_sha256": "fba9452d588e2f04eba99e2e9a01e342634f1e37915a01cb8debc9b9d9620118"
+  },
+  "teich_claude_agent-abfab5a6426d3ae6e": {
+   "token_count": 4500,
+   "supervised": 1750,
+   "token_ids_sha256": "ab69f2ddb5086cc4d4892e11e948ef66281d32a2963e89b5f28a693858f807ee"
+  },
+  "teich_codex_rollout-2026-06-17T12-28-28-019ed70e-709e-7430-a1bd-e7df3634ca16": {
+   "token_count": 59799,
+   "supervised": 14150,
+   "token_ids_sha256": "13192f576d4f3ad9d17168b0636abb124da53a4c51f7aada54ae87af879a14ec"
+  },
+  "teich_codex_rollout-2026-05-25T11-46-27-019e6075-b6ee-7223-bb72-0a39bf71d8af": {
+   "token_count": 35172,
+   "supervised": 3400,
+   "token_ids_sha256": "2a635d58d4ac69efb2aee02dbed15e08323c487a2694c394e95c9b0fd0b00f77"
+  },
+  "teich_codex_rollout-2026-07-12T06-29-44-019f5684-fe70-7d31-bdb3-6d5c927bee80": {
+   "token_count": 55946,
+   "supervised": 15601,
+   "token_ids_sha256": "8ffba998fa473a775116e1c05782850484c431aedc40c0bad15020f3329a88c2"
+  },
+  "teich_codex_rollout-2026-07-10T23-00-07-019f4fc3-007c-7440-ad3c-b939b8331bc4": {
+   "token_count": 47604,
+   "supervised": 20036,
+   "token_ids_sha256": "d63855053ed1445afa4440e6ef11880f7a75ba883702f778ee0aeabfe26413c5"
+  },
+  "teich_codex_rollout-2026-06-05T03-50-19-019e9767-bf00-7b31-b6ae-b13dfb7d5257": {
+   "token_count": 48226,
+   "supervised": 6802,
+   "token_ids_sha256": "c71867ea09742f46dd909ad215a3be0402702661359a2a13de91db4b91ee353b"
+  },
+  "teich_claude_agent-a5f1c9230c3dd9386": {
+   "token_count": 4524,
+   "supervised": 1645,
+   "token_ids_sha256": "9d5fcdb8a4f816cdc196a8b33438406d21e680ac880f39989f7c91159380f5cb"
+  },
+  "teich_codex_rollout-2026-06-17T20-47-05-019ed8d6-f0bf-7fe3-b875-d93ab9f7b8e3": {
+   "token_count": 46547,
+   "supervised": 13181,
+   "token_ids_sha256": "485fe90c2a4e1d11655b34f79af42a235b955437a4ebad256bf62ac7a17132fd"
+  },
+  "teich_codex_rollout-2026-05-22T01-55-31-019e4ee5-9f5e-7b90-b46b-6160289faf24": {
+   "token_count": 36098,
+   "supervised": 3048,
+   "token_ids_sha256": "64be31c19c5d05c2705e2b20ebc3d45cbc6314fc4a53b619dae5921ddd603c58"
+  },
+  "teich_codex_rollout-2026-05-07T15-46-40-019e049f-2c33-7033-bdb6-81ebfeab5032": {
+   "token_count": 43088,
+   "supervised": 14419,
+   "token_ids_sha256": "11dd752b7cb9ae87b3476864ca93cbd189ef20cfc3c5c1e930ca4d5e6ebd79dd"
+  },
+  "teich_codex_rollout-2026-07-10T00-00-28-019f4ad3-e425-7232-b753-ea03bf94268d": {
+   "token_count": 52120,
+   "supervised": 18357,
+   "token_ids_sha256": "2a7c38059e99aa3a8b5c789fcee739ad5ae99de8c26f891305b7f86312272f7d"
+  },
+  "teich_codex_rollout-2026-05-18T11-22-21-019e3c53-21c6-7963-b934-9901d0b3a33d": {
+   "token_count": 50036,
+   "supervised": 6409,
+   "token_ids_sha256": "d5e088b9c3be5b1badc2ad852d9f498c0e8af2f51e8a57197747f2f24767b132"
+  },
+  "teich_claude_agent-affae103816d7c8fb": {
+   "token_count": 4414,
+   "supervised": 1603,
+   "token_ids_sha256": "fe89b8867c5b381963fd3a6c7618ce2eb3fb52208508d57c9c4380513e6b9dd8"
+  },
+  "teich_codex_rollout-2026-06-23T11-44-14-019ef5cc-19f9-7833-a66b-406c857362df": {
+   "token_count": 57477,
+   "supervised": 12998,
+   "token_ids_sha256": "22eba34af5146f0f4a3491b714a9e898fd6b09b2a9c8885967aec177898f8b8a"
+  },
+  "teich_codex_rollout-2026-05-22T18-01-42-019e525a-2f65-7371-9775-5537a1d461af": {
+   "token_count": 31273,
+   "supervised": 1609,
+   "token_ids_sha256": "318cd3590823072f5aa4d1fa758f5c93980f4e2edf371409a672d2332f92c50f"
+  },
+  "teich_codex_rollout-2026-06-24T20-56-35-019efcec-283b-7180-8e65-f3f4ae21fd69": {
+   "token_count": 41710,
+   "supervised": 12580,
+   "token_ids_sha256": "874e16a61179f1819ad26711852d77cdb1c46f38139d8bdb4bd483a94eef5d70"
+  },
+  "teich_codex_rollout-2026-07-09T15-50-23-019f4913-33b2-7c72-8c00-ed8897ac75cb": {
+   "token_count": 47434,
+   "supervised": 17842,
+   "token_ids_sha256": "a375269a80897f5334bb07a10a1d504119bedf4cad85b35a0c9ac0a2ddec4120"
+  },
+  "teich_codex_rollout-2026-05-21T00-05-38-019e495a-a7c7-7b71-b70e-b3c5e5b86998": {
+   "token_count": 43168,
+   "supervised": 6210,
+   "token_ids_sha256": "c1e8745c1f758e00d22cba655898ede5a79ba475e4c433240795468c79193ec7"
+  },
+  "teich_claude_agent-acc9f85ced97364ca": {
+   "token_count": 3884,
+   "supervised": 1449,
+   "token_ids_sha256": "bec0ca6325b865e91d5735dd477ba0ab103a1fc05e1b0160ff61eeb5a90373ba"
+  },
+  "teich_codex_rollout-2026-07-03T19-44-19-019f2b03-3833-77b0-8cb6-2adb91f4a541": {
+   "token_count": 64731,
+   "supervised": 11832,
+   "token_ids_sha256": "74c02672c319e3dd8bf5600bdc804fcd0ee49a6a64b89764b39558d83e063feb"
+  },
+  "teich_codex_rollout-2026-05-22T22-58-54-019e536a-4628-7683-9542-4aefad88dc08": {
+   "token_count": 25640,
+   "supervised": 765,
+   "token_ids_sha256": "523d0a0b1996ff4ab9899ff1817b24b8b79b8dc77e82fd37ba45e25a36421666"
+  },
+  "teich_codex_rollout-2026-05-08T14-24-34-019e097a-5bb9-7531-b672-dc226fbbc216": {
+   "token_count": 35273,
+   "supervised": 12278,
+   "token_ids_sha256": "da9a9dfec96245228780dbf62562345ee01b6b5684fe7d21f5827bbede797656"
+  },
+  "teich_codex_rollout-2026-07-11T16-17-28-019f5378-b6fb-7fa3-9dc1-61ada333effe": {
+   "token_count": 64489,
+   "supervised": 17539,
+   "token_ids_sha256": "274eed5dfb7ab20c4c9b7c92cb446f7b85b20d54e5b066f12f6c419d4600fba2"
+  },
+  "teich_codex_rollout-2026-06-12T14-57-21-019ebdd6-f3bd-7ea0-9186-1813465ba521": {
+   "token_count": 52469,
+   "supervised": 5887,
+   "token_ids_sha256": "0f834aefbd84834c9a5a71614b320030e13b46f6b81959a3464b3e236c9b8a28"
+  },
+  "teich_claude_agent-a3622521df8a9137d": {
+   "token_count": 3296,
+   "supervised": 1030,
+   "token_ids_sha256": "2bb0bdb4ea300e2e486a6cfcb5bae672e127b8e9da35d2d7f615955ab1edd8cd"
+  },
+  "teich_codex_rollout-2026-07-03T19-20-15-019f2aed-307d-7122-820f-80fc4ddec904": {
+   "token_count": 56532,
+   "supervised": 11030,
+   "token_ids_sha256": "58ed2ec5c72325b230e0499da6b03aad6db0536352e71b8b642c903b53f52b62"
+  },
+  "teich_codex_rollout-2026-05-22T10-37-50-019e50c3-d033-7fd2-b445-99005b9e8ce8": {
+   "token_count": 24415,
+   "supervised": 747,
+   "token_ids_sha256": "acbdb74dba7d5e878b46788897e2c4c605413b2fc451e48a5b476be38db0c86a"
+  },
+  "teich_codex_rollout-2026-07-11T13-09-27-019f52cc-9577-71d2-a334-4185f364e7cc": {
+   "token_count": 54609,
+   "supervised": 11796,
+   "token_ids_sha256": "394c0625d7da0c8757162ea5b28a34de83ac70d768548ba01e6633ece2b27797"
+  },
+  "teich_codex_rollout-2026-07-11T20-05-01-019f5449-0e89-7ab2-b7d9-3abaccfa190c": {
+   "token_count": 64710,
+   "supervised": 17167,
+   "token_ids_sha256": "97421bdbec932319ad00d3e3c171613a664df201dac40e25bbc448e0c0d2c95a"
+  },
+  "teich_codex_rollout-2026-05-20T23-01-50-019e4920-4013-7d90-bf43-2933c8c5d10e": {
+   "token_count": 41487,
+   "supervised": 4987,
+   "token_ids_sha256": "a4fef3883bfb68f6b7168ed819bac19370dc1ad1d5fb2696be4cda11d1ad2b4d"
+  },
+  "teich_codex_rollout-2026-06-23T10-52-43-019ef59c-ee58-7572-9a2e-922190a16f64": {
+   "token_count": 52681,
+   "supervised": 11009,
+   "token_ids_sha256": "348ca8216cb3902cb6b983130715c15ec166379e1308da6553cea979f14ec7a5"
+  },
+  "teich_codex_rollout-2026-05-23T18-19-03-019e5790-6b4c-78d2-afd3-3292bda7450c": {
+   "token_count": 23807,
+   "supervised": 699,
+   "token_ids_sha256": "9b0efb91276ebfa7da8d57eb976501cb6d1389126b3464ed2c42bff924972386"
+  },
+  "teich_codex_rollout-2026-06-23T00-57-49-019ef37c-4825-7963-a482-367a3aa0d720": {
+   "token_count": 48351,
+   "supervised": 11662,
+   "token_ids_sha256": "966d791026f86dc5a0d8884589e3d27094d2642064b109f6f0cc3da038b23ed9"
+  },
+  "teich_codex_rollout-2026-07-11T19-32-26-019f542b-3734-71d0-a11c-360a2d8f990d": {
+   "token_count": 45938,
+   "supervised": 15984,
+   "token_ids_sha256": "05614e2d42ac83c41318c291022b6989e1cec14a8db2c416ca25fa34ef500cd4"
+  },
+  "teich_codex_rollout-2026-06-11T17-58-06-019eb956-1359-77f0-9f15-05f2a44ce2e2": {
+   "token_count": 28642,
+   "supervised": 1764,
+   "token_ids_sha256": "411f3428db012e990dbc61559bdafd628e3043cbe1867edaab9379c58973d271"
+  },
+  "teich_codex_rollout-2026-06-22T22-58-54-019ef30f-6906-7700-9013-3475b6108faa": {
+   "token_count": 59186,
+   "supervised": 10875,
+   "token_ids_sha256": "9050fdfca7761d9d819310ed9c4ee9cc70e6fb3c1628b0e657ebc40bc2307c01"
+  },
+  "teich_codex_rollout-2026-05-26T16-51-33-019e66b3-6487-73b0-85c6-7aaa0e898670": {
+   "token_count": 25053,
+   "supervised": 451,
+   "token_ids_sha256": "4a7c7b50d5395f191d72aa3aea3dd17db369935c8e99fd670446ae13020984d3"
+  },
+  "teich_claude_agent-ad0d43f51d82b9624": {
+   "token_count": 64727,
+   "supervised": 9882,
+   "token_ids_sha256": "8aeea122efa4417f9e4701725d1928b53c62562d86e1b11e8b94f0d66c6343b5"
+  },
+  "teich_codex_rollout-2026-07-11T20-40-35-019f5469-9b29-7471-ba1d-6333a100aa07": {
+   "token_count": 64425,
+   "supervised": 15533,
+   "token_ids_sha256": "f800cb0034639a78476ab51d817c6727566bdb3ba80f9c6d8cae8a38206e987a"
+  },
+  "teich_codex_rollout-2026-05-27T16-33-00-019e6bc8-c3cc-7460-a68e-d48e35c73fb1": {
+   "token_count": 28330,
+   "supervised": 1500,
+   "token_ids_sha256": "71d26ec89b0ac37e1327f89b087ac4c775ee94b17f5025eab01818584dd81283"
+  },
+  "teich_codex_rollout-2026-07-02T12-37-58-019f2456-88a9-77e2-8de0-a21753083115": {
+   "token_count": 55611,
+   "supervised": 10841,
+   "token_ids_sha256": "e069d6891589dc4f27f0c35f336fc858307e6e43cd0fdc363afd917e0f14e967"
+  },
+  "teich_codex_rollout-2026-06-24T18-44-34-019efc73-4a24-7d00-b545-83f54f418f2d": {
+   "token_count": 40978,
+   "supervised": 9139,
+   "token_ids_sha256": "21b25019cb6c58b57be53c95409b845df92e3efb1416170de97de46403ae152f"
+  },
+  "teich_codex_rollout-2026-07-10T09-10-53-019f4ccb-d01e-71d3-bfb7-fde73d42152f": {
+   "token_count": 59237,
+   "supervised": 15105,
+   "token_ids_sha256": "8669704bf37f30d2410cba9014cf0ed50f1321e2ea77c03fa5e66442a93f1846"
+  },
+  "teich_codex_rollout-2026-06-02T18-03-28-019e8b01-bf69-78f0-b1de-a6c38af5c6cc": {
+   "token_count": 27493,
+   "supervised": 1450,
+   "token_ids_sha256": "d712c2771f2dcd79e3cf4c3995b610ec16d43cf311aafa447ab02932813299b1"
+  },
+  "teich_codex_rollout-2026-06-17T17-52-22-019ed836-fcb9-7b53-af03-65cb69bf210f": {
+   "token_count": 45614,
+   "supervised": 10824,
+   "token_ids_sha256": "9d0a5f4cf79da6a7ac50b52d1aa08f778563e2b423af5d34e12835c33cb727bc"
+  },
+  "teich_claude_agent-a17246556f6e5ba27": {
+   "token_count": 61921,
+   "supervised": 8759,
+   "token_ids_sha256": "57649f2e09511d01a4aa20b490f3c30d7352b4fe6286ee51d1234f70aecd238a"
+  },
+  "teich_codex_rollout-2026-07-12T14-17-38-019f5831-5f50-7123-96b6-0efa55b7ba3b": {
+   "token_count": 44805,
+   "supervised": 14682,
+   "token_ids_sha256": "945cf0edb4260bee409aaa381759dbd1ec1dc813006b20f990c998eca00116eb"
+  },
+  "teich_codex_rollout-2026-05-27T13-56-59-019e6b39-ef50-70d3-aeb8-02dcb6551fa0": {
+   "token_count": 26420,
+   "supervised": 1128,
+   "token_ids_sha256": "5cc1e1350034f747590f41e85e3dabb74267ce6c43682482f48b8dfc69737d19"
+  },
+  "teich_codex_rollout-2026-07-02T11-59-19-019f2433-2472-7c02-8a2a-1cbcfc560a19": {
+   "token_count": 55278,
+   "supervised": 10819,
+   "token_ids_sha256": "ed73c539c1366e5dab42f0ca06ff32cfd2979ef3c2e2caf19112fd38a71aabf3"
+  },
+  "teich_codex_rollout-2026-06-23T02-21-23-019ef3c8-cc20-7fe0-804b-3e6f7f941df9": {
+   "token_count": 33190,
+   "supervised": 8579,
+   "token_ids_sha256": "83301e7077dd537168401b5d2943c9e948101c8853df307348129bf56a3bd3a6"
+  },
+  "teich_codex_rollout-2026-07-11T16-17-52-019f5379-1495-7901-9523-78132078bbb2": {
+   "token_count": 57656,
+   "supervised": 13926,
+   "token_ids_sha256": "e4e88e2f43822a75ba87057bcd179f0ca3fc5cd6051cc40c83f1786e9ceb3e33"
+  },
+  "teich_codex_rollout-2026-05-19T15-25-44-019e4258-4e8c-7403-9f35-e348f5f5a06d": {
+   "token_count": 30528,
+   "supervised": 965,
+   "token_ids_sha256": "3dc0ac6df7f2c05ddfac42df6c1079d74c9fbaea1a942a3ba52f12e4009dc746"
+  },
+  "teich_codex_rollout-2026-06-23T00-17-39-019ef357-85a5-7b42-86f2-436df7675fab": {
+   "token_count": 65365,
+   "supervised": 10296,
+   "token_ids_sha256": "248348d8cfca3287ed95314a14a147df81c80755d5465a67c08d2a47fa406adb"
+  },
+  "teich_codex_rollout-2026-06-23T02-21-27-019ef3c8-dc1d-7952-9152-fbdaba571ca9": {
+   "token_count": 40176,
+   "supervised": 8460,
+   "token_ids_sha256": "d945e46740c60867651e361c4376a7cc36955c700c5981a4d3c89f9734476f44"
+  },
+  "teich_codex_rollout-2026-07-11T18-07-41-019f53dd-a100-7741-b427-6f4d4278e765": {
+   "token_count": 42472,
+   "supervised": 13878,
+   "token_ids_sha256": "b10f9a82ee1f84f365ab71a4ac88f377081296ea73d68953d8166c78c18a0385"
+  },
+  "teich_codex_rollout-2026-05-22T01-26-58-019e4ecb-7a46-7b62-abc6-1cd04d024b59": {
+   "token_count": 26850,
+   "supervised": 737,
+   "token_ids_sha256": "3b5b998511f309377f5b7e5cc2109ce8f86382b0e91a6e3df0320f56c20d17bb"
+  },
+  "teich_codex_rollout-2026-07-06T21-06-23-019f3ac1-6f29-7292-8efd-0a33fff96990": {
+   "token_count": 58146,
+   "supervised": 9912,
+   "token_ids_sha256": "83c1384b783d51f0ad2b847233c87c86fc6413e6115c33457b4709d2a0ddd1aa"
+  },
+  "teich_claude_agent-a301853ef88e88f69": {
+   "token_count": 64386,
+   "supervised": 8319,
+   "token_ids_sha256": "893c45585d7625eff71a6c4b0b56b551ea450e8e61c963473786cf49db2bdd1e"
+  },
+  "teich_codex_rollout-2026-07-10T19-13-49-019f4ef3-d032-7183-8da7-5c8b8b8645d6": {
+   "token_count": 60377,
+   "supervised": 13828,
+   "token_ids_sha256": "2d2a875c67ef73b91e10c1832262909911cbbf81634fc4979a75847898f78fa0"
+  },
+  "teich_codex_rollout-2026-06-09T12-10-05-019eadca-bcc9-79d3-8d73-51043d835c11": {
+   "token_count": 23998,
+   "supervised": 94,
+   "token_ids_sha256": "35150ba174e59a9df7796320729048afb1e47bb35e7a7e30e50f8541ea3ae8a6"
+  },
+  "teich_codex_rollout-2026-06-23T11-44-41-019ef5cc-84e6-7f90-9edd-a37477deb887": {
+   "token_count": 51809,
+   "supervised": 9796,
+   "token_ids_sha256": "9d3031f7ea70695bc1fc009af71f88ad802dcb7a2a0c362482cac9933d4cd2e8"
+  },
+  "teich_codex_rollout-2026-07-06T23-13-59-019f3b36-40dd-7273-a74d-6a9514acd7ad": {
+   "token_count": 44410,
+   "supervised": 8008,
+   "token_ids_sha256": "9e315663f9b4144e0837cee359af8d148a43cb82983deccb9cad306f434f8024"
+  },
+  "teich_codex_rollout-2026-07-10T21-19-44-019f4f67-18a3-7403-be19-c4e03e05c4f3": {
+   "token_count": 39007,
+   "supervised": 12260,
+   "token_ids_sha256": "4d2c3169a3cb13a60551d317c7f4fc2f8afcf155acacefd8203203fe0267a953"
+  },
+  "teich_codex_rollout-2026-06-18T11-18-50-019edbf5-0ecf-7600-a82e-5dbef7888f81": {
+   "token_count": 58016,
+   "supervised": 9716,
+   "token_ids_sha256": "459167f026210bb744df44548ea841930cbcb1090daf3613416f72db086bcffd"
+  },
+  "teich_codex_rollout-2026-06-23T02-38-43-019ef3d8-abfc-7bd1-8a1e-aad27e4da240": {
+   "token_count": 36331,
+   "supervised": 7883,
+   "token_ids_sha256": "669d10584f6b7ef7f04767840d68cdb8dfdfabd37b1d2beacb45ca3f6e59e679"
+  },
+  "teich_codex_rollout-2026-07-11T16-59-28-019f539f-2e31-7110-8633-ccd511904256": {
+   "token_count": 39720,
+   "supervised": 11748,
+   "token_ids_sha256": "8ef8f7934110ef30948d88f3abe8f2c0da370bc5db87b0cadbff30f6b220f204"
+  },
+  "teich_codex_rollout-2026-07-08T12-26-08-019f4331-db18-7921-93b9-41bdc172426f": {
+   "token_count": 57556,
+   "supervised": 9126,
+   "token_ids_sha256": "b57d9480ced07eaf02ad73788617e37f84da765e90cc4654eb6ada9f8de0effa"
+  },
+  "teich_codex_rollout-2026-07-08T13-26-19-019f4368-f3af-7491-8d43-b40b2c136b54": {
+   "token_count": 45053,
+   "supervised": 7849,
+   "token_ids_sha256": "b995cb15d746f3fe9760997c4a943ac73a5d674b02b6a73d3993c368c1dbefe8"
+  },
+  "teich_codex_rollout-2026-07-10T06-01-43-019f4c1e-9fa2-77f3-a65a-34825ac68724": {
+   "token_count": 47913,
+   "supervised": 10791,
+   "token_ids_sha256": "2da13598dfaaa57b5e0784b3c5e0b62afd33d619642fe30112ccd9dc05c051d5"
+  },
+  "teich_codex_rollout-2026-06-18T12-10-41-019edc24-83da-7f73-a83b-c99da83d117a": {
+   "token_count": 60320,
+   "supervised": 9078,
+   "token_ids_sha256": "ff77370af80a5b478510b583801be2cae4faab24fa59a695cf964ac98fc3d35c"
+  },
+  "teich_codex_rollout-2026-06-23T02-38-54-019ef3d8-d3d3-72d3-9639-f56478f2942d": {
+   "token_count": 35407,
+   "supervised": 7750,
+   "token_ids_sha256": "0e3ae5406ed1898273023b94842722ff4639d10755fda59e6236110d81d5b146"
+  },
+  "teich_codex_rollout-2026-07-10T00-13-05-019f4adf-71db-7053-b6ca-716ed172750f": {
+   "token_count": 40958,
+   "supervised": 10335,
+   "token_ids_sha256": "3c49a57404238edbd7b3abbe6009badcac9931ae5e6abe482a5e5a3886699451"
+  },
+  "teich_codex_rollout-2026-06-17T21-06-51-019ed8e9-08ef-7302-ae94-0a14bd128c46": {
+   "token_count": 59850,
+   "supervised": 8565,
+   "token_ids_sha256": "25b024835390596f9282f4cb170ea1929ee6098f14b7361fa077ab8881970c59"
+  },
+  "teich_codex_rollout-2026-07-12T00-32-40-019f553e-174c-78e2-a380-b29083f7a58a": {
+   "token_count": 45992,
+   "supervised": 7501,
+   "token_ids_sha256": "08de9c1071e61b7be0d58b5b2f2c771c3cea28becaa77a7f19ed4f9cb1930280"
+  },
+  "teich_codex_rollout-2026-07-10T13-51-50-019f4dcd-07a9-73c0-be31-b6e3a1c8ee22": {
+   "token_count": 32972,
+   "supervised": 9896,
+   "token_ids_sha256": "7bd17d3982463c84a70c756b28bb594e8247722b798b38d2b6e5e359695a4140"
+  },
+  "teich_codex_rollout-2026-07-06T10-10-10-019f3868-a8d7-7770-ac05-30d1ce3b6ea8": {
+   "token_count": 59108,
+   "supervised": 8551,
+   "token_ids_sha256": "ad9ce039ed4b344855851c9435344a2675b28ace3522dc4c1d49f4de4da5f066"
+  },
+  "teich_codex_rollout-2026-06-23T03-41-30-019ef412-26e4-7a53-9f50-8c6bfafcadc1": {
+   "token_count": 39137,
+   "supervised": 7443,
+   "token_ids_sha256": "8f42950bcb05569c303fda6c4b039782b10d48cbe257d48bc331483a449e8614"
+  },
+  "teich_codex_rollout-2026-07-10T13-28-53-019f4db8-0660-75c2-af8b-7ef3332adb07": {
+   "token_count": 35696,
+   "supervised": 8610,
+   "token_ids_sha256": "a7e8ba029f3c00e85bf7bcc462f4d8ed186caf27fedc077ee96806c4bc9b5a39"
+  },
+  "teich_codex_rollout-2026-06-17T23-14-00-019ed95d-7397-7ef2-956b-79c7c6c718b6": {
+   "token_count": 62199,
+   "supervised": 8545,
+   "token_ids_sha256": "887fdf5851cc93b02d7dff534f2c8309cb5d44b9ff043a5663bd8e4f1b935b66"
+  },
+  "teich_claude_agent-afeb218413e746019": {
+   "token_count": 65143,
+   "supervised": 6923,
+   "token_ids_sha256": "fb9482be6744c2cad3d0f94511f989ebbaf88f86b5a1a045432958629959c331"
+  },
+  "teich_codex_rollout-2026-07-10T06-33-15-019f4c3b-7f94-74a1-afcd-70b86945a1f1": {
+   "token_count": 40797,
+   "supervised": 8564,
+   "token_ids_sha256": "85d03c1c2bfb5c9c65b4f6a5b32ec27be4f6bd0f6db0c5491a50d204c092a77e"
+  },
+  "teich_codex_rollout-2026-06-17T14-48-05-019ed78e-4224-7af0-89b4-df162597707c": {
+   "token_count": 45992,
+   "supervised": 8362,
+   "token_ids_sha256": "ca023a5afb7f3193ddd5d92b79647bb9c89c69b34808b108288f25ef2fc9ab11"
+  },
+  "teich_codex_rollout-2026-07-09T23-49-45-019f4aca-1559-7930-82e1-88d02d850a4e": {
+   "token_count": 43179,
+   "supervised": 6764,
+   "token_ids_sha256": "7db721cbb7e0d13902a5dcf2ee58f6b178099cb0240d97338ddca81eca2bd210"
+  },
+  "teich_codex_rollout-2026-07-12T13-58-14-019f581f-9cb4-7fb0-8509-d0752f2c9358": {
+   "token_count": 35981,
+   "supervised": 8549,
+   "token_ids_sha256": "3441fb19a7dafd3bb185c1a9a3b3ca6cea788cedbbd5a65179505805599e1409"
+  },
+  "teich_codex_rollout-2026-06-17T12-51-05-019ed723-273a-77c3-8e7a-eb23cf449e74": {
+   "token_count": 46494,
+   "supervised": 8333,
+   "token_ids_sha256": "c197b7ce2d7f5cad4844707d0e257a5e8ec716bef2478f3c91dd89372fd780ce"
+  },
+  "teich_claude_agent-a4788654b54a39ee2": {
+   "token_count": 63367,
+   "supervised": 6670,
+   "token_ids_sha256": "2043476b290365668165d101e817306d11fd2ba8a406251568f94fa322283a0f"
+  },
+  "teich_codex_rollout-2026-07-10T00-02-49-019f4ad6-0b61-7e31-9dc5-7849fee83b5f": {
+   "token_count": 40616,
+   "supervised": 8339,
+   "token_ids_sha256": "913d5ffba9974ef0ab8c9522e23b679b51ee1e2b0c996c1946d222109a14fe3d"
+  },
+  "teich_codex_rollout-2026-06-23T12-46-50-019ef605-6a99-7891-9933-ad516893898b": {
+   "token_count": 54313,
+   "supervised": 8124,
+   "token_ids_sha256": "67ca11ec848451d750ca0d17d52a8ea92a3b7d87a4489574a4efceab104955d6"
+  },
+  "teich_codex_rollout-2026-06-30T15-21-10-019f1a9f-393f-74c3-a6c7-4284f39aefaf": {
+   "token_count": 35561,
+   "supervised": 6603,
+   "token_ids_sha256": "9bdd27c8d820051be7a6acbf56f2cfd4e7e8f14629f6ffeeddf8f765e16f358a"
+  },
+  "teich_codex_rollout-2026-07-09T20-27-31-019f4a10-ede3-71c3-a776-f70389b8f3de": {
+   "token_count": 31586,
+   "supervised": 7932,
+   "token_ids_sha256": "c95ce3500fb9826d764108ac798aee452b2a9bed303f1d371a006787e0d75789"
+  },
+  "teich_codex_rollout-2026-06-30T14-10-03-019f1a5e-1a2e-75e3-a5f5-e448364dc19a": {
+   "token_count": 58111,
+   "supervised": 7904,
+   "token_ids_sha256": "8b43e57e6975cdbe1d17f34b7aab9d914e2451c6cd6c19c8104ed1bde967414b"
+  },
+  "teich_claude_agent-afff2cabe319aa11b": {
+   "token_count": 62717,
+   "supervised": 6286,
+   "token_ids_sha256": "f461677088813582e0089d889ce5d2905bd4e98d5aa227cd2c5abd85be733675"
+  },
+  "teich_codex_rollout-2026-07-10T16-27-19-019f4e5b-62d5-7c82-8887-bdaaced40600": {
+   "token_count": 35056,
+   "supervised": 7344,
+   "token_ids_sha256": "0775e289f6d758c4d0422e54af341a1f1d7453a84c078a715b4db5d67058e072"
+  },
+  "teich_codex_rollout-2026-07-06T23-22-53-019f3b3e-691e-7932-8568-decf9a92cd2c": {
+   "token_count": 47091,
+   "supervised": 7655,
+   "token_ids_sha256": "02f366c5e1ea44bcc89ea2261d7fbbeed51411711ee850964b3454db5b9697a5"
+  },
+  "teich_codex_rollout-2026-06-24T19-23-40-019efc97-14e7-7f71-9c85-2c20fbbc6d33": {
+   "token_count": 42982,
+   "supervised": 6149,
+   "token_ids_sha256": "360969f695f75c661d96ade7c83e972245e98ef6d95f28c9238755d2a1e14bed"
+  },
+  "teich_codex_rollout-2026-07-11T23-26-04-019f5501-1e42-7d51-8e84-dfb4d8df6d73": {
+   "token_count": 43085,
+   "supervised": 6993,
+   "token_ids_sha256": "7a29e1d41a3904ac5c9e6720e3f10c9bce810635b80157841aa0d9fb2ada5359"
+  },
+  "teich_codex_rollout-2026-06-17T18-32-51-019ed85c-0a46-7b82-96f9-f1361fd184c8": {
+   "token_count": 40819,
+   "supervised": 7655,
+   "token_ids_sha256": "76f0ea62fc7f93f57433d637a9db5491969d13d21aacd3c79d6ce81cc48ae567"
+  },
+  "teich_claude_agent-ada370abcd373646a": {
+   "token_count": 62044,
+   "supervised": 5538,
+   "token_ids_sha256": "21e70029560c5d16d54c68cdb0cac9518133c10dad911dfac066805feae32d66"
+  },
+  "teich_codex_rollout-2026-07-10T16-10-05-019f4e4b-988a-7120-98b0-4b4e5947a24e": {
+   "token_count": 34062,
+   "supervised": 6919,
+   "token_ids_sha256": "da6d3d77c8c8edbf01e4438a1fd9cbaff3788fafb8aa99dc06723a8b21898ff6"
+  },
+  "teich_codex_rollout-2026-06-18T13-11-48-019edc5c-79aa-7492-9ad9-269b65ea6cfc": {
+   "token_count": 59244,
+   "supervised": 7584,
+   "token_ids_sha256": "44c034aa6b375e2a9d47c37cee302da1aca6f1de2d135cf0efa27f301f457f19"
+  },
+  "teich_claude_agent-a91362b3ce5c89511": {
+   "token_count": 64362,
+   "supervised": 5381,
+   "token_ids_sha256": "080de1ccb59c1ad9955ad745fd2fd1475fc1b52d94bf7d61ef0a952c1fe19555"
+  },
+  "teich_codex_rollout-2026-07-10T14-23-17-019f4de9-d2d7-76f1-b585-2e512e0ef4f3": {
+   "token_count": 31538,
+   "supervised": 6672,
+   "token_ids_sha256": "474729e2dc03e051877e91ad307c8c3d2a1de48544a9f3d9098ba5e359b646b4"
+  },
+  "teich_codex_rollout-2026-06-17T17-19-01-019ed818-7432-7db1-9272-b6c3e93e97ca": {
+   "token_count": 43352,
+   "supervised": 7557,
+   "token_ids_sha256": "954063126e9a6b224fed13cabb04d996d53b53bbfd8f28afb9f597acb1045499"
+  },
+  "teich_codex_rollout-2026-05-10T01-16-03-019e10f5-2c76-7df1-a345-a35cde6ef092": {
+   "token_count": 26860,
+   "supervised": 4939,
+   "token_ids_sha256": "b8d9cbcd3f6163a656d54e291e3cfbb26a6b9399654703e566bccfae2524614f"
+  },
+  "teich_codex_rollout-2026-07-10T03-03-42-019f4b7b-a5d9-7600-b8a8-551553109599": {
+   "token_count": 43409,
+   "supervised": 6452,
+   "token_ids_sha256": "6b45e8a9e55109c40253e765bd8948cb466857e7f4f958450a40ea2c65b81a19"
+  },
+  "teich_codex_rollout-2026-07-06T09-36-52-019f384a-2a4b-71f2-90bc-ff18536f627f": {
+   "token_count": 48445,
+   "supervised": 7520,
+   "token_ids_sha256": "79e95eb89bfdae767d7a238bb6ccd5421418ce5a2186e6a3f69394a55efe7d63"
+  },
+  "teich_claude_agent-afbe15b1df3121bca": {
+   "token_count": 60617,
+   "supervised": 4926,
+   "token_ids_sha256": "e8b341107f0cec3f59c3c3999dc40da4f08a81dfb6ec14cfe40e0c28a769c7ae"
+  },
+  "teich_codex_rollout-2026-07-11T16-50-15-019f5396-be13-70e3-91b7-182594ca3658": {
+   "token_count": 28135,
+   "supervised": 5026,
+   "token_ids_sha256": "45b1154f97035107061520516a3acced9e5c13705c6ee1cf8ab16ab017d4a302"
+  },
+  "teich_codex_rollout-2026-06-17T14-48-36-019ed78e-bc91-7b42-adf0-b9e8d89cc745": {
+   "token_count": 43859,
+   "supervised": 7512,
+   "token_ids_sha256": "b9aed0b5a344ebc485e0bcf0ca2bf1c02f80d210d0c1c9bb81326991521988e5"
+  },
+  "teich_codex_rollout-2026-06-24T19-44-31-019efcaa-2c17-7c21-925b-1feb099fdb27": {
+   "token_count": 36457,
+   "supervised": 4489,
+   "token_ids_sha256": "9f154c97fcfd1c5239cc6b5b1b3e0d972275a0cb1b24f69d428657e8b043fcbd"
+  },
+  "teich_codex_rollout-2026-07-10T10-14-30-019f4d06-0f7f-77d1-a475-4bdea349d94f": {
+   "token_count": 28210,
+   "supervised": 4996,
+   "token_ids_sha256": "72b83fa6edd0b707aa0299f88eff657e7b3c71be2ed1a54a1f15b53b98a9841a"
+  },
+  "teich_codex_rollout-2026-06-22T09-34-08-019ef02e-a351-7ce3-919c-b56a1445bf6d": {
+   "token_count": 51232,
+   "supervised": 7100,
+   "token_ids_sha256": "f77abdbab379567a9f5dcda7d6ebb6c6fe57fa4693574d81ce14f3fa53678fae"
+  },
+  "teich_claude_agent-a8ea4087b47688020": {
+   "token_count": 60236,
+   "supervised": 4472,
+   "token_ids_sha256": "cba12b5f02f296cfc4acd1b2ae273125df6ca1e4f902485b6b61693bb9be93fd"
+  },
+  "teich_codex_rollout-2026-07-10T17-37-51-019f4e9b-f4ed-7ee1-9e1b-c1a1ab098fa7": {
+   "token_count": 26682,
+   "supervised": 4738,
+   "token_ids_sha256": "18807ce597a28856924e39ace5db8a664fe4163d036c6bf63469e89cd409ba9b"
+  },
+  "teich_codex_rollout-2026-06-17T19-15-41-019ed883-4243-71c3-b59e-016a8667da30": {
+   "token_count": 37899,
+   "supervised": 6991,
+   "token_ids_sha256": "45429443df319c5c402306c2f7570e9ecf1f06240a797ff953e2fea38dc4c406"
+  },
+  "teich_claude_agent-a8dcbb6fa38d4c4e2": {
+   "token_count": 59699,
+   "supervised": 4433,
+   "token_ids_sha256": "ff8fe2c0006dc38c2148c11d462ff1e4764484770b522683dcb97122ebecc97e"
+  },
+  "teich_codex_rollout-2026-07-10T04-53-31-019f4be0-313b-7d72-9766-5542c8703f3d": {
+   "token_count": 47766,
+   "supervised": 4402,
+   "token_ids_sha256": "bce319ee3530f0f4b3a93fd0b2fbd5013a3c5e545ef71cc2ed127c172bec4724"
+  },
+  "teich_codex_rollout-2026-07-06T22-28-08-019f3b0c-4821-70e1-819a-a62f8bb24e8c": {
+   "token_count": 51509,
+   "supervised": 6866,
+   "token_ids_sha256": "f94e72c4a56a3951a9c86580e4064840f91c6c9d6f900d496cbdaf5613617b06"
+  },
+  "teich_claude_agent-a544a17c309a71953": {
+   "token_count": 59786,
+   "supervised": 4411,
+   "token_ids_sha256": "8fb6ec6b079dd07c00ddf5172459eeb9babaf5a57238210c8814ed608ea7ad55"
+  },
+  "teich_codex_rollout-2026-07-09T22-23-44-019f4a7b-52b6-7a20-882c-d1bb63d08f48": {
+   "token_count": 28897,
+   "supervised": 3971,
+   "token_ids_sha256": "db522b2e34c26c41114132a962ad18714a98907a273903db86506f9bf8fdce09"
+  },
+  "teich_codex_rollout-2026-06-17T18-22-29-019ed852-8c9f-72c0-beb7-0169966d50c2": {
+   "token_count": 40027,
+   "supervised": 6850,
+   "token_ids_sha256": "aa222666778a927fe2b3937d5fbdbe0662c41a7807d2950d57dc9ad63859d624"
+  },
+  "teich_claude_agent-a0c07f1301018da28": {
+   "token_count": 59645,
+   "supervised": 4252,
+   "token_ids_sha256": "a73688cac221430fd684b86c2f475cb91cc992ba53d07ec696c444d0bccca309"
+  },
+  "teich_codex_rollout-2026-07-11T02-33-34-019f5086-69da-7ef1-b678-fe9426602b68": {
+   "token_count": 27870,
+   "supervised": 3542,
+   "token_ids_sha256": "a4e3965e4e199bc9adacbfb3620a43584c37663b14c0f9a41d259b78f492374b"
+  },
+  "teich_codex_rollout-2026-06-23T12-47-27-019ef605-f976-7e51-980c-0bc917525314": {
+   "token_count": 54039,
+   "supervised": 6847,
+   "token_ids_sha256": "c012d238370e133e71f14d0ea642a8b5c0d234601c42a371beb4109595c1461a"
+  },
+  "teich_claude_agent-a85c67202a70f73fa": {
+   "token_count": 59454,
+   "supervised": 4137,
+   "token_ids_sha256": "228d8d516e83afab6d7fb1b50088e2190fe82eeb661616426ca087c1090a87f3"
+  },
+  "teich_codex_rollout-2026-07-10T19-13-31-019f4ef3-8ae5-7a80-adbb-dcb456cfe5bf": {
+   "token_count": 35616,
+   "supervised": 3410,
+   "token_ids_sha256": "572d73e18b3de94e5d15b640836c7a09b2c5ce96ec7ddabf05224886fd065b53"
+  },
+  "teich_codex_rollout-2026-07-08T11-43-09-019f430a-7e5d-75a0-bc4f-b50c5c18b870": {
+   "token_count": 45636,
+   "supervised": 6832,
+   "token_ids_sha256": "e5e599fed6a207905ae1a639ec4da130ad21b3b7b4c015b14f935b82850b36f6"
+  },
+  "teich_claude_agent-a13692b5c1ad12fbe": {
+   "token_count": 63133,
+   "supervised": 4134,
+   "token_ids_sha256": "e8a4fa3bd84eafd9424b9fadae19b4d363220c3c4bc654f2355128308f605e50"
+  },
+  "teich_codex_rollout-2026-07-11T18-14-54-019f53e4-3cc4-7123-ada8-e1074d082246": {
+   "token_count": 25358,
+   "supervised": 3025,
+   "token_ids_sha256": "39c1200cc49e1c999bcace0112bf2fe74b5ad5301ef37f6c773548768e6c22ef"
+  },
+  "teich_codex_rollout-2026-06-17T21-06-52-019ed8e9-0cda-7a72-a6c4-4a542dd5ba2c": {
+   "token_count": 46834,
+   "supervised": 6805,
+   "token_ids_sha256": "3b7317f02cf9eaa29507f6172bd3ed50ec65f6e88bbe506a90f15fe7f2fd75e8"
+  },
+  "teich_claude_agent-a224a4aa90ab515c5": {
+   "token_count": 59415,
+   "supervised": 4096,
+   "token_ids_sha256": "cc58e9ee888c506f872c30567a02770a125d7273e09bde5eec3226a957ac79da"
+  },
+  "teich_codex_rollout-2026-07-10T00-09-16-019f4adb-f44a-74e0-87d1-461852ea52c7": {
+   "token_count": 22638,
+   "supervised": 1437,
+   "token_ids_sha256": "96ac53d170fea07047063e46835524e0035110c09e6a1e0df49e954885286981"
+  },
+  "teich_codex_rollout-2026-06-17T20-15-07-019ed8b9-aa59-7770-9232-bfd19b0a9e43": {
+   "token_count": 39783,
+   "supervised": 6739,
+   "token_ids_sha256": "dc80904b0569139b5e82b8481a717284a021a35ccc1b2cf09f5cbd6069f35f73"
+  },
+  "teich_claude_agent-ad672cba58677c1bc": {
+   "token_count": 59394,
+   "supervised": 4087,
+   "token_ids_sha256": "cc662606758222b06e6b7695e7b243c0909f15f5b306be017c993659894782ec"
+  },
+  "teich_codex_rollout-2026-07-10T16-31-19-019f4e5f-0b75-7cc1-b1e0-e67748519262": {
+   "token_count": 21977,
+   "supervised": 1298,
+   "token_ids_sha256": "edc8080b14426fc37622bc61d8665eb893b5e1aa3639519381c94dfe3e486e1d"
+  },
+  "teich_codex_rollout-2026-06-18T12-10-34-019edc24-694a-7951-9e52-eedde188d0c4": {
+   "token_count": 54058,
+   "supervised": 6721,
+   "token_ids_sha256": "a8dbc0ad46f4ea3cb0bc6c0a91d3facf944d2d769415254923535c798c5fccf5"
+  },
+  "teich_claude_agent-a48f931e9d7c74549": {
+   "token_count": 60276,
+   "supervised": 3996,
+   "token_ids_sha256": "94049f85be2656905a4f90c135d970a5f642d5d945108a3206004ee0fd31ab41"
+  },
+  "teich_codex_rollout-2026-07-11T18-17-57-019f53e7-07fc-7a73-861c-25fe79bfec41": {
+   "token_count": 16737,
+   "supervised": 195,
+   "token_ids_sha256": "1b34df70b3bb832dd5b37a4c0a63c55f704d1b48285c1e0578bd22c00e5363a3"
+  },
+  "teich_codex_rollout-2026-06-18T13-03-32-019edc54-e841-7471-a386-31e48bef3f3b": {
+   "token_count": 54028,
+   "supervised": 6713,
+   "token_ids_sha256": "55453a5fd14eabfc93f3fae106e029e63925bdef8e89bd631e22841fdf791257"
+  },
+  "teich_claude_agent-a71ca099ca0aa620e": {
+   "token_count": 59046,
+   "supervised": 3826,
+   "token_ids_sha256": "25d903d2ce4dd97b652daf6c95e757176ec00d66d7044dfd9edd818855bd4768"
+  }
+ }
+}

@@ -1,0 +1,25 @@
+{
+  "cosine": 1.0,
+  "decision": "component_stream_shared_decode_native_scalar_cache_scaffold_parity_pass",
+  "decoded_dense_weight_bytes": 0,
+  "max_abs_diff": 0.000244140625,
+  "next_track_b_hypothesis": "replace_scalar_component_stream_shared_decode_body_with_valid_parallel_schedule",
+  "oracle": "component_stream_sorted_matmul_oracle",
+  "passes_native_parity": true,
+  "peer2_used": false,
+  "record_type": "glm45_air_e8p_component_stream_shared_decode_native_scaffold_parity",
+  "schema_version": 1,
+  "shape": {
+    "codewords_per_bk": 8,
+    "experts": 3,
+    "group_size": 352,
+    "input_dims": 704,
+    "k_blocks": 11,
+    "n_tiles": 2,
+    "output_dims": 70,
+    "routes": 23,
+    "tokens": 9
+  },
+  "speed_claim": false,
+  "variant": "nax_e8p_component_stream_rhs_sorted_shared_decode_matmul"
+}

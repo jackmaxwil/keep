@@ -1,0 +1,3417 @@
+{
+  "code_bits": 8,
+  "converted_groups": 80,
+  "group_size": 512,
+  "groups": [
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.0.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.0.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.934214499997324,
+      "group_size": 512,
+      "layer": 0,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00000-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.0.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.0.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.0.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.0.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.95118333400751,
+      "group_size": 512,
+      "layer": 0,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00000-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.0.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.0.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.1.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.1.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.851573291001841,
+      "group_size": 512,
+      "layer": 1,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00001-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.1.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.1.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.1.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.1.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.078069124996546,
+      "group_size": 512,
+      "layer": 1,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00001-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.1.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.1.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.2.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.2.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.167158666998148,
+      "group_size": 512,
+      "layer": 2,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00002-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.2.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.2.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.2.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.2.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.115786915994249,
+      "group_size": 512,
+      "layer": 2,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00002-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.2.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.2.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.3.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.3.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.50333774999308,
+      "group_size": 512,
+      "layer": 3,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00003-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.3.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.3.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.3.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.3.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.950919834009255,
+      "group_size": 512,
+      "layer": 3,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00003-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.3.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.3.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.4.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.4.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.579155500003253,
+      "group_size": 512,
+      "layer": 4,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00004-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.4.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.4.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.4.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.4.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 7.450152833000175,
+      "group_size": 512,
+      "layer": 4,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00004-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.4.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.4.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.5.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.5.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.559153958005481,
+      "group_size": 512,
+      "layer": 5,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00005-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.5.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.5.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.5.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.5.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.8467522080027265,
+      "group_size": 512,
+      "layer": 5,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00005-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.5.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.5.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.6.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.6.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.770612082997104,
+      "group_size": 512,
+      "layer": 6,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00006-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.6.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.6.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.6.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.6.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.284618334000697,
+      "group_size": 512,
+      "layer": 6,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00006-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.6.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.6.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.7.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.7.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.430042749998393,
+      "group_size": 512,
+      "layer": 7,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00007-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.7.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.7.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.7.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.7.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.214323374995729,
+      "group_size": 512,
+      "layer": 7,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00007-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.7.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.7.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.8.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.8.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.17229266600043,
+      "group_size": 512,
+      "layer": 8,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00008-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.8.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.8.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.8.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.8.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.12474470899906,
+      "group_size": 512,
+      "layer": 8,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00008-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.8.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.8.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.9.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.9.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.134172709003906,
+      "group_size": 512,
+      "layer": 9,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00009-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.9.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.9.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.9.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.9.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.995913874998223,
+      "group_size": 512,
+      "layer": 9,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00009-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.9.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.9.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.10.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.10.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.017584749992238,
+      "group_size": 512,
+      "layer": 10,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00010-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.10.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.10.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.10.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.10.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.082308500001091,
+      "group_size": 512,
+      "layer": 10,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00010-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.10.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.10.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.11.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.11.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.924841915999423,
+      "group_size": 512,
+      "layer": 11,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00011-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.11.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.11.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.11.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.11.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.955971666000551,
+      "group_size": 512,
+      "layer": 11,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00011-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.11.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.11.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.12.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.12.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.011021917001926,
+      "group_size": 512,
+      "layer": 12,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00012-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.12.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.12.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.12.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.12.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.955186541003059,
+      "group_size": 512,
+      "layer": 12,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00012-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.12.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.12.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.13.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.13.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.11207987499074,
+      "group_size": 512,
+      "layer": 13,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00013-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.13.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.13.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.13.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.13.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.407479000001331,
+      "group_size": 512,
+      "layer": 13,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00013-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.13.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.13.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.14.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.14.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.299496541992994,
+      "group_size": 512,
+      "layer": 14,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00014-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.14.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.14.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.14.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.14.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.423912415993982,
+      "group_size": 512,
+      "layer": 14,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00014-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.14.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.14.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.15.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.15.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.538121166013298,
+      "group_size": 512,
+      "layer": 15,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00015-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.15.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.15.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.15.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.15.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.731314415999805,
+      "group_size": 512,
+      "layer": 15,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00015-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.15.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.15.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.16.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.16.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.210843332999502,
+      "group_size": 512,
+      "layer": 16,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00016-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.16.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.16.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.16.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.16.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.378618624992669,
+      "group_size": 512,
+      "layer": 16,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00016-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.16.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.16.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.17.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.17.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.304596291010967,
+      "group_size": 512,
+      "layer": 17,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00017-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.17.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.17.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.17.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.17.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.476226750004571,
+      "group_size": 512,
+      "layer": 17,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00017-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.17.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.17.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.18.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.18.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.784626458000275,
+      "group_size": 512,
+      "layer": 18,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00018-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.18.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.18.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.18.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.18.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.657764999996289,
+      "group_size": 512,
+      "layer": 18,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00018-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.18.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.18.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.19.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.19.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 13.007146500007366,
+      "group_size": 512,
+      "layer": 19,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00019-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.19.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.19.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.19.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.19.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.250148792008986,
+      "group_size": 512,
+      "layer": 19,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00019-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.19.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.19.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.20.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.20.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.733987416999298,
+      "group_size": 512,
+      "layer": 20,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00020-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.20.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.20.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.20.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.20.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.799331333008013,
+      "group_size": 512,
+      "layer": 20,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00020-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.20.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.20.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.21.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.21.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.820447042002343,
+      "group_size": 512,
+      "layer": 21,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00021-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.21.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.21.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.21.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.21.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.4060414580017095,
+      "group_size": 512,
+      "layer": 21,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00021-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.21.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.21.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.22.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.22.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.960406041005626,
+      "group_size": 512,
+      "layer": 22,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00022-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.22.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.22.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.22.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.22.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.012969666990102,
+      "group_size": 512,
+      "layer": 22,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00022-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.22.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.22.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.23.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.23.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.447726457990939,
+      "group_size": 512,
+      "layer": 23,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00023-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.23.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.23.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.23.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.23.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.993024958006572,
+      "group_size": 512,
+      "layer": 23,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00023-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.23.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.23.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.24.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.24.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.247604916992714,
+      "group_size": 512,
+      "layer": 24,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00024-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.24.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.24.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.24.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.24.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.396565374991042,
+      "group_size": 512,
+      "layer": 24,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00024-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.24.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.24.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.25.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.25.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.95092633299646,
+      "group_size": 512,
+      "layer": 25,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00025-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.25.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.25.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.25.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.25.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.996993167005712,
+      "group_size": 512,
+      "layer": 25,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00025-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.25.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.25.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.26.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.26.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.935171207995154,
+      "group_size": 512,
+      "layer": 26,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00026-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.26.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.26.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.26.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.26.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.959439124999335,
+      "group_size": 512,
+      "layer": 26,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00026-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.26.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.26.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.27.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.27.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.119565415996476,
+      "group_size": 512,
+      "layer": 27,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00027-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.27.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.27.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.27.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.27.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.05705066700466,
+      "group_size": 512,
+      "layer": 27,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00027-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.27.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.27.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.28.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.28.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.902819584007375,
+      "group_size": 512,
+      "layer": 28,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00028-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.28.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.28.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.28.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.28.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.03589600000123,
+      "group_size": 512,
+      "layer": 28,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00028-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.28.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.28.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.29.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.29.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.948756625002716,
+      "group_size": 512,
+      "layer": 29,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00029-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.29.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.29.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.29.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.29.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.959543208999094,
+      "group_size": 512,
+      "layer": 29,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00029-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.29.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.29.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.30.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.30.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.899174750011298,
+      "group_size": 512,
+      "layer": 30,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00030-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.30.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.30.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.30.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.30.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.0151533339958405,
+      "group_size": 512,
+      "layer": 30,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00030-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.30.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.30.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.31.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.31.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.319434666002053,
+      "group_size": 512,
+      "layer": 31,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00031-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.31.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.31.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.31.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.31.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.035701792003238,
+      "group_size": 512,
+      "layer": 31,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00031-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.31.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.31.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.32.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.32.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.233536540996283,
+      "group_size": 512,
+      "layer": 32,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00032-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.32.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.32.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.32.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.32.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.934772749998956,
+      "group_size": 512,
+      "layer": 32,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00032-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.32.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.32.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.33.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.33.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.889046458993107,
+      "group_size": 512,
+      "layer": 33,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00033-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.33.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.33.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.33.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.33.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.940615874991636,
+      "group_size": 512,
+      "layer": 33,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00033-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.33.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.33.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.34.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.34.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.962658666991047,
+      "group_size": 512,
+      "layer": 34,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00034-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.34.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.34.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.34.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.34.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.953943291999167,
+      "group_size": 512,
+      "layer": 34,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00034-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.34.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.34.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.35.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.35.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.933635207999032,
+      "group_size": 512,
+      "layer": 35,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00035-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.35.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.35.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.35.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.35.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.9911011250078445,
+      "group_size": 512,
+      "layer": 35,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00035-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.35.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.35.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.36.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.36.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.136059041993576,
+      "group_size": 512,
+      "layer": 36,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00036-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.36.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.36.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.36.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.36.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.932287417002954,
+      "group_size": 512,
+      "layer": 36,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00036-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.36.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.36.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.37.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.37.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 12.17484812499606,
+      "group_size": 512,
+      "layer": 37,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00037-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.37.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.37.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.37.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.37.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 6.091685833001975,
+      "group_size": 512,
+      "layer": 37,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00037-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.37.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.37.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.38.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.38.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.847703959007049,
+      "group_size": 512,
+      "layer": 38,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00038-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.38.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.38.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.38.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.38.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.93563633300073,
+      "group_size": 512,
+      "layer": 38,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00038-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.38.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.38.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "gate_proj": "model.language_model.layers.39.mlp.switch_mlp.gate_proj.codes",
+        "up_proj": "model.language_model.layers.39.mlp.switch_mlp.up_proj.codes"
+      },
+      "codes_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          256
+        ],
+        "up_proj": [
+          256,
+          512,
+          256
+        ]
+      },
+      "elapsed_seconds": 11.848488541989354,
+      "group_size": 512,
+      "layer": 39,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00039-gate_up_proj.safetensors",
+      "peak_source_tensor_bytes": 2147483648,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "gate_proj": "model.language_model.layers.39.mlp.switch_mlp.gate_proj.scales",
+        "up_proj": "model.language_model.layers.39.mlp.switch_mlp.up_proj.scales"
+      },
+      "scales_shapes": {
+        "gate_proj": [
+          256,
+          512,
+          4
+        ],
+        "up_proj": [
+          256,
+          512,
+          4
+        ]
+      },
+      "source_projection": "gate_up_proj",
+      "source_tensor": "model.language_model.layers.39.mlp.experts.gate_up_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "gate_proj",
+        "up_proj"
+      ]
+    },
+    {
+      "code_bits": 8,
+      "codes_names": {
+        "down_proj": "model.language_model.layers.39.mlp.switch_mlp.down_proj.codes"
+      },
+      "codes_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          64
+        ]
+      },
+      "elapsed_seconds": 5.9467341670097085,
+      "group_size": 512,
+      "layer": 39,
+      "output_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/layer-00039-down_proj.safetensors",
+      "peak_source_tensor_bytes": 1073741824,
+      "scale_estimator": "max_abs",
+      "scales_names": {
+        "down_proj": "model.language_model.layers.39.mlp.switch_mlp.down_proj.scales"
+      },
+      "scales_shapes": {
+        "down_proj": [
+          256,
+          2048,
+          1
+        ]
+      },
+      "source_projection": "down_proj",
+      "source_tensor": "model.language_model.layers.39.mlp.experts.down_proj",
+      "source_tensors_read": 1,
+      "status": "converted",
+      "target_projections": [
+        "down_proj"
+      ]
+    }
+  ],
+  "manifest_path": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out/qwen-moe-materialization-manifest.json",
+  "materialization_status": "qwen_moe_groups_materialized",
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "output_dir": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+  "peak_source_tensor_bytes": 2147483648,
+  "planned_groups": 80,
+  "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "scale_estimator": "max_abs",
+  "skipped_existing_groups": 0,
+  "source_tensors_read": 80
+}

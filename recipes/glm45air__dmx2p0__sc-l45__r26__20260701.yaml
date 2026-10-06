@@ -1,0 +1,601 @@
+# First recipe fixture: the accepted balanced-RC lineage rooted at the
+# protected r26 seed. Encodes seed -> layer-45 gate/up/down rank-4 low-rank
+# sidecar (8 math rows, indices 44-51 from both caches) -> audit + three
+# split evals + paired Lane S. Hyperparameters transcribed from the accepted
+# artifact's conversion-manifest run{} block.
+#
+# The position-scoped logit-bias bundle is intentionally NOT a promotable
+# step: its metric profile is the promotion target (community_wow), and its
+# prompt-independent replacement is the first `keep plan-next` proposal.
+schema_version: 1
+name: glm45air__dmx2p0__sc-l45__r26__20260701
+description: >-
+  r26 seed -> L45 gud rank-4 low-rank sidecar (math8) -> balanced RC verify
+
+external_inputs:
+  seed_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-dynamic3p0-target23-joint-gate-up-down-nextcycle-r25-r26-s48-lr1-w2-m1-nll0p5-20260701
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+  lane_s_q2_control:
+    kind: file
+    path: artifacts/benchmarks/glm45-air-target23-nextcycle-r26-q2-control-prefill1k-quiet-20260701.jsonl
+  route_disagreement:
+    kind: file
+    path: artifacts/quality/glm45-air-route-trace-disagreement-report-route000-layer36-split18-gatestop-wired83-dirty-20260701.json
+  sparse_residual_plan:
+    kind: file
+    path: artifacts/quality/glm45-air-train-tail-cleanup-2-report-route000-layer41-sparse-plan-20260702.json
+
+steps:
+  - id: train_l45_gud_math8
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: external:seed_artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 45
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 12
+      learning_rate: 0.5
+      target_nll_weight: 0.5
+      teacher_top1_margin_weight: 2
+      teacher_top1_margin: 1
+      loss_scope: final_layer_selected
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: both
+      max_train_rows: 8
+      train_row_indices: [44, 45, 46, 47, 48, 49, 50, 51]
+      max_positions: 16
+    gate: {profile: train_sane}
+
+  - id: audit
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+    gate: {profile: audit_ok}
+
+  - id: resident_byte_audit
+    op: resident-byte-audit
+    class: diagnostic
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+
+  - id: eval_report
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate: {profile: balanced_rc_split}
+
+  - id: top1_gap_tail_cleanup
+    op: top1-gap
+    class: diagnostic
+    inputs:
+      evidence: step:eval_report_repair/evidence
+    params:
+      select_tail_cleanup_targets: true
+      teacher_token_id: 565
+      focus_position: 0
+      max_train_rows: 8
+      max_validation_rows: 12
+      top_tail_records: 40
+      label: route4_pos0_tail_cleanup
+
+  - id: train_tail_cleanup_1
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: step:train_l45_gud_math8/artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 41
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 1
+      learning_rate: 0.00025
+      target_nll_weight: 3.0
+      teacher_top1_margin_weight: 2.0
+      teacher_top1_margin: 1.0
+      tail_kld_weight: 0.0001
+      loss_scope: selected_layer
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: validation
+      max_train_rows: 8
+      train_row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      max_positions: 1
+      aux_loss_position_indices: [0]
+    gate: {profile: train_sane}
+
+  - id: audit_train_tail_cleanup_1
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_tail_cleanup_1/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_tail_cleanup_1_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_tail_cleanup_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: train_tail_cleanup_2
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: step:train_tail_cleanup_1/artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 41
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 4
+      learning_rate: 0.0005
+      target_nll_weight: 4.0
+      teacher_top1_margin_weight: 4.0
+      teacher_top1_margin: 1.0
+      tail_kld_weight: 0.0002
+      loss_scope: selected_layer
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: validation
+      max_train_rows: 8
+      train_row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      max_positions: 1
+      aux_loss_position_indices: [0]
+    gate: {profile: train_sane}
+
+  - id: audit_train_tail_cleanup_2
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_tail_cleanup_2/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_tail_cleanup_2_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_tail_cleanup_2/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: bump_non_expert_precision_1
+    op: bump-non-expert-precision
+    class: diagnostic
+    inputs:
+      seed_artifact: step:train_tail_cleanup_2/artifact
+    params:
+      surfaces: [embed_tokens, lm_head, router_gates]
+      dtype: bf16
+      reason: p1_top1_tail_flat_try_safe_non_expert_bf16_surfaces
+
+  - id: resident_byte_audit_bump_non_expert_precision_1
+    op: resident-byte-audit
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      baseline_evidence: step:resident_byte_audit/evidence_json
+
+  - id: eval_report_bump_non_expert_precision_1_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_bump_non_expert_precision_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_bump_non_expert_precision_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report_bump_non_expert_precision_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_bump_non_expert_precision_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_bump_non_expert_precision_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection_bump_non_expert_precision_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_bump_non_expert_precision_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_bump_non_expert_precision_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:bump_non_expert_precision_1/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout_bump_non_expert_precision_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: train_router_kd_1
+    op: train-router-kd
+    class: diagnostic
+    inputs:
+      seed_artifact: step:train_tail_cleanup_2/artifact
+      disagreement: external:route_disagreement
+    params:
+      scale: 1
+      max_abs_delta: 0.125
+      num_experts: 128
+
+  - id: eval_report_train_router_kd_1_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_train_router_kd_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_report_train_router_kd_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report_train_router_kd_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_train_router_kd_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_train_router_kd_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection_train_router_kd_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_train_router_kd_1_full
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_train_router_kd_1_full_repair
+    op: eval-repair
+    class: diagnostic
+    inputs:
+      artifact: step:train_router_kd_1/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout_train_router_kd_1_full/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: sparse_residual_1
+    op: sparse-residual
+    class: promotable
+    inputs:
+      seed_artifact: step:train_tail_cleanup_2/artifact
+      plan_json: external:sparse_residual_plan
+    params:
+      model_id: zai-org/GLM-4.5-Air
+      revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+      projection: down_proj
+      plan_target: report_route_000:0
+      plan_expert: 93
+      plan_route_rank: 0
+      plan_max_rows: 4
+      residual_scale: 0.5
+    gate: {profile: train_sane}
+
+  - id: audit_sparse_residual_1
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:sparse_residual_1/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_sparse_residual_1_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:sparse_residual_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [120, 73, 44, 0, 108, 121, 75, 45]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: train_plan_next_1
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: step:train_tail_cleanup_2/artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 41
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 4
+      learning_rate: 0.0005
+      target_nll_weight: 4.0
+      teacher_top1_margin_weight: 4.0
+      teacher_top1_margin: 1.0
+      tail_kld_weight: 0.0002
+      loss_scope: selected_layer
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: validation
+      max_train_rows: 8
+      train_row_indices: [121, 120, 44, 45, 75, 73]
+      max_positions: 1
+      aux_loss_position_indices: [0]
+    gate: {profile: train_sane}
+
+  - id: audit_train_tail_cleanup_2_train_plan_next_1
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_plan_next_1/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_train_plan_next_1_focus
+    op: eval
+    class: diagnostic
+    inputs:
+      artifact: step:train_plan_next_1/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      row_indices: [121, 120, 44, 45, 75, 73]
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_selection_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate: {profile: balanced_rc_split}
+
+  - id: eval_holdout
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+
+  - id: eval_holdout_repair
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 2
+      mlx_cache_limit_gb: 0
+      mlx_clear_cache_before_load: true
+    gate: {profile: balanced_rc_split}
+
+  - id: lane_s_candidate
+    op: benchmark-lane-s
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      control_evidence: external:lane_s_q2_control
+    params:
+      engine: vq_e1_routed_nax_e8p
+      scenario: prefill_1k
+      warmup_repetitions: 1
+      repetitions: 3
+      clean_repetition_max_attempts: 4
+      memory_quiet_window_seconds: 3
+      memory_quiet_max_attempts: 1
+      prefill_memory_quiet_window_seconds: 3
+      prefill_memory_quiet_max_attempts: 1
+      parent_vm_stat_diagnostics: true
+      memory_phase_trace: true
+    gate: {profile: lane_s}
+
+  # Diagnostics: tail attribution on the candidate's report eval. Outputs
+  # are tainted — nothing promotable may consume them.
+  - id: attribute_tail
+    op: attribute
+    class: diagnostic
+    inputs:
+      baseline_evidence: step:eval_report_repair/evidence
+
+promotion:
+  artifact_step: train_l45_gud_math8
+  gates:
+    - {evidence_step: eval_report_repair, profile: community_wow}
+    - {evidence_step: eval_selection_repair, profile: community_wow}
+    - {evidence_step: eval_holdout_repair, profile: community_wow}
+    - {evidence_step: lane_s_candidate, profile: lane_s}
+  target_metric_profile: community_wow

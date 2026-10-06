@@ -1,0 +1,43 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "family_policy_json": "3a61437c9bab349d/evidence_json",
+    "index_path": "41b9356101ebf8e7519e150dc811f80c4226e727301fbb032b890f006ed0be83",
+    "source_dir": "b513616c55d1144366e6a8d7728692ea5e8dbaac9105eabeeda3b15246a28e3d"
+  },
+  "op": "qwen-family-control-benchmark-latency-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/evidence/evidence_json.json",
+    "latency_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/out/qwen_control_benchmark_latency_rows.jsonl"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/bench_qwen_family_control_latency.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--source-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--index-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0/model.safetensors.index.json",
+    "--output-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_control_benchmark_latency-182d14cd/evidence/evidence.jsonl",
+    "--layer",
+    "0",
+    "--repetitions",
+    "2",
+    "--top-k",
+    "8",
+    "--warmup-repetitions",
+    "0"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_control_benchmark_latency",
+  "step_key": "182d14cd8f0eb199"
+}

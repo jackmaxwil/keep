@@ -1,0 +1,146 @@
+{
+  "audit_mode": "manual_readonly_commands",
+  "decision": "rdma_link_down",
+  "direct_arp_ready": false,
+  "direct_ip_ready": false,
+  "direct_path_ready": false,
+  "direct_route_ready": false,
+  "expected": {
+    "local_direct_ip": "192.168.10.1",
+    "local_interface": "en1",
+    "local_mac": "36:13:f1:c0:85:80",
+    "local_rdma_device": "rdma_en1",
+    "peer_control_ssh": "jackmazac@192.168.100.191",
+    "peer_direct_ip": "192.168.10.2",
+    "peer_interface": "en1",
+    "peer_mac": "36:a7:c5:18:04:80",
+    "peer_rdma_device": "rdma_en1"
+  },
+  "link_layer_ready": false,
+  "local": {
+    "arp": {
+      "expected_mac": "36:a7:c5:18:04:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "bridge": {
+      "members": [
+        "en1",
+        "en6",
+        "en2"
+      ],
+      "status": "inactive"
+    },
+    "hardware_ports": {
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "fc:b2:14:8f:0c:e1"
+      }
+    },
+    "interface": {
+      "expected_ip": "192.168.10.1",
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:13:f1:c0:85:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "gid0": "fe80::3413:f1ff:fec0:8580",
+      "has_ipv4_gid": false,
+      "port_active": false,
+      "state": "PORT_DOWN"
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": "192.168.100.1",
+      "interface": "en0",
+      "uses_expected_interface": false
+    }
+  },
+  "observations": [
+    "local en1 is UP/RUNNING but reports status inactive and no 192.168.10.1/30 address",
+    "peer en1 is UP/RUNNING but reports status inactive and no 192.168.10.2/30 address",
+    "local route to 192.168.10.2 uses en0 via 192.168.100.1",
+    "peer route to 192.168.10.1 uses utun13",
+    "direct ARP entries are absent on both hosts",
+    "both rdma_en1 ports are PORT_DOWN and only expose link-local GID0",
+    "UC pingpong, JACCL preflight, and distributed cache were not run because direct IP, ARP, route, RDMA port, and IPv4 GID gates are red"
+  ],
+  "peer": {
+    "arp": {
+      "expected_mac": "36:13:f1:c0:85:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "bridge": {
+      "members": [
+        "en1",
+        "en2",
+        "en3"
+      ],
+      "status": "inactive"
+    },
+    "hardware_ports": {
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "84:2f:57:64:03:6a"
+      }
+    },
+    "interface": {
+      "expected_ip": "192.168.10.2",
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:a7:c5:18:04:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "gid0": "fe80::34a7:c5ff:fe18:480",
+      "has_ipv4_gid": false,
+      "port_active": false,
+      "state": "PORT_DOWN"
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": null,
+      "interface": "utun13",
+      "uses_expected_interface": false
+    }
+  },
+  "peer2_used": false,
+  "rdma_ipv4_gid_ready": false,
+  "rdma_jaccl_touched": false,
+  "read_only_commands": [
+    "ifconfig en1",
+    "route -n get 192.168.10.2",
+    "arp -n 192.168.10.2",
+    "/usr/bin/ibv_devinfo -d rdma_en1 -v",
+    "networksetup -listallhardwareports",
+    "ifconfig bridge0",
+    "ssh jackmazac@192.168.100.191 'ifconfig en1'",
+    "ssh jackmazac@192.168.100.191 'route -n get 192.168.10.1'",
+    "ssh jackmazac@192.168.100.191 'arp -n 192.168.10.1'",
+    "ssh jackmazac@192.168.100.191 '/usr/bin/ibv_devinfo -d rdma_en1 -v'",
+    "ssh jackmazac@192.168.100.191 'networksetup -listallhardwareports'",
+    "ssh jackmazac@192.168.100.191 'ifconfig bridge0'"
+  ],
+  "ready_for_jaccl_preflight": false,
+  "ready_for_uc_pingpong": false,
+  "record_type": "glm45_air_rdma_topology_audit",
+  "schema_version": 1
+}

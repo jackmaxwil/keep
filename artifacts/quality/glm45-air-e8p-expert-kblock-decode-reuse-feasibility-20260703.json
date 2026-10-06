@@ -1,0 +1,82 @@
+{
+  "feasibility": {
+    "correct_cache_bytes": 540672,
+    "correct_cache_dtype": "float16",
+    "correct_cache_is_decoded_rhs_equivalent": true,
+    "correct_cache_shape": [
+      3,
+      11,
+      2,
+      64,
+      64
+    ],
+    "decision": "reject_expert_kblock_predecode_cache_decoded_rhs_equivalent",
+    "factor_lut_shared_across_output_tiles": true,
+    "next_track_b_hypothesis": "change_expert_kblock_rhs_layout_or_kernel_family",
+    "output_tile_reuse_feasible_without_decoded_cache": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_expert_kblock_predecode_cache",
+      "do_not_materialize_decoded_rhs_equivalent_expert_kblock_cache",
+      "do_not_retime_near_duplicate_expert_kblock_v2"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "avoid_expert_kblock_predecoded_rhs_cache",
+      "avoid_per_fragment_e8p_reconstruction",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "scale_values_depend_on_output_column": true,
+    "slot_values_depend_on_output_column": true,
+    "structural_risk": "expert/K-block factor LUTs are shared across output tiles, but sign/abs slots and scale slots are keyed by expert/n_tile/k_block/output_column/codeword. Avoiding per-fragment reconstruction by predecoding the missing axes requires an expert/k_block/n_tile/output_column/input-column cache, which is decoded-RHS-equivalent storage.",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_expert_kblock_predecode_cache"
+  },
+  "native_parity_claim": false,
+  "next_family_selector_verdict": {
+    "candidate_ready_for_source_probe": false,
+    "decision": "reject_expert_kblock_predecode_cache_decoded_rhs_equivalent",
+    "decode_reuse_scope": "expert_kblock_predecode_cache",
+    "dispatch_grid": "experts_x_k_blocks_x_route_tiles",
+    "matched_rejected_families": [
+      "expert_kblock_factor_reuse"
+    ],
+    "native_parity_claim": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_expert_kblock_predecode_cache",
+      "do_not_materialize_decoded_rhs_equivalent_expert_kblock_cache",
+      "do_not_retime_near_duplicate_expert_kblock_v2"
+    ],
+    "required_next_features": [
+      "materially_change_rhs_storage_contract_or_kernel_family",
+      "avoid_expert_kblock_predecoded_rhs_cache",
+      "avoid_decoded_rhs_equivalent_cache",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "speed_claim": false,
+    "storage_constraint": "compressed_e8p_expert_kblock_factor_lut_scales",
+    "structural_reasons": [
+      "candidate overlaps rejected Track B RHS family",
+      "candidate depends on decoded-RHS-equivalent expert/K-block predecode cache",
+      "candidate does not preserve compressed RHS storage",
+      "candidate materializes decoded dense RHS bytes"
+    ],
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax_expert_kblock_predecode_cache",
+    "tensorops_rhs_source": "predecoded_expert_kblock_b_cache"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_expert_kblock_decode_reuse_feasibility",
+  "schema_version": 1,
+  "shape": {
+    "bk": 64,
+    "bn": 64,
+    "experts": 3,
+    "group_size": 352,
+    "input_dims": 704,
+    "k_blocks": 11,
+    "n_tiles": 2,
+    "output_dims": 128
+  },
+  "speed_claim": false
+}

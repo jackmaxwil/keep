@@ -1,0 +1,109 @@
+{
+  "decision": "generated_shard_rejected_nonfinite_logits_and_dirty_memory",
+  "distributed_backend": "jaccl",
+  "distributed_size": 2,
+  "layer_split": 24,
+  "max_positions": 1,
+  "metadata_jsonl": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-20260703/metadata.jsonl",
+  "mlx_wired_limit_gb": 1,
+  "next_required": [
+    "do_not_accept_this_cache_as_clean_teacher_cache",
+    "rerun_with_real_iogpu_wired_limit_gate_or_fix_low_wired_export_nan_path",
+    "capture_launcher_log_for_rank_exit_diagnosis"
+  ],
+  "no_full_logits": true,
+  "output_dir": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-20260703",
+  "prompt_ids": [
+    "report_code_000"
+  ],
+  "prompt_set": "air_vq_ladder_report_v1",
+  "rank_exit_observed": {
+    "rank_0_exit_code": -15,
+    "rank_1_exit_code": 255
+  },
+  "record_count": 1,
+  "record_type": "glm45_air_distributed_cleanroom_cache_attempt",
+  "required_wired_mb": 0,
+  "tensors": {
+    "target_logprobs": {
+      "dtype": "float32",
+      "finite": false,
+      "sample": [
+        "nan"
+      ],
+      "shape": [
+        1
+      ]
+    },
+    "teacher_top1_ids": {
+      "dtype": "int32",
+      "finite": null,
+      "sample": [
+        150193
+      ],
+      "shape": [
+        1
+      ]
+    },
+    "topk_ids": {
+      "dtype": "int32",
+      "finite": null,
+      "sample": [
+        150193,
+        136528,
+        150191,
+        150190,
+        150189,
+        150188,
+        150187,
+        150186,
+        150185,
+        150184,
+        150183,
+        150182,
+        150181,
+        150180,
+        150179,
+        144720
+      ],
+      "shape": [
+        1,
+        16
+      ]
+    },
+    "topk_logprobs": {
+      "dtype": "float32",
+      "finite": false,
+      "sample": [
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan",
+        "nan"
+      ],
+      "shape": [
+        1,
+        16
+      ]
+    }
+  },
+  "top_k": 16,
+  "validation_all_memory_clean": false,
+  "validation_errors": [
+    "topk_logprobs values must be finite",
+    "target_logprobs values must be finite"
+  ],
+  "validation_jsonl": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-20260703-validation.jsonl",
+  "validation_ok": false
+}

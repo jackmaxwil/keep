@@ -1,0 +1,124 @@
+{
+  "account_id": "246813579024",
+  "canonical_identity_sha256": "feed00afd49b825fd9f52a9b487ff8d3ae3620d45085b55c23efd7ef2334238a",
+  "effect_boundary": {
+    "allowed_operations": [
+      "ec2:RunInstances",
+      "ec2:TerminateInstances",
+      "sts:GetCallerIdentity"
+    ],
+    "botocore_total_max_attempts": 1,
+    "client_token_enforcement_layer": "PUBLISHED_FUNCTION_VERSION_AND_LEDGER_NOT_IAM",
+    "combined_host_run_terminate_start_denied": true,
+    "generic_pass_role_forbidden": true,
+    "published_version_and_resource_policy_required": true,
+    "same_token_sender_is_sole_run_instances_principal": true
+  },
+  "launch_shape": {
+    "data_disk_count": 0,
+    "imds_v2_required": true,
+    "instance_type": "p5.48xlarge",
+    "market": "on-demand",
+    "max_count": 1,
+    "min_count": 1,
+    "root_volume": {
+      "delete_on_termination": true,
+      "encrypted": true,
+      "iops": 3000,
+      "throughput_mib_per_second": 125,
+      "volume_size_gib": 300,
+      "volume_type": "gp3"
+    }
+  },
+  "liability": {
+    "aws_hard_post_acceptance_billing_cap": false,
+    "completion_max_calls": 6,
+    "completion_window_seconds": 360,
+    "control_period_seconds": 2592000,
+    "gpu_reserve_cost_usd": "13.76",
+    "gpu_reserve_seconds": 900,
+    "no_instance_scan_settles_liability": false,
+    "prepared_wal_before_possibly_sent": true,
+    "root_volume_tail_usd_max": "0.01",
+    "task8_reserve_required_before_possibly_sent": true,
+    "termination_max_calls_per_window": 6,
+    "termination_only_continuation_until_settlement": true,
+    "termination_window_seconds": 360,
+    "watch_action_deadline_seconds": 20,
+    "watch_interval_seconds": 60
+  },
+  "pinned_sky": {
+    "canonical_identity_sha256": "b84905447fc8874b2d59a0e6ab4e5a8bd930423e2c0f00bca34a15397c4506a9",
+    "dependency_lock_sha256": "0a6eeed4861ba30701f9d2419dc46a3708e105d04bfb70fcdca569a9a214233e",
+    "dist_record_sha256": "3f55d3067a765631930733b241017d512e67b0b495ae93f9415503098ffb1062",
+    "interpreter_path": "/Users/jack.mazac/.local/share/keep/skypilot-0.13.0/bin/python",
+    "interpreter_sha256": "68100c5188b837802c7ae52398389d121b1c063ed244dec11649775b539c3a30",
+    "jobs_launch_retryable": false,
+    "jobs_server_sha256": "fe63ab110c28c3e368de56a700d437918a7105cf2db893d814f9627be6331955",
+    "original_provisioner_sha256": "fc5d2e4b94f97c10babb583859da24a4fb19256807e763e064e1f294d6c442ef",
+    "patched_provisioner_sha256": "b9d633d4f4756bec51f431ca5e35c23a7db4c30387bc2da618bbc4a006e7f423",
+    "record_type": "glm52_pinned_skypilot_identity_v1",
+    "schema_version": 1,
+    "server_config_sha256": "8627854cd50f21b5bf368ad0ab50f66d6301565680e0ff84e2535c9ff961feba",
+    "skypilot_version": "0.13.0",
+    "wheel_metadata_sha256": "846f799ff4bd85f135bc23d4503ece7e5941e125a7fdf6e02523a78c37a270b7"
+  },
+  "record_type": "glm52_task9_static_contract_v1",
+  "region": "us-west-2",
+  "relay_policy": {
+    "ATTESTATION": {
+      "allow_aws_credentials": false,
+      "allow_imds": false,
+      "allow_shell": false,
+      "allowed_paths": [
+        "/api/health",
+        "/users/role"
+      ],
+      "port": 18443,
+      "principal_arn": "arn:aws:iam::246813579024:role/keep-glm52-h1g-attestation"
+    },
+    "LAUNCH_ADMISSION": {
+      "allow_aws_credentials": false,
+      "allow_imds": false,
+      "allow_shell": false,
+      "allowed_paths": [
+        "/jobs/launch"
+      ],
+      "port": 18444,
+      "principal_arn": "arn:aws:iam::246813579024:role/keep-glm52-h1g-launch-admission"
+    },
+    "NUMERIC_BINDING": {
+      "allow_aws_credentials": false,
+      "allow_imds": false,
+      "allow_shell": false,
+      "allowed_paths": [
+        "/requests/exact",
+        "/jobs/exact"
+      ],
+      "port": 18445,
+      "principal_arn": "arn:aws:iam::246813579024:role/keep-glm52-h1g-numeric-binding"
+    },
+    "RETAINED_CANCELLATION": {
+      "allow_aws_credentials": false,
+      "allow_imds": false,
+      "allow_shell": false,
+      "allowed_paths": [
+        "/api/cancel",
+        "/jobs/cancel"
+      ],
+      "port": 18446,
+      "principal_arn": "arn:aws:iam::246813579024:role/keep-glm52-h1g-retained-cancellation"
+    }
+  },
+  "run_id": "glm52-sky-20260724",
+  "schema_version": 1,
+  "sky_server_config": {
+    "api_server": {
+      "api_version": 56,
+      "host": "127.0.0.1",
+      "port": 46580
+    },
+    "jobs_launch_retryable": false,
+    "service_account_role": "user"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "eval_row_probe_missing_requirements": [],
+  "family_eval_gate_pass": true,
+  "input_paths": [
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_rows-67fc6e49/out/qwen_family_eval_rows.jsonl"
+  ],
+  "metric_summary": {
+    "clean_row_count": 66,
+    "top1_mean": 1.0
+  },
+  "minimum_clean_rows_per_split": 22,
+  "missing_prompt_ids_by_split": {
+    "holdout": [],
+    "report": [],
+    "selection": []
+  },
+  "missing_requirements": [],
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "prompt_pack_required": true,
+  "record_type": "qwen_family_eval_gate_check",
+  "required_prompt_counts": {
+    "holdout": 22,
+    "report": 22,
+    "selection": 22
+  },
+  "required_splits": [
+    "report",
+    "selection",
+    "holdout"
+  ],
+  "row_error_count": 0,
+  "row_errors": [],
+  "split_counts": {
+    "holdout": 22,
+    "report": 22,
+    "selection": 22
+  }
+}

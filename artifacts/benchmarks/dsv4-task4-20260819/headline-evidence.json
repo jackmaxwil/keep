@@ -1,0 +1,1164 @@
+{
+  "record_type": "dsv4_mtp_headline_compact_evidence_v1",
+  "schema_version": 1,
+  "raw_summary_sha256": "a5f462a44fb187ee9ffda92885794ed314538e984b4645cb37fafb753a0dbfe5",
+  "summary": {
+    "acceptance_consistency": true,
+    "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+    "claim_limit": "Same-machine deterministic report-split prefix only; ratio is not portable across machines or prompt distributions.",
+    "clean_pairs": 3,
+    "comparison": "compressed_ar_elapsed / compressed_speculative_elapsed",
+    "dirty_pairs": 0,
+    "max_new_tokens": 16,
+    "median_baseline_over_speculative": 2.8530882960542354,
+    "min_clean_pairs": 3,
+    "orders": {
+      "baseline_first": 2,
+      "speculative_first": 1
+    },
+    "paired_baseline_over_speculative": [
+      0.8212909930465911,
+      2.974165241698767,
+      2.8530882960542354
+    ],
+    "pairs": 3,
+    "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+    "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+    "record_type": "dsv4_mtp_headline_summary_v1",
+    "rows": 6,
+    "schema_version": 1,
+    "speculative_stats": {
+      "acceptance_rate": 0.5789473684210527,
+      "accepted_per_verify_pass": 2.75,
+      "accepted_tokens": 11,
+      "drafted_tokens": 19,
+      "emitted_per_verify_pass": 4.0,
+      "emitted_tokens": 16,
+      "rejected_tokens": 8,
+      "verify_kernel_calls": 516,
+      "verify_kernel_implementations": [
+        "metal",
+        "nax_e8p_m32n64"
+      ],
+      "verify_passes": 4,
+      "verify_kernel_implementation_counts": {
+        "metal": 504,
+        "nax_e8p_m32n64": 12
+      },
+      "verify_kernel_unique_dispatches": [
+        {
+          "count": 84,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": false,
+            "implementation": "metal",
+            "input_dims": 4096,
+            "output_dims": 2048,
+            "route_count": 30,
+            "strategy": "direct",
+            "token_rows": 5
+          }
+        },
+        {
+          "count": 252,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": false,
+            "implementation": "metal",
+            "input_dims": 4096,
+            "output_dims": 2048,
+            "route_count": 36,
+            "strategy": "direct",
+            "token_rows": 6
+          }
+        },
+        {
+          "count": 42,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": true,
+            "implementation": "metal",
+            "input_dims": 2048,
+            "output_dims": 4096,
+            "route_count": 30,
+            "strategy": "direct",
+            "token_rows": 30
+          }
+        },
+        {
+          "count": 126,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": true,
+            "implementation": "metal",
+            "input_dims": 2048,
+            "output_dims": 4096,
+            "route_count": 36,
+            "strategy": "direct",
+            "token_rows": 36
+          }
+        },
+        {
+          "count": 2,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": false,
+            "implementation": "nax_e8p_m32n64",
+            "input_dims": 4096,
+            "output_dims": 2048,
+            "route_count": 30,
+            "strategy": "sorted_tiled",
+            "token_rows": 5
+          }
+        },
+        {
+          "count": 6,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": false,
+            "implementation": "nax_e8p_m32n64",
+            "input_dims": 4096,
+            "output_dims": 2048,
+            "route_count": 36,
+            "strategy": "sorted_tiled",
+            "token_rows": 6
+          }
+        },
+        {
+          "count": 1,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": true,
+            "implementation": "nax_e8p_m32n64",
+            "input_dims": 2048,
+            "output_dims": 4096,
+            "route_count": 30,
+            "strategy": "sorted_tiled",
+            "token_rows": 30
+          }
+        },
+        {
+          "count": 3,
+          "dispatch": {
+            "code_bits": 16,
+            "group_size": 512,
+            "has_lhs_indices": true,
+            "implementation": "nax_e8p_m32n64",
+            "input_dims": 2048,
+            "output_dims": 4096,
+            "route_count": 36,
+            "strategy": "sorted_tiled",
+            "token_rows": 36
+          }
+        }
+      ]
+    },
+    "token_parity": true,
+    "verdict": "PASS"
+  },
+  "rows": [
+    {
+      "raw_row_sha256": "ad9bcd4a6eb388c657b5ec4bc3ebac023560cc337307a939010fe8da244fb9df",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 20035,
+      "ppid": 20026,
+      "pair_id": 0,
+      "pair_order": "baseline_first",
+      "role": "baseline",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "0",
+        "--pair-order",
+        "baseline_first",
+        "--role",
+        "baseline",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-00-baseline.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 7.5027868330071215,
+      "tokens_per_second": 2.132540928606816,
+      "speculative_stats": null,
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 1675,
+      "pageouts_delta": 0,
+      "pageouts_total": 328762,
+      "swapouts_delta": 0,
+      "swapouts_total": 4913948,
+      "mlx_active_bytes": 90990886424,
+      "mlx_cache_bytes": 3634329765,
+      "mlx_peak_bytes": 93967816928,
+      "rss_bytes": 48423337984,
+      "wired_limit_environment_absent": true
+    },
+    {
+      "raw_row_sha256": "da12c58e98b192bcd706f3aaf19c11a7fee9041793049fb09dc3d62f7795b78e",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 21081,
+      "ppid": 20026,
+      "pair_id": 0,
+      "pair_order": "baseline_first",
+      "role": "speculative",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "0",
+        "--pair-order",
+        "baseline_first",
+        "--role",
+        "speculative",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-00-speculative.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 9.135357499995735,
+      "tokens_per_second": 1.7514366569679918,
+      "speculative_stats": {
+        "acceptance_rate": 0.5789473684210527,
+        "accepted_per_verify_pass": 2.75,
+        "accepted_tokens": 11,
+        "drafted_tokens": 19,
+        "emitted_per_verify_pass": 4.0,
+        "emitted_tokens": 16,
+        "rejected_tokens": 8,
+        "verify_kernel_calls": 516,
+        "verify_kernel_implementations": [
+          "metal",
+          "nax_e8p_m32n64"
+        ],
+        "verify_passes": 4,
+        "verify_kernel_implementation_counts": {
+          "metal": 504,
+          "nax_e8p_m32n64": 12
+        },
+        "verify_kernel_unique_dispatches": [
+          {
+            "count": 84,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 252,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 42,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 126,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 36
+            }
+          },
+          {
+            "count": 2,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 6,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 1,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 3,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 36
+            }
+          }
+        ]
+      },
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 2037,
+      "pageouts_delta": 0,
+      "pageouts_total": 328891,
+      "swapouts_delta": 0,
+      "swapouts_total": 5259052,
+      "mlx_active_bytes": 90990892752,
+      "mlx_cache_bytes": 3787294157,
+      "mlx_peak_bytes": 93972017348,
+      "rss_bytes": 53935128576,
+      "wired_limit_environment_absent": true
+    },
+    {
+      "raw_row_sha256": "b2a219e02f7064a2ce3a0072dc6329a84ba8de772d70364e9f8d8a014b19c7e3",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 22423,
+      "ppid": 20026,
+      "pair_id": 1,
+      "pair_order": "speculative_first",
+      "role": "baseline",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "1",
+        "--pair-order",
+        "speculative_first",
+        "--role",
+        "baseline",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-01-baseline.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 28.21576449999702,
+      "tokens_per_second": 0.5670588865313817,
+      "speculative_stats": null,
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 25464,
+      "pageouts_delta": 0,
+      "pageouts_total": 329540,
+      "swapouts_delta": 0,
+      "swapouts_total": 5516720,
+      "mlx_active_bytes": 90990885456,
+      "mlx_cache_bytes": 3634280569,
+      "mlx_peak_bytes": 93967815960,
+      "rss_bytes": 53767389184,
+      "wired_limit_environment_absent": true
+    },
+    {
+      "raw_row_sha256": "a664fc0bd3b1dc1b3410f2b85e99ccc064a7e74f57c40e1530ebbe45619da954",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 22021,
+      "ppid": 20026,
+      "pair_id": 1,
+      "pair_order": "speculative_first",
+      "role": "speculative",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "1",
+        "--pair-order",
+        "speculative_first",
+        "--role",
+        "speculative",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-01-speculative.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 9.486952541978098,
+      "tokens_per_second": 1.6865268303180405,
+      "speculative_stats": {
+        "acceptance_rate": 0.5789473684210527,
+        "accepted_per_verify_pass": 2.75,
+        "accepted_tokens": 11,
+        "drafted_tokens": 19,
+        "emitted_per_verify_pass": 4.0,
+        "emitted_tokens": 16,
+        "rejected_tokens": 8,
+        "verify_kernel_calls": 516,
+        "verify_kernel_implementations": [
+          "metal",
+          "nax_e8p_m32n64"
+        ],
+        "verify_passes": 4,
+        "verify_kernel_implementation_counts": {
+          "metal": 504,
+          "nax_e8p_m32n64": 12
+        },
+        "verify_kernel_unique_dispatches": [
+          {
+            "count": 84,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 252,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 42,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 126,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 36
+            }
+          },
+          {
+            "count": 2,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 6,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 1,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 3,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 36
+            }
+          }
+        ]
+      },
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 1367,
+      "pageouts_delta": 0,
+      "pageouts_total": 329201,
+      "swapouts_delta": 0,
+      "swapouts_total": 5444804,
+      "mlx_active_bytes": 90990892792,
+      "mlx_cache_bytes": 3788311069,
+      "mlx_peak_bytes": 93972017388,
+      "rss_bytes": 55491969024,
+      "wired_limit_environment_absent": true
+    },
+    {
+      "raw_row_sha256": "d74e332005aa97431154f1da7dbf5be4aaa908224fa1ad6d4920881b4c176574",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 23982,
+      "ppid": 20026,
+      "pair_id": 2,
+      "pair_order": "baseline_first",
+      "role": "baseline",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "2",
+        "--pair-order",
+        "baseline_first",
+        "--role",
+        "baseline",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-02-baseline.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 29.16414433301543,
+      "tokens_per_second": 0.5486188731375572,
+      "speculative_stats": null,
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 2589,
+      "pageouts_delta": 0,
+      "pageouts_total": 329895,
+      "swapouts_delta": 0,
+      "swapouts_total": 5528988,
+      "mlx_active_bytes": 90990884944,
+      "mlx_cache_bytes": 3634247297,
+      "mlx_peak_bytes": 93967815448,
+      "rss_bytes": 53994536960,
+      "wired_limit_environment_absent": true
+    },
+    {
+      "raw_row_sha256": "2f9fe955450de88ef5be2769a89cb96c6b7326be14b9b4792d19b540c1bee187",
+      "record_type": "dsv4_mtp_headline_row_v1",
+      "schema_version": 1,
+      "fresh_process": true,
+      "pid": 28598,
+      "ppid": 20026,
+      "pair_id": 2,
+      "pair_order": "baseline_first",
+      "role": "speculative",
+      "argv": [
+        "/Users/jack.mazac/Developer/keep/benchmarks/bench_dsv4_mtp_headline.py",
+        "run-row",
+        "--source",
+        "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+        "--resident-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+        "--vq-dir",
+        "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+        "--pack",
+        "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+        "--prompt-tokens",
+        "64",
+        "--max-new-tokens",
+        "16",
+        "--quiet-window-seconds",
+        "5.0",
+        "--quiet-max-attempts",
+        "3",
+        "--pair-id",
+        "2",
+        "--pair-order",
+        "baseline_first",
+        "--role",
+        "speculative",
+        "--output",
+        "/Users/jack.mazac/Developer/keep/artifacts/benchmarks/dsv4-task4-20260819/headline/rows/pair-02-speculative.json"
+      ],
+      "artifact_identity_sha256": "5dcbe26f5a790caad0740fe7413f79cfcd30518ee8f227c178d6522664776aae",
+      "artifact_identity": {
+        "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+        "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+        "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+        "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+        "resident_parameter_tensors": 1271,
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+        "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+        "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+        "vq_projection_files": 138
+      },
+      "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+      "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+      "campaign_split": "report",
+      "holdout_used": false,
+      "selection": "shortest report session, deterministic prefix",
+      "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+      "prompt_sha256": "666b30afc24bd2eb9e1f6816e39fecc869740acf7f2ea0c014c6209069d39458",
+      "prompt_tokens": 64,
+      "source_session_tokens": 4405,
+      "max_new_tokens": 16,
+      "token_ids_sha256": "fb84360de9a343c8da8ac2b2bf7b3b62651a5d1ce0eaee83f274cc362d8ee81c",
+      "emitted_tokens": 16,
+      "elapsed_seconds": 10.221956457971828,
+      "tokens_per_second": 1.5652580859432277,
+      "speculative_stats": {
+        "acceptance_rate": 0.5789473684210527,
+        "accepted_per_verify_pass": 2.75,
+        "accepted_tokens": 11,
+        "drafted_tokens": 19,
+        "emitted_per_verify_pass": 4.0,
+        "emitted_tokens": 16,
+        "rejected_tokens": 8,
+        "verify_kernel_calls": 516,
+        "verify_kernel_implementations": [
+          "metal",
+          "nax_e8p_m32n64"
+        ],
+        "verify_passes": 4,
+        "verify_kernel_implementation_counts": {
+          "metal": 504,
+          "nax_e8p_m32n64": 12
+        },
+        "verify_kernel_unique_dispatches": [
+          {
+            "count": 84,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 252,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "metal",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 42,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "direct",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 126,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "metal",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "direct",
+              "token_rows": 36
+            }
+          },
+          {
+            "count": 2,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 5
+            }
+          },
+          {
+            "count": 6,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": false,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 4096,
+              "output_dims": 2048,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 6
+            }
+          },
+          {
+            "count": 1,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 30,
+              "strategy": "sorted_tiled",
+              "token_rows": 30
+            }
+          },
+          {
+            "count": 3,
+            "dispatch": {
+              "code_bits": 16,
+              "group_size": 512,
+              "has_lhs_indices": true,
+              "implementation": "nax_e8p_m32n64",
+              "input_dims": 2048,
+              "output_dims": 4096,
+              "route_count": 36,
+              "strategy": "sorted_tiled",
+              "token_rows": 36
+            }
+          }
+        ]
+      },
+      "quiet": {
+        "attempts": 1,
+        "available": true,
+        "enabled": true,
+        "pageouts_delta": 0,
+        "quiet": true,
+        "swapouts_delta": 0,
+        "window_seconds": 5.0
+      },
+      "thermal": {
+        "command": [
+          "pmset",
+          "-g",
+          "therm"
+        ],
+        "output": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+        "returncode": 0,
+        "sha256": "6735f04bb165f84b3cc6782e9b66f43b84459bbf0da5ff652792c7dc27bd0cf4",
+        "warning_lines": [
+          "Note: No thermal warning level has been recorded",
+          "Note: No performance warning level has been recorded"
+        ]
+      },
+      "pageins_delta": 2453,
+      "pageouts_delta": 0,
+      "pageouts_total": 330461,
+      "swapouts_delta": 0,
+      "swapouts_total": 5541312,
+      "mlx_active_bytes": 90990892700,
+      "mlx_cache_bytes": 3787491741,
+      "mlx_peak_bytes": 93972017296,
+      "rss_bytes": 54088024064,
+      "wired_limit_environment_absent": true
+    }
+  ]
+}

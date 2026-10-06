@@ -1,0 +1,32 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "benchmark_jsonl": "714d4d550f0cc45e/benchmark_jsonl",
+    "benchmark_row_probe_json": "714d4d550f0cc45e/evidence_json",
+    "family_policy_json": "3a61437c9bab349d/evidence_json"
+  },
+  "op": "qwen-family-benchmark-gate-check",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_gate-18754774/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_gate-18754774/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/check_qwen_family_benchmark_gate.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--benchmark-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/out/qwen_family_benchmark_rows.jsonl",
+    "--benchmark-row-probe-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_rows-714d4d55/evidence/evidence_json.json",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_gate-18754774/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_benchmark_gate-18754774/evidence/evidence.jsonl"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_benchmark_gate",
+  "step_key": "18754774152cea67"
+}

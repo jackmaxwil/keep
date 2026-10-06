@@ -1,0 +1,130 @@
+{
+  "command_errors": [
+    {
+      "argv": [
+        "arp",
+        "-n",
+        "192.168.10.2"
+      ],
+      "output": "192.168.10.2 (192.168.10.2) -- no entry",
+      "returncode": 1
+    },
+    {
+      "argv": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=5",
+        "jackmazac@192.168.100.191",
+        "arp",
+        "-n",
+        "192.168.10.1"
+      ],
+      "output": "192.168.10.1 (192.168.10.1) -- no entry",
+      "returncode": 1
+    }
+  ],
+  "command_timestamp": "2026-07-04T17:58:03-0700",
+  "decision": "rdma_link_down",
+  "direct_arp_ready": false,
+  "direct_ip_ready": false,
+  "direct_path_ready": false,
+  "direct_route_ready": false,
+  "link_layer_ready": false,
+  "local": {
+    "arp": {
+      "expected_mac": "36:a7:c5:18:04:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "hardware_ports": {
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "fc:b2:14:8f:0c:e1"
+      }
+    },
+    "interface": {
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:13:f1:c0:85:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "gid0": "fe80::3413:f1ff:fec0:8580",
+      "has_ipv4_gid": false,
+      "port_active": false,
+      "state": "PORT_DOWN"
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": "192.168.100.1",
+      "interface": "en0",
+      "uses_expected_interface": false
+    }
+  },
+  "mutating_commands_run": false,
+  "peer": {
+    "arp": {
+      "expected_mac": "36:13:f1:c0:85:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "hardware_ports": {
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "84:2f:57:64:03:6a"
+      }
+    },
+    "interface": {
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:a7:c5:18:04:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "gid0": "fe80::34a7:c5ff:fe18:480",
+      "has_ipv4_gid": false,
+      "port_active": false,
+      "state": "PORT_DOWN"
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": null,
+      "interface": "utun13",
+      "uses_expected_interface": false
+    }
+  },
+  "rdma_ipv4_gid_ready": false,
+  "read_only_commands": [
+    "ifconfig en1",
+    "networksetup -listallhardwareports",
+    "route -n get 192.168.10.2",
+    "arp -n 192.168.10.2",
+    "/usr/bin/ibv_devinfo -d rdma_en1 -v",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 ifconfig en1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 networksetup -listallhardwareports",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 route -n get 192.168.10.1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 arp -n 192.168.10.1",
+    "ssh -o BatchMode=yes -o ConnectTimeout=5 jackmazac@192.168.100.191 /usr/bin/ibv_devinfo -d rdma_en1 -v"
+  ],
+  "ready_for_jaccl_preflight": false,
+  "ready_for_uc_pingpong": false,
+  "record_type": "glm45_air_rdma_topology_audit"
+}

@@ -1,0 +1,155 @@
+{
+  "command_errors": [
+    {
+      "argv": [
+        "arp",
+        "-n",
+        "192.168.10.2"
+      ],
+      "output": "192.168.10.2 (192.168.10.2) -- no entry",
+      "returncode": 1
+    },
+    {
+      "argv": [
+        "ssh",
+        "jackmazac@192.168.100.191",
+        "arp -n 192.168.10.1"
+      ],
+      "output": "192.168.10.1 (192.168.10.1) -- no entry",
+      "returncode": 1
+    }
+  ],
+  "decision": "rdma_link_down",
+  "direct_arp_ready": false,
+  "direct_ip_ready": false,
+  "direct_path_ready": false,
+  "direct_route_ready": false,
+  "link_layer_ready": false,
+  "local": {
+    "arp": {
+      "expected_mac": "36:a7:c5:18:04:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "hardware_ports": {
+      "Ethernet Adapter (en3)": {
+        "device": "en3",
+        "ethernet_address": "ca:fe:ca:53:dd:37"
+      },
+      "Ethernet Adapter (en4)": {
+        "device": "en4",
+        "ethernet_address": "ca:fe:ca:53:dd:38"
+      },
+      "Ethernet Adapter (en5)": {
+        "device": "en5",
+        "ethernet_address": "ca:fe:ca:53:dd:39"
+      },
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "Thunderbolt 2": {
+        "device": "en6",
+        "ethernet_address": "36:13:f1:c0:85:84"
+      },
+      "Thunderbolt 3": {
+        "device": "en2",
+        "ethernet_address": "36:13:f1:c0:85:88"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:13:f1:c0:85:80"
+      },
+      "USB 10/100/1G/2.5G LAN": {
+        "device": "en8",
+        "ethernet_address": "f4:4d:ad:04:95:75"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "fc:b2:14:8f:0c:e1"
+      }
+    },
+    "interface": {
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:13:f1:c0:85:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "has_ipv4_gid": false,
+      "port_active": false
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": "192.168.100.1",
+      "interface": "en0",
+      "uses_expected_interface": false
+    }
+  },
+  "peer": {
+    "arp": {
+      "expected_mac": "36:13:f1:c0:85:80",
+      "has_expected_mac": false,
+      "mac": null
+    },
+    "hardware_ports": {
+      "Ethernet Adapter (en4)": {
+        "device": "en4",
+        "ethernet_address": "c2:4d:20:10:80:a8"
+      },
+      "Ethernet Adapter (en5)": {
+        "device": "en5",
+        "ethernet_address": "c2:4d:20:10:80:a9"
+      },
+      "Ethernet Adapter (en6)": {
+        "device": "en6",
+        "ethernet_address": "c2:4d:20:10:80:aa"
+      },
+      "Thunderbolt 1": {
+        "device": "en1",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Thunderbolt 2": {
+        "device": "en2",
+        "ethernet_address": "36:a7:c5:18:04:84"
+      },
+      "Thunderbolt 3": {
+        "device": "en3",
+        "ethernet_address": "36:a7:c5:18:04:88"
+      },
+      "Thunderbolt Bridge": {
+        "device": "bridge0",
+        "ethernet_address": "36:a7:c5:18:04:80"
+      },
+      "Wi-Fi": {
+        "device": "en0",
+        "ethernet_address": "84:2f:57:64:03:6a"
+      }
+    },
+    "interface": {
+      "has_expected_ip": false,
+      "inet": [],
+      "mac": "36:a7:c5:18:04:80",
+      "status": "inactive"
+    },
+    "rdma": {
+      "has_ipv4_gid": false,
+      "port_active": false
+    },
+    "rdma_device": "rdma_en1",
+    "route": {
+      "gateway": null,
+      "interface": "utun13",
+      "uses_expected_interface": false
+    }
+  },
+  "rdma_ipv4_gid_ready": false,
+  "ready_for_jaccl_preflight": false,
+  "ready_for_uc_pingpong": false,
+  "record_type": "glm45_air_rdma_topology_audit",
+  "recovery": {
+    "local_commands": "sudo ifconfig bridge0 down && sudo ifconfig en1 inet 192.168.10.1 netmask 255.255.255.252 up",
+    "notes": "Do not add host routes. If stale host routes exist, delete them, clear ARP, then verify route, ARP, RDMA GID[1], UC pingpong, and clean-room JACCL.",
+    "peer_commands": "ssh jackmazac@192.168.100.191 'sudo ifconfig bridge0 down && sudo ifconfig en1 inet 192.168.10.2 netmask 255.255.255.252 up'"
+  }
+}

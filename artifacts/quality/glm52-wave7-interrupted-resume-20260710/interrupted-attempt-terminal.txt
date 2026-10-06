@@ -1,0 +1,45 @@
+Codex PTY transcript provenance
+session_record: /Users/jack.mazac/.codex/sessions/2026/07/09/rollout-2026-07-09T16-13-26-019f4928-4ea1-7211-8095-31aca8257fe8.jsonl:17692
+session_timestamp_utc: 2026-07-10T12:33:09.164Z
+tool_chunk_id: e48df1
+process_returncode: 130
+
+^CTraceback (most recent call last):
+  File "/Users/jack.mazac/Developer/keep/benchmarks/materialize_glm52_reap_groups.py", line 559, in <module>
+    main()
+    ~~~~^^
+  File "/Users/jack.mazac/Developer/keep/benchmarks/materialize_glm52_reap_groups.py", line 539, in main
+    payload, exit_code = _run(args)
+                         ~~~~^^^^^^
+  File "/Users/jack.mazac/Developer/keep/benchmarks/materialize_glm52_reap_groups.py", line 378, in _run
+    manifest = convert_vq_groups_from_safetensors(
+        source_dir=args.source_dir,
+    ...<6 lines>...
+        expert_workers=args.expert_workers,
+    )
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/convert/stream_convert.py", line 1125, in convert_vq_groups_from_safetensors
+    convert_vq_group_from_safetensors(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        source_dir=source_dir,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        expert_executor=expert_executor,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/convert/stream_convert.py", line 784, in convert_vq_group_from_safetensors
+    result = _convert_expert_projection(task)
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/convert/stream_convert.py", line 692, in _convert_expert_projection
+    weight = read_modelopt_nvfp4_weight(Path(task.source_dir), task.source_bundle)
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/convert/nvfp4.py", line 266, in read_modelopt_nvfp4_weight
+    weight_header, weight_raw = read_safetensors_tensor_bytes(
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        source_root / bundle.weight_shard,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        bundle.weight_name,
+        ^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/jack.mazac/Developer/keep/src/mlx_vq/io/source_safetensors.py", line 149, in read_safetensors_tensor_bytes
+    raw = handle.read(end - start)
+KeyboardInterrupt

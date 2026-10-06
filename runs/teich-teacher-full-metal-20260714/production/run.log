@@ -1,0 +1,2 @@
+=== 2026-07-15T06:08:23Z starting full 257-session production run ===
+=== resumable: re-running this script with the same OUT dir skips sessions whose .npz already exists ===

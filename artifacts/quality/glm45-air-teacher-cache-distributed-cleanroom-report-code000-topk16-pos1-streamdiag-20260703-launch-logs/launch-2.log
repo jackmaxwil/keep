@@ -1,0 +1,50 @@
+[32m[INFO] Running /tmp/glm-mlx-python /private/tmp/glm_export_distributed_teacher_cache.py --rank-view-roots-json '{"0":"/Users/jack.mazac/Developer/keep/artifacts/build/glm45air__dmx2p0__sc-l45__r26__legacy_lineage_20260701/steps/legacy_pipeline_source_views-d660767a/out/rank-0","1":"/Users/jackmazac/Development/mlx/glm45-air-pipeline-views/rank-1"}' --output-dir /Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-streamdiag-20260703 --require-two-ranks --rank0-only-logits --stream-lm-head --lm-head-chunk-rows 8192 --mlx-cache-limit-gb 0 --mlx-wired-limit-gb 1 --top-k 16 --prompt-set air_vq_ladder_report_v1 --max-positions 1 --prompt-id report_code_000 --no-full-logits --layer-split 24 [0m
+Traceback (most recent call last):
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 1366, in <module>
+    main()
+    ~~~~^^
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 1188, in main
+    output = _stream_lm_head_topk_payload(
+        output,
+    ...<4 lines>...
+        top_k=args.top_k,
+    )
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 914, in _stream_lm_head_topk_payload
+    _raise_for_nonfinite_streamed_topk_payload(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        selected_hidden=np.asarray(selected_hidden.astype(mx.float32), dtype=np.float32),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+        first_nonfinite_chunk=first_nonfinite_chunk,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 796, in _raise_for_nonfinite_streamed_topk_payload
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: streamed lm_head top-k payload contains non-finite values: {"first_nonfinite_chunk": {"end": 8192, "start": 0}, "log_normalizer": {"dtype": "float64", "finite": false, "finite_count": 0, "name": "log_normalizer", "nan_count": 1, "neginf_count": 0, "nonfinite_count": 1, "posinf_count": 0, "shape": [1], "size": 1}, "running_exp_sum": {"dtype": "float64", "finite": false, "finite_count": 0, "name": "running_exp_sum", "nan_count": 1, "neginf_count": 0, "nonfinite_count": 1, "posinf_count": 0, "shape": [1], "size": 1}, "running_max": {"dtype": "float64", "finite": false, "finite_count": 0, "name": "running_max", "nan_count": 1, "neginf_count": 0, "nonfinite_count": 1, "posinf_count": 0, "shape": [1], "size": 1}, "selected_hidden": {"dtype": "float32", "finite": false, "finite_count": 0, "name": "selected_hidden", "nan_count": 4096, "neginf_count": 0, "nonfinite_count": 4096, "posinf_count": 0, "shape": [1, 4096], "size": 4096}, "target_logits": {"dtype": "float64", "finite": false, "finite_count": 0, "name": "target_logits", "nan_count": 1, "neginf_count": 0, "nonfinite_count": 1, "posinf_count": 0, "shape": [1], "size": 1}, "target_logprobs": {"dtype": "float32", "finite": false, "finite_count": 0, "name": "target_logprobs", "nan_count": 1, "neginf_count": 0, "nonfinite_count": 1, "posinf_count": 0, "shape": [1], "size": 1}, "topk_logits": {"dtype": "float64", "finite": false, "finite_count": 0, "name": "topk_logits", "nan_count": 16, "neginf_count": 0, "nonfinite_count": 16, "posinf_count": 0, "shape": [1, 16], "size": 16}, "topk_logprobs": {"dtype": "float32", "finite": false, "finite_count": 0, "name": "topk_logprobs", "nan_count": 16, "neginf_count": 0, "nonfinite_count": 16, "posinf_count": 0, "shape": [1, 16], "size": 16}}
+[33m[WARN] Node with rank 0 exited with code 1 [0m
+Exception in thread Thread-2 (_thread_fn):
+Traceback (most recent call last):
+  File "/Users/jack.mazac/.local/share/uv/python/cpython-3.14.5-macos-aarch64-none/lib/python3.14/threading.py", line 1082, in _bootstrap_inner
+    self._context.run(self.run)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/Users/jack.mazac/.local/share/uv/python/cpython-3.14.5-macos-aarch64-none/lib/python3.14/threading.py", line 1024, in run
+    self._target(*self._args, **self._kwargs)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jack.mazac/Developer/keep/.venv/lib/python3.14/site-packages/mlx/_distributed_utils/launch.py", line 208, in _thread_fn
+    command.terminate()
+    ~~~~~~~~~~~~~~~~~^^
+  File "/Users/jack.mazac/Developer/keep/.venv/lib/python3.14/site-packages/mlx/_distributed_utils/launch.py", line 95, in terminate
+    c = run(
+        cmd,
+    ...<4 lines>...
+        text=True,
+    )
+  File "/Users/jack.mazac/.local/share/uv/python/cpython-3.14.5-macos-aarch64-none/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command 'ssh jackmazac@192.168.100.191 'pid=$(cat /var/folders/6c/bstk3yh95vj2kk0jnvd69f180000gn/T/tmp.BVQSptVaya
+); if ps -p $pid >/dev/null; then     kill $pid;     echo 1; else     echo 0; fi; rm /var/folders/6c/bstk3yh95vj2kk0jnvd69f180000gn/T/tmp.BVQSptVaya
+'' returned non-zero exit status 1.

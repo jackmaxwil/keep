@@ -1,0 +1,99 @@
+{
+  "eval_row_probe_missing_requirements": [
+    "qwen_eval_metric_rows"
+  ],
+  "family_eval_gate_pass": false,
+  "input_paths": [
+    "artifacts/quality/qwen36-35b-a3b-family-eval-row-prep-with-teacher-logits-20260703/qwen_family_eval_rows.jsonl"
+  ],
+  "metric_summary": {
+    "clean_row_count": 0,
+    "top1_mean": null
+  },
+  "minimum_clean_rows_per_split": 16,
+  "missing_prompt_ids_by_split": {
+    "holdout": [
+      "qwen_holdout_000",
+      "qwen_holdout_001",
+      "qwen_holdout_002",
+      "qwen_holdout_003",
+      "qwen_holdout_004",
+      "qwen_holdout_005",
+      "qwen_holdout_006",
+      "qwen_holdout_007",
+      "qwen_holdout_008",
+      "qwen_holdout_009",
+      "qwen_holdout_010",
+      "qwen_holdout_011",
+      "qwen_holdout_012",
+      "qwen_holdout_013",
+      "qwen_holdout_014",
+      "qwen_holdout_015"
+    ],
+    "report": [
+      "qwen_report_000",
+      "qwen_report_001",
+      "qwen_report_002",
+      "qwen_report_003",
+      "qwen_report_004",
+      "qwen_report_005",
+      "qwen_report_006",
+      "qwen_report_007",
+      "qwen_report_008",
+      "qwen_report_009",
+      "qwen_report_010",
+      "qwen_report_011",
+      "qwen_report_012",
+      "qwen_report_013",
+      "qwen_report_014",
+      "qwen_report_015"
+    ],
+    "selection": [
+      "qwen_selection_000",
+      "qwen_selection_001",
+      "qwen_selection_002",
+      "qwen_selection_003",
+      "qwen_selection_004",
+      "qwen_selection_005",
+      "qwen_selection_006",
+      "qwen_selection_007",
+      "qwen_selection_008",
+      "qwen_selection_009",
+      "qwen_selection_010",
+      "qwen_selection_011",
+      "qwen_selection_012",
+      "qwen_selection_013",
+      "qwen_selection_014",
+      "qwen_selection_015"
+    ]
+  },
+  "missing_requirements": [
+    "qwen_report_eval_jsonl",
+    "qwen_selection_eval_jsonl",
+    "qwen_holdout_eval_jsonl",
+    "qwen_report_eval_prompt_rows",
+    "qwen_selection_eval_prompt_rows",
+    "qwen_holdout_eval_prompt_rows",
+    "qwen_eval_metric_rows"
+  ],
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "prompt_pack_required": true,
+  "record_type": "qwen_family_eval_gate_check",
+  "required_prompt_counts": {
+    "holdout": 16,
+    "report": 16,
+    "selection": 16
+  },
+  "required_splits": [
+    "report",
+    "selection",
+    "holdout"
+  ],
+  "row_error_count": 0,
+  "row_errors": [],
+  "split_counts": {
+    "holdout": 0,
+    "report": 0,
+    "selection": 0
+  }
+}

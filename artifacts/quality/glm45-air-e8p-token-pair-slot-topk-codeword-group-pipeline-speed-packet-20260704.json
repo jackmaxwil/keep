@@ -1,0 +1,199 @@
+{
+  "all_lane_s_pass": false,
+  "all_memory_clean": true,
+  "all_output_shape_equivalent": true,
+  "all_parity_pass": false,
+  "artifact_dir": "artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8",
+  "candidate_iterations": 1,
+  "candidate_jsonl": "artifacts/benchmarks/glm45-air-e8p-token-pair-slot-topk-codeword-group-pipeline-m1024-candidate-20260704.jsonl",
+  "candidate_timeout_observed_seconds": null,
+  "candidate_warmup": 0,
+  "closest_ratio": {
+    "artifact_projection": "down_proj",
+    "candidate_equivalence_claim": true,
+    "candidate_memory_clean": true,
+    "candidate_ms_per_iter": 222.1293340116972,
+    "candidate_native_pair_slot_topk_shape": [
+      512,
+      2,
+      8,
+      4096
+    ],
+    "candidate_output_shape": [
+      512,
+      2,
+      8,
+      4096
+    ],
+    "candidate_q2_view_shape": [
+      1024,
+      8,
+      4096
+    ],
+    "candidate_timed_out": false,
+    "candidate_variant": "nax_e8p_token_pair_slot_topk_codeword_group_pipeline_rhs_sorted_matmul",
+    "codeword_group_count": 8,
+    "lane_s_pass": false,
+    "lane_s_ratio": 1.15,
+    "output_shape_equivalent": true,
+    "output_stripe_count": 64,
+    "pair_slots": 2,
+    "pair_width": 2,
+    "parity_pass": false,
+    "parity_ratio": 1.25,
+    "projection": "down",
+    "q2_memory_clean": true,
+    "q2_ms_per_iter": 4.434291666257195,
+    "q2_output_shape": [
+      1024,
+      8,
+      4096
+    ],
+    "q2_variant": "mlx_q2",
+    "ratio_is_timeout_lower_bound": false,
+    "ratio_to_q2": 50.093532570713265,
+    "route_count": 8192,
+    "route_slot_count": 4194304,
+    "timeout_observed_seconds": null,
+    "token_pairs": 512,
+    "tokens": 1024,
+    "top_k": 8,
+    "topk_slots": 8
+  },
+  "comparison_count": 1,
+  "comparisons": [
+    {
+      "artifact_projection": "down_proj",
+      "candidate_equivalence_claim": true,
+      "candidate_memory_clean": true,
+      "candidate_ms_per_iter": 222.1293340116972,
+      "candidate_native_pair_slot_topk_shape": [
+        512,
+        2,
+        8,
+        4096
+      ],
+      "candidate_output_shape": [
+        512,
+        2,
+        8,
+        4096
+      ],
+      "candidate_q2_view_shape": [
+        1024,
+        8,
+        4096
+      ],
+      "candidate_timed_out": false,
+      "candidate_variant": "nax_e8p_token_pair_slot_topk_codeword_group_pipeline_rhs_sorted_matmul",
+      "codeword_group_count": 8,
+      "lane_s_pass": false,
+      "lane_s_ratio": 1.15,
+      "output_shape_equivalent": true,
+      "output_stripe_count": 64,
+      "pair_slots": 2,
+      "pair_width": 2,
+      "parity_pass": false,
+      "parity_ratio": 1.25,
+      "projection": "down",
+      "q2_memory_clean": true,
+      "q2_ms_per_iter": 4.434291666257195,
+      "q2_output_shape": [
+        1024,
+        8,
+        4096
+      ],
+      "q2_variant": "mlx_q2",
+      "ratio_is_timeout_lower_bound": false,
+      "ratio_to_q2": 50.093532570713265,
+      "route_count": 8192,
+      "route_slot_count": 4194304,
+      "timeout_observed_seconds": null,
+      "token_pairs": 512,
+      "tokens": 1024,
+      "top_k": 8,
+      "topk_slots": 8
+    }
+  ],
+  "custom_memory_limit_override": false,
+  "decision": "reject_token_pair_slot_topk_codeword_group_pipeline_speed_path",
+  "lane_s_claim": false,
+  "lane_s_ratio": 1.15,
+  "layer_index": 1,
+  "next_track_b_hypothesis": "change_token_pair_slot_topk_codeword_group_pipeline_layout_or_kernel_family",
+  "pair_width": 2,
+  "parity_ratio": 1.25,
+  "peer2_used": false,
+  "projection": "down_proj",
+  "q2_iterations": 3,
+  "q2_jsonl": "artifacts/benchmarks/glm45-air-e8p-token-pair-slot-topk-codeword-group-pipeline-m1024-q2-20260704.jsonl",
+  "q2_warmup": 1,
+  "rdma_jaccl_touched": false,
+  "record_type": "glm45_air_e8p_token_pair_slot_topk_codeword_group_pipeline_speed_packet",
+  "rejected_next_steps": [
+    "do_not_claim_lane_s_from_rejected_speed_packet",
+    "do_not_route_resident_auto_from_rejected_speed_packet",
+    "do_not_use_peer2_for_this_local_trackb_slice",
+    "do_not_set_custom_memory_limit_override_for_this_local_trackb_slice"
+  ],
+  "resident_auto_claim": false,
+  "same_window_q2_speed_packet": true,
+  "schema_version": 1,
+  "speed_claim": false,
+  "tokens": [
+    1024
+  ],
+  "top_k": 8,
+  "worst_ratio": {
+    "artifact_projection": "down_proj",
+    "candidate_equivalence_claim": true,
+    "candidate_memory_clean": true,
+    "candidate_ms_per_iter": 222.1293340116972,
+    "candidate_native_pair_slot_topk_shape": [
+      512,
+      2,
+      8,
+      4096
+    ],
+    "candidate_output_shape": [
+      512,
+      2,
+      8,
+      4096
+    ],
+    "candidate_q2_view_shape": [
+      1024,
+      8,
+      4096
+    ],
+    "candidate_timed_out": false,
+    "candidate_variant": "nax_e8p_token_pair_slot_topk_codeword_group_pipeline_rhs_sorted_matmul",
+    "codeword_group_count": 8,
+    "lane_s_pass": false,
+    "lane_s_ratio": 1.15,
+    "output_shape_equivalent": true,
+    "output_stripe_count": 64,
+    "pair_slots": 2,
+    "pair_width": 2,
+    "parity_pass": false,
+    "parity_ratio": 1.25,
+    "projection": "down",
+    "q2_memory_clean": true,
+    "q2_ms_per_iter": 4.434291666257195,
+    "q2_output_shape": [
+      1024,
+      8,
+      4096
+    ],
+    "q2_variant": "mlx_q2",
+    "ratio_is_timeout_lower_bound": false,
+    "ratio_to_q2": 50.093532570713265,
+    "route_count": 8192,
+    "route_slot_count": 4194304,
+    "timeout_observed_seconds": null,
+    "token_pairs": 512,
+    "tokens": 1024,
+    "top_k": 8,
+    "topk_slots": 8
+  }
+}

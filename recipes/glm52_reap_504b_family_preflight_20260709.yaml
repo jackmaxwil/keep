@@ -1,0 +1,144 @@
+schema_version: 1
+strict_inputs: true
+name: glm52_reap_504b_family_preflight_20260709
+description: >
+  Recompute the pinned GLM-5.2 REAP source, tokenizer, runtime, policy, prompt,
+  and teacher-source metadata contracts, then compose the hard family release
+  gate against the current six-group full-bind preflight. The terminal gate is
+  intentionally fail-loud (exit 2) until the full 225-group artifact,
+  production bind/generation, full-vocabulary quality rows, and same-machine
+  pinned-FP4 benchmark evidence exist.
+external_inputs:
+  source_dir:
+    kind: artifact_dir
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+  profile_path:
+    kind: file
+    path: models/glm52-reap-504b-v2.yaml
+    expect_hash: ae8b852139ac26e63846b0475064e5b955a00f1ff75f628682a3d8494474114d
+  config_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json
+    expect_hash: 5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b
+  index_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json
+    expect_hash: bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f
+  non_vq_artifact:
+    kind: artifact_dir
+    path: artifacts/build/glm52_reap_504b_materialization_probe_20260709/steps/non_vq_pack-a678bc3c/out
+    expect_hash: 42112475c610abe884347ccb75d099cfcab7455d47a7a822b91212daee3b3f99
+  routed_artifact:
+    kind: artifact_dir
+    path: artifacts/quality/glm52-wave2-materialization-20260709/e8-layers3-4-w1
+    expect_hash: 74ed26bb0e88d30cfd9d1b23f87d7b14122c5f660dbda42ea1c331a419ae53c8
+steps:
+  - id: source_audit
+    op: glm52-source-audit
+    class: diagnostic
+    inputs:
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: source_payload_audit
+    op: glm52-source-payload-audit
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      source_audit_evidence: step:source_audit/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: indexshare_runtime
+    op: glm52-indexshare-runtime-probe
+    class: diagnostic
+    inputs:
+      config_path: external:config_path
+      index_path: external:index_path
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: tokenizer_readiness
+    op: glm52-tokenizer-readiness-probe
+    class: diagnostic
+    inputs:
+      tokenizer_dir: external:source_dir
+      config_path: external:config_path
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      prompt: The capital of France is
+
+  - id: synthetic_generation
+    op: glm52-synthetic-generation-probe
+    class: diagnostic
+
+  - id: full_bind_evidence
+    op: glm52-full-bind-evidence
+    class: diagnostic
+    inputs:
+      profile_path: external:profile_path
+      config_path: external:config_path
+      source_index_path: external:index_path
+      non_vq_artifact: external:non_vq_artifact
+      routed_artifact: external:routed_artifact
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: family_policy
+    op: glm52-family-gate-policy
+    class: diagnostic
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: eval_prompts
+    op: glm52-family-eval-prompt-pack
+    class: diagnostic
+    inputs:
+      tokenizer_dir: external:source_dir
+      tokenizer_readiness_json: step:tokenizer_readiness/evidence_json
+      family_policy_json: step:family_policy/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: teacher_metadata
+    op: glm52-family-eval-teacher-metadata
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      source_audit_json: step:source_audit/evidence_json
+      source_payload_audit_json: step:source_payload_audit/evidence_json
+      tokenizer_readiness_json: step:tokenizer_readiness/evidence_json
+      family_policy_json: step:family_policy/evidence_json
+      eval_prompt_pack_json: step:eval_prompts/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: family_gate
+    op: glm52-family-gate-check
+    class: diagnostic
+    gate:
+      profile: glm52_family
+    inputs:
+      family_policy_json: step:family_policy/evidence_json
+      eval_prompt_pack_json: step:eval_prompts/evidence_json
+      teacher_metadata_json: step:teacher_metadata/evidence_json
+      full_bind_preflight_json: step:full_bind_evidence/evidence_json
+      indexshare_runtime_json: step:indexshare_runtime/evidence_json
+      synthetic_generation_json: step:synthetic_generation/evidence_json

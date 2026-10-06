@@ -1,0 +1,77 @@
+{
+  "head": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/head"
+  },
+  "lower-window-0": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-0"
+  },
+  "lower-window-1": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-1"
+  },
+  "lower-window-10": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-10"
+  },
+  "lower-window-11": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-11"
+  },
+  "lower-window-2": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-2"
+  },
+  "lower-window-3": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-3"
+  },
+  "lower-window-4": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-4"
+  },
+  "lower-window-5": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-5"
+  },
+  "lower-window-6": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-6"
+  },
+  "lower-window-7": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-7"
+  },
+  "lower-window-8": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-8"
+  },
+  "lower-window-9": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/lower-window-9"
+  },
+  "upper-window-0": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-0"
+  },
+  "upper-window-1": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-1"
+  },
+  "upper-window-10": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-10"
+  },
+  "upper-window-11": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-11"
+  },
+  "upper-window-2": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-2"
+  },
+  "upper-window-3": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-3"
+  },
+  "upper-window-4": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-4"
+  },
+  "upper-window-5": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-5"
+  },
+  "upper-window-6": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-6"
+  },
+  "upper-window-7": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-7"
+  },
+  "upper-window-8": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-8"
+  },
+  "upper-window-9": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower2-4-6-8-10-12-14-16-18-20-22-upper25-27-29-31-33-35-37-39-41-43-45-headproc-20260704/upper-window-9"
+  }
+}

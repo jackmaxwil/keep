@@ -1,0 +1,31 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact": "acef91b9e3c6896c/artifact",
+    "config_path": "93a4693fa9d8392fbfccd4b3c9873f4bfdcb14fdede978b123d07d19675efe99"
+  },
+  "op": "qwen-upstream-transformer-bind-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/upstream_transformer_probe-6a2d5d9e/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/upstream_transformer_probe-6a2d5d9e/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/probe_qwen_upstream_transformer_binding.py",
+    "--artifact-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+    "--config-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0/config.json",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/upstream_transformer_probe-6a2d5d9e/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/upstream_transformer_probe-6a2d5d9e/evidence/evidence.jsonl",
+    "--expected-layers",
+    "0,39"
+  ],
+  "status": "completed",
+  "step_id": "upstream_transformer_probe",
+  "step_key": "6a2d5d9e347d9262"
+}

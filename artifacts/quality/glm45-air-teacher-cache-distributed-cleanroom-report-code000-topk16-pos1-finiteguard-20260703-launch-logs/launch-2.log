@@ -1,0 +1,20 @@
+[32m[INFO] Running /tmp/glm-mlx-python /private/tmp/glm_export_distributed_teacher_cache.py --rank-view-roots-json '{"0":"/Users/jack.mazac/Developer/keep/artifacts/build/glm45air__dmx2p0__sc-l45__r26__legacy_lineage_20260701/steps/legacy_pipeline_source_views-d660767a/out/rank-0","1":"/Users/jackmazac/Development/mlx/glm45-air-pipeline-views/rank-1"}' --output-dir /Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-finiteguard-20260703 --require-two-ranks --rank0-only-logits --stream-lm-head --lm-head-chunk-rows 8192 --mlx-cache-limit-gb 0 --mlx-wired-limit-gb 1 --top-k 16 --prompt-set air_vq_ladder_report_v1 --max-positions 1 --prompt-id report_code_000 --no-full-logits --layer-split 24 [0m
+Traceback (most recent call last):
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 1272, in <module>
+    main()
+    ~~~~^^
+  File "/private/tmp/glm_export_distributed_teacher_cache.py", line 1173, in main
+    row, tensors = build_teacher_cache_topk_payload(
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        topk_ids=output.topk_ids,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<9 lines>...
+        max_positions=args.max_positions,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/tmp/keep-src/mlx_vq/quality/teacher_cache.py", line 1197, in build_teacher_cache_topk_payload
+    raise ValueError("topk_logprobs values must be finite")
+ValueError: topk_logprobs values must be finite
+[33m[WARN] Node with rank 1 exited with code 255 [0m
+[33m[WARN] Node with rank 0 exited with code -15 [0m

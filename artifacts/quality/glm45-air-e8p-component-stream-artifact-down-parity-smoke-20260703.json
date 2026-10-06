@@ -1,0 +1,30 @@
+{
+  "artifact_layer": 45,
+  "artifact_projection": "down_proj",
+  "artifact_reference_cosine": 1.0,
+  "artifact_reference_max_abs_diff": 0.001953125,
+  "artifact_reference_variant": "decoded_fp16_sorted_direct",
+  "decision": "component_stream_artifact_down_scalar_parity_smoke_pass",
+  "diagnostic_note": "artifact-backed native component-stream RHS E8P FP16 scalar/source oracle timing with direct decoded sorted-reference parity fields; packing happens before the timed loop and dense RHS is materialized only for the untimed parity oracle",
+  "finite_output": true,
+  "input_dims": 1408,
+  "ms_per_iter": 26.509916002396494,
+  "native_parity_claim": true,
+  "next_required_features": [
+    "design_component_stream_speed_path_before_q2_benchmark",
+    "run_same_window_q2_control_only_after_speed_path_exists",
+    "do_not_promote_scalar_oracle_as_speed_path"
+  ],
+  "output_dims": 4096,
+  "output_shape": [
+    32,
+    4096
+  ],
+  "pageouts_delta": 0,
+  "record_type": "glm45_air_e8p_component_stream_scalar_down_parity_smoke",
+  "source_jsonl": "artifacts/benchmarks/glm45-air-e8p-component-stream-scalar-down-parity-smoke-20260703.jsonl",
+  "speed_claim": false,
+  "swapouts_delta": 0,
+  "variant": "nax_e8p_component_stream_rhs_sorted_scalar_raw",
+  "vq_group_size": 352
+}

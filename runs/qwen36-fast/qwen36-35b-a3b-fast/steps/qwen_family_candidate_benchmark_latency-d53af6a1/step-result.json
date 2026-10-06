@@ -1,0 +1,40 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "artifact": "acef91b9e3c6896c/artifact",
+    "family_policy_json": "3a61437c9bab349d/evidence_json"
+  },
+  "op": "qwen-family-candidate-benchmark-latency-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/evidence/evidence_json.json",
+    "latency_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/out/qwen_candidate_benchmark_latency_rows.jsonl"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/bench_qwen_family_candidate_latency.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--artifact-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/materialize_groups-acef91b9/out",
+    "--output-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_candidate_benchmark_latency-d53af6a1/evidence/evidence.jsonl",
+    "--layer",
+    "0",
+    "--repetitions",
+    "2",
+    "--top-k",
+    "8",
+    "--warmup-repetitions",
+    "0"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_candidate_benchmark_latency",
+  "step_key": "d53af6a129b75746"
+}

@@ -1,0 +1,726 @@
+{
+  "benchmark_context": {
+    "all_lane_s_pass": false,
+    "all_parity_pass": false,
+    "analysis_json": "artifacts/quality/glm45-air-e8p-expert-kblock-v2-partial-tensorops-context-20260703.json",
+    "component_stream_tensorops_best_ms_per_iter": null,
+    "component_stream_tensorops_best_ratio_to_q2": null,
+    "component_stream_tensorops_comparison_count": 0,
+    "component_stream_tensorops_worst_ms_per_iter": null,
+    "component_stream_tensorops_worst_ratio_to_q2": null,
+    "down_best_ratio_to_q2": null,
+    "down_best_variant": null,
+    "expert_kblock_factor_signal": "expert_kblock_factor_reuse_present",
+    "expert_kblock_native_best_ms_per_iter": null,
+    "expert_kblock_native_best_ratio_to_q2": null,
+    "expert_kblock_native_comparison_count": 0,
+    "expert_kblock_native_worst_ms_per_iter": null,
+    "expert_kblock_native_worst_ratio_to_q2": null,
+    "expert_kblock_required_kernel_features": [
+      "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+      "avoid_per_fragment_factor_reconstruction",
+      "avoid_lane_local_barrier_fragment_buffer",
+      "account_for_output_column_scale_groups"
+    ],
+    "expert_kblock_schedule_decision": "probe_expert_kblock_factor_decode_reuse",
+    "expert_kblock_tensorops_best_ms_per_iter": 28.52349999981622,
+    "expert_kblock_tensorops_best_ratio_to_q2": 6.255,
+    "expert_kblock_tensorops_comparison_count": 1,
+    "expert_kblock_tensorops_worst_ms_per_iter": 28.52349999981622,
+    "expert_kblock_tensorops_worst_ratio_to_q2": 6.255,
+    "lane_s_ratio": null,
+    "parity_ratio": null,
+    "sign_nibble_micro_lut_tensorops_best_ms_per_iter": null,
+    "sign_nibble_micro_lut_tensorops_best_ratio_to_q2": null,
+    "sign_nibble_micro_lut_tensorops_comparison_count": 0,
+    "sign_nibble_micro_lut_tensorops_worst_ms_per_iter": null,
+    "sign_nibble_micro_lut_tensorops_worst_ratio_to_q2": null,
+    "sign_nibble_tensorops_best_ms_per_iter": null,
+    "sign_nibble_tensorops_best_ratio_to_q2": null,
+    "sign_nibble_tensorops_comparison_count": 0,
+    "sign_nibble_tensorops_worst_ms_per_iter": null,
+    "sign_nibble_tensorops_worst_ratio_to_q2": null,
+    "sign_plane_tensorops_best_ms_per_iter": null,
+    "sign_plane_tensorops_best_ratio_to_q2": null,
+    "sign_plane_tensorops_comparison_count": 0,
+    "sign_plane_tensorops_worst_ms_per_iter": null,
+    "sign_plane_tensorops_worst_ratio_to_q2": null
+  },
+  "component_stream_partial_reduction_guardrail": {
+    "decision": "component_stream_partial_reduction_scaffold_scalar_body",
+    "final_reduction_kernel_present": true,
+    "materializes_decoded_dense_rhs": false,
+    "partial_accumulation_scratch_present": true,
+    "partial_binding_present": true,
+    "partial_body_parallel_schedule_present": false,
+    "partial_body_tensorops_present": false,
+    "partial_grid": "route_tiles_x_component_pairs_x_k_blocks",
+    "partial_kernel_name": "nax_e8p_component_stream_rhs_sorted_partial_matmul",
+    "partial_write_kernel_present": true,
+    "passes_contract": true,
+    "reduce_kernel_name": "nax_e8p_component_stream_rhs_sorted_partial_reduce",
+    "reduction_grid": "route_tiles_x_n_tiles",
+    "rejected_next_steps": [
+      "do_not_benchmark_scalar_component_stream_partial_scaffold",
+      "do_not_promote_without_same_window_q2_speed_packet"
+    ],
+    "required_next_features": [
+      "replace_scalar_component_stream_partial_body_with_valid_parallel_schedule",
+      "preserve_component_stream_partial_reduction_scaffold",
+      "preserve_compressed_component_stream_storage",
+      "prove_native_component_stream_partial_reduction_parity_after_schedule_change"
+    ],
+    "scratch_dtype": "float32",
+    "speed_claim": false,
+    "structural_risk": "component-stream partial accumulation and final reduction are source-visible, but the partial writer still computes one scalar component contribution per lane instead of a valid parallel speed schedule",
+    "uses_component_stream_storage": true
+  },
+  "component_stream_shared_decode_guardrail": {
+    "decision": "component_stream_shared_decode_scalar_cache_scaffold_present",
+    "has_tensorops_matmul": false,
+    "kernel_name": "nax_e8p_component_stream_rhs_sorted_shared_decode_matmul",
+    "kernel_present": true,
+    "materializes_decoded_dense_rhs": false,
+    "primitive_binding_present": true,
+    "reconstructs_components_per_fragment": false,
+    "rejected_next_steps": [
+      "do_not_benchmark_scalar_shared_decode_cache_scaffold",
+      "do_not_route_resident_auto_before_parallel_schedule",
+      "do_not_claim_speed_without_same_window_q2_packet"
+    ],
+    "required_next_features": [
+      "prove_native_shared_decode_cache_parity",
+      "replace_scalar_shared_decode_body_with_valid_parallel_schedule",
+      "prove_artifact_shared_decode_cache_parity_after_schedule_change"
+    ],
+    "shared_decode_cache_present": true,
+    "speed_claim": false,
+    "stages_decoded_b": false,
+    "structural_risk": "component-stream shared decode cache source is present as a scalar parity scaffold; it must be replaced by a valid parallel schedule before q2 timing",
+    "uses_component_stream_storage": true
+  },
+  "component_stream_source_guardrail": {
+    "accumulates_sorted_routes": true,
+    "component_stream_kernel_present": true,
+    "decision": "component_stream_native_scalar_oracle_present",
+    "dispatch_grid": "route_output_scalar",
+    "fills_tensorops_b_fragment": false,
+    "kernel_name": "nax_e8p_component_stream_rhs_sorted_scalar_matmul",
+    "materializes_decoded_dense_rhs": false,
+    "passes_contract": true,
+    "primitive_binding_present": true,
+    "rejected_next_steps": [
+      "do_not_claim_speed_from_scalar_oracle",
+      "do_not_route_resident_auto_before_artifact_speed_gate"
+    ],
+    "required_next_features": [
+      "prove_native_component_stream_parity",
+      "prove_air_down_group_size_352_parity",
+      "add_artifact_projection_parity_gate"
+    ],
+    "structural_risk": "component-stream scalar source is present, but it is only a parity oracle before native/artifact projection gates",
+    "uses_abs_index_tiles": true,
+    "uses_codeword_scale_slots": true,
+    "uses_component_scale_slots": true,
+    "uses_scale_tiles": true,
+    "uses_sign_component_bits": true
+  },
+  "component_stream_speed_path_guardrail": {
+    "component_stream_tensorops_best_ms_per_iter": null,
+    "component_stream_tensorops_best_ratio_to_q2": null,
+    "component_stream_tensorops_comparison_count": 0,
+    "component_stream_tensorops_worst_ms_per_iter": null,
+    "component_stream_tensorops_worst_ratio_to_q2": null,
+    "decision": "component_stream_tensorops_speed_path_candidate_present_needs_parity",
+    "has_tensorops_matmul": true,
+    "materializes_decoded_dense_rhs": false,
+    "passes_contract": true,
+    "primitive_binding_present": true,
+    "rejected_next_steps": [
+      "do_not_benchmark_before_native_and_artifact_parity",
+      "do_not_route_resident_auto_before_same_window_q2_speed_gate",
+      "do_not_claim_speed_without_q2_control"
+    ],
+    "required_next_features": [
+      "prove_native_component_stream_tensorops_parity",
+      "prove_artifact_component_stream_tensorops_parity",
+      "run_same_window_q2_speed_packet",
+      "verify_clean_rows_no_pageouts_or_swapouts"
+    ],
+    "scalar_kernel_name": "nax_e8p_component_stream_rhs_sorted_scalar_matmul",
+    "scalar_oracle_present": true,
+    "speed_claim": false,
+    "speed_kernel_name": "nax_e8p_component_stream_rhs_sorted_tensorops_matmul",
+    "stages_decoded_b": false,
+    "structural_risk": "component-stream TensorOps candidate is present, but speed is unproven until native parity, artifact parity, and same-window q2 rows pass",
+    "tensorops_speed_kernel_present": true,
+    "uses_component_stream_storage": true
+  },
+  "e8p_kernel": {
+    "decoded_b_threadgroup_staging": true,
+    "decodes_e8p_to_ws": true,
+    "has_k_block_decode_loop": true,
+    "kernel_name": "nax_e8p_fp16_sorted_matmul_steel",
+    "loads_btile_from_threadgroup_ws": true,
+    "structural_risk": "decoded-B threadgroup staging materializes E8P weight fragments before TensorOps; 3 threadgroup barriers in the kernel body; B tiles are loaded from staged Ws rather than source codes/scales",
+    "threadgroup_barrier_count": 3
+  },
+  "e8p_packed_rhs_requirements": {
+    "benchmark_rejects_current_steel_family": true,
+    "must_avoid_decoded_b_threadgroup_staging": true,
+    "must_match_geometry": {
+      "bits": 2,
+      "bk": 64,
+      "bm": 64,
+      "bn": 64,
+      "group_size": 128,
+      "wm": 2,
+      "wn": 2
+    },
+    "next_kernel_requirement": "Build an E8P-packed RHS tile layout that preserves compressed codes/scales, feeds a bk64 sorted gather-qmm RHS NAX TensorOps path, and avoids per-output-tile E8P decode or dense/predecoded FP16 RHS materialization.",
+    "reject_next_paths": [
+      "direct_reduce_scalar_accumulation",
+      "inline_b_decode_per_output_tile",
+      "dense_or_predecoded_fp16_rhs"
+    ],
+    "requires_bk64_rhs_nax": true,
+    "requires_sorted_route_gather": true,
+    "storage_constraint": "compressed_e8p_codes_scales",
+    "target_kernel_family": "sorted_gather_qmm_rhs_nax"
+  },
+  "expert_kblock_dispatch_contract_guardrail": {
+    "carries_output_tiles_inside_reuse_scope": true,
+    "decision": "expert_kblock_v2_dispatch_contract_present",
+    "dispatch_grid": "experts_x_k_blocks_x_route_tiles",
+    "enforces_bn64_codewords8": true,
+    "fixed_threadgroup_threads": 128,
+    "incompatible_primitive_grid_present": true,
+    "passes_contract": true,
+    "required_next_features": [],
+    "slot_layout_rank": 5,
+    "structural_risk": "none",
+    "uses_v2_pso": true,
+    "v2_primitive_present": true
+  },
+  "expert_kblock_partial_reduction_guardrail": {
+    "decision": "expert_kblock_v2_partial_reduction_scaffold_present",
+    "final_reduction_kernel_present": true,
+    "partial_accumulation_scratch_present": true,
+    "partial_body_parallel_schedule_present": true,
+    "partial_body_tensorops_present": true,
+    "partial_grid": "experts_x_k_blocks_x_route_tiles",
+    "partial_write_kernel_present": true,
+    "passes_contract": true,
+    "reduction_grid": "route_tiles_x_n_tiles",
+    "rejected_next_steps": [
+      "do_not_benchmark_before_native_v2_parity",
+      "do_not_promote_without_tensorops_speed_packet"
+    ],
+    "required_next_features": [
+      "prove_native_v2_partial_reduction_parity",
+      "resolve_v2_schedule_guardrail_before_speed",
+      "run_same_window_q2_speed_packet_after_guardrail_and_parity"
+    ],
+    "scratch_dtype": "float32",
+    "speed_claim": false,
+    "structural_risk": "partial accumulation, TensorOps writer body, and final reduction are source-visible, but schedule guardrails and native parity must pass before this becomes speed evidence"
+  },
+  "expert_kblock_primitive_shape_guardrail": {
+    "current_tensorops_benchmark_rejected": true,
+    "decision": "current_primitive_shape_blocks_v2_reuse_scope",
+    "dispatch_grid": "n_tiles_x_num_route_tiles",
+    "enforces_bn64_codewords8": true,
+    "fixed_threadgroup_threads": 128,
+    "rejected_next_steps": [
+      "do_not_add_v2_wrapper_on_current_n_tiles_x_route_tiles_dispatch",
+      "do_not_retime_current_expert_kblock_tensorops",
+      "do_not_lightly_tweak_current_expert_kblock_tensorops"
+    ],
+    "required_next_features": [
+      "redesign_expert_kblock_primitive_dispatch_contract",
+      "dispatch_over_reuse_scope_before_output_tile",
+      "broaden_decode_reuse_scope_before_tensorops_fragment_fill",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "slot_layout_rank": 5,
+    "structural_risk": "current primitive dispatches one threadgroup grid over n_tiles x route_tiles, so factor decode reuse cannot be broadened across output tiles without a new dispatch/storage contract",
+    "uses_current_tensorops_pso": true
+  },
+  "expert_kblock_schedule_guardrail": {
+    "benchmark_decision": "probe_expert_kblock_factor_decode_reuse",
+    "current_tensorops_benchmark_rejected": true,
+    "decision": "reject_expert_kblock_tensorops_v2_near_duplicate",
+    "factor_signal": "expert_kblock_factor_reuse_present",
+    "invalid_v2_kernels": [],
+    "kblock_reduction_missing_v2_kernels": [],
+    "kernel_names": [
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_matmul",
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_matmul",
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_v2_matmul"
+    ],
+    "kernel_reports": [
+      {
+        "decision": "tensorops_candidate_present_needs_benchmark",
+        "decodes_factor_values_per_b_fragment": true,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_matmul",
+        "populates_b_fragments": true,
+        "present": true,
+        "single_kblock_completion": false,
+        "structural_risk": "candidate still reconstructs factor-derived B values per TensorOps fragment",
+        "uses_factor_luts": true
+      },
+      {
+        "decision": "scalar_consumer_present_tensorops_missing",
+        "decodes_factor_values_per_b_fragment": false,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": false,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_matmul",
+        "populates_b_fragments": false,
+        "present": true,
+        "single_kblock_completion": false,
+        "structural_risk": "candidate does not reach TensorOps",
+        "uses_factor_luts": true
+      },
+      {
+        "decision": "reject_v2_per_fragment_factor_reconstruction",
+        "decodes_factor_values_per_b_fragment": true,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_v2_matmul",
+        "populates_b_fragments": true,
+        "present": true,
+        "single_kblock_completion": false,
+        "structural_risk": "candidate still reconstructs factor-derived B values per TensorOps fragment",
+        "uses_factor_luts": true
+      }
+    ],
+    "present_kernel_count": 3,
+    "present_kernels": [
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_matmul",
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_matmul",
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_v2_matmul"
+    ],
+    "rejected_next_steps": [
+      "do_not_benchmark_near_duplicate_expert_kblock_v2",
+      "do_not_retime_current_expert_kblock_tensorops",
+      "do_not_lightly_tweak_current_expert_kblock_tensorops"
+    ],
+    "rejected_v2_kernels": [
+      "nax_e8p_expert_kblock_factor_reuse_rhs_sorted_tensorops_v2_matmul"
+    ],
+    "requested_kernel_features": [
+      "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+      "avoid_per_fragment_factor_reconstruction",
+      "avoid_lane_local_barrier_fragment_buffer",
+      "account_for_output_column_scale_groups"
+    ],
+    "required_next_features": [
+      "materially_different_rhs_layout_or_kernel_family",
+      "broaden_decode_reuse_scope_before_tensorops_fragment_fill",
+      "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots",
+      "account_for_output_column_scale_groups",
+      "avoid_per_fragment_factor_reconstruction",
+      "avoid_lane_local_barrier_fragment_buffer"
+    ],
+    "schedule_requested": true,
+    "v2_kernel_invalid": false,
+    "v2_kernel_kblock_reduction_missing": false,
+    "v2_kernel_present": true,
+    "v2_kernel_rejected": true,
+    "v2_partial_body_tensorops_present": true,
+    "v2_partial_reduction_scaffold_present": true
+  },
+  "metal_source": "native/vq_nax_ext/kernels/nax_fp16_matmul.metal",
+  "next_track_b_hypothesis": "prove_component_stream_tensorops_artifact_parity",
+  "packed_rhs_tiled_family": {
+    "decision": "reject_decoded_b_staged_packed_rhs_family",
+    "kernel_names": [
+      "nax_e8p_packed_rhs_sorted_tiled_matmul",
+      "nax_e8p_packed_rhs_sorted_tiled_m128_matmul",
+      "nax_e8p_packed_rhs_sorted_tiled_k128_matmul"
+    ],
+    "kernel_reports": [
+      {
+        "decision": "reject_decoded_b_staged_packed_rhs_kernel",
+        "decodes_e8p_to_staged_b": true,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": true,
+        "kernel_name": "nax_e8p_packed_rhs_sorted_tiled_matmul",
+        "loads_b_fragments_from_staged_b": true,
+        "present": true,
+        "structural_risk": "packed E8P RHS codes are decoded into threadgroup staged_b before TensorOps; right-hand TensorOps fragments are populated from staged decoded B storage; 2 threadgroup barriers in the kernel body",
+        "threadgroup_barrier_count": 2
+      },
+      {
+        "decision": "reject_decoded_b_staged_packed_rhs_kernel",
+        "decodes_e8p_to_staged_b": true,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": true,
+        "kernel_name": "nax_e8p_packed_rhs_sorted_tiled_m128_matmul",
+        "loads_b_fragments_from_staged_b": true,
+        "present": true,
+        "structural_risk": "packed E8P RHS codes are decoded into threadgroup staged_b before TensorOps; right-hand TensorOps fragments are populated from staged decoded B storage; 2 threadgroup barriers in the kernel body",
+        "threadgroup_barrier_count": 2
+      },
+      {
+        "decision": "reject_decoded_b_staged_packed_rhs_kernel",
+        "decodes_e8p_to_staged_b": true,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": true,
+        "kernel_name": "nax_e8p_packed_rhs_sorted_tiled_k128_matmul",
+        "loads_b_fragments_from_staged_b": true,
+        "present": true,
+        "structural_risk": "packed E8P RHS codes are decoded into threadgroup staged_b before TensorOps; right-hand TensorOps fragments are populated from staged decoded B storage; 2 threadgroup barriers in the kernel body",
+        "threadgroup_barrier_count": 2
+      }
+    ],
+    "present_kernel_count": 3,
+    "rejected_kernel_count": 3,
+    "rejected_kernels": [
+      "nax_e8p_packed_rhs_sorted_tiled_matmul",
+      "nax_e8p_packed_rhs_sorted_tiled_m128_matmul",
+      "nax_e8p_packed_rhs_sorted_tiled_k128_matmul"
+    ],
+    "required_next_features": [
+      "avoid_decoded_b_threadgroup_staging",
+      "reuse_decode_outside_threadgroup_b_tile",
+      "preserve_compressed_rhs_storage",
+      "change_rhs_layout_or_kernel_family"
+    ]
+  },
+  "primitive_source": "native/vq_nax_ext/csrc/nax_fp16_primitive.mm",
+  "q2_geometry": {
+    "down": {
+      "bits": 2,
+      "bk": 64,
+      "bm": 64,
+      "bn": 64,
+      "group_size": 128,
+      "max_route_count": 32768,
+      "observed_rows": 3,
+      "passes_bk64_rhs_nax": true,
+      "requests_bk32": false,
+      "tokens_observed": [
+        1024,
+        2048,
+        4096
+      ],
+      "wm": 2,
+      "wn": 2
+    },
+    "gate_up": {
+      "bits": 2,
+      "bk": 64,
+      "bm": 64,
+      "bn": 64,
+      "group_size": 128,
+      "max_route_count": 32768,
+      "observed_rows": 3,
+      "passes_bk64_rhs_nax": true,
+      "requests_bk32": false,
+      "tokens_observed": [
+        1024,
+        2048,
+        4096
+      ],
+      "wm": 2,
+      "wn": 2
+    }
+  },
+  "q2_geometry_jsonl": "artifacts/benchmarks/glm45-air-nax-q2-lldb-summary.jsonl",
+  "q2_jsonl": "artifacts/benchmarks/glm45-air-nax-q2-lldb-summary.jsonl",
+  "record_type": "glm45_air_e8p_kernel_structure_analysis",
+  "schema_version": 1,
+  "shared_decode_kernel": {
+    "decision": "reject_per_fragment_factor_reconstruction_shared_decode",
+    "factor_lut_load_count": 2,
+    "has_tensorops_matmul": true,
+    "has_threadgroup_half_staging": false,
+    "kernel_name": "nax_e8p_split_byte_factor_reuse_rhs_sorted_shared_decode_matmul",
+    "reconstructs_b_fragments_from_factor_luts": true,
+    "required_next_features": [
+      "broader_expert_output_factor_decode_reuse",
+      "avoid_per_fragment_factor_reconstruction",
+      "preserve_compressed_rhs_storage",
+      "change_rhs_layout_or_kernel_family"
+    ],
+    "structural_risk": "B cooperative tensor fragments are reconstructed from split-byte factor LUTs per k/n fragment; TensorOps are reached without decoded-B staging, so remaining cost is factor decode schedule reuse",
+    "threadgroup_barrier_count": 0
+  },
+  "shared_n_decode_kernel": {
+    "decision": "reject_lane_local_shared_n_decode",
+    "has_lane_local_shared_b": true,
+    "has_tensorops_matmul": true,
+    "kernel_name": "nax_e8p_split_byte_factor_reuse_rhs_sorted_shared_n_decode_matmul",
+    "loads_b_fragments_from_shared_b": true,
+    "reconstructs_shared_b_from_factor_luts": true,
+    "required_next_features": [
+      "avoid_lane_local_barrier_fragment_buffer",
+      "broader_expert_output_factor_decode_reuse",
+      "avoid_per_fragment_factor_reconstruction",
+      "preserve_compressed_rhs_storage",
+      "change_rhs_layout_or_kernel_family"
+    ],
+    "structural_risk": "split-byte factor values are decoded into lane-local shared_b before TensorOps; right-hand TensorOps fragments are populated from lane-local shared_b storage; 2 threadgroup barriers in the kernel body",
+    "threadgroup_barrier_count": 2,
+    "uses_factor_luts": true
+  },
+  "sign_nibble_schedule_guardrail": {
+    "benchmark_context": {
+      "all_lane_s_pass": false,
+      "all_parity_pass": false,
+      "analysis_json": "artifacts/quality/glm45-air-e8p-expert-kblock-v2-partial-tensorops-context-20260703.json",
+      "component_stream_tensorops_best_ms_per_iter": null,
+      "component_stream_tensorops_best_ratio_to_q2": null,
+      "component_stream_tensorops_comparison_count": 0,
+      "component_stream_tensorops_worst_ms_per_iter": null,
+      "component_stream_tensorops_worst_ratio_to_q2": null,
+      "down_best_ratio_to_q2": null,
+      "down_best_variant": null,
+      "expert_kblock_factor_signal": "expert_kblock_factor_reuse_present",
+      "expert_kblock_native_best_ms_per_iter": null,
+      "expert_kblock_native_best_ratio_to_q2": null,
+      "expert_kblock_native_comparison_count": 0,
+      "expert_kblock_native_worst_ms_per_iter": null,
+      "expert_kblock_native_worst_ratio_to_q2": null,
+      "expert_kblock_required_kernel_features": [
+        "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+        "avoid_per_fragment_factor_reconstruction",
+        "avoid_lane_local_barrier_fragment_buffer",
+        "account_for_output_column_scale_groups"
+      ],
+      "expert_kblock_schedule_decision": "probe_expert_kblock_factor_decode_reuse",
+      "expert_kblock_tensorops_best_ms_per_iter": 28.52349999981622,
+      "expert_kblock_tensorops_best_ratio_to_q2": 6.255,
+      "expert_kblock_tensorops_comparison_count": 1,
+      "expert_kblock_tensorops_worst_ms_per_iter": 28.52349999981622,
+      "expert_kblock_tensorops_worst_ratio_to_q2": 6.255,
+      "lane_s_ratio": null,
+      "parity_ratio": null,
+      "sign_nibble_micro_lut_tensorops_best_ms_per_iter": null,
+      "sign_nibble_micro_lut_tensorops_best_ratio_to_q2": null,
+      "sign_nibble_micro_lut_tensorops_comparison_count": 0,
+      "sign_nibble_micro_lut_tensorops_worst_ms_per_iter": null,
+      "sign_nibble_micro_lut_tensorops_worst_ratio_to_q2": null,
+      "sign_nibble_tensorops_best_ms_per_iter": null,
+      "sign_nibble_tensorops_best_ratio_to_q2": null,
+      "sign_nibble_tensorops_comparison_count": 0,
+      "sign_nibble_tensorops_worst_ms_per_iter": null,
+      "sign_nibble_tensorops_worst_ratio_to_q2": null,
+      "sign_plane_tensorops_best_ms_per_iter": null,
+      "sign_plane_tensorops_best_ratio_to_q2": null,
+      "sign_plane_tensorops_comparison_count": 0,
+      "sign_plane_tensorops_worst_ms_per_iter": null,
+      "sign_plane_tensorops_worst_ratio_to_q2": null
+    },
+    "benchmark_rejects_micro_lut_tensorops": false,
+    "benchmark_rejects_sign_nibble_tensorops": false,
+    "decision": "needs_manual_review",
+    "kernel_names": [
+      "nax_e8p_sign_nibble_abs_index_rhs_sorted_tiled_matmul",
+      "nax_e8p_sign_nibble_abs_index_rhs_sorted_shared_decode_matmul",
+      "nax_e8p_sign_nibble_abs_index_rhs_sorted_tensorops_matmul",
+      "nax_e8p_sign_nibble_micro_lut_rhs_sorted_tensorops_matmul"
+    ],
+    "kernel_reports": [
+      {
+        "decision": "not_present",
+        "kernel_name": "nax_e8p_sign_nibble_abs_index_rhs_sorted_tiled_matmul",
+        "present": false
+      },
+      {
+        "decision": "not_present",
+        "kernel_name": "nax_e8p_sign_nibble_abs_index_rhs_sorted_shared_decode_matmul",
+        "present": false
+      },
+      {
+        "benchmark_rejects_micro_lut_tensorops": false,
+        "benchmark_rejects_sign_nibble_tensorops": false,
+        "decision": "needs_manual_review",
+        "decodes_from_sign_nibbles": false,
+        "decodes_micro_lut_values_per_b_fragment": false,
+        "decodes_nibble_values_per_b_fragment": true,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_sign_nibble_abs_index_rhs_sorted_tensorops_matmul",
+        "loads_b_fragments_from_staged_b": false,
+        "present": true,
+        "reconstructs_sign_byte_from_nibbles": false,
+        "structural_risk": "B cooperative tensor fragments reconstruct nibble signs, abs indices, parity, and scales per fragment",
+        "threadgroup_barrier_count": 0,
+        "uses_abs_index_lut": false,
+        "uses_abs_index_tiles": true,
+        "uses_codeword_scale_slots": true,
+        "uses_micro_lut_luts": false,
+        "uses_micro_lut_slot_maps": false,
+        "uses_parity_tiles": true,
+        "uses_scale_tiles": true,
+        "uses_sign_nibble_tiles": true
+      },
+      {
+        "benchmark_rejects_micro_lut_tensorops": false,
+        "benchmark_rejects_sign_nibble_tensorops": false,
+        "decision": "needs_manual_review",
+        "decodes_from_sign_nibbles": false,
+        "decodes_micro_lut_values_per_b_fragment": true,
+        "decodes_nibble_values_per_b_fragment": false,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_sign_nibble_micro_lut_rhs_sorted_tensorops_matmul",
+        "loads_b_fragments_from_staged_b": false,
+        "present": true,
+        "reconstructs_sign_byte_from_nibbles": false,
+        "structural_risk": "B cooperative tensor fragments reconstruct micro-LUT sign slots, abs-index LUT entries, parity, and scales per fragment",
+        "threadgroup_barrier_count": 0,
+        "uses_abs_index_lut": true,
+        "uses_abs_index_tiles": false,
+        "uses_codeword_scale_slots": true,
+        "uses_micro_lut_luts": true,
+        "uses_micro_lut_slot_maps": true,
+        "uses_parity_tiles": false,
+        "uses_scale_tiles": true,
+        "uses_sign_nibble_tiles": false
+      }
+    ],
+    "micro_lut_rejected_kernels": [],
+    "per_fragment_rejected_kernels": [],
+    "present_tensorops_kernel_count": 2,
+    "q2_shaped_tensorops_kernel_present": true,
+    "rejected_kernel_count": 0,
+    "rejected_kernels": [],
+    "required_next_features": [
+      "match_q2_bk64_bn64_tensorops_geometry",
+      "decode_nibble_sign_masks_without_per_fragment_sign_byte_reconstruction",
+      "avoid_decoded_b_threadgroup_staging",
+      "avoid_lane_local_barrier_fragment_buffer",
+      "preserve_compressed_rhs_storage",
+      "preserve_codeword_scale_slots"
+    ],
+    "scalar_consumes_sign_nibbles": true,
+    "scalar_kernel_name": "nax_e8p_sign_nibble_abs_index_rhs_sorted_matmul",
+    "scalar_reconstructs_sign_byte_from_nibbles": true,
+    "scalar_sorted_route_kernel_present": true
+  },
+  "sign_plane_schedule_guardrail": {
+    "benchmark_context": {
+      "all_lane_s_pass": false,
+      "all_parity_pass": false,
+      "analysis_json": "artifacts/quality/glm45-air-e8p-expert-kblock-v2-partial-tensorops-context-20260703.json",
+      "component_stream_tensorops_best_ms_per_iter": null,
+      "component_stream_tensorops_best_ratio_to_q2": null,
+      "component_stream_tensorops_comparison_count": 0,
+      "component_stream_tensorops_worst_ms_per_iter": null,
+      "component_stream_tensorops_worst_ratio_to_q2": null,
+      "down_best_ratio_to_q2": null,
+      "down_best_variant": null,
+      "expert_kblock_factor_signal": "expert_kblock_factor_reuse_present",
+      "expert_kblock_native_best_ms_per_iter": null,
+      "expert_kblock_native_best_ratio_to_q2": null,
+      "expert_kblock_native_comparison_count": 0,
+      "expert_kblock_native_worst_ms_per_iter": null,
+      "expert_kblock_native_worst_ratio_to_q2": null,
+      "expert_kblock_required_kernel_features": [
+        "reuse_factor_decode_across_output_tiles_per_expert_kblock",
+        "avoid_per_fragment_factor_reconstruction",
+        "avoid_lane_local_barrier_fragment_buffer",
+        "account_for_output_column_scale_groups"
+      ],
+      "expert_kblock_schedule_decision": "probe_expert_kblock_factor_decode_reuse",
+      "expert_kblock_tensorops_best_ms_per_iter": 28.52349999981622,
+      "expert_kblock_tensorops_best_ratio_to_q2": 6.255,
+      "expert_kblock_tensorops_comparison_count": 1,
+      "expert_kblock_tensorops_worst_ms_per_iter": 28.52349999981622,
+      "expert_kblock_tensorops_worst_ratio_to_q2": 6.255,
+      "lane_s_ratio": null,
+      "parity_ratio": null,
+      "sign_nibble_micro_lut_tensorops_best_ms_per_iter": null,
+      "sign_nibble_micro_lut_tensorops_best_ratio_to_q2": null,
+      "sign_nibble_micro_lut_tensorops_comparison_count": 0,
+      "sign_nibble_micro_lut_tensorops_worst_ms_per_iter": null,
+      "sign_nibble_micro_lut_tensorops_worst_ratio_to_q2": null,
+      "sign_nibble_tensorops_best_ms_per_iter": null,
+      "sign_nibble_tensorops_best_ratio_to_q2": null,
+      "sign_nibble_tensorops_comparison_count": 0,
+      "sign_nibble_tensorops_worst_ms_per_iter": null,
+      "sign_nibble_tensorops_worst_ratio_to_q2": null,
+      "sign_plane_tensorops_best_ms_per_iter": null,
+      "sign_plane_tensorops_best_ratio_to_q2": null,
+      "sign_plane_tensorops_comparison_count": 0,
+      "sign_plane_tensorops_worst_ms_per_iter": null,
+      "sign_plane_tensorops_worst_ratio_to_q2": null
+    },
+    "benchmark_rejects_sign_plane_tensorops": false,
+    "decision": "needs_manual_review",
+    "kernel_names": [
+      "nax_e8p_sign_plane_abs_index_rhs_sorted_tensorops_matmul"
+    ],
+    "kernel_reports": [
+      {
+        "benchmark_rejects_sign_plane_tensorops": false,
+        "decision": "needs_manual_review",
+        "decodes_sign_plane_values_per_b_fragment": true,
+        "has_lane_local_fragment_buffer": false,
+        "has_tensorops_matmul": true,
+        "has_threadgroup_staged_b": false,
+        "kernel_name": "nax_e8p_sign_plane_abs_index_rhs_sorted_tensorops_matmul",
+        "present": true,
+        "reconstructs_signs_from_bit_planes": true,
+        "structural_risk": "sign bytes are reconstructed from output-column bit planes inside the TensorOps schedule; B cooperative tensor fragments reconstruct sign planes, abs indices, parity, and scales per fragment",
+        "threadgroup_barrier_count": 0,
+        "uses_abs_index_tiles": true,
+        "uses_codeword_scale_slots": true,
+        "uses_scale_tiles": true,
+        "uses_sign_bit_planes": true
+      }
+    ],
+    "per_fragment_rejected_kernels": [],
+    "present_tensorops_kernel_count": 1,
+    "q2_shaped_tensorops_kernel_present": true,
+    "rejected_kernel_count": 0,
+    "rejected_kernels": [],
+    "required_next_features": [],
+    "scalar_consumes_sign_planes": true,
+    "scalar_kernel_name": "nax_e8p_sign_plane_abs_index_rhs_sorted_matmul",
+    "scalar_reconstructs_signs_from_bit_planes": true,
+    "scalar_sorted_route_kernel_present": true
+  },
+  "structural_gap": "Current E8P Steel decodes into threadgroup Ws and reloads B tiles from that staging, while the audited q2 path is a sorted gather-qmm RHS NAX kernel with bk64 geometry.",
+  "track_b_current_family_verdict": {
+    "benchmarkable_candidate_present": false,
+    "benchmarkable_families": [],
+    "blocked_families": [
+      "steel",
+      "packed_rhs_tiled",
+      "shared_decode",
+      "shared_n_decode",
+      "expert_kblock_v2"
+    ],
+    "decision": "current_track_b_family_has_open_review_or_benchmark_candidate",
+    "family_decisions": {
+      "expert_kblock_v2": "reject_expert_kblock_tensorops_v2_near_duplicate",
+      "packed_rhs_tiled": "reject_decoded_b_staged_packed_rhs_family",
+      "shared_decode": "reject_per_fragment_factor_reconstruction_shared_decode",
+      "shared_n_decode": "reject_lane_local_shared_n_decode",
+      "sign_nibble": "needs_manual_review",
+      "sign_plane": "needs_manual_review",
+      "steel": "reject_decoded_b_threadgroup_staging"
+    },
+    "open_review_families": [
+      "sign_nibble",
+      "sign_plane"
+    ],
+    "open_review_family_count": 2,
+    "rejected_next_steps": [],
+    "required_next_features": []
+  }
+}

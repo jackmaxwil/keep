@@ -1,0 +1,78 @@
+{
+  "attempt": "glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-streamdiag-20260703",
+  "cache_output_dir": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-streamdiag-20260703",
+  "decision": "streamed_rank0_hidden_nonfinite_before_lm_head",
+  "distributed_path": {
+    "hostfile": "/tmp/glm-jaccl-hostfile-en1.json",
+    "local_direct_if": "en1",
+    "local_direct_ip": "192.168.10.1",
+    "peer_direct_if": "en1",
+    "peer_direct_ip": "192.168.10.2",
+    "peer_ssh": "jackmazac@192.168.100.191",
+    "topology_audit": "artifacts/quality/glm45-air-rdma-topology-audit-20260703-stream-topk-diagnostic.json",
+    "topology_decision": "rdma_direct_path_ready",
+    "jaccl_preflight": "passed",
+    "jaccl_all_sum": 2.0
+  },
+  "export_settings": {
+    "layer_split": 24,
+    "prompt_set": "air_vq_ladder_report_v1",
+    "prompt_id": "report_code_000",
+    "top_k": 16,
+    "max_positions": 1,
+    "no_full_logits": true,
+    "stream_lm_head": true,
+    "required_wired_mb": 0,
+    "mlx_wired_limit_gb": 1,
+    "mlx_cache_limit_gb": 0
+  },
+  "failure": {
+    "rank0_exit_code": 1,
+    "metadata_written": false,
+    "safetensors_written": false,
+    "error": "streamed lm_head top-k payload contains non-finite values",
+    "first_nonfinite_chunk": {
+      "start": 0,
+      "end": 8192
+    },
+    "selected_hidden": {
+      "shape": [
+        1,
+        4096
+      ],
+      "dtype": "float32",
+      "finite": false,
+      "finite_count": 0,
+      "nonfinite_count": 4096,
+      "nan_count": 4096,
+      "posinf_count": 0,
+      "neginf_count": 0
+    },
+    "topk_logprobs": {
+      "shape": [
+        1,
+        16
+      ],
+      "dtype": "float32",
+      "finite": false,
+      "finite_count": 0,
+      "nonfinite_count": 16,
+      "nan_count": 16
+    },
+    "target_logprobs": {
+      "shape": [
+        1
+      ],
+      "dtype": "float32",
+      "finite": false,
+      "finite_count": 0,
+      "nonfinite_count": 1,
+      "nan_count": 1
+    }
+  },
+  "evidence": {
+    "launch_preflight_log": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-streamdiag-20260703-launch-logs/launch-1.log",
+    "launch_exporter_log": "artifacts/quality/glm45-air-teacher-cache-distributed-cleanroom-report-code000-topk16-pos1-streamdiag-20260703-launch-logs/launch-2.log"
+  },
+  "next_p2_hypothesis": "diagnose_rank0_received_or_post_norm_hidden_nonfinite_under_low_wired_limit_or_rerun_with_real_iogpu_wired_limit_gate"
+}

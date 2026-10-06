@@ -1,0 +1,120 @@
+{
+  "artifact_manifest_path": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up/conversion-manifest.json",
+  "artifact_manifest_sha256": "b552d0821207591ee7497731f4f8db6c6c255cb25c749018072f13224024eb2d",
+  "artifact_total_bytes": 545001782,
+  "code_bits": 8,
+  "codebook_name": "quip_e8",
+  "codebook_sha256": "b78586631069e239d29c146538722d763f4a0040d59a800e8c918ecef03e2180",
+  "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+  "converted_vq_groups": 0,
+  "dense_checkpoint_written": false,
+  "elapsed_seconds": 0.8719230419956148,
+  "existing_vq_groups": 2,
+  "expert_workers": 1,
+  "full_group_coverage": false,
+  "group_size": 512,
+  "groups": [
+    {
+      "artifact_bytes": 272500893,
+      "artifact_path": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up/layer-00010-gate_proj.safetensors",
+      "artifact_sha256": "3de6e7fa06dbf4556c5d54227ab6d793a6732a2d273b7b887241f00f562c68c7",
+      "codes_dtype": "uint8",
+      "codes_name": "model.layers.10.mlp.switch_mlp.gate_proj.codes",
+      "codes_shape": [
+        168,
+        2048,
+        768
+      ],
+      "cross_shard_bundle_count": 0,
+      "decoded_expert_bytes": 50331648,
+      "expert_count": 168,
+      "layer": 10,
+      "projection": "gate_proj",
+      "scales_dtype": "float16",
+      "scales_name": "model.layers.10.mlp.switch_mlp.gate_proj.scales",
+      "scales_shape": [
+        168,
+        2048,
+        12
+      ],
+      "source_bundle_members": 504,
+      "source_bundles": 168,
+      "source_shards": [
+        "model-00001.safetensors"
+      ],
+      "status": "ready"
+    },
+    {
+      "artifact_bytes": 272500889,
+      "artifact_path": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up/layer-00010-up_proj.safetensors",
+      "artifact_sha256": "a397ff9ad6d7a2baf7a55ac4a44dd8bff258338d3aa9ae9673ae65fe34d7c863",
+      "codes_dtype": "uint8",
+      "codes_name": "model.layers.10.mlp.switch_mlp.up_proj.codes",
+      "codes_shape": [
+        168,
+        2048,
+        768
+      ],
+      "cross_shard_bundle_count": 0,
+      "decoded_expert_bytes": 50331648,
+      "expert_count": 168,
+      "layer": 10,
+      "projection": "up_proj",
+      "scales_dtype": "float16",
+      "scales_name": "model.layers.10.mlp.switch_mlp.up_proj.scales",
+      "scales_shape": [
+        168,
+        2048,
+        12
+      ],
+      "source_bundle_members": 504,
+      "source_bundles": 168,
+      "source_shards": [
+        "model-00001.safetensors"
+      ],
+      "status": "ready"
+    }
+  ],
+  "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+  "materialization_blocked": false,
+  "materialization_blockers": [],
+  "materialization_scope": "bounded",
+  "materialization_status": "glm52_modelopt_nvfp4_groups_ready",
+  "max_decoded_experts_in_flight": 1,
+  "model_id": "0xSero/glm-5.2-reap-504B-v2",
+  "peak_decoded_expert_bytes": 50331648,
+  "planned_vq_groups": 225,
+  "process_peak_rss_bytes": 188628992,
+  "profile": "glm52-reap-504b-v2",
+  "ready_vq_groups": 2,
+  "record_type": "glm52_modelopt_nvfp4_materialization_run",
+  "run_groups": [
+    {
+      "layer": 10,
+      "projection": "gate_proj",
+      "run_status": "existing"
+    },
+    {
+      "layer": 10,
+      "projection": "up_proj",
+      "run_status": "existing"
+    }
+  ],
+  "scale_estimator": "max_abs",
+  "schema_version": 1,
+  "selected_group_keys": [
+    "10:gate_proj",
+    "10:up_proj"
+  ],
+  "selected_vq_groups": 2,
+  "skipped_existing_outputs": 2,
+  "skipped_vq_groups": 223,
+  "source_bundle_members": 1008,
+  "source_bundle_members_read": 0,
+  "source_bundles": 336,
+  "source_bundles_read": 0,
+  "source_decoder": "modelopt_nvfp4_v1",
+  "source_revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+  "source_weight_encoding": "modelopt_nvfp4",
+  "working_set_policy": "one_decoded_expert_per_worker_v1"
+}

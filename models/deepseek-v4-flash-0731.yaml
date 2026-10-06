@@ -1,0 +1,86 @@
+name: deepseek-v4-flash-0731
+hf_model_id: deepseek-ai/DeepSeek-V4-Flash-0731
+# The snapshot downloaded and measured on 2026-08-11; every structural fact
+# below and in ramp.models.deepseek_v4_policy comes from this commit.
+revision: 7872f01b1d1fe23eabc4c98b48bffcef5a386062
+architecture: deepseek_v4
+num_layers: 43
+# Measured across all 48 shards (Wave 1, 2026-08-11): layers 0..42 each carry
+# 256 routed experts; the config has no first_k_dense_replace. All 43 layers
+# are sparse, so imatrix_layers auto-derives to range(0, 43).
+num_sparse_layers: 43
+first_sparse_layer: 0
+hidden_size: 4096
+moe_intermediate_size: 2048
+num_experts: 256
+experts_per_tok: 6
+vocab_size: 129280
+shared_experts: 1
+converter: deepseek_v4_vq_groups
+fused_gate_up: false
+# Re-derived on this geometry by the Wave 5 pilot
+# (.superpowers/sdd/wave5-pilot-report.md); no longer the GLM-5.2 placeholder.
+#
+# code_bits 16 (E8P), not the inherited 8 (E8-1bit). Measured on layers 1 and
+# 20, route-count weighted over 16 stratified experts: E8-1bit sits at 3.1e-1
+# imatrix-weighted relative error and a 0.56 block-level cosine, which is not a
+# usable model. E8P at the same group size is 9.0e-2 / 0.954. The codebook step
+# returns 0.71 fractional error per bpw -- three times any group-size step -- so
+# it is where the bits go first.
+default_code_bits: 16
+# group_size 512 uniform, and uniform on purpose. On this geometry group size is
+# a *rate dial*, not a quality-per-bit lever: within E8P the marginal return
+# falls monotonically from 0.235 (512->256) to 0.165 (32->16) fractional error
+# per bpw, always below the codebook step, and no non-uniform allocation of the
+# same bits beat uniform (gate64/up64/down16 at 2.50 bpw loses to g=32 uniform
+# by 1.2%). gate and up agree to three significant figures -- same input space,
+# same shape -- and down's apparent advantage flips sign between layers 1 and
+# 20, so there is no per-projection signal to encode.
+#
+# The value follows the rate target, so changing the target changes it:
+#   512 -> 2.031 bpw ->  83.6 GB     256 -> 2.062 bpw ->  84.7 GB
+#   128 -> 2.125 bpw ->  87.0 GB      32 -> 2.500 bpw -> 100.9 GB
+#    16 -> 3.000 bpw -> 119.5 GB   (whole artifact, q8 residents, 46 MoE blocks)
+# 512 is chosen because the envelope is 98-105 GB and buying the 2.5 bpw point
+# costs 17 GB of a 128 GB machine for a 9% error reduction -- the memory is
+# worth more. Anything below 512 must also be re-checked against gather_vqmm
+# throughput, which Wave 4 benchmarked at 512 only.
+group_size_policy:
+  gate: 512
+  up: 512
+  down: 512
+default_engine: vq_e1_routed_nax_e8p
+recovery_layer: 42
+recovery_projections:
+  - gate
+  - up
+  - down
+hard_layers: []
+imatrix_layers: []
+# The source is NOT FP8 throughout: config.json sets expert_dtype "fp4", and
+# the shards confirm two distinct storage formats.
+#   * Residents (attention AND shared experts): F8_E4M3 codes with 128x128
+#     block scales -> decode via keep.convert.fp8_block.
+#   * Routed experts: FP4 packed two-per-byte in I8 ([2048,2048] for a logical
+#     [2048,4096] w1) with F8_E8M0 group-32 scales ([2048,128]). fp8_block
+#     cannot read these; a separate FP4/E8M0 decoder is required (follow-on,
+#     Wave 2).
+# ~163 GB on disk across 48 shards; ~608 GB dequantized to BF16 (from the
+# measured logical parameter count below).
+approx_bf16_gb: 608.0
+notes: >
+  DeepSeek-V4-Flash-0731. model_type deepseek_v4, MLA + indexer
+  (index_topk 512, index_n_heads 64, index_head_dim 128). Measured from
+  all 48 shards at the pinned revision (Wave 1, 2026-08-11): 304.18B
+  logical weight parameters (scales excluded; FP4-in-I8 expert weights
+  counted at two logical params per stored byte), settling the published
+  284B-vs-304B discrepancy in favor of 304B. The DSpark MTP drafter is
+  three full MoE blocks at mtp.{0,1,2} (each with its own 256 routed FP4
+  experts, FP8 residents, and a confidence_head; dspark_target_layer_ids
+  [40,41,42]) which must be skipped or loaded intentionally —
+  num_nextn_predict_layers=1 is a legacy compat field, not the drafter
+  depth. Mixed source precision: resident tensors are block-FP8
+  (dequantize via keep.convert.fp8_block), routed experts are FP4-in-I8
+  with E8M0 group-32 scales and need their own decoder before VQ fitting.
+  tokenizer.json sha256
+  8f9f37ca37fdc4f5fd36d5cf4d3b0e8392edb4e894fd10cc0d70b4957c8633cf.

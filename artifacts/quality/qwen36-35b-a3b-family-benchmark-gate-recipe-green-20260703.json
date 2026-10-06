@@ -1,0 +1,33 @@
+{
+  "benchmark_row_probe_missing_requirements": [],
+  "candidate_invariant_error_count": 0,
+  "candidate_invariant_errors": [],
+  "family_benchmark_gate_pass": true,
+  "input_paths": [
+    "artifacts/build/qwen36_35b_a3b_materialization_probe_20260702/steps/qwen_family_benchmark_rows-8686e293/out/qwen_family_benchmark_rows.jsonl"
+  ],
+  "minimum_repetitions_per_scenario": 2,
+  "missing_requirements": [],
+  "model_id": "Qwen/Qwen3.6-35B-A3B",
+  "record_type": "qwen_family_benchmark_gate_check",
+  "required_scenarios": [
+    "prefill_1k",
+    "decode_128"
+  ],
+  "row_error_count": 0,
+  "row_errors": [],
+  "scenario_counts": {
+    "decode_128": {
+      "candidate": 2,
+      "control": 2
+    },
+    "prefill_1k": {
+      "candidate": 2,
+      "control": 2
+    }
+  },
+  "scenario_latency_ratios": {
+    "decode_128": 2.907590373125956,
+    "prefill_1k": 1.8787297000626424
+  }
+}

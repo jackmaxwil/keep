@@ -1,0 +1,23 @@
+{
+ "record_type": "glm52_teich_topk_teacher_cache",
+ "top_k": 2048,
+ "lm_head_slice": 4096,
+ "max_batch_tokens": 131072,
+ "pack_path": "runs/teich-teacher-localref-20260713/validation-pack.json",
+ "identities": {
+  "config_sha256": "5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b",
+  "index_sha256": "bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f",
+  "non_vq_manifest_sha256": "5113750fdaf009b2174a2772dd2e3bccf490cfff354f082e5e0ad8af8771f8c8",
+  "snapshot_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+  "non_vq_package_dir": "artifacts/build/glm52_reap_504b_materialization_probe_20260709/steps/non_vq_pack-a678bc3c/out",
+  "model_id": "0xSero/glm-5.2-reap-504B-v2",
+  "source_revision": "6c9241aa05fb243a0edb7c804c213ec1cf5c920d"
+ },
+ "sessions": {
+  "teich_claude_agent-a3622521df8a9137d__dense_prefix2048": {
+   "token_count": 2048,
+   "supervised": 127,
+   "token_ids_sha256": "f70bf6cd55578145b822a991bb12263560926d81afed48c12c6fe069f013d914"
+  }
+ }
+}

@@ -1,0 +1,191 @@
+{
+  "acceptance_consistency": true,
+  "artifact_identity": {
+    "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+    "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+    "model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+    "payload_content_receipt_sha256": "b9c0b1afc40356649c4b5761f815acdd1bc49c65a0f8c04fdcf22b16c8931450",
+    "resident_manifest_sha256": "35fa6361691326aa805a5ff59a95508af1740660b98844071da59856ae8009d5",
+    "resident_package_set_sha256": "75b63dee580fc4038be088db63ef9e5dd2cb0256bb722abb77d94651ee51abe9",
+    "resident_parameter_tensors": 1271,
+    "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+    "vq_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+    "vq_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+    "vq_projection_files": 138
+  },
+  "artifact_identity_sha256": "8d30e9f61d81192c04684645a7dc4439fcb38e2d233a81e4fe371806f2daa15d",
+  "claim_limit": "Same-machine deterministic report-split prefix only; ratio is not portable across machines or prompt distributions.",
+  "clean_pairs": 3,
+  "comparison": "compressed_ar_elapsed / compressed_speculative_elapsed",
+  "dirty_pairs": 2,
+  "generation_config": {
+    "campaign_split": "report",
+    "holdout_used": false,
+    "max_new_tokens": 16,
+    "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+    "prompt_sha256": "56abd36a1c85c08a75204573853754372a2af9de37520117b95f95e56c361030",
+    "prompt_tokens": 64,
+    "scoring": "greedy_argmax"
+  },
+  "generation_config_sha256": "3c6b81edd82e70d3f1b3555407a09ebffcd9a290168741b8ef17511b2a351baa",
+  "harness_identity": {
+    "benchmark_source_sha256": "24c9fce7ba4c5c86a2f3f74cc4003bfe4e07fab2827fbc8ffc911d38f4f429fe",
+    "runtime_source_sha256": "1461d7b1f023a58a8d4aa4faf89f1b16f53e69886b66f26186b8058c5f51fb9c"
+  },
+  "harness_identity_sha256": "01eda624a465d1d6904ae8af9e8f8211015be4591807376791cfe74b002ecdac",
+  "max_new_tokens": 16,
+  "median_baseline_over_speculative": 1.7700938193895241,
+  "min_clean_pairs": 3,
+  "orders": {
+    "baseline_first": 2,
+    "speculative_first": 1
+  },
+  "pack": "/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json",
+  "pack_sha256": "168eb4cb9251d1cb01a79a0d61205480f02252a0e6d2c96f596847b21e7f82a5",
+  "paired_baseline_over_speculative": [
+    1.7700938193895241,
+    3.2972944650096374,
+    1.4479585874602416
+  ],
+  "pairs": 5,
+  "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34:prefix-64",
+  "prompt_sha256": "56abd36a1c85c08a75204573853754372a2af9de37520117b95f95e56c361030",
+  "record_type": "dsv4_mtp_headline_summary_v2",
+  "rows": 10,
+  "schema_version": 2,
+  "speculative_stats": {
+    "acceptance_rate": 0.5789473684210527,
+    "accepted_per_verify_pass": 2.75,
+    "accepted_tokens": 11,
+    "drafted_tokens": 19,
+    "emitted_per_verify_pass": 4.0,
+    "emitted_tokens": 16,
+    "rejected_tokens": 8,
+    "verify_kernel_calls": 516,
+    "verify_kernel_implementation_counts": {
+      "metal": 504,
+      "nax_e8p_m32n64": 12
+    },
+    "verify_kernel_implementations": [
+      "metal",
+      "nax_e8p_m32n64"
+    ],
+    "verify_kernel_unique_dispatches": [
+      {
+        "count": 84,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": false,
+          "implementation": "metal",
+          "input_dims": 4096,
+          "output_dims": 2048,
+          "route_count": 30,
+          "strategy": "direct",
+          "token_rows": 5
+        }
+      },
+      {
+        "count": 252,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": false,
+          "implementation": "metal",
+          "input_dims": 4096,
+          "output_dims": 2048,
+          "route_count": 36,
+          "strategy": "direct",
+          "token_rows": 6
+        }
+      },
+      {
+        "count": 2,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": false,
+          "implementation": "nax_e8p_m32n64",
+          "input_dims": 4096,
+          "output_dims": 2048,
+          "route_count": 30,
+          "strategy": "sorted_tiled",
+          "token_rows": 5
+        }
+      },
+      {
+        "count": 6,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": false,
+          "implementation": "nax_e8p_m32n64",
+          "input_dims": 4096,
+          "output_dims": 2048,
+          "route_count": 36,
+          "strategy": "sorted_tiled",
+          "token_rows": 6
+        }
+      },
+      {
+        "count": 42,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": true,
+          "implementation": "metal",
+          "input_dims": 2048,
+          "output_dims": 4096,
+          "route_count": 30,
+          "strategy": "direct",
+          "token_rows": 30
+        }
+      },
+      {
+        "count": 126,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": true,
+          "implementation": "metal",
+          "input_dims": 2048,
+          "output_dims": 4096,
+          "route_count": 36,
+          "strategy": "direct",
+          "token_rows": 36
+        }
+      },
+      {
+        "count": 1,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": true,
+          "implementation": "nax_e8p_m32n64",
+          "input_dims": 2048,
+          "output_dims": 4096,
+          "route_count": 30,
+          "strategy": "sorted_tiled",
+          "token_rows": 30
+        }
+      },
+      {
+        "count": 3,
+        "dispatch": {
+          "code_bits": 16,
+          "group_size": 512,
+          "has_lhs_indices": true,
+          "implementation": "nax_e8p_m32n64",
+          "input_dims": 2048,
+          "output_dims": 4096,
+          "route_count": 36,
+          "strategy": "sorted_tiled",
+          "token_rows": 36
+        }
+      }
+    ],
+    "verify_passes": 4
+  },
+  "token_parity": true,
+  "verdict": "PASS"
+}

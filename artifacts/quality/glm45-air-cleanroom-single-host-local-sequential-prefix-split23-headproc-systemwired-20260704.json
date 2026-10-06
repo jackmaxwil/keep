@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "record_type": "glm45_air_single_host_cache_prefix_attempt",
+  "decision": "single_host_cache_prefix_generated_dirty_head_process_not_clean",
+  "bounded_single_host_attempt": true,
+  "distributed_backend": "local_sequential",
+  "single_host_pipeline_local": true,
+  "local_sequential_stage_processes": true,
+  "local_sequential_head_process": true,
+  "pipeline_size": 2,
+  "layer_split": 23,
+  "lm_head_chunk_rows": 8192,
+  "top_k": 16,
+  "max_positions": 1,
+  "prompt_ids": [
+    "capital_france"
+  ],
+  "full_logits_available": false,
+  "output_dir": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-20260704",
+  "metadata_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-20260704/metadata.jsonl",
+  "validation_jsonl": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-validation-20260704.jsonl",
+  "teacher_logit_files": [
+    "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-headproc-systemwired-20260704/teacher_logits/capital_france.safetensors"
+  ],
+  "exit_code": 0,
+  "validation_ran": true,
+  "validation_ok": true,
+  "allow_dirty_cache": true,
+  "cache_rows_generated": true,
+  "cache_row_count": 1,
+  "kld_modes": {
+    "teacher_topk_lower_bound": 1
+  },
+  "all_memory_clean": false,
+  "mlx_cache_limit_bytes": 0,
+  "mlx_memory_limit_bytes": null,
+  "mlx_wired_limit_bytes": null,
+  "previous_mlx_wired_limit_bytes": null,
+  "custom_mlx_wired_limit_override": false,
+  "system_wired_default": true,
+  "local_sequential_lower_hidden_host_spill": true,
+  "local_sequential_lower_hidden_host_dtype": "bfloat16",
+  "local_sequential_lower_hidden_host_shape": [
+    1,
+    5,
+    4096
+  ],
+  "local_sequential_lower_hidden_host_nbytes": 81920,
+  "local_sequential_upper_hidden_host_spill": true,
+  "local_sequential_upper_hidden_host_dtype": "bfloat16",
+  "local_sequential_upper_hidden_host_shape": [
+    1,
+    5,
+    4096
+  ],
+  "local_sequential_upper_hidden_host_nbytes": 81920,
+  "mlx_peak_bytes": 116535272885,
+  "pageouts_delta": 554,
+  "swapouts_delta": 896276,
+  "elapsed_seconds": 98.12174370900175,
+  "rank_metrics": [
+    {
+      "elapsed_seconds": 45.574605417001294,
+      "mlx_active_bytes": 12,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 113580860357,
+      "pageouts_delta": 297,
+      "pageouts_total": 27062,
+      "rank": 1,
+      "rss_bytes": 57401917440,
+      "stage": "local_sequential_lower_process",
+      "swapouts_delta": 396680,
+      "swapouts_total": 28898439
+    },
+    {
+      "elapsed_seconds": 49.39058237500285,
+      "mlx_active_bytes": 12,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 116535272885,
+      "pageouts_delta": 257,
+      "pageouts_total": 27319,
+      "rank": 0,
+      "rss_bytes": 57438863360,
+      "stage": "local_sequential_upper_process",
+      "swapouts_delta": 499596,
+      "swapouts_total": 29398035
+    },
+    {
+      "elapsed_seconds": 0.25752741700125625,
+      "mlx_active_bytes": 8,
+      "mlx_cache_bytes": 0,
+      "mlx_peak_bytes": 67256328,
+      "pageouts_delta": 0,
+      "pageouts_total": 27319,
+      "rank": 0,
+      "rss_bytes": 379338752,
+      "stage": "local_sequential_head_process",
+      "swapouts_delta": 0,
+      "swapouts_total": 29398035
+    }
+  ],
+  "memory_delta_vs_previous_stage_process": {
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-stageproc-systemwired-20260704.json",
+    "mlx_peak_bytes_delta": 0,
+    "pageouts_delta_delta": -263,
+    "swapouts_delta_delta": 53980
+  },
+  "memory_delta_vs_previous_prefix": {
+    "previous_attempt": "artifacts/quality/glm45-air-cleanroom-single-host-local-sequential-prefix-split23-gc-20260704.json",
+    "mlx_peak_bytes_delta": -58112,
+    "pageouts_delta_delta": -1020,
+    "swapouts_delta_delta": -1066856
+  },
+  "rank_view_roots": {
+    "0": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-0",
+    "1": "/Users/jack.mazac/Developer/keep/artifacts/quality/glm45-air-local-sequential-rank-views-split23-20260704/rank-1"
+  },
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "sudo_touched": false,
+  "direct_path_mutated": false,
+  "uc_pingpong_touched": false,
+  "warnings": [
+    "pageouts_delta is nonzero: 554",
+    "swapouts_delta is nonzero: 896276"
+  ]
+}

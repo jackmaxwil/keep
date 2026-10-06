@@ -1,0 +1,145 @@
+schema_version: 1
+name: glm45air__e8p2p0__agq_ebss32_rht_l41gu__bare_compose_20260707
+description: Bare composed re-quant candidate combining EBSS32+AGQ E8P reround seed with the existing learned RHT layer-41 gate/up rewrite, with no recovery sidecar.
+external_inputs:
+  source_dir:
+    kind: artifact_dir
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+  config_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa/config.json
+  index_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa/model.safetensors.index.json
+  agq_ebss_seed:
+    kind: artifact_dir
+    path: artifacts/build/glm45air__dmx2p0__agq_e8p_affinity_mean_reround1_20260707/steps/agq_e8p_materialize_sweep_01-e6461310/out/air-agq-e8p-ebss32-affinity-mean-reround1-bpw-2p0
+  rotation_manifest:
+    kind: file
+    path: artifacts/quality/glm45-air-learned-rht-signs-l41-gu-e8p-smoke-20260707/rotation-manifest.json
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+steps:
+- id: compose_materialize_rotation_01
+  op: materialize-learned-rotation
+  class: promotable
+  inputs:
+    source_dir: external:source_dir
+    config_path: external:config_path
+    index_path: external:index_path
+    seed_artifact: external:agq_ebss_seed
+    rotation_manifest: external:rotation_manifest
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    group_size: 512
+    code_bits: 16
+    expert_workers: 8
+- id: compose_eval_report_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_report
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_selection_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_selection
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_holdout_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_holdout
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_report_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_report
+    existing_evidence: step:compose_eval_report_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_selection_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_selection
+    existing_evidence: step:compose_eval_selection_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_holdout_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_holdout
+    existing_evidence: step:compose_eval_holdout_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_report_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_report
+    existing_evidence: step:compose_eval_report_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_selection_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_selection
+    existing_evidence: step:compose_eval_selection_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true
+- id: compose_eval_holdout_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:compose_materialize_rotation_01/artifact
+    teacher: external:teacher_holdout
+    existing_evidence: step:compose_eval_holdout_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true

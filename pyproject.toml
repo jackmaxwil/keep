@@ -1,0 +1,44 @@
+[project]
+name = "keep"
+version = "0.1.0"
+description = "KEEP method and RAMP MLX/Metal runtime for low-bit routed MoE inference"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "boto3==1.43.51",
+    "mlx>=0.31.2",
+    "mlx-lm>=0.31.3",
+    "huggingface_hub>=0.36.0",
+    "safetensors>=0.6.2",
+    "numpy>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+keep = "keep.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = [
+    "cmake>=3.27",
+    "ml_dtypes>=0.4.0",
+    "nanobind>=2.12",
+    "pytest>=8.0.0",
+    "pytest-benchmark>=5.0.0",
+    "tokenizers>=0.22.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "pack: needs the ~90MB re-tokenized teich pack on disk; skipped when absent",
+    "checkpoint: needs the local DeepSeek-V4-Flash-0731 safetensors shards; skipped when absent",
+    "mlx: needs an importable mlx runtime; skipped headless",
+]

@@ -1,0 +1,243 @@
+{
+  "all_required_evidence_matches_expected_decisions": true,
+  "all_required_evidence_present": true,
+  "all_transport_claims_local_and_non_speed": true,
+  "evidence": [
+    {
+      "decision": "current_track_b_family_not_benchmarkable",
+      "evidence": "current_family",
+      "path": "artifacts/quality/glm45-air-e8p-trackb-current-family-component-inclusive-20260703.json",
+      "record_type": "glm45_air_e8p_kernel_structure_analysis",
+      "transport_claims": {}
+    },
+    {
+      "decision": "reject_route_codeword_projection_cache_too_large",
+      "evidence": "route_codeword",
+      "path": "artifacts/quality/glm45-air-e8p-route-codeword-projection-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_codeword_projection_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_active_codeword_projection_cache_too_large",
+      "evidence": "route_active_codeword",
+      "path": "artifacts/quality/glm45-air-e8p-route-active-codeword-projection-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_active_codeword_projection_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_abs_index_projection_requires_sign_axis",
+      "evidence": "route_abs_index",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-index-projection-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_index_projection_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_abs_component_projection_cache_too_large",
+      "evidence": "route_abs_component",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-projection-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_component_projection_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_abs_component_tile_cache_missing_route_slot_axis",
+      "evidence": "route_abs_component_tile_sweep",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-tile-sweep-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_component_tile_sweep",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_abs_component_token_reuse_cache_too_large",
+      "evidence": "route_abs_component_token_reuse",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-token-reuse-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_component_token_reuse_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_route_abs_component_token_active_expert_cache_too_large",
+      "evidence": "route_abs_component_token_active_expert",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-token-active-expert-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_component_token_active_expert_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_exact_route_abs_component_projection_lower_bound_over_cap",
+      "evidence": "route_abs_component_lower_bound",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-lower-bound-20260703.json",
+      "record_type": "glm45_air_e8p_route_abs_component_lower_bound",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_component_stream_shared_decode_cross_ntile_cache",
+      "evidence": "component_shared_decode",
+      "path": "artifacts/quality/glm45-air-e8p-component-stream-shared-decode-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_component_stream_shared_decode_feasibility",
+      "transport_claims": {
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    },
+    {
+      "decision": "reject_expert_kblock_predecode_cache_decoded_rhs_equivalent",
+      "evidence": "expert_kblock_predecode",
+      "path": "artifacts/quality/glm45-air-e8p-expert-kblock-decode-reuse-feasibility-20260703.json",
+      "record_type": "glm45_air_e8p_expert_kblock_decode_reuse_feasibility",
+      "transport_claims": {
+        "native_parity_claim": false,
+        "peer2_used": false,
+        "rdma_jaccl_touched": false,
+        "speed_claim": false
+      }
+    }
+  ],
+  "frontier_decision": "track_b_current_frontier_requires_new_rhs_or_kernel_family",
+  "mismatched_evidence": [],
+  "missing_evidence": [],
+  "native_parity_claim": false,
+  "next_required_features": [
+    "materially_different_rhs_layout_or_kernel_family",
+    "bounded_cardinality_mechanism_below_cache_cap",
+    "preserve_compressed_rhs_storage",
+    "preserve_codeword_scale_slots",
+    "avoid_decoded_rhs_equivalent_cache",
+    "preserve_e8p_sign_axis_for_route_projection",
+    "preserve_route_slot_axis_or_prove_equivalent_rowwise_reconstruction",
+    "bounded_rowwise_cardinality_mechanism_below_cache_cap",
+    "exact_token_reuse_still_requires_new_bounded_mechanism",
+    "active_expert_token_reuse_still_requires_stronger_bounded_mechanism",
+    "exact_abs_component_lower_bound_requires_new_rhs_or_kernel_family"
+  ],
+  "peer2_used": false,
+  "rdma_jaccl_touched": false,
+  "ready_for_native_speed_work": false,
+  "record_type": "glm45_air_e8p_trackb_frontier_summary",
+  "rejected_families": [
+    {
+      "decision": "current_track_b_family_not_benchmarkable",
+      "evidence": "current_family",
+      "family_group": "current_source_families",
+      "path": "artifacts/quality/glm45-air-e8p-trackb-current-family-component-inclusive-20260703.json"
+    },
+    {
+      "decision": "reject_route_codeword_projection_cache_too_large",
+      "evidence": "route_codeword",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-codeword-projection-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_route_active_codeword_projection_cache_too_large",
+      "evidence": "route_active_codeword",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-active-codeword-projection-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_route_abs_index_projection_requires_sign_axis",
+      "evidence": "route_abs_index",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-index-projection-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_route_abs_component_projection_cache_too_large",
+      "evidence": "route_abs_component",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-projection-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_route_abs_component_tile_cache_missing_route_slot_axis",
+      "evidence": "route_abs_component_tile_sweep",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-tile-sweep-20260703.json"
+    },
+    {
+      "decision": "reject_route_abs_component_token_reuse_cache_too_large",
+      "evidence": "route_abs_component_token_reuse",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-token-reuse-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_route_abs_component_token_active_expert_cache_too_large",
+      "evidence": "route_abs_component_token_active_expert",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-token-active-expert-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_exact_route_abs_component_projection_lower_bound_over_cap",
+      "evidence": "route_abs_component_lower_bound",
+      "family_group": "route_projection",
+      "path": "artifacts/quality/glm45-air-e8p-route-abs-component-lower-bound-20260703.json"
+    },
+    {
+      "decision": "reject_component_stream_shared_decode_cross_ntile_cache",
+      "evidence": "component_shared_decode",
+      "family_group": "decode_reuse",
+      "path": "artifacts/quality/glm45-air-e8p-component-stream-shared-decode-feasibility-20260703.json"
+    },
+    {
+      "decision": "reject_expert_kblock_predecode_cache_decoded_rhs_equivalent",
+      "evidence": "expert_kblock_predecode",
+      "family_group": "decode_reuse",
+      "path": "artifacts/quality/glm45-air-e8p-expert-kblock-decode-reuse-feasibility-20260703.json"
+    }
+  ],
+  "rejected_next_steps": [
+    "do_not_time_current_e8p16_families",
+    "do_not_benchmark_route_codeword_projection_cache",
+    "do_not_benchmark_route_active_codeword_projection_cache",
+    "do_not_benchmark_route_abs_index_projection_cache",
+    "do_not_benchmark_route_abs_component_projection_cache",
+    "do_not_benchmark_route_abs_component_tile_cache_without_route_slot_axis",
+    "do_not_benchmark_token_reuse_abs_component_cache",
+    "do_not_benchmark_token_active_expert_abs_component_cache",
+    "do_not_benchmark_exact_route_abs_component_projection_family",
+    "do_not_claim_exactness_from_route_tile_level_cache_bytes",
+    "do_not_claim_speed_from_token_reuse_cardinality_probe",
+    "do_not_claim_speed_from_token_active_expert_cardinality_probe",
+    "do_not_claim_speed_from_lower_bound_cardinality_probe",
+    "do_not_benchmark_scalar_shared_decode_cache_scaffold",
+    "do_not_benchmark_expert_kblock_predecode_cache",
+    "do_not_claim_speed_from_structure_or_cardinality_probe"
+  ],
+  "schema_version": 1,
+  "speed_claim": false,
+  "transport_violations": []
+}

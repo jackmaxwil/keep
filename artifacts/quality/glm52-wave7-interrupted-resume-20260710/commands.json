@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "record_type": "glm52_materialization_interruption_resume_commands",
+  "working_directory": "/Users/jack.mazac/Developer/keep",
+  "full_artifact_command_composition": "lock_wrapper + artifact_command_base + attempt.suffix_argv",
+  "lock_wrapper": [
+    "/usr/bin/lockf",
+    "-kn",
+    ".keep-heavy-job.lock"
+  ],
+  "artifact_command_base": [
+    "env",
+    "UV_CACHE_DIR=/tmp/keep-uv-cache",
+    "uv",
+    "run",
+    "--group",
+    "dev",
+    "python",
+    "benchmarks/materialize_glm52_reap_groups.py",
+    "--profile-path",
+    "models/glm52-reap-504b-v2.yaml",
+    "--model-id",
+    "0xSero/glm-5.2-reap-504B-v2",
+    "--revision",
+    "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "--config-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json",
+    "--index-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json",
+    "--source-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "--output-dir",
+    "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up",
+    "--groups",
+    "10:gate_proj,10:up_proj",
+    "--code-bits",
+    "8",
+    "--group-size",
+    "512",
+    "--scale-estimator",
+    "max_abs",
+    "--expert-workers",
+    "1",
+    "--skip-existing"
+  ],
+  "attempts": [
+    {
+      "attempt_index": 1,
+      "purpose": "fresh run intentionally interrupted after first atomic group publish",
+      "suffix_argv": [],
+      "interruption_trigger": {
+        "transport": "Codex PTY",
+        "wait_for_path": "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up/layer-00010-gate_proj.safetensors",
+        "control_character": "U+0003",
+        "signal": "SIGINT",
+        "observed_returncode": 130
+      }
+    },
+    {
+      "attempt_index": 2,
+      "purpose": "resume interrupted output directory",
+      "suffix_argv": [
+        "--output-json",
+        "artifacts/quality/glm52-wave7-interrupted-resume-20260710/resume-completion.json",
+        "--append-jsonl",
+        "artifacts/quality/glm52-wave7-interrupted-resume-20260710/materialization.jsonl"
+      ]
+    },
+    {
+      "attempt_index": 3,
+      "purpose": "verify zero group conversion and zero group-payload writes after recovery",
+      "suffix_argv": [
+        "--output-json",
+        "artifacts/quality/glm52-wave7-interrupted-resume-20260710/zero-write-verification.json",
+        "--append-jsonl",
+        "artifacts/quality/glm52-wave7-interrupted-resume-20260710/materialization.jsonl"
+      ]
+    }
+  ],
+  "strict_bounded_audit_argv": [
+    "env",
+    "UV_CACHE_DIR=/tmp/keep-uv-cache",
+    "uv",
+    "run",
+    "--group",
+    "dev",
+    "python",
+    "benchmarks/audit_glm52_reap_materialization.py",
+    "--artifact-dir",
+    "artifacts/quality/glm52-wave7-interrupted-resume-20260710/e8-l10-gate-up",
+    "--source-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "--profile-path",
+    "models/glm52-reap-504b-v2.yaml",
+    "--config-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json",
+    "--index-path",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json",
+    "--model-id",
+    "0xSero/glm-5.2-reap-504B-v2",
+    "--revision",
+    "6c9241aa05fb243a0edb7c804c213ec1cf5c920d",
+    "--groups",
+    "10:gate_proj,10:up_proj",
+    "--code-bits",
+    "8",
+    "--group-size",
+    "512",
+    "--scale-estimator",
+    "max_abs",
+    "--materialization-runs-jsonl",
+    "artifacts/quality/glm52-wave7-interrupted-resume-20260710/materialization.jsonl",
+    "--output-json",
+    "artifacts/quality/glm52-wave7-interrupted-resume-20260710/bounded-artifact-audit.json"
+  ]
+}

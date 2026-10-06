@@ -1,0 +1,38 @@
+{
+  "gate_result": null,
+  "input_hashes": {
+    "eval_prompt_pack_json": "c622c3d25018c7ec/evidence_json",
+    "family_policy_json": "3a61437c9bab349d/evidence_json",
+    "source_dir": "b513616c55d1144366e6a8d7728692ea5e8dbaac9105eabeeda3b15246a28e3d",
+    "tokenizer_dir": "b513616c55d1144366e6a8d7728692ea5e8dbaac9105eabeeda3b15246a28e3d"
+  },
+  "op": "qwen-family-eval-teacher-metadata-probe",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/evidence/evidence_json.json",
+    "metadata_jsonl": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/out/qwen_teacher_cache_metadata.jsonl"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/prepare_qwen_family_eval_teacher_metadata.py",
+    "--family-policy-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_policy-3a61437c/evidence/evidence_json.json",
+    "--eval-prompt-pack-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_prompts-c622c3d2/evidence/evidence_json.json",
+    "--tokenizer-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--source-dir",
+    "/Users/jack.mazac/.cache/huggingface/hub/models--Qwen--Qwen3.6-35B-A3B/snapshots/995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--output-dir",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/out",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/qwen_family_eval_teacher_metadata-f6839094/evidence/evidence.jsonl"
+  ],
+  "status": "completed",
+  "step_id": "qwen_family_eval_teacher_metadata",
+  "step_key": "f6839094c84dc18a"
+}

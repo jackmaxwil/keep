@@ -1,0 +1,33 @@
+{
+  "gate_result": null,
+  "input_hashes": {},
+  "op": "qwen-moe-source-audit",
+  "output_paths": {
+    "evidence": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/source_audit-1ef60837/evidence/evidence.jsonl",
+    "evidence_json": "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/source_audit-1ef60837/evidence/evidence_json.json"
+  },
+  "resolved_argv": [
+    "uv",
+    "run",
+    "python",
+    "benchmarks/inspect_qwen_moe_source.py",
+    "--output-json",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/source_audit-1ef60837/evidence/evidence_json.json",
+    "--append-jsonl",
+    "runs/qwen36-fast/qwen36-35b-a3b-fast/steps/source_audit-1ef60837/evidence/evidence.jsonl",
+    "--expected-expert-tensors",
+    "80",
+    "--expected-language-layers",
+    "40",
+    "--expected-model-type",
+    "qwen3_5_moe",
+    "--model-id",
+    "Qwen/Qwen3.6-35B-A3B",
+    "--revision",
+    "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "--verify-hf-shapes"
+  ],
+  "status": "completed",
+  "step_id": "source_audit",
+  "step_key": "1ef60837d0b749ac"
+}
