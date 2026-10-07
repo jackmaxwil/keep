@@ -258,12 +258,10 @@ from keep.quality.teich_corpus import _token_ids_sha256  # noqa: E402
 
 SCRIPT_VERSION = "retokenize_teich_dsv4/2.0.0"
 
-DEFAULT_SOURCE_PACK = Path(
-    "/Users/jack.mazac/models/teich/glm52-coding-agent-initial-v2-20260713.json"
-)
-DEFAULT_OUTPUT_PACK = Path("/Users/jack.mazac/models/teich/dsv4-coding-agent-v1-20260811.json")
+DEFAULT_SOURCE_PACK = Path.home() / "models" / "teich" / "glm52-coding-agent-initial-v2-20260713.json"
+DEFAULT_OUTPUT_PACK = Path.home() / "models" / "teich" / "dsv4-coding-agent-v1-20260811.json"
 DEFAULT_MANIFEST = REPO_ROOT / "recipes" / "dsv4_teich_split_manifest_v1_20260811.json"
-DEFAULT_V4_TOKENIZER_DIR = Path("/Users/jack.mazac/models/DeepSeek-V4-Flash-0731")
+DEFAULT_V4_TOKENIZER_DIR = Path.home() / "models" / "DeepSeek-V4-Flash-0731"
 
 DEFAULT_GLM_TOKENIZER_REPO = "0xSero/glm-5.2-reap-504B-v2"
 GLM_TOKENIZER_FILES = ("tokenizer.json", "tokenizer_config.json")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
+import re
 import sys
 from functools import cache
 from pathlib import Path
@@ -78,6 +79,18 @@ def load_native() -> ModuleType:
         ) from import_error
 
 
+def gpu_has_neural_accelerators(device_name: str) -> bool:
+    """True for Apple M5 or newer, the first GPUs with per-core tensor units.
+
+    On an M4 Max the extension builds and loads, but 36 of the 94 native
+    kernel tests return wrong values (2026-10-07). Loading is therefore not
+    proof the kernels work, and anything older than M5 is refused.
+    """
+
+    match = re.match(r"Apple M(\d+)", device_name)
+    return bool(match) and int(match.group(1)) >= 5
+
+
 @cache
 def is_available() -> bool:
     # Cached separately from ``load_native``: ``functools.cache`` does not cache
@@ -85,6 +98,8 @@ def is_available() -> bool:
     # dispatch. Caching also pins the dispatch decision for the life of the
     # process instead of letting a transient load failure silently switch
     # kernels mid-run.
+    if not gpu_has_neural_accelerators(str(mx.device_info().get("device_name", ""))):
+        return False
     try:
         return bool(load_native().is_available())
     except ImportError:

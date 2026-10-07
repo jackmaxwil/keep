@@ -249,7 +249,7 @@ def run_audit(*, timeout_seconds: int = 30, try_xcode_install: bool = False) -> 
                     "install",
                     "26.4.1",
                     "--directory",
-                    "/Users/jack.mazac/Applications",
+                    str(Path.home() / "Applications"),
                     "--no-superuser",
                     "--experimental-unxip",
                 ],

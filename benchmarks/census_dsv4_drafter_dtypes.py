@@ -14,7 +14,7 @@ import struct
 import sys
 from pathlib import Path
 
-CHECKPOINT = Path("/Users/jack.mazac/models/DeepSeek-V4-Flash-0731")
+CHECKPOINT = Path.home() / "models" / "DeepSeek-V4-Flash-0731"
 
 
 def shard_header(checkpoint: Path, shard: str, cache: dict) -> dict:
