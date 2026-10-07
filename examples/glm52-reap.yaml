@@ -1,0 +1,22 @@
+# High-level GLM-5.2-REAP raw-HF-to-release entrypoint.
+#
+# Every path below is an explicit release-environment authority. `keep compile`,
+# `keep validate`, and `keep build --dry-run` only resolve the content-addressed
+# graph; a real build validates each authority before it loads the model. The
+# checked-in prompt fixture has the required 1024-token shape but is explicitly
+# not release evidence: replace every fixture path for a real release run.
+model: glm52-reap-504b-v2
+quality: fast
+recovery: off
+output: runs/glm52-reap-fast
+release_inputs:
+  teacher_artifact_identities_json: artifacts/quality/glm52-teacher-cache-artifact-identities-20260710.json
+  teacher_ledger_path: artifacts/quality/glm52-teacher-cache-fp32-20260710-ledger.jsonl
+  teacher_checkpoint_dir: artifacts/quality/glm52-teacher-cache-fp32-20260710-checkpoints
+  # Candidate evaluation has no route-capture switch; this is the raw NPZ
+  # inventory consumed by the candidate route-capture producer.
+  candidate_route_input_root: artifacts/quality/glm52-teacher-cache-fp32-20260710
+  source_route_authority_json: artifacts/quality/glm52-teacher-cache-artifact-identities-20260710.json
+  candidate_route_authority_json: artifacts/quality/glm52-teacher-cache-artifact-identities-20260710.json
+  benchmark_prompt_token_ids_json: examples/fixtures/glm52-release-placeholder-1024-token-ids.json
+  benchmark_source_contract_json: artifacts/quality/glm52-teacher-cache-artifact-identities-20260710.json

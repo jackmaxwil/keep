@@ -1,0 +1,23 @@
+# Python and tooling
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.benchmarks/
+.venv/
+.DS_Store
+.env
+codedb.snapshot
+
+# Model weights, build outputs and run data stay out of git.
+# Small evidence files under artifacts/ are force-added (git add -f).
+*.safetensors
+artifacts/
+runs/
+traces/
+.repos/
+native/vq_nax_ext/build/
+
+# Machine-local state
+AGENTS.local.md
+.keep-heavy-job.lock

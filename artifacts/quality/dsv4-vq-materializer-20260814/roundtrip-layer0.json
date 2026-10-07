@@ -1,0 +1,91 @@
+{
+  "artifact_dir": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+  "bind_proof": {
+    "bind_path": "binder",
+    "checked_by": "ramp.models.deepseek_v4_flash_adapter.has_unbound_deepseek_v4_flash_vq_experts / dense_deepseek_v4_flash_routed_parameter_names",
+    "dense_routed_experts": false,
+    "dense_routed_parameter_names": [],
+    "file_discovery_exercised": true,
+    "gap": null,
+    "layers_bound": [
+      0
+    ],
+    "probe_layers": 1,
+    "probe_slot": 0,
+    "unbound_vq_experts": false
+  },
+  "block": {
+    "calibration_layer": 0,
+    "file_stem": "layer-00000",
+    "index": 0,
+    "key": "layers.0",
+    "kind": "backbone",
+    "tensor_prefix": "model.layers.0.ffn.switch_mlp"
+  },
+  "bound_layers": [
+    0
+  ],
+  "environment": {
+    "e8p_backend_env": null,
+    "pid": 39741,
+    "platform": "macOS-26.4-arm64-arm-64bit",
+    "python": "3.12.13"
+  },
+  "experts": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "forward_agreement": {
+    "correct_mapping": {
+      "cosine": 0.9999999999999827,
+      "max_abs_error": 4.745648628842053e-10,
+      "reference_rms": 0.0005370803339736532,
+      "relative_mse": 3.464761576317857e-14
+    },
+    "discrimination_ratio": 42702010348.503914,
+    "gate_up_swapped_control": {
+      "cosine": 0.9992600935232073,
+      "max_abs_error": 9.924617835419631e-05,
+      "reference_rms": 0.0005372052903431143,
+      "relative_mse": 0.0014795228468702387
+    },
+    "tensor_mapping": {
+      "w1": "gate_proj",
+      "w2": "down_proj",
+      "w3": "up_proj"
+    }
+  },
+  "geometry": {
+    "experts_per_tok": 6,
+    "hidden_size": 4096,
+    "moe_intermediate_size": 2048,
+    "num_experts": 256
+  },
+  "passed": true,
+  "peak_rss_gb": 4.043227136,
+  "policy": {
+    "code_bits": 16,
+    "code_bits_policy": {
+      "down": 16,
+      "gate": 16,
+      "up": 16
+    },
+    "fit_backend": "mlx-exact",
+    "group_size_policy": {
+      "down": 512,
+      "gate": 512,
+      "up": 512
+    },
+    "iterations": 8,
+    "mtp_importance": "backbone-mean",
+    "routed_bpw": 2.03125,
+    "search_backend": "metal"
+  },
+  "record_type": "dsv4_vq_roundtrip_v1",
+  "tokens": 4,
+  "tolerance": 0.001
+}

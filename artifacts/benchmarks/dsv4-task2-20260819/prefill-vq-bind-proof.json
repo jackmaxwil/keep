@@ -1,0 +1,17 @@
+{
+ "activation": "LimitedSwiGLU",
+ "bound_module": "QuantizedVQSwitchGLU",
+ "checked_at": "layer_0_bound_probe_before_first_forward",
+ "code_bits": 16,
+ "dense_routed_experts": false,
+ "dense_routed_parameter_names": [],
+ "engine": "vq_e8p_streamed",
+ "file_discovery": "every backbone block's three artifact files were opened and header-parsed by build_dsv4_vq_block_span_index, and each file's size was re-checked against the manifest",
+ "group_size": 512,
+ "is_quantized_vq_switch_glu": true,
+ "is_quantized_vq_switch_linear": true,
+ "num_experts": 256,
+ "record_type": "dsv4_teacher_agreement_bind_proof_v1",
+ "route_backend": "gather_vqmm_auto",
+ "whole_model_unbound_check": "not applicable under layer-sequential streaming; 42 of 43 layers are deliberately unbound at any instant"
+}

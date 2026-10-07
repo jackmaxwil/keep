@@ -1,0 +1,103 @@
+{
+  "artifact_dir": "/Users/jack.mazac/keep-artifacts/dsv4-residents-release-precision-20260819",
+  "backbone_bound_count": 1199,
+  "backbone_vq_experts_unbound_as_expected": true,
+  "bind_seconds": 10.170328207983403,
+  "bound_count": 1271,
+  "compute_dtype": "bfloat16",
+  "dense_routed_parameter_count": 0,
+  "direct_tensor_count": 878,
+  "fp8_block_decoded_count": 390,
+  "heavy_job_lock": "/Users/jack.mazac/Developer/keep/.keep-heavy-job.lock",
+  "missing_model_parameter_count": 0,
+  "mlx_active_bytes": 17504406868,
+  "mlx_peak_bytes": 18326523356,
+  "mtp_bound_count": 72,
+  "mtp_vq_experts_unbound_as_expected": true,
+  "numerical_bound": {
+    "metric": "max_abs_error",
+    "observed_max": 0.0,
+    "threshold": 0.0
+  },
+  "numerical_rows": [
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "model.layers.0.attn.wq_a.weight",
+      "shape": [
+        1024,
+        4096
+      ]
+    },
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "model.layers.0.ffn.shared_experts.gate_proj.weight",
+      "shape": [
+        2048,
+        4096
+      ]
+    },
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "model.layers.42.attn.wq_b.weight",
+      "shape": [
+        32768,
+        1024
+      ]
+    },
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "model.layers.42.ffn.shared_experts.down_proj.weight",
+      "shape": [
+        4096,
+        2048
+      ]
+    },
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "mtp_drafter.blocks.0.main_proj.weight",
+      "shape": [
+        4096,
+        12288
+      ]
+    },
+    {
+      "all_finite": true,
+      "dtype": "mlx.core.bfloat16",
+      "max_abs_error": 0.0,
+      "mean_abs_error": 0.0,
+      "parameter": "mtp_drafter.blocks.2.attn.wo_b.weight",
+      "shape": [
+        4096,
+        8192
+      ]
+    }
+  ],
+  "pid": 52972,
+  "preserved_integer_tensor_count": 3,
+  "production_binder": "ramp.models.deepseek_v4_flash_adapter.bind_deepseek_v4_flash_non_vq_weights",
+  "record_type": "dsv4_resident_production_bind_proof_v1",
+  "reference_partial_bound_count": 124,
+  "reshaped_tensor_count": 46,
+  "rss_bytes": 10450288640,
+  "schema_version": 1,
+  "source_dir": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+  "status": "pass",
+  "total_seconds": 11.588045042008162,
+  "unmatched_source_tensor_count": 0,
+  "wired_limit_variables_absent": true
+}

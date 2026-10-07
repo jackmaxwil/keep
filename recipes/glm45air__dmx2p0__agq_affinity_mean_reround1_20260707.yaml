@@ -1,0 +1,111 @@
+schema_version: 1
+name: glm45air__dmx2p0__agq_affinity_mean_reround1_20260707
+description: AGQ debug retry using EBSS32 prompts, score-normalized affinity imatrix, and one low-tier reround at the 2.0 bpw budget.
+external_inputs:
+  baseline_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-vq
+  high_bit_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8
+  prompt_selection:
+    kind: file
+    path: artifacts/build/glm45air__dmx2p0__agq_ebss32_requant_20260707/glm45air__dmx2p0__agq_ebss32_requant_20260707/steps/agq_select_prompts_01-af0dd195/evidence/selection_json.json
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+steps:
+- id: agq_mean_collect_imatrix_01
+  op: collect-imatrix
+  class: promotable
+  inputs:
+    artifact: external:baseline_artifact
+    prompt_selection: external:prompt_selection
+  params:
+    prompt_set: air_imatrix_calib_v1
+- id: agq_mean_materialize_sweep_01
+  op: materialize-sweep
+  class: promotable
+  inputs:
+    imatrix_manifest: step:agq_mean_collect_imatrix_01/imatrix_manifest
+    baseline_artifact: external:baseline_artifact
+    high_bit_artifact: external:high_bit_artifact
+  params:
+    candidate_prefix: air-agq-ebss32-affinity-mean-reround1
+    budget:
+    - 2.0
+    mid_error_factor: 0.5
+    reround_top_low_experts: 1
+    importance_key: affinity_weighted_mean_importance
+- id: agq_mean_eval_report_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_report
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: agq_mean_eval_selection_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_selection
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: agq_mean_eval_holdout_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_holdout
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: agq_mean_eval_report_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_report
+    existing_evidence: step:agq_mean_eval_report_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: agq_mean_eval_selection_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_selection
+    existing_evidence: step:agq_mean_eval_selection_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: agq_mean_eval_holdout_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: step:agq_mean_materialize_sweep_01/artifact_bpw2p0
+    teacher: external:teacher_holdout
+    existing_evidence: step:agq_mean_eval_holdout_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true

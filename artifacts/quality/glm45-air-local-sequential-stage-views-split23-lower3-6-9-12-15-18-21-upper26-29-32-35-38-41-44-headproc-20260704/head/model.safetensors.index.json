@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "format": "glm45_air_local_sequential_stage_view",
+    "head_process": true,
+    "include_embed": false,
+    "include_lm_head": true,
+    "include_norm": false,
+    "layer_split": 23,
+    "lower_split_layer": null,
+    "pipeline_size": 2,
+    "rank": 0,
+    "required_present_tensor_bytes": 1241513984,
+    "source_dir": "/Users/jack.mazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa",
+    "stage": "head",
+    "start_layer": null,
+    "stop_after_layer": null,
+    "upper_split_layer": null,
+    "visible_shard_file_bytes": 7166072280
+  },
+  "weight_map": {
+    "lm_head.weight": "model-00046-of-00047.safetensors"
+  }
+}

@@ -1,0 +1,119 @@
+schema_version: 1
+name: glm45air__e8p2p0__none__bare_baseline_20260707
+description: Fair bare E8P RTN control eval for the re-quantization ladder, with no recovery sidecar or additional lever.
+external_inputs:
+  baseline_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+steps:
+- id: bare_eval_report_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_report
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_selection_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_selection
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_holdout_raw_01
+  op: eval
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_holdout
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_report_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_report
+    existing_evidence: step:bare_eval_report_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_selection_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_selection
+    existing_evidence: step:bare_eval_selection_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_holdout_repair_01
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_holdout
+    existing_evidence: step:bare_eval_holdout_raw_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 5
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_report_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_report
+    existing_evidence: step:bare_eval_report_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_selection_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_selection
+    existing_evidence: step:bare_eval_selection_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true
+- id: bare_eval_holdout_repair_02
+  op: eval-repair
+  class: verify
+  inputs:
+    artifact: external:baseline_artifact
+    teacher: external:teacher_holdout
+    existing_evidence: step:bare_eval_holdout_repair_01/evidence
+  params:
+    engine: vq_e1_routed_nax_e8p
+    max_rows: 128
+    repair_attempts: 10
+    clear_mlx_cache_between_rows: true

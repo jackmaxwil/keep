@@ -1,0 +1,24 @@
+# KEEP high-level recipe: GLM-4.5-Air base artifact to fast RC candidate.
+#
+# This compiles to the existing low-level Air chain:
+# collect-imatrix -> materialize-sweep -> low-rank recovery -> audit/evals ->
+# Lane S -> promotion gates.
+model: glm45-air
+
+# fast mirrors the current speed-over-cleanliness recipe settings, including
+# allow_dirty_rows gate overrides. Use wow for strict cleanliness gates.
+quality: fast
+
+# Compiled build artifacts will be planned under this root unless --build-root
+# is supplied on the CLI.
+output: runs/glm45-air-fast
+
+# default uses the profile's imatrix calibration prompt set.
+calibration: default
+
+# auto enables the Air family low-rank recovery step from the template.
+recovery: auto
+
+# Escape hatch for advanced users. Keys are low-level step ids; values merge
+# into that step's params after compilation.
+overrides: {}

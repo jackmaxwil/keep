@@ -1,0 +1,124 @@
+schema_version: 1
+name: glm52_reap_504b_materialization_probe_20260709
+description: >
+  Pinned GLM-5.2 REAP ModelOpt-NVFP4-to-KEEP materialization probe.
+  It covers a normal layer-10 gate group and the layer-29 gate group containing
+  the known cross-shard expert-58 bundle, strictly audits the routed artifacts,
+  and raw-range repacks the complete main-model non-routed BF16/F32 inventory.
+  This is not a full 225-group or whole-model artifact.
+external_inputs:
+  source_dir:
+    kind: artifact_dir
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+  profile_path:
+    kind: file
+    path: models/glm52-reap-504b-v2.yaml
+  config_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/config.json
+    expect_hash: 5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b
+  index_path:
+    kind: file
+    path: /Users/jack.mazac/.cache/huggingface/hub/models--0xSero--glm-5.2-reap-504B-v2/snapshots/6c9241aa05fb243a0edb7c804c213ec1cf5c920d/model.safetensors.index.json
+    expect_hash: bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f
+  routed_layer3_artifact:
+    kind: artifact_dir
+    path: artifacts/quality/glm52-wave2-materialization-20260709/e8-layers3-4-w1
+  routed_layer3_audit:
+    kind: file
+    path: artifacts/quality/glm52-wave3-artifact-audit-20260709/e8-layers3-4-audit.json
+steps:
+  - id: source_audit
+    op: glm52-source-audit
+    class: diagnostic
+    inputs:
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+
+  - id: source_payload_audit
+    op: glm52-source-payload-audit
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      source_audit_evidence: step:source_audit/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      groups: [10:gate_proj, 29:gate_proj]
+
+  - id: materialize_groups
+    op: glm52-moe-materialize-groups
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      payload_audit_evidence: step:source_payload_audit/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      groups: [10:gate_proj, 29:gate_proj]
+      code_bits: 8
+      group_size: 512
+      scale_estimator: max_abs
+      expert_workers: 1
+
+  - id: non_vq_pack
+    op: glm52-non-vq-pack
+    class: diagnostic
+    inputs:
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      payload_audit_evidence: step:source_payload_audit/evidence_json
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      config_sha256: 5fa690755d0dab25a8e0e5e0745675bdac03ba2b6f5641da2931278235c71f1b
+      index_sha256: bb5b4fa9782aea5ffc66f9145d6e630f1045d385c30437c531bebe422c075f3f
+      max_shard_payload_bytes: 4294967296
+
+  - id: artifact_audit
+    op: glm52-moe-artifact-audit
+    class: diagnostic
+    inputs:
+      artifact: step:materialize_groups/artifact
+      source_dir: external:source_dir
+      profile_path: external:profile_path
+      config_path: external:config_path
+      index_path: external:index_path
+      materialization_runs: step:materialize_groups/evidence
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      groups: [10:gate_proj, 29:gate_proj]
+      code_bits: 8
+      group_size: 512
+      scale_estimator: max_abs
+
+  - id: layer_forward_probe
+    op: glm52-layer-forward-probe
+    class: diagnostic
+    inputs:
+      non_vq_artifact: step:non_vq_pack/artifact
+      non_vq_evidence_json: step:non_vq_pack/evidence_json
+      routed_artifact: external:routed_layer3_artifact
+      routed_audit_json: external:routed_layer3_audit
+      profile_path: external:profile_path
+      config_path: external:config_path
+    params:
+      model_id: 0xSero/glm-5.2-reap-504B-v2
+      revision: 6c9241aa05fb243a0edb7c804c213ec1cf5c920d
+      layer: 3
+      tokens: 1
+      seed: 20260709
+      input_scale: 0.125

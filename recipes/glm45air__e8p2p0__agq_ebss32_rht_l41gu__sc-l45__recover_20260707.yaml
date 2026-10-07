@@ -1,0 +1,175 @@
+schema_version: 1
+name: glm45air__e8p2p0__agq_ebss32_rht_l41gu__sc-l45__recover_20260707
+description: >-
+  Bare EBSS32+AGQ+learned-RHT composed candidate -> accepted L45 gud rank-4
+  low-rank sidecar recovery -> full report/selection/holdout evaluation.
+
+external_inputs:
+  seed_artifact:
+    kind: artifact_dir
+    path: artifacts/build/glm45air__e8p2p0__agq_ebss32_rht_l41gu__bare_compose_20260707/steps/compose_materialize_rotation_01-69027733/out
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+
+steps:
+  - id: train_l45_gud_math8
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: external:seed_artifact
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 45
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 12
+      learning_rate: 0.5
+      target_nll_weight: 0.5
+      teacher_top1_margin_weight: 2
+      teacher_top1_margin: 1
+      loss_scope: final_layer_selected
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: both
+      max_train_rows: 8
+      train_row_indices: [44, 45, 46, 47, 48, 49, 50, 51]
+      max_positions: 16
+    gate: {profile: train_sane}
+
+  - id: audit
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_selection_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_holdout_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_report_repair_01
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report_raw/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 5
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_selection_repair_01
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection_raw/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 5
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_holdout_repair_01
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout_raw/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 5
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_report_repair_02
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+      existing_evidence: step:eval_report_repair_01/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 10
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_selection_repair_02
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+      existing_evidence: step:eval_selection_repair_01/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 10
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true
+
+  - id: eval_holdout_repair_02
+    op: eval-repair
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+      existing_evidence: step:eval_holdout_repair_01/evidence
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      repair_attempts: 10
+      mlx_cache_limit_gb: 0
+      clear_mlx_cache_between_rows: true

@@ -1,0 +1,46 @@
+{
+ "record_type": "glm53_real_layer_parity_v1",
+ "model_id": "zai-org/GLM-5.3-Flash",
+ "revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+ "layers": 3,
+ "layer_types": [
+  "linear_attention",
+  "linear_attention",
+  "linear_attention"
+ ],
+ "mlp_layer_types": [
+  "dense",
+  "dense",
+  "dense"
+ ],
+ "prompt_tokens": 87,
+ "tensors_fetched": 89,
+ "bytes_fetched": 2553092232,
+ "fetch_seconds": 101.1,
+ "fp8_tensors_bit_exact_vs_torch": 9,
+ "reference": "transformers 5.16.1 Glm5NextTextModel, float32, eager, torch 2.14.1",
+ "streams_compared": [
+  "input to layer 0",
+  "input to layer 1",
+  "input to layer 2",
+  "output of layer 2"
+ ],
+ "ramp": {
+  "float32": {
+   "max_relative_error_per_stream": [
+    0.0,
+    9.023407073982526e-06,
+    9.031152330862824e-06,
+    5.5009704738040455e-06
+   ]
+  },
+  "bfloat16": {
+   "max_relative_error_per_stream": [
+    0.0,
+    0.008966423571109772,
+    0.008210377767682076,
+    0.005706832278519869
+   ]
+  }
+ }
+}

@@ -1,0 +1,297 @@
+{
+ "all_memory_clean": false,
+ "bind_proof": {
+  "activation": "LimitedSwiGLU",
+  "bound_module": "QuantizedVQSwitchGLU",
+  "checked_at": "layer_0_bound_probe_before_first_forward",
+  "code_bits": 16,
+  "dense_routed_experts": false,
+  "dense_routed_parameter_names": [],
+  "engine": "vq_e8p_streamed",
+  "file_discovery": "every backbone block's three artifact files were opened and header-parsed by build_dsv4_vq_block_span_index, and each file's size was re-checked against the manifest",
+  "group_size": 512,
+  "is_quantized_vq_switch_glu": true,
+  "is_quantized_vq_switch_linear": true,
+  "num_experts": 256,
+  "record_type": "dsv4_teacher_agreement_bind_proof_v1",
+  "route_backend": "gather_vqmm_auto",
+  "whole_model_unbound_check": "not applicable under layer-sequential streaming; 42 of 43 layers are deliberately unbound at any instant"
+ },
+ "clean_row_count": 0,
+ "engine": "vq_e8p_streamed",
+ "engines": [
+  "vq_e8p_streamed"
+ ],
+ "identities": {
+  "checkpoint_dir": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+  "compress_ratios": [
+   0,
+   0,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4,
+   128,
+   4
+  ],
+  "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+  "expert_bytes_per_layer": 1635778560,
+  "expert_mode": "vq_e8p_g512",
+  "expert_span_bytes_per_layer": 1635778560,
+  "hidden_size": 4096,
+  "moe_intermediate_size": 2048,
+  "n_routed_experts": 256,
+  "num_experts_per_tok": 6,
+  "num_hidden_layers": 43,
+  "resident_bind_seconds": 9.68,
+  "resident_bound": 1199,
+  "resident_fp8_decoded": 365,
+  "resident_gb": 14.703,
+  "swiglu_limit": 10.0,
+  "vq_artifact": {
+   "artifact_dir": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+   "artifact_payload_bytes": 75246105792,
+   "codebook": {
+    "code_bits": 16,
+    "entries": 256,
+    "name": "quip_e8p",
+    "sha256": "efc2c03c60acd955dc812ff2bade9ec6cc31259807e48473506161f3a9a230ce"
+   },
+   "converter": "deepseek_v4_vq_groups",
+   "created_utc": "2026-08-17T21:07:34Z",
+   "family": "deepseek-v4-flash",
+   "file_count": 138,
+   "file_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+   "geometry": {
+    "backbone_layers": 43,
+    "experts_per_block": 256,
+    "experts_per_tok": 6,
+    "hidden_size": 4096,
+    "moe_blocks": 46,
+    "moe_intermediate_size": 2048,
+    "mtp_blocks": 3,
+    "projection_shapes": {
+     "down_proj": [
+      4096,
+      2048
+     ],
+     "gate_proj": [
+      2048,
+      4096
+     ],
+     "up_proj": [
+      2048,
+      4096
+     ]
+    },
+    "projections_per_block": 3
+   },
+   "manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+   "policy": {
+    "code_bits": 16,
+    "code_bits_policy": {
+     "down": 16,
+     "gate": 16,
+     "up": 16
+    },
+    "fit_backend": "mlx-exact",
+    "group_size_policy": {
+     "down": 512,
+     "gate": 512,
+     "up": 512
+    },
+    "iterations": 8,
+    "mtp_importance": "backbone-mean",
+    "routed_bpw": 2.03125,
+    "search_backend": "metal"
+   },
+   "source": {
+    "checkpoint_dir": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+    "config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+    "hf_model_id": "deepseek-ai/DeepSeek-V4-Flash-0731",
+    "index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+    "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+   }
+  },
+  "vq_code_bits": 16,
+  "vq_group_size": 512,
+  "with_mtp": false
+ },
+ "kld_estimators": [
+  "head_exact_plus_proportional_tail"
+ ],
+ "out_dir": "/Users/jack.mazac/keep-artifacts/dsv4-task2-20260819/prefill-vq",
+ "peak_mlx_gb": 28.04,
+ "per_row_mean": {
+  "max_nll_delta": 0.21823994912356715,
+  "max_ppl_ratio": 1.2438855010490046,
+  "mean_kld": 0.13060785756250629,
+  "mean_nll_delta": 0.13012390005488422,
+  "mean_ppl_ratio": 1.1399969320423535,
+  "mean_top1_agreement": 0.9305905765680033
+ },
+ "position_weighted": {
+  "mean_kld": 0.14093304314200342,
+  "mean_kld_head": 0.14100916230610744,
+  "mean_kld_lower": 0.14093304314200342,
+  "mean_kld_upper": 0.148738772194115,
+  "mean_student_tail_mass": 0.0007180556456327805,
+  "mean_teacher_tail_mass": 0.00022361408101150555,
+  "nll_delta": 0.11634966670851467,
+  "ppl_ratio": 1.1233886150641015,
+  "target_in_teacher_topk_fraction": 0.9940950594959034,
+  "teacher_nll": 0.575844306054572,
+  "top10_agreement": 0.9957917531757194,
+  "top1_agreement": 0.9339517335297925,
+  "top5_agreement": 0.9916281561851182,
+  "vq_nll": 0.6921939727630868
+ },
+ "prefill_chunk_tokens": 1024,
+ "process_memory": {
+  "mlx_active_bytes": 14804769596,
+  "mlx_cache_bytes": 0,
+  "mlx_peak_bytes": 28037726636,
+  "pageouts_delta": 30153,
+  "pageouts_total": 327806,
+  "rss_bytes": 23224811520,
+  "swapouts_delta": 467480,
+  "swapouts_total": 3626428
+ },
+ "record_type": "dsv4_teacher_agreement_summary_v1",
+ "row_count": 8,
+ "row_distributions": {
+  "mean_kld": {
+   "max": 0.22343005732092494,
+   "median": 0.12297087391158047,
+   "p90": 0.16576175627364684,
+   "p99": 0.2176632272161971
+  },
+  "nll_delta": {
+   "max": 0.21823994912356715,
+   "median": 0.11238388962416745,
+   "p90": 0.19071909738903547,
+   "p99": 0.21548786395011396
+  },
+  "ppl_ratio": {
+   "max": 1.2438855010490046,
+   "median": 1.1189430848779887,
+   "p90": 1.2103169192563459,
+   "p99": 1.2405286428697389
+  },
+  "top1_agreement": {
+   "max": 0.9534533403630339,
+   "median": 0.9297882299447005,
+   "p90": 0.9491263511848855,
+   "p99": 0.953020641445219
+  }
+ },
+ "rows_jsonl": "/Users/jack.mazac/keep-artifacts/dsv4-task2-20260819/prefill-vq/rows.jsonl",
+ "run_config_sha256": "99f75386306f0306a61b36a5135f5b2494ce06dace83331fcbc52236c9d9e0b5",
+ "schema_version": 1,
+ "sessions_produced": 3,
+ "sessions_selected": 8,
+ "sessions_skipped": 5,
+ "split": "report",
+ "stream": {
+  "convert_seconds": 36.12,
+  "gb_read": 212.651,
+  "io_busy_seconds": 52.01,
+  "io_gb_per_s": 32.71,
+  "layer_reads": 130,
+  "read_span_seconds": 7823.39,
+  "read_wait_seconds": 0.64
+ },
+ "teacher_generation_config_sha256": "c9d68af1c4939b9281571f5fae69ea51c482928f6ea0c9a7cd2d398131d240f1",
+ "token_tail": {
+  "max_row_max_kld": 25.145625533063654,
+  "max_row_p999_kld": 13.54682000530759,
+  "max_token_kld_pooled": 25.145626068115234,
+  "p999_kld_pooled": 10.54931017398831,
+  "p999_kld_source": "token-array sidecars",
+  "p99_kld_pooled": 2.910563147068022,
+  "pooled_token_count": 89586
+ },
+ "total_supervised_positions": 89586,
+ "total_tokens": 361366,
+ "worst_rows": {
+  "highest_mean_kld": [
+   {
+    "mean_kld": 0.22343005732092494,
+    "prompt_id": "teich_codex_rollout-2026-06-19T10-50-52-019ee101-d002-7ae0-a1d9-22c16ba7ff3c"
+   },
+   {
+    "mean_kld": 0.14104677011052766,
+    "prompt_id": "teich_codex_rollout-2026-07-06T09-36-52-019f384a-2a4b-71f2-90bc-ff18536f627f"
+   },
+   {
+    "mean_kld": 0.12440365723811277,
+    "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34"
+   },
+   {
+    "mean_kld": 0.12301052525074255,
+    "prompt_id": "teich_codex_rollout-2026-07-11T18-14-54-019f53e4-3cc4-7123-ada8-e1074d082246"
+   },
+   {
+    "mean_kld": 0.1229312225724184,
+    "prompt_id": "teich_codex_rollout-2026-05-27T21-21-35-019e6cd0-f8a6-7ae0-a3ee-5d1d9110165c"
+   }
+  ],
+  "lowest_top1": [
+   {
+    "prompt_id": "teich_codex_rollout-2026-07-11T18-14-54-019f53e4-3cc4-7123-ada8-e1074d082246",
+    "top1_agreement": 0.9032846715328468
+   },
+   {
+    "prompt_id": "teich_codex_rollout-2026-06-19T10-50-52-019ee101-d002-7ae0-a1d9-22c16ba7ff3c",
+    "top1_agreement": 0.9236358587494793
+   },
+   {
+    "prompt_id": "teich_codex_rollout-2026-07-10T14-23-17-019f4de9-d2d7-76f1-b585-2e512e0ef4f3",
+    "top1_agreement": 0.9245105926521856
+   },
+   {
+    "prompt_id": "teich_claude_agent-ab6dc2ab37c3c2c34",
+    "top1_agreement": 0.9275541795665635
+   },
+   {
+    "prompt_id": "teich_codex_rollout-2026-07-06T09-36-52-019f384a-2a4b-71f2-90bc-ff18536f627f",
+    "top1_agreement": 0.9320222803228373
+   }
+  ]
+ }
+}

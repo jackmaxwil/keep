@@ -1,0 +1,17 @@
+{
+  "head": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/head"
+  },
+  "lower-final": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/lower-final"
+  },
+  "lower-pre": {
+    "1": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/lower-pre"
+  },
+  "upper-final": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/upper-final"
+  },
+  "upper-pre": {
+    "0": "artifacts/quality/glm45-air-local-sequential-stage-views-split23-lower12-upper34-headproc-20260704/upper-pre"
+  }
+}

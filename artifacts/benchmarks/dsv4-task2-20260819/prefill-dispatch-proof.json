@@ -1,0 +1,46 @@
+{
+  "activation_dtype": "bfloat16",
+  "artifact": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+  "artifact_file_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+  "artifact_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+  "bound_module": "QuantizedVQSwitchGLU",
+  "can_use_shared_sorted_prefill": true,
+  "claim_limit": "Real-artifact layer-0 production prefill dispatch proof only; no timing claim.",
+  "helper_calls": [
+    {
+      "implementation": "nax_e8p_m32n64",
+      "input_dims": 4096,
+      "output_dims": 2048,
+      "projection": "gate_up",
+      "route_count": 6144
+    },
+    {
+      "implementation": "nax_e8p_m32n64",
+      "input_dims": 4096,
+      "output_dims": 2048,
+      "projection": "gate_up",
+      "route_count": 6144
+    },
+    {
+      "implementation": "nax_e8p_m32n64",
+      "input_dims": 2048,
+      "output_dims": 4096,
+      "projection": "down",
+      "route_count": 6144
+    }
+  ],
+  "kernel_calls": 3,
+  "layer": 0,
+  "output_finite": true,
+  "output_shape": [
+    1024,
+    6,
+    4096
+  ],
+  "prefill_engine": "auto",
+  "record_type": "dsv4_task2_prefill_dispatch_proof_v1",
+  "route_count": 6144,
+  "selected_implementation": "nax_e8p_m32n64",
+  "tokens": 1024,
+  "top_k": 6
+}

@@ -1,0 +1,132 @@
+{
+  "claim_limit": "Layer-0 real-artifact M=1 expert projections only; residents do not exist yet, so this is not full-model or end-to-end decode evidence.",
+  "clean_rows": 9,
+  "comparison_formula": "source_mxfp4_projection_ms / production_vq_e8p_projection_ms",
+  "dirty_rows": 0,
+  "faster_clean_rows": 0,
+  "gate": "STOP",
+  "identities": {
+    "artifact": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+    "artifact_codebook_sha256": "efc2c03c60acd955dc812ff2bade9ec6cc31259807e48473506161f3a9a230ce",
+    "artifact_file_inventory_sha256": "4bda0cf1a635123d08f711cd38ad4bb3f716b41714883495ec91cfd71540e843",
+    "artifact_manifest_sha256": "a996c4bedc514f49c54fe15d5d9b2373f839678e55b241861f2fda60cb4bf8b3",
+    "checkpoint": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+    "checkpoint_config_sha256": "6c8f3d2d3b48707541b88f32f22ef3f0f8a6b57d8523281e2b8d3cdb0ae9a023",
+    "checkpoint_index_sha256": "98efab455cf08dfbbbaaba6f570e1bf10bf927d2b4c3c453a59c2f6f0e3be92b",
+    "checkpoint_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+    "source_layer0_shards": {
+      "model-00002-of-00048.safetensors": {
+        "bytes": 3566321192,
+        "etag": "77b26c939a0e25b3113c8d6bb04e1901a748bd4a7d2589e3bfdaabdf1e9bba14",
+        "revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062"
+      }
+    }
+  },
+  "kernel_identity": "nax_e8p_fp16_sorted_steel_m32n64",
+  "orders": {
+    "source_first": 4,
+    "vq_first": 5
+  },
+  "projection_total": {
+    "median_paired_source_over_vq": 0.0934906004757825,
+    "paired_source_over_vq": {
+      "max": 0.09850194409083954,
+      "median": 0.0934906004757825,
+      "min": 0.08669818199349806,
+      "q1": 0.08843757287216822,
+      "q3": 0.09723396577145439
+    },
+    "source_ms": {
+      "max": 3.473199997097254,
+      "median": 2.9881164024118334,
+      "min": 2.402225008700043,
+      "q1": 2.905699802795425,
+      "q3": 3.0672584020067006
+    },
+    "vq_ms": {
+      "max": 36.63591659278609,
+      "median": 32.70619999966584,
+      "min": 27.58867500233464,
+      "q1": 30.335608398308977,
+      "q3": 34.08006679965183
+    }
+  },
+  "projections": {
+    "down_proj": {
+      "median_paired_source_over_vq": 0.09485625995690551,
+      "paired_source_over_vq": {
+        "max": 0.09890299547674747,
+        "median": 0.09485625995690551,
+        "min": 0.07652834104454026,
+        "q1": 0.09234833456477065,
+        "q3": 0.09829870087185566
+      },
+      "source_ms": {
+        "max": 1.1006082000676543,
+        "median": 0.9292081987950951,
+        "min": 0.8313250029459596,
+        "q1": 0.842225004453212,
+        "q3": 1.0573000006843358
+      },
+      "vq_ms": {
+        "max": 11.302641598740593,
+        "median": 10.78696659533307,
+        "min": 8.856558398110792,
+        "q1": 9.096033399691805,
+        "q3": 11.005399998975918
+      }
+    },
+    "gate_proj": {
+      "median_paired_source_over_vq": 0.09137297087641937,
+      "paired_source_over_vq": {
+        "max": 0.10226009768431336,
+        "median": 0.09137297087641937,
+        "min": 0.07142902207907663,
+        "q1": 0.08775975788615731,
+        "q3": 0.09871627104102375
+      },
+      "source_ms": {
+        "max": 1.2954499979969114,
+        "median": 1.0320415953174233,
+        "min": 0.733733200468123,
+        "q1": 0.9957499976735562,
+        "q3": 1.0949082032311708
+      },
+      "vq_ms": {
+        "max": 14.694608398713171,
+        "median": 10.921391600277275,
+        "min": 9.308166604023427,
+        "q1": 10.454625001875684,
+        "q3": 11.346316599519923
+      }
+    },
+    "up_proj": {
+      "median_paired_source_over_vq": 0.09476149057990824,
+      "paired_source_over_vq": {
+        "max": 0.10116545478730711,
+        "median": 0.09476149057990824,
+        "min": 0.08533576686129882,
+        "q1": 0.09030368096186667,
+        "q3": 0.09792238075810245
+      },
+      "source_ms": {
+        "max": 1.1423250020015985,
+        "median": 1.061883196234703,
+        "min": 0.8042000001296401,
+        "q1": 0.983200001064688,
+        "q3": 1.1204499984160066
+      },
+      "vq_ms": {
+        "max": 12.64981659478508,
+        "median": 11.18531659594737,
+        "min": 9.298524999758229,
+        "q1": 10.119608405511826,
+        "q3": 11.42835840000771
+      }
+    }
+  },
+  "record_type": "dsv4_m1_expert_projection_summary_v1",
+  "rows": 9,
+  "scope": "component_level_m1_expert_projection_only",
+  "source_backend": "mx.gather_qmm:mxfp4"
+}

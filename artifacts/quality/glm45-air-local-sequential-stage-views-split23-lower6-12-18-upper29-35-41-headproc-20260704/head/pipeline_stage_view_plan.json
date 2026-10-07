@@ -1,0 +1,41 @@
+{
+  "first_layer": null,
+  "fits_required_tensor_budget": true,
+  "fits_visible_shard_budget": true,
+  "head_process": true,
+  "include_embed": false,
+  "include_lm_head": true,
+  "include_norm": false,
+  "last_layer": null,
+  "layer_split": 23,
+  "layers": [],
+  "lower_split_layer": null,
+  "missing_parameter_keys": [],
+  "missing_shards": [],
+  "missing_source_tensor_count": 0,
+  "missing_source_tensors": [],
+  "parameter_key_count": 1,
+  "parameter_keys": [
+    "lm_head.weight"
+  ],
+  "parameter_weight_map": {
+    "lm_head.weight": "model-00046-of-00047.safetensors"
+  },
+  "pipeline_size": 2,
+  "present_source_tensor_count": 1,
+  "rank": 0,
+  "required_present_tensor_bytes": 1241513984,
+  "required_shard_count": 1,
+  "required_shards": [
+    "model-00046-of-00047.safetensors"
+  ],
+  "required_source_tensor_count": 1,
+  "required_source_tensors": [
+    "lm_head.weight"
+  ],
+  "stage": "head",
+  "start_layer": null,
+  "stop_after_layer": null,
+  "upper_split_layer": null,
+  "visible_shard_file_bytes": 7166072280
+}

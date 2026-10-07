@@ -1,0 +1,1562 @@
+schema_version: 1
+name: glm45air__dmx2p0__sc-l45__r26__legacy_lineage_20260701
+description: Legacy continuous-training lineage reconstructed from conversion-manifest.json
+  files.
+external_inputs:
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  legacy_fit_teacher_02_01_01:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  legacy_fit_teacher_02_02_01:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  legacy_fit_teacher_02_04_01:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  legacy_fit_teacher_02_05_01:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+lineage:
+  target_artifact: artifacts/glm-4.5-air-dynamic3p0-r26-lora-l45-gud-math8-r4-init0p05-s12-lr0p5-w2-m1-nll0p5-20260701
+  root_artifact: artifacts/glm-4.5-air-vq
+  step_count: 27
+  warnings: []
+  root_producer:
+    op: stream-convert-vq
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+steps:
+- id: legacy_pipeline_source_views
+  op: pipeline-source-views
+  class: diagnostic
+  inputs: {}
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    pipeline_size: 2
+    layer_split: 23
+    rank_budget_gb: 115
+    rank0_only_logits_views: true
+    materialize: true
+- id: legacy_rdma_topology_audit
+  op: rdma-topology-audit
+  class: diagnostic
+  inputs: {}
+  params:
+    local_if: en1
+    peer_if: en1
+    local_ip: 198.51.100.1
+    peer_ip: 198.51.100.2
+    local_rdma_device: rdma_en1
+    peer_rdma_device: rdma_en1
+    peer_ssh: jackmazac@203.0.113.191
+    require_ready: true
+- id: legacy_jaccl_hostfile
+  op: jaccl-hostfile
+  class: diagnostic
+  inputs: {}
+  params:
+    local_ip: 198.51.100.1
+    local_rdma_device: rdma_en1
+    peer_ssh: jackmazac@203.0.113.191
+    peer_rdma_device: rdma_en1
+- id: legacy_local_sequential_stage_views
+  op: pipeline-source-views
+  class: diagnostic
+  inputs: {}
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    pipeline_size: 2
+    layer_split: 23
+    rank_budget_gb: 115
+    local_sequential_stage_views: true
+    local_sequential_head_process: true
+    local_sequential_lower_split_layers:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    local_sequential_upper_split_layers:
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    - 45
+    materialize: true
+- id: legacy_pipeline_view_probe
+  op: pipeline-view-load-probe
+  class: diagnostic
+  inputs:
+    view_dir: step:legacy_pipeline_source_views/artifact
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    pipeline_size: 2
+    layer_split: 23
+    rank_budget_gb: 115
+    reuse_existing: true
+- id: legacy_report_cache_single_host_prefix
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs:
+    rank_view_dir: step:legacy_pipeline_source_views/artifact
+    local_sequential_stage_view_roots_json: step:legacy_local_sequential_stage_views/stage_view_roots_json
+  params:
+    top_k: 16
+    max_positions: 1
+    prompt_set: base
+    prompt_id:
+    - capital_france
+    single_host_fallback: true
+    single_host_pipeline_local: true
+    single_host_pipeline_local_stage_processes: true
+    single_host_pipeline_local_head_process: true
+    single_host_pipeline_local_lower_split_layers:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    single_host_pipeline_local_upper_split_layers:
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    - 45
+    single_host_pipeline_local_abort_on_dirty_stage: true
+    single_host_revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    mlx_cache_limit_gb: 48
+    no_full_logits: true
+    skip_local_consume: true
+    require_memory_quiet_preflight: true
+    memory_quiet_seconds: 3
+    memory_quiet_max_attempts: 20
+    memory_quiet_stage_view_margin_gb: 8
+    peer_ssh: jackmazac@203.0.113.191
+    peer_rank0_view_root: glm45-air-pipeline-views/rank-0-p2
+    peer_source_dir: /Users/jackmazac/.cache/huggingface/hub/models--zai-org--GLM-4.5-Air/snapshots/a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    peer_source_stage_ssh: jackmazac@198.51.100.2
+    stage_peer_source: true
+    peer_source_min_free_gb: 16
+    local_sequential_remote_workers: head
+    local_sequential_remote_tmp_dir: /tmp/glm-p2-remote-workers
+    local_sequential_remote_dirty_retries: 1
+    local_sequential_remote_retry_sleep_seconds: 30
+    layer_split: 23
+    lm_head_chunk_rows: 8192
+    vq_artifact_dir: artifacts/glm-4.5-air-vq
+- id: legacy_report_cache_distributed_prefix
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs:
+    rank_view_dir: step:legacy_pipeline_source_views/artifact
+    jaccl_hostfile: step:legacy_jaccl_hostfile/hostfile
+  params:
+    top_k: 16
+    max_positions: 1
+    prompt_set: base
+    prompt_id:
+    - capital_france
+    layer_split: 23
+    required_wired_mb: 0
+    local_direct_if: en1
+    peer_direct_if: en1
+    local_direct_ip: 198.51.100.1
+    peer_direct_ip: 198.51.100.2
+    peer_ssh: jackmazac@203.0.113.191
+    peer_source_stage_ssh: jackmazac@198.51.100.2
+    stage_peer_source: true
+    peer_source_min_free_gb: 16
+    mlx_cache_limit_gb: 48
+    no_full_logits: true
+    skip_local_consume: true
+    require_memory_quiet_preflight: true
+    memory_quiet_seconds: 3
+    memory_quiet_max_attempts: 20
+    memory_quiet_min_free_gb: 24
+    allow_dirty_cache: true
+    lm_head_chunk_rows: 8192
+    vq_artifact_dir: artifacts/glm-4.5-air-vq
+- id: legacy_report_cache_single_host_preflight
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs: {}
+  params:
+    top_k: 128
+    max_positions: 128
+    preflight_only: true
+    single_host_fallback: true
+    mlx_cache_limit_gb: 48
+    single_host_source_memory_guard_ratio: 1.0
+    vq_artifact_dir: artifacts/glm-4.5-air-vq
+    prompt_set: air_vq_ladder_report_v1
+- id: legacy_selection_cache_single_host_preflight
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs: {}
+  params:
+    top_k: 128
+    max_positions: 128
+    preflight_only: true
+    single_host_fallback: true
+    mlx_cache_limit_gb: 48
+    single_host_source_memory_guard_ratio: 1.0
+    vq_artifact_dir: artifacts/glm-4.5-air-vq
+    prompt_set: air_vq_ladder_select_v1
+- id: legacy_report_cache_preflight
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs:
+    rank_view_dir: step:legacy_pipeline_source_views/artifact
+    jaccl_hostfile: step:legacy_jaccl_hostfile/hostfile
+  params:
+    top_k: 128
+    max_positions: 128
+    layer_split: 23
+    required_wired_mb: 0
+    local_direct_if: en1
+    peer_direct_if: en1
+    local_direct_ip: 198.51.100.1
+    peer_direct_ip: 198.51.100.2
+    peer_ssh: jackmazac@203.0.113.191
+    preflight_only: true
+    prompt_set: air_vq_ladder_report_v1
+- id: legacy_selection_cache_preflight
+  op: export-teacher-cache-cleanroom
+  class: diagnostic
+  inputs:
+    rank_view_dir: step:legacy_pipeline_source_views/artifact
+    jaccl_hostfile: step:legacy_jaccl_hostfile/hostfile
+  params:
+    top_k: 128
+    max_positions: 128
+    layer_split: 23
+    required_wired_mb: 0
+    local_direct_if: en1
+    peer_direct_if: en1
+    local_direct_ip: 198.51.100.1
+    peer_direct_ip: 198.51.100.2
+    peer_ssh: jackmazac@203.0.113.191
+    preflight_only: true
+    prompt_set: air_vq_ladder_select_v1
+- id: legacy_stream_convert_root
+  op: stream-convert-vq
+  class: promotable
+  inputs: {}
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    download_missing_source_shards: true
+    code_bits: 8
+    group_size: 512
+    scale_estimator: max_abs
+    expert_workers: 16
+- id: legacy_collect_imatrix_01
+  op: collect-imatrix
+  class: promotable
+  inputs:
+    artifact: step:legacy_stream_convert_root/artifact
+  params:
+    prompt_set: air_imatrix_calib_v1
+    layers:
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 13
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 22
+    - 23
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 32
+    - 33
+    - 34
+    - 35
+    - 36
+    - 37
+    - 38
+    - 39
+    - 40
+    - 41
+    - 42
+    - 43
+    - 44
+    - 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+- id: legacy_stream_convert_high_bit_01
+  op: stream-convert-vq
+  class: promotable
+  inputs: {}
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    download_missing_source_shards: true
+    code_bits: 16
+    group_size: 512
+    scale_estimator: max_abs
+    expert_workers: 16
+- id: legacy_materialize_sweep_01
+  op: materialize-sweep
+  class: promotable
+  inputs:
+    imatrix_manifest: step:legacy_collect_imatrix_01/imatrix_manifest
+    baseline_artifact: step:legacy_stream_convert_root/artifact
+    high_bit_artifact: step:legacy_stream_convert_high_bit_01/artifact
+  params:
+    candidate_prefix: air-dynamic-imatrix
+    budget:
+    - 3.0
+    mid_error_factor: 0.5
+    reround_top_low_experts: 1
+- id: legacy_fit_sidecar_02_01
+  op: fit-block-local-sidecar
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_materialize_sweep_01/artifact_bpw3p0
+    teacher_1: external:legacy_fit_teacher_02_01_01
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    layer: 18
+    projection: gate_proj
+    trainable: output_bias
+    max_train_rows: 8
+  gate:
+    profile: train_sane
+- id: legacy_fit_sidecar_02_02
+  op: fit-block-local-sidecar
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_materialize_sweep_01/artifact_bpw3p0
+    teacher_1: external:legacy_fit_teacher_02_02_01
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    layer: 18
+    projection: up_proj
+    trainable: output_bias
+    max_train_rows: 8
+  gate:
+    profile: train_sane
+- id: legacy_merge_sidecars_02_03
+  op: merge-block-local-sidecars
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_materialize_sweep_01/artifact_bpw3p0
+    source_artifact_1: step:legacy_fit_sidecar_02_01/artifact
+    source_artifact_2: step:legacy_fit_sidecar_02_02/artifact
+  params:
+    train_split: selection
+    train_row_count: 8
+    max_positions: 8
+    trainable: output_bias
+    teacher_jsonl: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+    teacher_cache_root: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean
+  gate:
+    profile: train_sane
+- id: legacy_fit_sidecar_02_04
+  op: fit-block-local-sidecar
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_merge_sidecars_02_03/artifact
+    teacher_1: external:legacy_fit_teacher_02_04_01
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    layer: 41
+    projection: gate_proj
+    trainable: output_bias
+    max_train_rows: 8
+  gate:
+    profile: train_sane
+- id: legacy_fit_sidecar_02_05
+  op: fit-block-local-sidecar
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_merge_sidecars_02_03/artifact
+    teacher_1: external:legacy_fit_teacher_02_05_01
+  params:
+    model_id: zai-org/GLM-4.5-Air
+    revision: a24ceef6ce4f3536971efe9b778bdaa1bab18daa
+    layer: 41
+    projection: up_proj
+    trainable: output_bias
+    max_train_rows: 8
+  gate:
+    profile: train_sane
+- id: legacy_merge_sidecars_02
+  op: merge-block-local-sidecars
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_materialize_sweep_01/artifact_bpw3p0
+    source_artifact_1: step:legacy_fit_sidecar_02_01/artifact
+    source_artifact_2: step:legacy_fit_sidecar_02_02/artifact
+    source_artifact_3: step:legacy_fit_sidecar_02_04/artifact
+    source_artifact_4: step:legacy_fit_sidecar_02_05/artifact
+  params:
+    train_split: selection
+    train_row_count: 8
+    max_positions: 8
+    trainable: output_bias
+    teacher_jsonl: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+    teacher_cache_root: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean
+  gate:
+    profile: train_sane
+- id: legacy_scale_sidecars_02
+  op: scale-block-local-sidecars
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_materialize_sweep_01/artifact_bpw3p0
+    source_artifact: step:legacy_merge_sidecars_02/artifact
+  params:
+    scale_policy_json: '{"layer_18":1.0,"layer_41":0.75}'
+  gate:
+    profile: train_sane
+- id: legacy_train_03
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_scale_sidecars_02/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 32
+    learning_rate: 5.0
+    target_nll_weight: 0.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    max_train_rows: 32
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_04
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_03/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 32
+    learning_rate: 5.0
+    target_nll_weight: 0.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    max_train_rows: 32
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_05
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_04/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 16
+    learning_rate: 1.0
+    target_nll_weight: 0.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 16
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_06
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_05/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 16
+    learning_rate: 1.0
+    target_nll_weight: 0.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 16
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_07
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_06/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 32
+    learning_rate: 1.0
+    target_nll_weight: 0.0
+    teacher_top1_margin_weight: 1.0
+    teacher_top1_margin: 0.5
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 8
+    train_row_indices:
+    - 43
+    - 67
+    - 71
+    - 32
+    - 10
+    - 59
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_08
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_07/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 32
+    learning_rate: 1.0
+    target_nll_weight: 0.0
+    teacher_top1_margin_weight: 1.0
+    teacher_top1_margin: 0.5
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 8
+    train_row_indices:
+    - 43
+    - 67
+    - 71
+    - 32
+    - 10
+    - 59
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_09
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_08/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 64
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 8
+    train_row_indices:
+    - 59
+    - 71
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_10
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_09/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 64
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: validation
+    max_train_rows: 8
+    train_row_indices:
+    - 59
+    - 71
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_11
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_10/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 10
+    - 32
+    - 52
+    - 60
+    - 67
+    - 73
+    - 79
+    - 83
+    - 87
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_12
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_11/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 10
+    - 32
+    - 52
+    - 60
+    - 67
+    - 73
+    - 79
+    - 83
+    - 87
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_13
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_12/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 7
+    - 18
+    - 29
+    - 67
+    - 72
+    - 74
+    - 75
+    - 79
+    - 80
+    - 82
+    - 83
+    - 85
+    - 86
+    - 87
+    - 89
+    - 90
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_14
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_13/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 7
+    - 18
+    - 29
+    - 67
+    - 72
+    - 74
+    - 75
+    - 79
+    - 80
+    - 82
+    - 83
+    - 85
+    - 86
+    - 87
+    - 89
+    - 90
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_15
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_14/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 80
+    - 2
+    - 47
+    - 79
+    - 84
+    - 72
+    - 41
+    - 119
+    - 125
+    - 35
+    - 67
+    - 18
+    - 52
+    - 56
+    - 60
+    - 13
+    - 75
+    - 24
+    - 90
+    - 10
+    - 30
+    - 74
+    - 32
+    - 51
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_16
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_15/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 80
+    - 2
+    - 47
+    - 79
+    - 84
+    - 72
+    - 41
+    - 119
+    - 125
+    - 35
+    - 67
+    - 18
+    - 52
+    - 56
+    - 60
+    - 13
+    - 75
+    - 24
+    - 90
+    - 10
+    - 30
+    - 74
+    - 32
+    - 51
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_17
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_16/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 59
+    - 63
+    - 71
+    - 48
+    - 49
+    - 76
+    - 113
+    - 40
+    - 62
+    - 66
+    - 88
+    - 127
+    - 124
+    - 65
+    - 126
+    - 123
+    - 111
+    - 121
+    - 77
+    - 46
+    - 122
+    - 120
+    - 64
+    - 58
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_18
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_17/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 59
+    - 63
+    - 71
+    - 48
+    - 49
+    - 76
+    - 113
+    - 40
+    - 62
+    - 66
+    - 88
+    - 127
+    - 124
+    - 65
+    - 126
+    - 123
+    - 111
+    - 121
+    - 77
+    - 46
+    - 122
+    - 120
+    - 64
+    - 58
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_19
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_18/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 54
+    - 55
+    - 36
+    - 57
+    - 19
+    - 117
+    - 8
+    - 43
+    - 78
+    - 44
+    - 81
+    - 91
+    - 3
+    - 27
+    - 50
+    - 38
+    - 70
+    - 4
+    - 9
+    - 68
+    - 20
+    - 118
+    - 42
+    - 31
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_20
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_19/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 54
+    - 55
+    - 36
+    - 57
+    - 19
+    - 117
+    - 8
+    - 43
+    - 78
+    - 44
+    - 81
+    - 91
+    - 3
+    - 27
+    - 50
+    - 38
+    - 70
+    - 4
+    - 9
+    - 68
+    - 20
+    - 118
+    - 42
+    - 31
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_21
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_20/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: gate_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 48
+    train_row_indices:
+    - 47
+    - 80
+    - 18
+    - 7
+    - 2
+    - 10
+    - 32
+    - 67
+    - 59
+    - 72
+    - 90
+    - 63
+    - 48
+    - 113
+    - 51
+    - 52
+    - 56
+    - 65
+    - 66
+    - 76
+    - 74
+    - 82
+    - 49
+    - 88
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_22
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_21/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projection: up_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    surrogate_output_chunk_size: 128
+    train_cache: both
+    max_train_rows: 48
+    train_row_indices:
+    - 47
+    - 80
+    - 18
+    - 7
+    - 2
+    - 10
+    - 32
+    - 67
+    - 59
+    - 72
+    - 90
+    - 63
+    - 48
+    - 113
+    - 51
+    - 52
+    - 56
+    - 65
+    - 66
+    - 76
+    - 74
+    - 82
+    - 49
+    - 88
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_23
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_22/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    - gate_proj
+    - up_proj
+    surrogate_output_chunk_size: 256
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 15
+    - 115
+    - 26
+    - 37
+    - 34
+    - 11
+    - 22
+    - 103
+    - 105
+    - 95
+    - 107
+    - 94
+    - 99
+    - 101
+    - 96
+    - 97
+    - 98
+    - 93
+    - 92
+    - 100
+    - 106
+    - 104
+    - 102
+    max_positions: 24
+  gate:
+    profile: train_sane
+- id: legacy_train_24
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_23/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    - gate_proj
+    - up_proj
+    surrogate_output_chunk_size: 256
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 59
+    - 18
+    - 10
+    - 2
+    - 32
+    - 47
+    - 113
+    - 63
+    - 67
+    - 51
+    - 90
+    - 119
+    - 48
+    - 43
+    - 13
+    - 66
+    - 24
+    - 75
+    - 125
+    - 74
+    - 83
+    - 124
+    - 7
+    - 56
+    max_positions: 24
+  gate:
+    profile: train_sane
+- id: legacy_train_25
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_24/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    - gate_proj
+    - up_proj
+    surrogate_output_chunk_size: 256
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 80
+    - 72
+    - 65
+    - 111
+    - 126
+    - 29
+    - 76
+    - 40
+    - 84
+    - 86
+    - 52
+    - 71
+    - 73
+    - 88
+    - 77
+    - 79
+    - 30
+    - 85
+    - 64
+    - 123
+    - 127
+    - 49
+    - 54
+    - 19
+    max_positions: 16
+  gate:
+    profile: train_sane
+- id: legacy_train_26
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_25/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: auto
+    layer: 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+    trainable: output_bias
+    steps: 48
+    learning_rate: 1.0
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    - gate_proj
+    - up_proj
+    surrogate_output_chunk_size: 256
+    train_cache: both
+    max_train_rows: 24
+    train_row_indices:
+    - 36
+    - 3
+    - 55
+    - 6
+    - 41
+    - 121
+    - 17
+    - 57
+    - 87
+    - 122
+    - 46
+    - 117
+    - 89
+    - 28
+    - 39
+    - 58
+    - 14
+    - 62
+    - 35
+    - 25
+    - 44
+    - 60
+    - 81
+    - 91
+    max_positions: 32
+  gate:
+    profile: train_sane
+- id: legacy_train_27
+  op: train-low-rank
+  class: promotable
+  inputs:
+    seed_artifact: step:legacy_train_26/artifact
+    selection_teacher: external:teacher_selection
+    validation_teacher: external:teacher_report
+  params:
+    prefill_engine: nax_e8p
+    layer: 45
+    projections:
+    - gate_proj
+    - up_proj
+    - down_proj
+    trainable: low_rank_residual
+    low_rank: 4
+    low_rank_init_scale: 0.05
+    steps: 12
+    learning_rate: 0.5
+    target_nll_weight: 0.5
+    teacher_top1_margin_weight: 2.0
+    teacher_top1_margin: 1.0
+    loss_scope: final_layer_selected
+    surrogate_projections:
+    - down_proj
+    - gate_proj
+    - up_proj
+    surrogate_output_chunk_size: 256
+    train_cache: both
+    max_train_rows: 8
+    train_row_indices:
+    - 44
+    - 45
+    - 46
+    - 47
+    - 48
+    - 49
+    - 50
+    - 51
+    max_positions: 16
+  gate:
+    profile: train_sane

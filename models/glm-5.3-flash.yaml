@@ -1,0 +1,50 @@
+name: glm-5.3-flash
+hf_model_id: zai-org/GLM-5.3-Flash
+# Every structural fact below was measured from config.json and all 62 shard
+# headers at this commit: artifacts/census/glm53-flash-source-census-eb9eb208.json.
+revision: eb9eb208eb0d988989d07a6a12d0fdeb5f52574a
+architecture: glm5_next
+num_layers: 45
+# Layers 0..2 are dense (first_k_dense_replace 3); 3..44 carry 288 routed
+# experts each. Layer 45 is the NextN drafter and is not counted here.
+num_sparse_layers: 42
+first_sparse_layer: 3
+hidden_size: 4096
+moe_intermediate_size: 2048
+num_experts: 288
+experts_per_tok: 8
+vocab_size: 154880
+shared_experts: 1
+converter: glm5_next_vq_groups
+fused_gate_up: false
+# NOT DERIVED. 16-bit E8P at group 512 (2.031 bpw) is the starting hypothesis
+# the pilot sweep tests, chosen because the 92 GB memory envelope leaves little
+# room above it (plan section 5). The DeepSeek result is not inherited: the
+# source here is FP8, not FP4, and this M4 Max has no NAX fast path for 16-bit
+# codes. Replace with measured values after the Phase 3 and Phase 6 sweeps.
+default_code_bits: 16
+group_size_policy:
+  gate: 512
+  up: 512
+  down: 512
+# No production engine is wired for this family yet.
+default_engine: unwired
+recovery_layer: 44
+recovery_projections:
+  - gate
+  - up
+  - down
+hard_layers: []
+imatrix_layers: []
+# 321.32 B logical parameters x 2 bytes.
+approx_bf16_gb: 642.6
+notes: >
+  GLM-5.3-Flash, Glm5NextForConditionalGeneration, text model glm5_next_text.
+  Hybrid attention: 34 Kimi Delta Attention layers and 11 NoPE MLA layers
+  with a k-pool-4 DSA indexer (layers 3, 7, ..., 43). mHC with 4 streams.
+  FP8 e4m3 with F32 128x128 block scales on routed experts, shared experts,
+  dense MLPs and MLA projections; KDA, indexer, router and embeddings BF16.
+  328.33 GB on disk, 304.41 B routed parameters. The vision tower
+  (model.visual, 0.56 B) is skipped for v1. tokenizer.json sha256
+  19e773648cb4e65de8660ea6365e10acca112d42a854923df93db4a6f333a82d,
+  identical to GLM-5.2.

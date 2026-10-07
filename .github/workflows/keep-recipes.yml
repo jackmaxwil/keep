@@ -1,0 +1,29 @@
+name: KEEP recipe drift
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - keep-build-recipes
+
+jobs:
+  validate-recipes:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: uv sync --group dev
+      - name: Validate recipe graph and dry-run argv
+        run: |
+          set -euo pipefail
+          while IFS= read -r recipe; do
+            uv run keep validate "$recipe"
+            uv run keep build "$recipe" --dry-run --no-hash
+          done < <(find recipes -name '*.yaml' -print | sort)
+      - name: Fast model-free pytest subset
+        run: |
+          uv run python -m pytest -q \
+            --ignore=tests/test_nax_native.py \
+            --ignore=tests/test_glm45_air_projection_kernels.py

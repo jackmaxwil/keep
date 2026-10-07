@@ -1,0 +1,138 @@
+{
+ "campaign_envelope_gb": [
+  98.0,
+  105.0
+ ],
+ "census": {
+  "embedding_bf16": {
+   "dtypes": {
+    "BF16": 1
+   },
+   "stored_elems": 529530880,
+   "tensors": 1
+  },
+  "lm_head_bf16": {
+   "dtypes": {
+    "BF16": 1
+   },
+   "stored_elems": 529530880,
+   "tensors": 1
+  },
+  "resident_bf16": {
+   "dtypes": {
+    "BF16": 443
+   },
+   "stored_elems": 424505728,
+   "tensors": 443
+  },
+  "resident_f32": {
+   "dtypes": {
+    "F32": 339
+   },
+   "stored_elems": 37741352,
+   "tensors": 339
+  },
+  "resident_fp8_block": {
+   "dtypes": {
+    "F8_E4M3": 390
+   },
+   "stored_elems": 6304038912,
+   "tensors": 390
+  },
+  "resident_scale": {
+   "dtypes": {
+    "F32": 94,
+    "F8_E8M0": 390
+   },
+   "stored_elems": 385046,
+   "tensors": 484
+  },
+  "routed_expert_scale": {
+   "dtypes": {
+    "F8_E8M0": 35328
+   },
+   "stored_elems": 9261023232,
+   "tensors": 35328
+  },
+  "routed_expert_weight": {
+   "dtypes": {
+    "I8": 35328
+   },
+   "stored_elems": 148176371712,
+   "tensors": 35328
+  },
+  "routing_table_i64": {
+   "dtypes": {
+    "I64": 3
+   },
+   "stored_elems": 2327040,
+   "tensors": 3
+  }
+ },
+ "checkpoint_dir": "/Users/jack.mazac/models/DeepSeek-V4-Flash-0731",
+ "checkpoint_revision": "7872f01b1d1fe23eabc4c98b48bffcef5a386062",
+ "full_runnable_artifact": {
+  "q6_residents_bf16_embed": {
+   "embed_and_head_bytes": 2118123520,
+   "resident_bf16_bytes": 849011456,
+   "resident_f32_bytes": 150965408,
+   "resident_fp8_block_bytes": 5122031616,
+   "routed_vq_measured_bytes": 75246105792,
+   "tid2eid_i64_bytes": 18616320,
+   "total_bytes": 83504854112,
+   "total_gb_decimal": 83.5,
+   "total_gib": 77.77
+  },
+  "q6_residents_q8_embed": {
+   "embed_and_head_bytes": 1125253120,
+   "resident_bf16_bytes": 849011456,
+   "resident_f32_bytes": 150965408,
+   "resident_fp8_block_bytes": 5122031616,
+   "routed_vq_measured_bytes": 75246105792,
+   "tid2eid_i64_bytes": 18616320,
+   "total_bytes": 82511983712,
+   "total_gb_decimal": 82.51,
+   "total_gib": 76.85
+  },
+  "q8_residents_bf16_embed": {
+   "embed_and_head_bytes": 2118123520,
+   "resident_bf16_bytes": 849011456,
+   "resident_f32_bytes": 150965408,
+   "resident_fp8_block_bytes": 6698041344,
+   "routed_vq_measured_bytes": 75246105792,
+   "tid2eid_i64_bytes": 18616320,
+   "total_bytes": 85080863840,
+   "total_gb_decimal": 85.08,
+   "total_gib": 79.24
+  },
+  "q8_residents_q8_embed": {
+   "embed_and_head_bytes": 1125253120,
+   "resident_bf16_bytes": 849011456,
+   "resident_f32_bytes": 150965408,
+   "resident_fp8_block_bytes": 6698041344,
+   "routed_vq_measured_bytes": 75246105792,
+   "tid2eid_i64_bytes": 18616320,
+   "total_bytes": 84087993440,
+   "total_gb_decimal": 84.09,
+   "total_gib": 78.31
+  }
+ },
+ "logical_total_weight_count": 304180418216,
+ "measured_routed_vq_bytes": 75246105792,
+ "measured_routed_vq_gb_decimal": 75.246,
+ "measured_routed_vq_gib": 70.08,
+ "method": "every count read from the 48 safetensors shard headers of the pinned revision; no assumed parameter counts",
+ "pilot_resident_assumption": {
+  "bpw": 8.5,
+  "gb": 8.32,
+  "note": "the pilot lumped embed+head into residents and assumed the count; measured count is 7.8253e9, 0.03% low",
+  "weights": 7828000000.0
+ },
+ "projected_routed_vq_gb": 75.25,
+ "record_type": "dsv4_vq_size_accounting_v1",
+ "resident_weight_count_excl_embed_head": 6766285992,
+ "resident_weight_count_incl_embed_head": 7825347752,
+ "routed_logical_note": "FP4 packed two per stored I8 byte",
+ "routed_logical_weight_count": 296352743424,
+ "shards": 48
+}

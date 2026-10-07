@@ -1,0 +1,91 @@
+{
+  "artifact_dir": "/Users/jack.mazac/keep-artifacts/dsv4-vq-e8p-g512",
+  "bind_proof": {
+    "bind_path": "loader",
+    "checked_by": "ramp.models.deepseek_v4_flash_adapter.has_unbound_deepseek_v4_flash_vq_experts / dense_deepseek_v4_flash_routed_parameter_names",
+    "dense_routed_experts": false,
+    "dense_routed_parameter_names": [],
+    "file_discovery_exercised": false,
+    "gap": "file discovery not exercised: the caller named the files via the loader's artifact_paths indirection. bind_deepseek_v4_flash_vq_experts does reach this backbone layer, but only from a probe deep enough to contain it, which would leave every earlier layer unbound and make the whole-model unbound check vacuous. Layer 0 is verified through the full binder chain.",
+    "layers_bound": [
+      0
+    ],
+    "probe_layers": 1,
+    "probe_slot": 0,
+    "unbound_vq_experts": false
+  },
+  "block": {
+    "calibration_layer": 42,
+    "file_stem": "layer-00042",
+    "index": 42,
+    "key": "layers.42",
+    "kind": "backbone",
+    "tensor_prefix": "model.layers.42.ffn.switch_mlp"
+  },
+  "bound_layers": [
+    0
+  ],
+  "environment": {
+    "e8p_backend_env": null,
+    "pid": 38640,
+    "platform": "macOS-26.4-arm64-arm-64bit",
+    "python": "3.12.13"
+  },
+  "experts": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "forward_agreement": {
+    "correct_mapping": {
+      "cosine": 0.9999999999999832,
+      "max_abs_error": 6.312483764869814e-10,
+      "reference_rms": 0.0007362702985081529,
+      "relative_mse": 3.395183194932913e-14
+    },
+    "discrimination_ratio": 58216393250.01727,
+    "gate_up_swapped_control": {
+      "cosine": 0.9990124453597408,
+      "max_abs_error": 0.000288668954165708,
+      "reference_rms": 0.0007381473532792844,
+      "relative_mse": 0.0019765532003206453
+    },
+    "tensor_mapping": {
+      "w1": "gate_proj",
+      "w2": "down_proj",
+      "w3": "up_proj"
+    }
+  },
+  "geometry": {
+    "experts_per_tok": 6,
+    "hidden_size": 4096,
+    "moe_intermediate_size": 2048,
+    "num_experts": 256
+  },
+  "passed": true,
+  "peak_rss_gb": 4.042686464,
+  "policy": {
+    "code_bits": 16,
+    "code_bits_policy": {
+      "down": 16,
+      "gate": 16,
+      "up": 16
+    },
+    "fit_backend": "mlx-exact",
+    "group_size_policy": {
+      "down": 512,
+      "gate": 512,
+      "up": 512
+    },
+    "iterations": 8,
+    "mtp_importance": "backbone-mean",
+    "routed_bpw": 2.03125,
+    "search_backend": "metal"
+  },
+  "record_type": "dsv4_vq_roundtrip_v1",
+  "tokens": 4,
+  "tolerance": 0.001
+}

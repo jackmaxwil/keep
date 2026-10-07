@@ -1,0 +1,19 @@
+{
+ "measurement": "MLX GPU read bandwidth: mx.sum(axis=1) over a 4 GiB bf16 array, 9 repetitions, first discarded as warmup",
+ "chip": "Apple M4 Max",
+ "memory_bytes": 137438953472,
+ "mlx": "0.31.2",
+ "gb_per_s": [
+  47.2,
+  337.3,
+  409.4,
+  429.7,
+  429.2,
+  390.4,
+  376.0,
+  404.8,
+  417.4
+ ],
+ "median_gb_per_s_excl_warmup": 409.4,
+ "date": "2026-10-06"
+}

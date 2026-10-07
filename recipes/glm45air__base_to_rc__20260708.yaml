@@ -1,0 +1,165 @@
+schema_version: 1
+name: glm45air__base_to_rc__20260708
+description: >-
+  Base Air VQ artifact -> AGQ affinity-weighted EBSS32 dynamic-imatrix 2.0 bpw
+  materialization -> L45 gud rank-4 low-rank sidecar recovery -> full
+  report/selection/holdout plus Lane S RC gates.
+
+external_inputs:
+  baseline_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-vq
+  high_bit_artifact:
+    kind: artifact_dir
+    path: artifacts/glm-4.5-air-vq2-e8p-rtn-uniform-parallel8
+  prompt_selection:
+    kind: file
+    path: artifacts/build/glm45air__dmx2p0__agq_ebss32_requant_20260707/glm45air__dmx2p0__agq_ebss32_requant_20260707/steps/agq_select_prompts_01-af0dd195/evidence/selection_json.json
+  teacher_report:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-report-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_selection:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-select-v1-full-logits-route-trace-clean/metadata.jsonl
+  teacher_holdout:
+    kind: teacher_cache
+    path: artifacts/quality/glm45-air-teacher-cache-air-vq-ladder-holdout-v1-full-logits-clean-merged-20260701/metadata.jsonl
+  lane_s_q2_control:
+    kind: file
+    path: artifacts/benchmarks/glm45-air-target23-nextcycle-r26-q2-control-prefill1k-quiet-20260701.jsonl
+
+steps:
+  - id: collect_imatrix
+    op: collect-imatrix
+    class: promotable
+    inputs:
+      artifact: external:baseline_artifact
+      prompt_selection: external:prompt_selection
+    params:
+      prompt_set: air_imatrix_calib_v1
+      layers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45]
+      projections: [gate_proj, up_proj, down_proj]
+
+  - id: materialize_sweep
+    op: materialize-sweep
+    class: promotable
+    inputs:
+      imatrix_manifest: step:collect_imatrix/imatrix_manifest
+      baseline_artifact: external:high_bit_artifact
+      high_bit_artifact: external:high_bit_artifact
+    params:
+      candidate_prefix: air-base-to-rc-agq-ebss32-affinity-reround8
+      budget: [2.0]
+      mid_error_factor: 0.5
+      reround_top_low_experts: 8
+      importance_key: affinity_weighted_importance
+
+  - id: train_l45_gud_math8
+    op: train-low-rank
+    class: promotable
+    inputs:
+      seed_artifact: step:materialize_sweep/artifact_bpw2p0
+      selection_teacher: external:teacher_selection
+      validation_teacher: external:teacher_report
+    params:
+      prefill_engine: nax_e8p
+      layer: 45
+      projections: [gate_proj, up_proj, down_proj]
+      trainable: low_rank_residual
+      low_rank: 4
+      low_rank_init_scale: 0.05
+      steps: 12
+      learning_rate: 0.5
+      target_nll_weight: 0.5
+      teacher_top1_margin_weight: 2
+      teacher_top1_margin: 1
+      loss_scope: final_layer_selected
+      surrogate_projections: [gate_proj, up_proj, down_proj]
+      surrogate_output_chunk_size: 256
+      train_cache: both
+      max_train_rows: 8
+      train_row_indices: [44, 45, 46, 47, 48, 49, 50, 51]
+      max_positions: 16
+    gate: {profile: train_sane}
+
+  - id: audit
+    op: audit
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+    gate: {profile: audit_ok}
+
+  - id: eval_report_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_report
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 48
+      clear_mlx_cache_between_rows: false
+
+  - id: eval_selection_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_selection
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 48
+      clear_mlx_cache_between_rows: false
+
+  - id: eval_holdout_raw
+    op: eval
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      teacher: external:teacher_holdout
+    params:
+      engine: vq_e1_routed_nax_e8p
+      max_rows: 128
+      mlx_cache_limit_gb: 48
+      clear_mlx_cache_between_rows: false
+
+  - id: lane_s_candidate
+    op: benchmark-lane-s
+    class: verify
+    inputs:
+      artifact: step:train_l45_gud_math8/artifact
+      control_evidence: external:lane_s_q2_control
+    params:
+      engine: vq_e1_routed_nax_e8p
+      scenario: prefill_1k
+      warmup_repetitions: 1
+      repetitions: 2
+      clean_repetition_max_attempts: 1
+      memory_quiet_window_seconds: 0
+      memory_quiet_max_attempts: 1
+      prefill_memory_quiet_window_seconds: 0
+      prefill_memory_quiet_max_attempts: 1
+      parent_vm_stat_diagnostics: true
+      memory_phase_trace: true
+    gate:
+      profile: lane_s
+      thresholds: {allow_dirty_rows: true}
+
+promotion:
+  artifact_step: train_l45_gud_math8
+  gates:
+    - evidence_step: eval_report_raw
+      profile: community_wow
+      thresholds: {allow_dirty_rows: true, clean_rows: 0}
+    - evidence_step: eval_selection_raw
+      profile: community_wow
+      thresholds: {allow_dirty_rows: true, clean_rows: 0}
+    - evidence_step: eval_holdout_raw
+      profile: community_wow
+      thresholds: {allow_dirty_rows: true, clean_rows: 0}
+    - evidence_step: lane_s_candidate
+      profile: lane_s
+      thresholds: {allow_dirty_rows: true}
+  target_metric_profile: community_wow

@@ -1,0 +1,139 @@
+{
+  "environment": {
+    "e8p_backend_env": null,
+    "platform": "macOS-26.4-arm64-arm-64bit",
+    "python": "3.12.13",
+    "wired_limit_env": {
+      "GLM_MLX_WIRED_LIMIT_GB": null,
+      "MLX_WIRED_LIMIT_GB": null
+    }
+  },
+  "iterations": 8,
+  "peak_rss_gb": 1.156562944,
+  "proxy_caveat": "synthetic diagonal-Gaussian hidden states at the measured per-column activation RMS; real hidden states are heavy-tailed and correlated, and no router, shared expert, or residual stream is modelled",
+  "record_type": "dsv4_vq_pilot_block_probe_v1",
+  "rows": [
+    {
+      "block_cosine_route_weighted": 0.5576089462502224,
+      "block_relative_mse_max": 0.6940013111574315,
+      "block_relative_mse_route_weighted": 0.6891153681216536,
+      "bpw": 1.03125,
+      "code_bits": 8,
+      "experts_sampled": 8,
+      "group_size": 512,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.8625246599126315,
+      "block_relative_mse_max": 0.26262046727926974,
+      "block_relative_mse_route_weighted": 0.25607429272149795,
+      "bpw": 2.03125,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 512,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.8634254725761008,
+      "block_relative_mse_max": 0.25949241594257066,
+      "block_relative_mse_route_weighted": 0.2545105552176535,
+      "bpw": 2.0625,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 256,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.8652700415701562,
+      "block_relative_mse_max": 0.2547903911240876,
+      "block_relative_mse_route_weighted": 0.25136767422890066,
+      "bpw": 2.125,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 128,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.8739548519425934,
+      "block_relative_mse_max": 0.24056982031602694,
+      "block_relative_mse_route_weighted": 0.23643996634953807,
+      "bpw": 2.5,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 32,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.8831424029664086,
+      "block_relative_mse_max": 0.22441220995010858,
+      "block_relative_mse_route_weighted": 0.2204298587400959,
+      "bpw": 3.0,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 16,
+      "layer": 1
+    },
+    {
+      "block_cosine_route_weighted": 0.5770992737020704,
+      "block_relative_mse_max": 0.702911435103788,
+      "block_relative_mse_route_weighted": 0.6705240260477918,
+      "bpw": 1.03125,
+      "code_bits": 8,
+      "experts_sampled": 8,
+      "group_size": 512,
+      "layer": 20
+    },
+    {
+      "block_cosine_route_weighted": 0.8719572006407071,
+      "block_relative_mse_max": 0.26766944877060445,
+      "block_relative_mse_route_weighted": 0.24048517631182778,
+      "bpw": 2.03125,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 512,
+      "layer": 20
+    },
+    {
+      "block_cosine_route_weighted": 0.8723961802271053,
+      "block_relative_mse_max": 0.26587215903585054,
+      "block_relative_mse_route_weighted": 0.23992034501352089,
+      "bpw": 2.0625,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 256,
+      "layer": 20
+    },
+    {
+      "block_cosine_route_weighted": 0.873933592325622,
+      "block_relative_mse_max": 0.26299564206850595,
+      "block_relative_mse_route_weighted": 0.23740333161131758,
+      "bpw": 2.125,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 128,
+      "layer": 20
+    },
+    {
+      "block_cosine_route_weighted": 0.8812724058651205,
+      "block_relative_mse_max": 0.25475283672247956,
+      "block_relative_mse_route_weighted": 0.22506234253263954,
+      "bpw": 2.5,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 32,
+      "layer": 20
+    },
+    {
+      "block_cosine_route_weighted": 0.8889363584231957,
+      "block_relative_mse_max": 0.24734911756067093,
+      "block_relative_mse_route_weighted": 0.21197405322366214,
+      "bpw": 3.0,
+      "code_bits": 16,
+      "experts_sampled": 8,
+      "group_size": 16,
+      "layer": 20
+    }
+  ],
+  "swiglu_limit": 10.0,
+  "tokens": 512
+}
