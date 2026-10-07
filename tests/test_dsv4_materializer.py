@@ -25,15 +25,15 @@ pytest.importorskip("mlx.core")
 
 import mlx.core as mx
 
-from mlx_vq.codebook.e8 import E8P_PACKED_ABS_SHA256, e8p_full_grid
-from mlx_vq.convert.dsv4_vq_fit_mlx import (
+from keep.vq.e8 import E8P_PACKED_ABS_SHA256, e8p_full_grid
+from keep.convert.dsv4_vq_fit_mlx import (
     FIT_BACKENDS,
     SCALE_REDUCTIONS,
     compare_fit_backends,
     quantize_weight_importance_aware_mlx,
     resolve_fit_backend,
 )
-from mlx_vq.convert.dsv4_vq_materialize import (
+from keep.convert.dsv4_vq_materialize import (
     ARTIFACT_SCHEMA_VERSION,
     CONVERTER_KIND,
     FAMILY,
@@ -55,10 +55,10 @@ from mlx_vq.convert.dsv4_vq_materialize import (
     verify_bind_roundtrip,
     write_block_record,
 )
-from mlx_vq.convert.glm52_recovery_materialize import (
+from keep.convert.glm52_recovery_materialize import (
     quantize_weight_importance_aware,
 )
-from mlx_vq.quality.dsv4_teacher_runner import (
+from keep.quality.dsv4_teacher_runner import (
     build_dsv4_block_span_index,
     build_dsv4_expert_span_index,
 )
@@ -610,7 +610,7 @@ def test_materialized_block_writes_the_three_expected_files(toy_run):
 
 
 def test_materialized_tensors_load_through_the_shipped_vq_loader(toy_run):
-    from mlx_vq.io.load import load_quantized_vq_switch_linear
+    from keep.io.load import load_quantized_vq_switch_linear
 
     spec, _ = _materialize(toy_run)
     for projection in PROJECTIONS:
@@ -624,7 +624,7 @@ def test_materialized_tensors_load_through_the_shipped_vq_loader(toy_run):
 
 
 def test_artifact_metadata_carries_the_codebook_hash_and_the_mapping(toy_run):
-    from mlx_vq.io.load import inspect_safetensors
+    from keep.io.load import inspect_safetensors
 
     spec, _ = _materialize(toy_run)
     inspection = inspect_safetensors(toy_run["output"] / spec.artifact_name("gate_proj"))
@@ -639,7 +639,7 @@ def test_artifact_metadata_carries_the_codebook_hash_and_the_mapping(toy_run):
 def test_decoded_artifact_matches_the_fit_reconstruction_of_the_source(toy_run):
     """The artifact is the fit's own output, and the fit tracks the source."""
 
-    from mlx_vq.convert.dsv4_vq_pilot import projection_error
+    from keep.convert.dsv4_vq_pilot import projection_error
 
     spec, _ = _materialize(toy_run)
     decoded = decode_artifact_experts(toy_run["output"], spec, range(TOY_EXPERTS))

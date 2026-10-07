@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build.recipe import RecipeError, load_recipe
-from mlx_vq.build.runner import plan_recipe, render_dry_run
+from keep.build.recipe import RecipeError, load_recipe
+from keep.build.runner import plan_recipe, render_dry_run
 
 
 def _write_tiny_lineage(tmp_path: Path) -> Path:
@@ -3956,7 +3956,7 @@ def test_expect_hash_mismatch_warns_or_errors(tmp_path: Path) -> None:
     plan = plan_recipe(recipe, build_root=tmp_path / "build")
     assert any("hash mismatch" in warning for warning in plan.warnings)
 
-    from mlx_vq.build.recipe import RecipeError
+    from keep.build.recipe import RecipeError
 
     with pytest.raises(RecipeError, match="hash mismatch"):
         plan_recipe(recipe, build_root=tmp_path / "build", strict_inputs=True)

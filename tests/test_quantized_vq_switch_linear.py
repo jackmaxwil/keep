@@ -5,8 +5,8 @@ import json
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.io.load import (
+from keep.vq.e8 import e8_1bit_packed
+from keep.io.load import (
     infer_high_precision_switch_linear_dims,
     infer_vq_switch_linear_dims,
     inspect_safetensors,
@@ -15,9 +15,9 @@ from mlx_vq.io.load import (
     load_switch_linear_projection,
     switch_dense_equivalent_bytes,
 )
-from mlx_vq.io.schema import QuantizationConfig
-from mlx_vq.kernels.vq_qmv import vq_qmv_reference_np
-from mlx_vq.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
+from keep.io.schema import QuantizationConfig
+from ramp.kernels.vq_qmv import vq_qmv_reference_np
+from ramp.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
 
 
 def _write_switch_checkpoint(

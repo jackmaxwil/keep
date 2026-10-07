@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from mlx_vq.quality.calibration_importance import (
+from keep.quality.calibration_importance import (
     build_calibration_importance_report,
     read_jsonl_records,
 )

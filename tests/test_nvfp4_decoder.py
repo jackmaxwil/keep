@@ -34,7 +34,7 @@ E2M1_VALUES = np.array(
 
 
 def _nvfp4() -> Any:
-    return importlib.import_module("mlx_vq.convert.nvfp4")
+    return importlib.import_module("keep.convert.nvfp4")
 
 
 def _valid_config() -> dict[str, Any]:

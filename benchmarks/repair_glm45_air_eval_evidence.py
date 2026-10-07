@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.quality.teacher_cache import read_teacher_cache_rows, summarize_teacher_cache_records
+from keep.quality.teacher_cache import read_teacher_cache_rows, summarize_teacher_cache_records
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:

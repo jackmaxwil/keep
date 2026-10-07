@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.quality.glm52_family import (
+from keep.quality.glm52_family import (
     GLM52_FAMILY_POLICY_RECORD_TYPE as POLICY_RECORD_TYPE,
     GLM52_FAMILY_POLICY_STATUS as POLICY_STATUS,
     PINNED_GLM52_MODEL_ID as PINNED_MODEL_ID,

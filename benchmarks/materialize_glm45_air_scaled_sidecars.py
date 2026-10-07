@@ -7,7 +7,7 @@ from typing import Any
 
 import mlx.core as mx
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     link_seed_artifact_groups,
     load_conversion_manifest,
     write_continuous_artifact_manifest,

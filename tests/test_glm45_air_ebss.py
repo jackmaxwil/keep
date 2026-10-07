@@ -5,7 +5,7 @@ import json
 import pytest
 
 from benchmarks.select_glm45_air_ebss_prompts import write_ebss_selection_manifest
-from mlx_vq.quality.ebss import build_ebss_prompt_selection, build_route_record
+from keep.quality.ebss import build_ebss_prompt_selection, build_route_record
 
 
 def _route_record(

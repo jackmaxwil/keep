@@ -7,10 +7,10 @@ from typing import Any
 
 import mlx.core as mx
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
-from mlx_vq.benchmark.metrics import collect_metric_snapshot, collect_vm_stat_counts
-from mlx_vq.io.logit_bias import load_logit_bias_sidecar
-from mlx_vq.quality.teacher_cache import (
+from ramp.benchmark.glm45_air import append_jsonl
+from ramp.benchmark.metrics import collect_metric_snapshot, collect_vm_stat_counts
+from keep.io.logit_bias import load_logit_bias_sidecar
+from keep.quality.teacher_cache import (
     evaluate_teacher_cache_row,
     read_teacher_cache_rows,
     summarize_teacher_cache_records,

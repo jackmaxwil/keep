@@ -52,13 +52,13 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.kernels.gather_vqmm import (
+from keep.vq.e8 import e8_1bit_packed
+from ramp.kernels.gather_vqmm import (
     gather_vqmm_m1_kernel_unchecked,
     gather_vqmm_verify_mrows_kernel,
     m1_rows_per_threadgroup,
 )
-from mlx_vq.ops.vq_switch import (
+from ramp.ops.vq_switch import (
     _flat_route_descriptors,
     _token_route_lhs,
     gather_vqmm,

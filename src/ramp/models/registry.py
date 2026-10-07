@@ -117,7 +117,7 @@ register_family(
     FamilyBinding(
         family="glm52",
         architecture="glm_moe_dsa",
-        adapter_module="mlx_vq.models.glm52_vq_adapter",
+        adapter_module="ramp.models.glm52_vq_adapter",
         model_args_symbol="GLM52VQModelArgs",
         bind_vq_experts_symbol="bind_glm52_vq_experts",
         bind_non_vq_weights_symbol="bind_glm52_non_vq_weights",
@@ -129,7 +129,7 @@ register_family(
     FamilyBinding(
         family="glm45_air",
         architecture="glm4_moe",
-        adapter_module="mlx_vq.models.glm45_air_vq_adapter",
+        adapter_module="ramp.models.glm45_air_vq_adapter",
         model_args_symbol="ModelArgs",
         bind_vq_experts_symbol="bind_glm45_air_vq_experts",
         bind_non_vq_weights_symbol="bind_glm45_air_non_expert_weights",
@@ -142,7 +142,7 @@ register_family(
         family="qwen_moe",
         # Matches ``QWEN36_35B_A3B_MODEL_TYPE`` and ``models/qwen36-35b-a3b.yaml``.
         architecture="qwen3_5_moe",
-        adapter_module="mlx_vq.models.qwen_moe_adapter",
+        adapter_module="ramp.models.qwen_moe_adapter",
         # The adapter is a pure binder: it defines no args/config class.
         model_args_symbol=None,
         bind_vq_experts_symbol="bind_qwen_moe_vq_experts",

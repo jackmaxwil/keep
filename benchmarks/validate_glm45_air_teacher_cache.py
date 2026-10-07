@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from mlx_vq.quality.teacher_cache import validate_teacher_cache_metadata
+from keep.quality.teacher_cache import validate_teacher_cache_metadata
 
 
 def _append_jsonl(path: str | Path, record: dict) -> None:

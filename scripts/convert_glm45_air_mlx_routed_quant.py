@@ -6,12 +6,12 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.mlx_routed_quant import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.mlx_routed_quant import (
     convert_mlx_routed_quant_layer,
     write_mlx_routed_quant_manifest,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
+from keep.convert.stream_convert import load_safetensors_index
 
 
 def _load_config(path: str | None, *, model_id: str, revision: str) -> dict:

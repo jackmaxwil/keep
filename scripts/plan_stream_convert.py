@@ -6,8 +6,8 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.convert.inspect_hf import fetch_hf_config
-from mlx_vq.convert.stream_convert import (
+from keep.convert.inspect_hf import fetch_hf_config
+from keep.convert.stream_convert import (
     convert_vq_group_from_safetensors,
     convert_vq_groups_from_safetensors,
     load_safetensors_index,

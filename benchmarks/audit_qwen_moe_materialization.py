@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from mlx_vq.validate.qwen_vq import audit_qwen_moe_materialization_manifest
+from keep.validate.qwen_vq import audit_qwen_moe_materialization_manifest
 
 
 def _write_json(path: str | Path, payload: dict[str, object]) -> None:

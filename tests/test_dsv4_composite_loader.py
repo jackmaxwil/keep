@@ -9,8 +9,8 @@ from pathlib import Path
 import mlx.core as mx
 import pytest
 
-from mlx_vq.models import dsv4_composite_loader as loader
-from mlx_vq.models.dsv4_composite_loader import validate_dsv4_vq_manifest_structure
+from ramp.models import dsv4_composite_loader as loader
+from ramp.models.dsv4_composite_loader import validate_dsv4_vq_manifest_structure
 
 
 def _manifest(backbone=2, mtp=3):

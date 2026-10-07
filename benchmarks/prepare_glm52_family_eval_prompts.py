@@ -13,7 +13,7 @@ from typing import Any, Literal
 
 from mlx_lm.utils import load_tokenizer
 
-from mlx_vq.quality.glm52_family import (
+from keep.quality.glm52_family import (
     GLM52_EOS_TOKEN_IDS,
     GLM52_EVAL_PROMPT_TEXT_SHA256,
     GLM52_MODEL_VOCAB_SIZE,

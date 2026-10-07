@@ -5,8 +5,8 @@ import pytest
 
 mx = pytest.importorskip("mlx.core")
 
-from mlx_vq.codebook.e8 import e8_1bit_grid
-from mlx_vq.quant.rtn import nearest_codebook_indices_diagonal_hessian
+from keep.vq.e8 import e8_1bit_grid
+from keep.quant.rtn import nearest_codebook_indices_diagonal_hessian
 
 
 def _metal_ok() -> bool:
@@ -19,7 +19,7 @@ def _metal_ok() -> bool:
 
 @pytest.mark.skipif(not _metal_ok(), reason="Metal unavailable")
 def test_fused_nearest_matches_reference_on_e8_grid() -> None:
-    from mlx_vq.quant.e8p_metal import nearest_codebook_diagonal_hessian_fused_mlx as fused
+    from keep.quant.e8p_metal import nearest_codebook_diagonal_hessian_fused_mlx as fused
 
     grid = e8_1bit_grid().astype(np.float32)
     rng = np.random.default_rng(11)
@@ -36,7 +36,7 @@ def test_fused_nearest_matches_reference_on_e8_grid() -> None:
 
 @pytest.mark.skipif(not _metal_ok(), reason="Metal unavailable")
 def test_fused_nearest_per_row_diagonal() -> None:
-    from mlx_vq.quant.e8p_metal import nearest_codebook_diagonal_hessian_fused_mlx as fused
+    from keep.quant.e8p_metal import nearest_codebook_diagonal_hessian_fused_mlx as fused
 
     grid = e8_1bit_grid().astype(np.float32)
     rng = np.random.default_rng(12)

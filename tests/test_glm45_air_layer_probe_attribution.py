@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pytest
 
-from mlx_vq.quality.layer_probe_attribution import (
+from keep.quality.layer_probe_attribution import (
     build_sparse_residual_rows_from_plan_report,
     load_layer_probe_state_bundle,
     parse_layer_spec,

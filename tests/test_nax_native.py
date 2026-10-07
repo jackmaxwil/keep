@@ -5,9 +5,9 @@ import pytest
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
-from mlx_vq.kernels import nax
-from mlx_vq.kernels.e8p_rhs_layout import (
+from keep.vq.e8 import decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels import nax
+from ramp.kernels.e8p_rhs_layout import (
     decode_e8p_expert_kblock_factor_reuse_rhs_tile,
     component_stream_sorted_matmul_oracle,
     decode_e8p_rhs_tile,
@@ -25,7 +25,7 @@ from mlx_vq.kernels.e8p_rhs_layout import (
     pack_e8p_rhs_tiles,
     pack_e8p_split_byte_rhs_tiles,
 )
-import mlx_vq.ops.vq_switch as vq_switch
+import ramp.ops.vq_switch as vq_switch
 
 
 def test_nax_native_wrapper_reports_unavailable_before_build_or_smoke_matches_matmul() -> None:

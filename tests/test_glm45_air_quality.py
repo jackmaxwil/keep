@@ -5,12 +5,12 @@ import json
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.quality.glm45_air import (
+from keep.quality.glm45_air import (
     build_quality_record,
     compute_nll_metrics,
     compute_topk_summary,
 )
-from mlx_vq.quality.prompts import (
+from keep.quality.prompts import (
     QualityPrompt,
     get_quality_prompt_by_id,
     get_quality_prompt_ids,
@@ -95,7 +95,7 @@ def test_air_imatrix_calibration_prompt_set_is_chat_templated_code_heavy_and_non
 
 
 def test_air_vq_ladder_holdout_is_blind_third_split() -> None:
-    from mlx_vq.quality.prompts import (
+    from keep.quality.prompts import (
         prompt_text_hash,
         summarize_quality_prompt_corpus,
         validate_quality_prompt_splits,

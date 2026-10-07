@@ -41,8 +41,8 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
-from mlx_vq.kernels.gather_vqmm import (
+from keep.vq.e8 import decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels.gather_vqmm import (
     VERIFY_MROWS_VALUES,
     VERIFY_ROWS_PER_THREADGROUP_VALUES,
     gather_vqmm_m1_kernel_unchecked,
@@ -50,9 +50,9 @@ from mlx_vq.kernels.gather_vqmm import (
     m1_rows_per_threadgroup,
     verify_m_rows,
 )
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
-import mlx_vq.ops.vq_switch as vq_switch
-from mlx_vq.ops.vq_switch import gather_vqmm, gather_vqmm_verify_rows
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
+import ramp.ops.vq_switch as vq_switch
+from ramp.ops.vq_switch import gather_vqmm, gather_vqmm_verify_rows
 
 # DeepSeek-V4-Flash routed-expert shapes (measured 2026-08-11): gate/up are
 # K=4096 -> N=2048 and down expands K=2048 -> N=4096. The expert count is cut
@@ -873,7 +873,7 @@ def test_verify_rows_default_codebook_matches_explicit() -> None:
 
 
 _DISPATCH_PATHS = {
-    # attribute on mlx_vq.ops.vq_switch -> the dispatch decision it witnesses
+    # attribute on ramp.ops.vq_switch -> the dispatch decision it witnesses
     "gather_vqmm_m1_kernel": "m1_fast_path",
     "gather_vqmm_kernel": "scalar_token",
     "gather_vqmm_lhs_kernel": "scalar_per_route",
@@ -911,7 +911,7 @@ def _observe_dispatch(monkeypatch, call, *, out_dims: int) -> str:
         return fake
 
     for attr, path in _DISPATCH_PATHS.items():
-        monkeypatch.setattr(f"mlx_vq.ops.vq_switch.{attr}", recorder(path))
+        monkeypatch.setattr(f"ramp.ops.vq_switch.{attr}", recorder(path))
     result = call()
     if isinstance(result, mx.array):
         mx.eval(result)

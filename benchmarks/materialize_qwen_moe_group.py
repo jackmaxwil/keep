@@ -6,8 +6,8 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from mlx_vq.convert.inspect_hf import fetch_hf_config
-from mlx_vq.convert.qwen_moe import (
+from keep.convert.inspect_hf import fetch_hf_config
+from keep.convert.qwen_moe import (
     QWEN36_35B_A3B_MODEL_ID,
     QWEN36_35B_A3B_REVISION,
     audit_qwen_moe_source_payloads,

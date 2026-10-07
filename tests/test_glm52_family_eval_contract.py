@@ -18,7 +18,7 @@ from benchmarks.prepare_glm52_family_eval_prompts import (
     main as prompt_main,
     probe_glm52_family_eval_prompts,
 )
-from mlx_vq.quality.glm52_family import (
+from keep.quality.glm52_family import (
     GLM52_PINNED_TOKENIZER_FILES,
     canonical_sha256,
 )

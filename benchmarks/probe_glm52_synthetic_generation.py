@@ -11,8 +11,8 @@ import numpy as np
 from mlx.utils import tree_flatten
 from mlx_lm.generate import generate_step
 
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.models.glm52_vq_adapter import (
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm52_vq_adapter import (
     GLM52VQModel,
     GLM52VQModelArgs,
     Glm52VQMoE,

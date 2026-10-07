@@ -9,18 +9,18 @@ from types import SimpleNamespace
 import numpy as np
 import mlx.core as mx
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     continuous_sidecar_relpath,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.io.sparse_residual import (
+from keep.vq.e8 import e8_1bit_packed
+from keep.io.sparse_residual import (
     load_switch_linear_sparse_residual_rows,
     write_sparse_residual_artifact_manifest,
     write_sparse_residual_rows,
 )
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
 
 
 def _tiny_layer() -> QuantizedVQSwitchLinear:

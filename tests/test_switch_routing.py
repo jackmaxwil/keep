@@ -7,17 +7,17 @@ import mlx.nn as nn
 import numpy as np
 import pytest
 
-import mlx_vq.models.glm4_moe_adapter as glm4_moe_adapter
-from mlx_vq.codebook.e8 import cosine_similarity, decode_weight_matrix
-from mlx_vq.models.glm4_moe_adapter import (
+import ramp.models.glm4_moe_adapter as glm4_moe_adapter
+from keep.vq.e8 import cosine_similarity, decode_weight_matrix
+from ramp.models.glm4_moe_adapter import (
     GLM4MoeRoutingConfig,
     QuantizedVQGLM4MoE,
     QuantizedVQSwitchGLU,
     group_expert_select,
 )
-from mlx_vq.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
-from mlx_vq.ops.vq_switch import vq_switch_qmv
-from mlx_vq.quant.rht import apply_rht_np, deterministic_rht_signs
+from ramp.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
+from ramp.ops.vq_switch import vq_switch_qmv
+from keep.quant.rht import apply_rht_np, deterministic_rht_signs
 
 
 def _dense_expert_outputs(
@@ -542,7 +542,7 @@ def test_token_level_switch_linear_calls_fused_gather(monkeypatch) -> None:
         )
         return mx.zeros((x_arg.shape[0], rhs_indices.shape[1], layer.output_dims), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
+    monkeypatch.setattr("ramp.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
 
     actual = layer(x, indices)
     mx.eval(actual)
@@ -589,7 +589,7 @@ def test_batched_token_level_switch_linear_flattens_into_fused_gather(monkeypatc
         )
         return mx.zeros((x_arg.shape[0], rhs_indices.shape[1], layer.output_dims), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
+    monkeypatch.setattr("ramp.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
 
     actual = layer(x, indices)
     mx.eval(actual)
@@ -633,7 +633,7 @@ def test_per_route_switch_linear_uses_fused_lhs_when_enabled(monkeypatch) -> Non
         )
         return mx.zeros((x_arg.shape[0], layer.output_dims), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
+    monkeypatch.setattr("ramp.nn.switch_linear.gather_vqmm", fake_gather_vqmm)
 
     actual = layer(x, indices)
     mx.eval(actual)
@@ -670,7 +670,7 @@ def test_m1_per_route_switch_linear_uses_fast_decode(monkeypatch) -> None:
         return mx.zeros((x_arg.shape[0], layer.output_dims), dtype=x_arg.dtype)
 
     monkeypatch.setattr(
-        "mlx_vq.nn.switch_linear.gather_vqmm_m1_per_route_kernel_unchecked",
+        "ramp.nn.switch_linear.gather_vqmm_m1_per_route_kernel_unchecked",
         fake_m1_per_route,
     )
 

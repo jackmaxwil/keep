@@ -1,10 +1,26 @@
-"""RAMP MLX/Metal kernel entry points."""
+"""MLX/Metal VQ kernel entry points."""
 
-from keep._alias import install_alias_package
+__all__ = ["gather_vqmm_kernel", "vq_qmm", "vq_qmm_reference_np", "vq_qmv", "vq_qmv_reference_np"]
 
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.kernels",
-    globals(),
-    child_modules=("gather_vqmm", "metal_capability", "nax", "vq_qmm", "vq_qmv"),
-)
+_EXPORT_MODULES = {
+    "gather_vqmm_kernel": "ramp.kernels.gather_vqmm",
+    "vq_qmm": "ramp.kernels.vq_qmm",
+    "vq_qmm_reference_np": "ramp.kernels.vq_qmm",
+    "vq_qmv": "ramp.kernels.vq_qmv",
+    "vq_qmv_reference_np": "ramp.kernels.vq_qmv",
+}
+
+
+def __getattr__(name: str):
+    if name not in _EXPORT_MODULES:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name = _EXPORT_MODULES[name]
+    module = __import__(module_name, fromlist=[name])
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted((*globals(), *__all__))

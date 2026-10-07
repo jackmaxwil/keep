@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import encode_e8p_rtn_diagonal_hessian
+from keep.vq.e8 import encode_e8p_rtn_diagonal_hessian
 
 mx = pytest.importorskip("mlx.core")
 
@@ -21,7 +21,7 @@ def _metal_ok() -> bool:
 
 @pytest.mark.skipif(not _metal_ok(), reason="Metal unavailable")
 def test_mlx_matches_numpy_reference_bit_for_bit() -> None:
-    from mlx_vq.quant.e8p_metal import encode_e8p_diagonal_hessian_mlx
+    from keep.quant.e8p_metal import encode_e8p_diagonal_hessian_mlx
 
     rng = np.random.default_rng(20260711)
     for _ in range(3):

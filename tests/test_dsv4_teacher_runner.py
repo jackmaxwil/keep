@@ -41,7 +41,7 @@ from mlx_lm.models.cache import CacheList, RotatingKVCache
 from mlx_lm.models.switch_layers import SwitchGLU
 
 from benchmarks.produce_dsv4_teacher_cache import _refuse_wired_limit_env
-from mlx_vq.quality.dsv4_teacher_runner import (
+from keep.quality.dsv4_teacher_runner import (
     DSV4_PACK_RECORD_TYPE,
     DSV4_TEACHER_MODES,
     IMATRIX_SPACES,
@@ -746,15 +746,15 @@ class TestStatsCollectionIsTransparent:
 
 class TestImatrixAccumulation:
     def test_matches_the_host_reference(self):
-        """The device scatter-add equals ``mlx_vq.quality.imatrix``'s NumPy.
+        """The device scatter-add equals ``keep.quality.imatrix``'s NumPy.
 
         Tolerance is fp32-grade (2e-6), not merely "close": the one-hot matmul
         formulation this replaced agreed to only 5.9e-4 and one-sidedly, which
         is the whole reason the accumulator scatters instead.
         """
 
-        from mlx_vq.quality.dsv4_teacher_runner import routed_slot_columns
-        from mlx_vq.quality.imatrix import accumulate_routed_projection_imatrix
+        from keep.quality.dsv4_teacher_runner import routed_slot_columns
+        from keep.quality.imatrix import accumulate_routed_projection_imatrix
 
         rng = np.random.default_rng(9)
         tokens, top_k, dims, experts = 40, 3, 16, 6
@@ -801,7 +801,7 @@ class TestImatrixAccumulation:
             assert arrays["total_route_count__hidden"][0] == entry.total_route_count
 
     def test_down_space_columns_are_one_row_per_routed_slot(self):
-        from mlx_vq.quality.dsv4_teacher_runner import routed_slot_columns
+        from keep.quality.dsv4_teacher_runner import routed_slot_columns
 
         indices = mx.array(np.arange(12).reshape(4, 3) % 5)
         scores = mx.array(np.linspace(0.1, 1.0, 12).reshape(4, 3).astype(np.float32))
@@ -1009,7 +1009,7 @@ class TestRunModes:
         whole prefix and letting *it* do the slicing is what gives this teeth.
         """
 
-        from mlx_vq.quality.dsv4_teacher_runner import (
+        from keep.quality.dsv4_teacher_runner import (
             _fuse_dspark_taps,
             layer_major_prefill,
             mtp_target_capture,
@@ -1067,7 +1067,7 @@ class TestRunModes:
         cosmetic.
         """
 
-        from mlx_vq.quality.dsv4_teacher_runner import (
+        from keep.quality.dsv4_teacher_runner import (
             _fuse_dspark_taps,
             layer_major_prefill,
             mtp_target_capture,
@@ -1134,7 +1134,7 @@ class TestRunModes:
         shape -- and useless.
         """
 
-        from mlx_vq.quality.dsv4_teacher_runner import (
+        from keep.quality.dsv4_teacher_runner import (
             layer_major_prefill,
             mtp_target_capture,
         )
@@ -1187,7 +1187,7 @@ class TestRunModes:
         assert wrong_gap > 10 * replay_gap, (wrong_gap, replay_gap)
 
     def test_mtp_draft_width_is_capped_and_scales_the_artifact(self, tmp_path):
-        from mlx_vq.quality.dsv4_teacher_runner import (
+        from keep.quality.dsv4_teacher_runner import (
             layer_major_prefill,
             mtp_target_capture,
         )
@@ -1269,7 +1269,7 @@ class TestRunModes:
     def test_dspark_tap_capture_is_opt_in_in_the_layer_major_prefill(self, tmp_path):
         """The default prefill returns exactly what it returned before."""
 
-        from mlx_vq.quality.dsv4_teacher_runner import layer_major_prefill
+        from keep.quality.dsv4_teacher_runner import layer_major_prefill
 
         args, model = _tiny_drafter_model()
         experts = _tiny_experts(args)
@@ -1298,7 +1298,7 @@ class TestRunModes:
         assert all(len(chunks) == 3 for chunks in taps.values())
 
     def test_tap_capture_without_target_layer_ids_is_refused(self, tmp_path):
-        from mlx_vq.quality.dsv4_teacher_runner import layer_major_prefill
+        from keep.quality.dsv4_teacher_runner import layer_major_prefill
 
         args, model = _tiny_model()  # no dspark_target_layer_ids
         experts = _tiny_experts(args)
@@ -1334,7 +1334,7 @@ class TestRunModes:
             mx.take(logits, mx.array(session.positions.astype(np.int32)), axis=0)
         )
 
-        from mlx_vq.quality.dsv4_teacher_runner import _supervised_logit_capture
+        from keep.quality.dsv4_teacher_runner import _supervised_logit_capture
 
         capture = _supervised_logit_capture(
             model, hidden, session, chunk=16, top_k=8, lm_head_slice=4
@@ -1689,7 +1689,7 @@ class TestAtomicWrite:
             from pathlib import Path
             sys.path.insert(0, {str(ROOT / "src")!r})
             import numpy as np
-            from mlx_vq.quality.dsv4_teacher_runner import _atomic_savez
+            from keep.quality.dsv4_teacher_runner import _atomic_savez
 
             target = Path({str(target)!r})
             ready = Path({str(ready)!r})
@@ -1749,7 +1749,7 @@ class TestFinalize:
         expected = args.num_hidden_layers * 3 * args.n_routed_experts
         assert report["entry_count"] == expected
 
-        from mlx_vq.quality.imatrix import load_projection_imatrix_manifest
+        from keep.quality.imatrix import load_projection_imatrix_manifest
 
         manifest = load_projection_imatrix_manifest(report["manifest_path"])
         assert manifest["entry_count"] == expected
@@ -1958,7 +1958,7 @@ class TestRealCheckpointSpans:
 
         from safetensors import safe_open
 
-        from mlx_vq.quality.dsv4_teacher_runner import (
+        from keep.quality.dsv4_teacher_runner import (
             ShardStreamingExpertProvider,
             _LayerBuffers,
             _pread_exact,

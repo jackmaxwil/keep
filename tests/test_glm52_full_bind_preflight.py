@@ -13,12 +13,12 @@ from typing import Any
 
 import pytest
 
-from mlx_vq.io.schema import codebook_metadata_for_bits
-from mlx_vq.io.source_safetensors import read_safetensors_file_header
-from mlx_vq.models.profiles import ModelProfile
-from mlx_vq.models.profiles import get_profile
-from mlx_vq.validate import glm52_runtime
-from mlx_vq.validate.glm52_runtime import (
+from keep.io.schema import codebook_metadata_for_bits
+from keep.io.source_safetensors import read_safetensors_file_header
+from ramp.models.profiles import ModelProfile
+from ramp.models.profiles import get_profile
+from keep.validate import glm52_runtime
+from keep.validate.glm52_runtime import (
     expected_glm52_non_vq_runtime_schema,
     expected_glm52_non_vq_source_schema,
     expected_glm52_routed_group_keys,

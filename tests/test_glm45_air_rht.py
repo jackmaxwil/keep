@@ -3,12 +3,12 @@ from __future__ import annotations
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.kernels.vq_qmv import vq_qmv_reference_np
-from mlx_vq.nn.linear import QuantizedVQLinear
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
-from mlx_vq.quant.rht import apply_inverse_rht_np, apply_rht_np, deterministic_rht_signs
-from mlx_vq.quant.rtn import quantize_weight_rtn
+from keep.vq.e8 import e8_1bit_packed
+from ramp.kernels.vq_qmv import vq_qmv_reference_np
+from ramp.nn.linear import QuantizedVQLinear
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
+from keep.quant.rht import apply_inverse_rht_np, apply_rht_np, deterministic_rht_signs
+from keep.quant.rtn import quantize_weight_rtn
 
 
 def test_rht_round_trips_power_of_two_vectors() -> None:

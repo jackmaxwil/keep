@@ -5,11 +5,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
 )
-from mlx_vq.io.logit_bias import (
+from keep.io.logit_bias import (
     load_conversion_manifest,
     write_logit_bias_artifact_manifest,
     write_logit_bias_sidecar,

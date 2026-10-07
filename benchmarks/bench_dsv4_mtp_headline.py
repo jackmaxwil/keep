@@ -20,25 +20,25 @@ from typing import Any
 import mlx.core as mx
 from mlx.utils import tree_flatten
 
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
     wait_for_memory_quiet,
 )
-from mlx_vq.models.dsv4_composite_loader import (
+from ramp.models.dsv4_composite_loader import (
     load_authenticated_dsv4_composite,
     validate_dsv4_artifact_identity,
     validate_dsv4_composite_inputs,
     validate_dsv4_payload_receipt,
     validate_dsv4_vq_manifest_structure,
 )
-from mlx_vq.quality.dsv4_mtp_runtime import (
+from keep.quality.dsv4_mtp_runtime import (
     generate_dsv4_autoregressive,
     generate_dsv4_speculative,
 )
-from mlx_vq.quality.dsv4_teacher_agreement import heavy_job_lock
-from mlx_vq.quality.dsv4_teacher_runner import load_dsv4_teich_pack
+from keep.quality.dsv4_teacher_agreement import heavy_job_lock
+from keep.quality.dsv4_teacher_runner import load_dsv4_teich_pack
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HEAVY_JOB_LOCK = REPO_ROOT / ".keep-heavy-job.lock"
@@ -54,7 +54,7 @@ FORBIDDEN_WIRED_ENV = (
 )
 EXPECTED_VERIFY_IMPLEMENTATION = "nax_e8p_m32n64"
 BENCHMARK_SOURCE_PATH = Path(__file__).resolve()
-RUNTIME_SOURCE_PATH = (REPO_ROOT / "src/mlx_vq/quality/dsv4_mtp_runtime.py").resolve()
+RUNTIME_SOURCE_PATH = (REPO_ROOT / "src/keep/quality/dsv4_mtp_runtime.py").resolve()
 
 
 def _canonical_sha256(value: object) -> str:

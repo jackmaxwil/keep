@@ -3,10 +3,10 @@ from __future__ import annotations
 import mlx.core as mx
 import numpy as np
 
-import mlx_vq.nn.linear as linear_module
-from mlx_vq.codebook.e8 import cosine_similarity, e8_1bit_packed
-from mlx_vq.kernels.vq_qmm import vq_qmm, vq_qmm_reference_np
-from mlx_vq.nn.linear import QuantizedVQLinear
+import ramp.nn.linear as linear_module
+from keep.vq.e8 import cosine_similarity, e8_1bit_packed
+from ramp.kernels.vq_qmm import vq_qmm, vq_qmm_reference_np
+from ramp.nn.linear import QuantizedVQLinear
 
 
 def _fixture(*, m: int, in_dim: int = 64, out_dim: int = 32, group_size: int = 16, seed: int = 123):

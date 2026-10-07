@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.build import gates as build_gates
-from mlx_vq.build.gates import (
+from keep.build import gates as build_gates
+from keep.build.gates import (
     _GLM52_V2_FAMILY_POLICY_CONTRACT_SHA256,
     _GLM52_V2_INPUT_CONTRACT_SHA256,
     _GLM52_V2_INPUT_FILE_SHA256,
     _GLM52_V2_PROMPT_PACK_CONTRACT_SHA256,
     evaluate_gate,
 )
-from mlx_vq.quality.glm52_family import (
+from keep.quality.glm52_family import (
     GLM52_FAMILY_GATE_V1_CHECK_NAMES,
     GLM52_FAMILY_GATE_V1_MISSING_REQUIREMENTS,
     GLM52_FAMILY_GATE_V1_SCHEMA_VERSION,

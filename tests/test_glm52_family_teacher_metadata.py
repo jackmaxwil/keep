@@ -132,7 +132,7 @@ def test_teacher_metadata_rejects_prompt_mutation_even_with_rehashed_final_diges
     prompt_pack = json.loads(PROMPT_PACK.read_text())
     prompt_pack["prompt_rows"][0]["encoded_token_ids"][0] += 1
     prompt_pack.pop("prompt_pack_contract_sha256")
-    from mlx_vq.quality.glm52_family import canonical_sha256
+    from keep.quality.glm52_family import canonical_sha256
 
     prompt_pack["prompt_pack_contract_sha256"] = canonical_sha256(prompt_pack)
     mutated = tmp_path / "mutated-prompts.json"
@@ -200,7 +200,7 @@ def test_teacher_metadata_rejects_rehashed_prompt_provenance_mutation(
     prompt_pack = json.loads(PROMPT_PACK.read_text())
     prompt_pack[field] = replacement
     prompt_pack.pop("prompt_pack_contract_sha256")
-    from mlx_vq.quality.glm52_family import canonical_sha256
+    from keep.quality.glm52_family import canonical_sha256
 
     prompt_pack["prompt_pack_contract_sha256"] = canonical_sha256(prompt_pack)
     mutated = tmp_path / f"mutated-{field}.json"
@@ -278,7 +278,7 @@ def test_teacher_metadata_cli_writes_success_and_rejects_output_alias(
     mutated_prompt = json.loads(PROMPT_PACK.read_text())
     mutated_prompt["family_policy_sha256"] = "2" * 64
     mutated_prompt.pop("prompt_pack_contract_sha256")
-    from mlx_vq.quality.glm52_family import canonical_sha256
+    from keep.quality.glm52_family import canonical_sha256
 
     mutated_prompt["prompt_pack_contract_sha256"] = canonical_sha256(
         mutated_prompt

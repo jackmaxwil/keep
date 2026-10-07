@@ -14,13 +14,13 @@ import mlx.core as mx
 import numpy as np
 from mlx.utils import tree_flatten
 
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.models.glm52_vq_adapter import (
+from keep.convert.stream_convert import load_safetensors_index
+from ramp.models.glm52_vq_adapter import (
     Glm52VQDecoderLayer,
     Glm52VQMoE,
     bind_glm52_decoder_layer_non_vq_weights,
@@ -28,7 +28,7 @@ from mlx_vq.models.glm52_vq_adapter import (
     glm52_vq_args_from_config,
     is_glm52_sparse_layer,
 )
-from mlx_vq.models.profiles import (
+from ramp.models.profiles import (
     load_profile,
     validate_profile_against_hf_config_data,
 )

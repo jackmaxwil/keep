@@ -31,7 +31,7 @@ parity, not slippage.
 
 Files:
 
-* `src/mlx_vq/quality/dsv4_teacher_runner.py` — the runner.
+* `src/keep/quality/dsv4_teacher_runner.py` — the runner.
 * `benchmarks/produce_dsv4_teacher_cache.py` — CLI: `run` / `monitor` /
   `finalize` / `plan`.
 * `tests/test_dsv4_teacher_runner.py` — the suite.
@@ -132,7 +132,7 @@ cannot come back.
 
 `--mode calibration` accumulates llama.cpp-style per-(layer, projection, expert)
 sums of `activation^2`, plus the router-score-weighted variant AGQ wants, into
-the schema `mlx_vq.quality.imatrix` already consumes.
+the schema `keep.quality.imatrix` already consumes.
 
 Two departures from the GLM-4.5-Air collector, both forced by scale:
 
@@ -478,7 +478,7 @@ uv run --group dev python benchmarks/produce_dsv4_teacher_cache.py finalize \
 
 Writes `imatrix-sidecars/imatrix/layer-NNNNN-{projection}-expert-NNNNN.safetensors`
 plus `imatrix-manifest.json`, the exact schema
-`mlx_vq.quality.imatrix.load_projection_imatrix_manifest` validates and
+`keep.quality.imatrix.load_projection_imatrix_manifest` validates and
 GLM-4.5-Air's VQ fitting already reads. Sums across every session file present,
 so it can be run mid-campaign on a partial split and re-run later.
 

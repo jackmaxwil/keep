@@ -4,8 +4,8 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import cosine_similarity, decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
-from mlx_vq.kernels.vq_qmv import vq_qmv, vq_qmv_reference_np
+from keep.vq.e8 import cosine_similarity, decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels.vq_qmv import vq_qmv, vq_qmv_reference_np
 
 
 def _case(seed: int, *, out_dim: int, in_dim: int, group_size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:

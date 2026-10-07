@@ -9,7 +9,7 @@ import numpy as np
 from mlx_lm.models.glm4_moe import ModelArgs
 from mlx_lm.models.switch_layers import QuantizedSwitchLinear
 
-from mlx_vq.models.glm45_air_vq_adapter import (
+from ramp.models.glm45_air_vq_adapter import (
     GLM45AirMLXQuantizedSwitchGLU,
     GLM45AirVQModel,
     bind_glm45_air_mlx_quantized_routed_experts,

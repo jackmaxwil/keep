@@ -6,9 +6,9 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import e8_1bit_packed, e8p_packed_abs_grid
-from mlx_vq.kernels import nax
-import mlx_vq.ops.vq_switch as vq_switch
+from keep.vq.e8 import e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels import nax
+import ramp.ops.vq_switch as vq_switch
 
 
 def test_auto_nax_e8p_selector_pins_every_kernel_boundary() -> None:

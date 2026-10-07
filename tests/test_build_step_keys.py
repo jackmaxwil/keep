@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.build import hashing
+from keep.build import hashing
 
 
 def test_step_key_is_stable_and_param_order_independent() -> None:

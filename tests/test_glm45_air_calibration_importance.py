@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from mlx_vq.quality.calibration_importance import build_calibration_importance_report
+from keep.quality.calibration_importance import build_calibration_importance_report
 
 
 def _calibration_record(

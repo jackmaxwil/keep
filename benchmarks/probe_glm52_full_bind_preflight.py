@@ -7,8 +7,8 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
-from mlx_vq.models.profiles import load_profile
-from mlx_vq.validate.glm52_runtime import preflight_glm52_full_bind
+from ramp.models.profiles import load_profile
+from keep.validate.glm52_runtime import preflight_glm52_full_bind
 
 
 def _write_json(path: str | Path, payload: dict[str, object]) -> Path:

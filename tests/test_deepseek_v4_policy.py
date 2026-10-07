@@ -465,11 +465,11 @@ def test_policy_module_no_longer_carries_adapter_stubs():
 
 
 def test_policy_shim_is_same_module():
-    import mlx_vq.models.deepseek_v4_policy  # noqa: F401
+    import ramp.models.deepseek_v4_policy  # noqa: F401
     import ramp.models.deepseek_v4_policy as policy
 
     assert (
-        sys.modules["mlx_vq.models.deepseek_v4_policy"]
+        sys.modules["ramp.models.deepseek_v4_policy"]
         is sys.modules["ramp.models.deepseek_v4_policy"]
     )
     assert sys.modules["ramp.models.deepseek_v4_policy"] is policy
@@ -478,10 +478,10 @@ def test_policy_shim_is_same_module():
 _HEADLESS_PROBE = """
 import sys
 
-import mlx_vq.models.deepseek_v4_policy
+import ramp.models.deepseek_v4_policy
 import ramp.models.deepseek_v4_policy
 
-assert sys.modules["mlx_vq.models.deepseek_v4_policy"] is sys.modules[
+assert sys.modules["ramp.models.deepseek_v4_policy"] is sys.modules[
     "ramp.models.deepseek_v4_policy"
 ]
 

@@ -26,13 +26,13 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution path.
         _required_scenarios,
         _scenario_token_count,
     )
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.source_safetensors import read_indexed_safetensors_tensor_mlx
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.source_safetensors import read_indexed_safetensors_tensor_mlx
 
 
 @dataclass(frozen=True)

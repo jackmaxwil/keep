@@ -3,8 +3,8 @@ from __future__ import annotations
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import cosine_similarity, decode_weight_matrix, e8_1bit_packed
-from mlx_vq.nn.linear import QuantizedVQLinear
+from keep.vq.e8 import cosine_similarity, decode_weight_matrix, e8_1bit_packed
+from ramp.nn.linear import QuantizedVQLinear
 
 
 def _build_tiny_model(seed: int = 20260623):

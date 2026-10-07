@@ -115,7 +115,7 @@ Rebuilt for 3.12 — note a stale cmake cache resolved MLX under a
 uv run --group dev cmake -S native/vq_nax_ext -B native/vq_nax_ext/build \
   -DPython_EXECUTABLE="$(pwd)/.venv/bin/python3"
 uv run --group dev cmake --build native/vq_nax_ext/build
-uv run --group dev python -c "from mlx_vq.kernels import nax; print(nax.is_available())"
+uv run --group dev python -c "from ramp.kernels import nax; print(nax.is_available())"
 ```
 
 With NAX live, the A/B on the **real artifact** (16-bit E8P, group 512, layer 0,
@@ -205,7 +205,7 @@ reviewer against every substantive change before treating it as done, and
 never round a proxy up to a measurement.
 
 1. WIRE PRODUCTION DISPATCH TO THE E8P KERNELS.
-   src/mlx_vq/ops/vq_switch.py route_strategy="auto" currently sends
+   src/ramp/ops/vq_switch.py route_strategy="auto" currently sends
    code_bits=16 to the scalar path (see the code_bits == 8 gates in
    vq_switch.py, nn/switch_linear.py, kernels/gather_vqmm.py). Make auto select
    nax_e8p_fp16_sorted_steel_m32n64 (the measured winner) when NAX is

@@ -11,10 +11,10 @@ import mlx.core as mx
 import numpy as np
 from huggingface_hub import snapshot_download
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.schema import QuantizationConfig
-from mlx_vq.validate.glm45_air_vq import _expert_weight_name, _read_named_tensor
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.schema import QuantizationConfig
+from keep.validate.glm45_air_vq import _expert_weight_name, _read_named_tensor
 
 
 ROUTED_PROJECTIONS = ("gate_proj", "up_proj", "down_proj")

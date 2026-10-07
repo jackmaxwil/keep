@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-import mlx_vq.benchmark.metrics as metrics_module
-from mlx_vq.benchmark.metrics import MemoryPhaseTracer, collect_metric_snapshot, parse_vm_stat_counts
+import ramp.benchmark.metrics as metrics_module
+from ramp.benchmark.metrics import MemoryPhaseTracer, collect_metric_snapshot, parse_vm_stat_counts
 
 
 def test_metric_snapshot_has_required_keys() -> None:

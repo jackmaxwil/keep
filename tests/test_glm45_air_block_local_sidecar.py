@@ -7,13 +7,13 @@ from types import SimpleNamespace
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     load_conversion_manifest,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
-from mlx_vq.quality.mlx_surrogate import SwitchLinearSidecar, SwitchLinearSurrogate
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
+from keep.quality.mlx_surrogate import SwitchLinearSidecar, SwitchLinearSurrogate
 
 
 def _load_fitter_module():

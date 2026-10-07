@@ -5,14 +5,14 @@ from pathlib import Path
 
 import yaml
 
-from mlx_vq.build.executor import execute_plan
-from mlx_vq.build.plan_next import (
+from keep.build.executor import execute_plan
+from keep.build.plan_next import (
     auto_extend,
     load_merged_recipe,
     overlay_path_for,
 )
-from mlx_vq.build.recipe import load_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build.recipe import load_recipe
+from keep.build.runner import plan_recipe
 
 from tests.test_build_runner_resume import _TRAIN_STUB, _write_recipe
 from tests.test_plan_next import _DOMAIN_EVAL_STUB

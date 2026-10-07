@@ -17,7 +17,7 @@ import pytest
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "src/mlx_vq/quality/glm52_teacher_cache.py"
+    / "src/keep/quality/glm52_teacher_cache.py"
 )
 SPEC = importlib.util.spec_from_file_location("glm52_teacher_cache_under_test", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None

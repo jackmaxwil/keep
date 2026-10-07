@@ -24,9 +24,9 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import e8p_packed_abs_grid
-from mlx_vq.kernels import nax
-from mlx_vq.ops import vq_switch
+from keep.vq.e8 import e8p_packed_abs_grid
+from ramp.kernels import nax
+from ramp.ops import vq_switch
 
 EXPERTS = 256
 GROUP = 512

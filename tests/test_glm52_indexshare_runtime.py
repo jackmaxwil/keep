@@ -10,13 +10,13 @@ from mlx.utils import tree_flatten
 from mlx_lm.models.base import create_attention_mask
 from mlx_lm.models.cache import CacheList, KVCache
 
-from mlx_vq.models import glm52_vq_adapter
-from mlx_vq.models.glm52_vq_adapter import (
+from ramp.models import glm52_vq_adapter
+from ramp.models.glm52_vq_adapter import (
     GLM52VQModel,
     GLM52VQModelArgs,
     Glm52VQMoE,
 )
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
 
 
 _PINNED_REVISION = "6c9241aa05fb243a0edb7c804c213ec1cf5c920d"

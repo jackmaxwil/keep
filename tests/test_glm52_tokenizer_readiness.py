@@ -10,7 +10,7 @@ from tokenizers.models import WordLevel
 from tokenizers.pre_tokenizers import Whitespace
 from transformers import PreTrainedTokenizerFast
 
-from mlx_vq.quality import glm52_family
+from keep.quality import glm52_family
 
 from benchmarks.probe_glm52_tokenizer_readiness import (
     GLM52TokenizerIdentityContract,

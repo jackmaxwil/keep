@@ -5,7 +5,7 @@ import json
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.benchmark.vq2_preflight import run_vq2_preflight
+from ramp.benchmark.vq2_preflight import run_vq2_preflight
 
 
 def test_vq2_preflight_reports_kernel_status_and_artifact_readiness() -> None:

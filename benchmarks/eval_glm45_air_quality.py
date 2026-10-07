@@ -3,9 +3,9 @@ from __future__ import annotations
 import argparse
 import json
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.quality.glm45_air import run_quality_suite
-from mlx_vq.quality.prompts import get_quality_prompts
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.quality.glm45_air import run_quality_suite
+from keep.quality.prompts import get_quality_prompts
 
 DEFAULT_VQ_ARTIFACT_DIR = "artifacts/glm-4.5-air-vq"
 DEFAULT_Q2_ARTIFACT_DIR = "artifacts/glm-4.5-air-mlx-q2-routed-g128"

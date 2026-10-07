@@ -12,7 +12,7 @@ from typing import Any
 
 from mlx_lm.utils import load_tokenizer
 
-from mlx_vq.quality.glm52_family import find_unpinned_glm52_tokenizer_inputs
+from keep.quality.glm52_family import find_unpinned_glm52_tokenizer_inputs
 
 
 PROBE_RECORD_TYPE = "glm52_tokenizer_readiness_probe"

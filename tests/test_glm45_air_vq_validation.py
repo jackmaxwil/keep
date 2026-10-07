@@ -8,18 +8,18 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import decode_weight_matrix, e8_1bit_packed
-from mlx_vq.convert.stream_convert import (
+from keep.vq.e8 import decode_weight_matrix, e8_1bit_packed
+from keep.convert.stream_convert import (
     convert_vq_groups_from_safetensors,
     load_safetensors_index,
     plan_streaming_conversion_from_index,
 )
-from mlx_vq.validate.glm45_air_scale_fit import (
+from keep.validate.glm45_air_scale_fit import (
     evaluate_glm45_air_scale_fit,
     fit_e8_group_scales,
 )
-from mlx_vq.validate.glm45_air_vq import validate_glm45_air_vq
-from mlx_vq.validate.glm45_air_vq import select_input_state_rows
+from keep.validate.glm45_air_vq import validate_glm45_air_vq
+from keep.validate.glm45_air_vq import select_input_state_rows
 
 
 def _write_tiny_glm4_sparse_checkpoint(tmp_path):

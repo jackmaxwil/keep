@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build.cli import main as keep_main
-from mlx_vq.models.profiles import (
+from keep.build.cli import main as keep_main
+from ramp.models.profiles import (
     ModelProfile,
     ProfileError,
     get_profile,
@@ -221,7 +221,7 @@ def test_keep_models_show_smoke(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_converter_registry_is_open():
-    from mlx_vq.models import profiles
+    from ramp.models import profiles
 
     assert "glm52_vq_groups" in profiles.converter_kinds()
     assert "deepseek_v4_vq_groups" in profiles.converter_kinds()
@@ -236,14 +236,14 @@ def test_converter_registry_is_open():
 
 def test_register_converter_rejects_blank():
     import pytest
-    from mlx_vq.models import profiles
+    from ramp.models import profiles
 
     with pytest.raises(profiles.ProfileError):
         profiles.register_converter("")
 
 
 def test_deepseek_v4_flash_profile_loads():
-    from mlx_vq.models.profiles import get_profile
+    from ramp.models.profiles import get_profile
 
     profile = get_profile("deepseek-v4-flash-0731")
     assert profile.hf_model_id == "deepseek-ai/DeepSeek-V4-Flash-0731"

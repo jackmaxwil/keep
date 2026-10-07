@@ -5,9 +5,9 @@ from pathlib import Path
 
 import yaml
 
-from mlx_vq.build import executor
-from mlx_vq.build.recipe import load_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build import executor
+from keep.build.recipe import load_recipe
+from keep.build.runner import plan_recipe
 
 
 MODEL_ID = "0xSero/glm-5.2-reap-504B-v2"

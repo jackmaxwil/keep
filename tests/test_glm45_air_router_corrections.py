@@ -5,13 +5,13 @@ import mlx.core as mx
 import pytest
 from mlx_lm.models.glm4_moe import ModelArgs
 
-from mlx_vq.io.router_correction import (
+from keep.io.router_correction import (
     load_router_correction_sidecar,
     router_corrections_enabled,
     write_router_correction_artifact_manifest,
     write_router_correction_sidecar,
 )
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
 
 
 def _tiny_config() -> ModelArgs:

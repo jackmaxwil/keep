@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
+from ramp.benchmark.glm45_air import append_jsonl
 
 
 DEFAULT_CHECKS = (

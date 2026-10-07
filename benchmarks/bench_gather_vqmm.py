@@ -7,8 +7,8 @@ import time
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.ops.vq_switch import gather_vqmm, vq_switch_qmv
+from keep.vq.e8 import e8_1bit_packed
+from ramp.ops.vq_switch import gather_vqmm, vq_switch_qmv
 
 
 def _time_ms(fn, *, warmup: int, iterations: int) -> float:

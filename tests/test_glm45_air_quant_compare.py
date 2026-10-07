@@ -9,7 +9,7 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.benchmark.quant_compare import (
+from ramp.benchmark.quant_compare import (
     add_comparison_metadata,
     aggregate_repetition_records,
     audit_vq_artifact_prefill_compatibility,
@@ -19,7 +19,7 @@ from mlx_vq.benchmark.quant_compare import (
     quantized_parameter_bytes,
     validate_mlx_routed_group_size,
 )
-from mlx_vq.codebook.e8 import e8_1bit_packed, e8p_packed_abs_grid
+from keep.vq.e8 import e8_1bit_packed, e8p_packed_abs_grid
 
 _QUANT_COMPARE_SCRIPT = Path(__file__).resolve().parents[1] / "benchmarks" / "bench_glm45_air_quant_compare.py"
 _QUANT_COMPARE_SPEC = importlib.util.spec_from_file_location(

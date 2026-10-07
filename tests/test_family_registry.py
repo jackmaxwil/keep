@@ -19,7 +19,7 @@ def test_default_families_registered():
 def test_get_family_returns_binding():
     binding = registry.get_family("glm52")
     assert binding.architecture == "glm_moe_dsa"
-    assert binding.adapter_module == "mlx_vq.models.glm52_vq_adapter"
+    assert binding.adapter_module == "ramp.models.glm52_vq_adapter"
     assert binding.bind_vq_experts_symbol == "bind_glm52_vq_experts"
 
 
@@ -33,7 +33,7 @@ def test_register_and_unregister_family():
     binding = registry.FamilyBinding(
         family="test_family",
         architecture="test_arch",
-        adapter_module="mlx_vq.models.glm52_vq_adapter",
+        adapter_module="ramp.models.glm52_vq_adapter",
         model_args_symbol="GLM52VQModelArgs",
         bind_vq_experts_symbol="bind_glm52_vq_experts",
         bind_non_vq_weights_symbol="bind_glm52_non_vq_weights",
@@ -62,7 +62,7 @@ def test_qwen_moe_binding_uses_repo_model_type():
 
 
 def test_default_binding_architecture_matches_profile():
-    from mlx_vq.models.profiles import get_profile
+    from ramp.models.profiles import get_profile
 
     checked = 0
     for family in registry.list_families():
@@ -79,12 +79,12 @@ def test_default_binding_architecture_matches_profile():
 
 
 def test_resolve_family_allows_absent_model_args():
-    # ``mlx_vq.models.profiles`` is a headless-safe stand-in adapter module: it
+    # ``ramp.models.profiles`` is a headless-safe stand-in adapter module: it
     # imports no MLX and exposes real module-level callables.
     binding = registry.FamilyBinding(
         family="test_no_args",
         architecture="test_arch",
-        adapter_module="mlx_vq.models.profiles",
+        adapter_module="ramp.models.profiles",
         model_args_symbol=None,
         bind_vq_experts_symbol="get_profile",
         bind_non_vq_weights_symbol=None,
@@ -107,19 +107,12 @@ def test_empty_symbol_names_rejected():
         registry.FamilyBinding(
             family="test_bad",
             architecture="test_arch",
-            adapter_module="mlx_vq.models.profiles",
+            adapter_module="ramp.models.profiles",
             model_args_symbol="",
             bind_vq_experts_symbol="get_profile",
             bind_non_vq_weights_symbol=None,
             has_unbound_symbol="list_profiles",
         )
-
-
-def test_mlx_vq_shim_is_same_module():
-    import mlx_vq.models.registry  # noqa: F401
-
-    assert sys.modules["mlx_vq.models.registry"] is sys.modules["ramp.models.registry"]
-    assert sys.modules["ramp.models.registry"] is registry
 
 
 def test_registry_is_visible_on_ramp_models():
@@ -132,12 +125,12 @@ def test_registry_is_visible_on_ramp_models():
 _HEADLESS_PROBE = """
 import sys
 
-import mlx_vq.models.registry
+import ramp.models.registry
 import ramp.models.registry
 
 mlx_loaded = sorted(name for name in sys.modules if name == "mlx" or name.startswith("mlx."))
 assert "mlx.core" not in sys.modules, mlx_loaded
-assert sys.modules["mlx_vq.models.registry"] is sys.modules["ramp.models.registry"]
+assert sys.modules["ramp.models.registry"] is sys.modules["ramp.models.registry"]
 
 adapters = sorted(name for name in sys.modules if name.endswith("_adapter"))
 assert not adapters, adapters
@@ -157,23 +150,3 @@ def test_registry_import_does_not_load_mlx():
     assert result.stdout.strip().splitlines()[-1] == "ok"
 
 
-def test_alias_child_cannot_shadow_physical_module():
-    """A registered child alias must not hide a real file in the alias package."""
-
-    from keep._alias import install_alias_package
-
-    own_dir = Path(registry.__file__).resolve().parent
-    assert (own_dir / "registry.py").is_file()
-
-    namespace = {"__path__": [str(own_dir)]}
-    with pytest.raises(RuntimeError) as excinfo:
-        install_alias_package(
-            "ramp.models._shadow_probe",
-            "mlx_vq.models",
-            namespace,
-            child_modules=("registry",),
-        )
-    message = str(excinfo.value)
-    assert "registry" in message
-    assert str(own_dir / "registry.py") in message
-    assert "ramp.models._shadow_probe.registry" not in sys.modules

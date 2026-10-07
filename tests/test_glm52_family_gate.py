@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from benchmarks import check_glm52_family_gate as gate
-from mlx_vq.quality.glm52_family import (
+from keep.quality.glm52_family import (
     GLM52_FAMILY_GATE_SCHEMA_VERSION,
     GLM52_FAMILY_GATE_V1_SCHEMA_VERSION,
     GLM52_FAMILY_GATE_V2_SCHEMA_VERSION,
@@ -376,7 +376,7 @@ def _benchmark_gate() -> dict[str, object]:
 
 
 def _benchmark_api():
-    path = Path("src/mlx_vq/quality/glm52_benchmark.py")
+    path = Path("src/keep/quality/glm52_benchmark.py")
     spec = importlib.util.spec_from_file_location("glm52_benchmark_gate_test", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)

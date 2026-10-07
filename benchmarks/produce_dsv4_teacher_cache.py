@@ -2,7 +2,7 @@
 
 Streams the 163 GB released checkpoint through KEEP's MLX adapter one layer at a
 time and writes per-session teacher artifacts. Design, measurements and the two
-pinned behaviours live in :mod:`mlx_vq.quality.dsv4_teacher_runner` and in
+pinned behaviours live in :mod:`keep.quality.dsv4_teacher_runner` and in
 ``docs/deepseek-v4-flash/research/wave2-increment2-report.md``.
 
 Verbs
@@ -81,7 +81,7 @@ def _refuse_wired_limit_env() -> None:
 
 
 def _cmd_run(opts: argparse.Namespace) -> int:
-    from mlx_vq.quality.dsv4_teacher_runner import (
+    from keep.quality.dsv4_teacher_runner import (
         DEFAULT_PREFILL_CHUNK_TOKENS,
         MtpDrafterUnavailable,
         run_dsv4_teacher_production,
@@ -226,7 +226,7 @@ def _cmd_monitor(opts: argparse.Namespace) -> int:
 
 
 def _cmd_finalize(opts: argparse.Namespace) -> int:
-    from mlx_vq.quality.dsv4_teacher_runner import finalize_dsv4_calibration_imatrix
+    from keep.quality.dsv4_teacher_runner import finalize_dsv4_calibration_imatrix
 
     report = finalize_dsv4_calibration_imatrix(
         Path(opts.out_dir).expanduser(),
@@ -238,7 +238,7 @@ def _cmd_finalize(opts: argparse.Namespace) -> int:
 
 
 def _cmd_plan(opts: argparse.Namespace) -> int:
-    from mlx_vq.quality.dsv4_teacher_runner import (
+    from keep.quality.dsv4_teacher_runner import (
         build_dsv4_expert_span_index,
         load_dsv4_teich_pack,
     )

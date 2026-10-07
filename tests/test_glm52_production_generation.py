@@ -63,11 +63,11 @@ def _load_composite_loader_module():
         pass
 
     dependency(
-        "mlx_vq.convert.glm52_non_vq",
+        "keep.convert.glm52_non_vq",
         audit_glm52_non_vq_package=lambda *_args, **_kwargs: None,
     )
     dependency(
-        "mlx_vq.convert.glm52_reap",
+        "keep.convert.glm52_reap",
         GLM52_REAP_CONFIG_SHA256="1" * 64,
         GLM52_REAP_EXPECTED_GROUPS=225,
         GLM52_REAP_EXPECTED_LAYER_IDS=tuple(range(3, 78)),
@@ -75,12 +75,12 @@ def _load_composite_loader_module():
         GLM52_REAP_PROFILE_NAME="glm52-reap-504b-v2",
     )
     dependency(
-        "mlx_vq.convert.stream_convert",
+        "keep.convert.stream_convert",
         SafetensorsIndex=FakeSafetensorsIndex,
         load_safetensors_index=lambda _path: FakeSafetensorsIndex(),
     )
     dependency(
-        "mlx_vq.models.glm52_vq_adapter",
+        "ramp.models.glm52_vq_adapter",
         GLM52NonVQBindReport=FakeBindReport,
         GLM52VQModel=object,
         bind_glm52_non_vq_weights=lambda *_args, **_kwargs: None,
@@ -91,12 +91,12 @@ def _load_composite_loader_module():
         has_unbound_vq_experts=lambda _model: False,
     )
     dependency(
-        "mlx_vq.models.profiles",
+        "ramp.models.profiles",
         ModelProfile=FakeModelProfile,
         validate_profile_against_hf_config_data=lambda *_args, **_kwargs: [],
     )
     dependency(
-        "mlx_vq.quality.glm52_family",
+        "keep.quality.glm52_family",
         GLM52_PINNED_TOKENIZER_FILES=(),
         PINNED_GLM52_MODEL_ID=MODEL_ID,
         PINNED_GLM52_REVISION=REVISION,
@@ -104,23 +104,23 @@ def _load_composite_loader_module():
         validate_glm52_tokenizer_readiness=lambda *_args, **_kwargs: None,
     )
     dependency(
-        "mlx_vq.validate.glm52_artifact",
+        "keep.validate.glm52_artifact",
         audit_glm52_reap_materialization_manifest=lambda *_args, **_kwargs: None,
         audit_glm52_reap_source_accounting=lambda *_args, **_kwargs: None,
     )
     dependency(
-        "mlx_vq.validate.glm52_recovery_artifact",
+        "keep.validate.glm52_recovery_artifact",
         GLM52RecoveryArtifactAudit=object,
         audit_glm52_recovery_mixed_artifact=lambda *_args, **_kwargs: None,
     )
     dependency(
-        "mlx_vq.validate.glm52_runtime",
+        "keep.validate.glm52_runtime",
         expected_glm52_routed_group_keys=lambda *_args, **_kwargs: GROUP_KEYS,
         preflight_glm52_full_bind=lambda *_args, **_kwargs: None,
     )
     original = {name: sys.modules.get(name) for name in dependencies}
     sys.modules.update(dependencies)
-    path = Path("src/mlx_vq/models/glm52_composite_loader.py")
+    path = Path("src/ramp/models/glm52_composite_loader.py")
     spec = importlib.util.spec_from_file_location(module_name, path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -1315,7 +1315,7 @@ def test_recovery_loader_hashes_the_exact_retained_descriptor(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from mlx_vq.io import authenticated_artifacts
+    from keep.io import authenticated_artifacts
 
     module = _load_composite_loader_module()
     baseline = _recovery_baseline()
@@ -1380,7 +1380,7 @@ def test_recovery_snapshot_copy_fallback_is_explicit_and_space_bounded(
     free_bytes: int,
     match: str,
 ) -> None:
-    from mlx_vq.io import authenticated_artifacts
+    from keep.io import authenticated_artifacts
 
     module = _load_composite_loader_module()
     monkeypatch.setattr(
@@ -1471,7 +1471,7 @@ def test_recovery_loader_streams_source_authority_one_group_at_a_time(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from mlx_vq.io import authenticated_artifacts
+    from keep.io import authenticated_artifacts
 
     module = _load_composite_loader_module()
     baseline = _recovery_baseline()
@@ -1542,7 +1542,7 @@ def test_recovery_loader_closes_retained_descriptor_when_unlink_fails(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from mlx_vq.io import authenticated_artifacts
+    from keep.io import authenticated_artifacts
 
     module = _load_composite_loader_module()
     baseline = _recovery_baseline()

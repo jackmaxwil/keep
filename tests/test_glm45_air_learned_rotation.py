@@ -4,18 +4,18 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.kernels.vq_qmv import vq_qmv_reference_np
-from mlx_vq.nn.linear import QuantizedVQLinear
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
-from mlx_vq.quant.rotation import (
+from keep.vq.e8 import e8_1bit_packed
+from ramp.kernels.vq_qmv import vq_qmv_reference_np
+from ramp.nn.linear import QuantizedVQLinear
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
+from keep.quant.rotation import (
     apply_rotation_np,
     cayley_update_np,
     validate_rotation_matrix_np,
 )
-from mlx_vq.quant.rtn import quantize_weight_rtn
-from mlx_vq.quant.rht import deterministic_rht_signs
-from mlx_vq.quality.learned_rotation_training import train_learned_rht_signs_np, train_learned_rotation_np
+from keep.quant.rtn import quantize_weight_rtn
+from keep.quant.rht import deterministic_rht_signs
+from keep.quality.learned_rotation_training import train_learned_rht_signs_np, train_learned_rotation_np
 
 
 def _orthogonal_matrix(dim: int, *, seed: int) -> np.ndarray:

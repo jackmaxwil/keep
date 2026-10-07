@@ -8,7 +8,7 @@ from typing import Any
 import mlx.core as mx
 from mlx_lm.models import qwen3_5_moe
 
-from mlx_vq.models.qwen_moe_adapter import (
+from ramp.models.qwen_moe_adapter import (
     bind_qwen_moe_vq_experts,
     has_unbound_qwen_moe_vq_experts,
 )

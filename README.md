@@ -38,7 +38,7 @@ Build the extension once:
 ```bash
 uv run --group dev cmake -S native/vq_nax_ext -B native/vq_nax_ext/build -DPython_EXECUTABLE="$(pwd)/.venv/bin/python3"
 uv run --group dev cmake --build native/vq_nax_ext/build
-uv run python -c "from mlx_vq.kernels import nax; print(nax.is_available())"
+uv run python -c "from ramp.kernels import nax; print(nax.is_available())"
 ```
 
 If it prints `False` on an M5, delete `native/vq_nax_ext/build` and configure
@@ -127,7 +127,6 @@ To add a family, follow [`docs/new-model-family.md`](docs/new-model-family.md).
 | --- | --- |
 | `src/keep/` | KEEP, the compression method: codebooks, quantizers, converters, quality checks |
 | `src/ramp/` | RAMP, the runtime: model adapters, the family registry, kernels |
-| `src/mlx_vq/` | The original package. `keep` and `ramp` re-export from it while code moves |
 | `native/vq_nax_ext/` | The tensor-unit kernel extension |
 | `models/` | One pinned profile per model family |
 | `examples/`, `recipes/` | Short recipes and the step graphs they compile to |

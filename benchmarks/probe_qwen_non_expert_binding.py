@@ -7,9 +7,9 @@ from pathlib import Path
 
 import mlx.core as mx
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.source_safetensors import read_safetensors_tensor_header
-from mlx_vq.models.qwen_moe_adapter import bind_qwen_non_expert_weights
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.source_safetensors import read_safetensors_tensor_header
+from ramp.models.qwen_moe_adapter import bind_qwen_non_expert_weights
 
 
 _QWEN_LANGUAGE_LAYER_RE = re.compile(r"^model\.language_model\.layers\.(?P<layer>\d+)\.")

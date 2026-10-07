@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import mlx.core as mx
 
-import mlx_vq.ops.vq_switch as vq_switch
+import ramp.ops.vq_switch as vq_switch
 
 
 def test_nax_e8p_sorted_steel_route_plan_uses_m32_for_air_down_small_window() -> None:

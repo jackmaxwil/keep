@@ -60,7 +60,7 @@ from mlx_lm.models.base import create_attention_mask
 from mlx_lm.models.cache import CacheList
 from mlx_lm.models.switch_layers import SwitchGLU
 
-from mlx_vq.io.source_safetensors import read_safetensors_file_header
+from keep.io.source_safetensors import read_safetensors_file_header
 from ramp.models.deepseek_v4_flash_adapter import (
     DeepseekV4FlashVQModel,
     LimitedSwiGLU,

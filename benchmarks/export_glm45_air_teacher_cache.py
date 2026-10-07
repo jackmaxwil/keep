@@ -9,13 +9,13 @@ from pathlib import Path
 import mlx.core as mx
 from mlx_lm import load
 
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.quality.prompts import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.quality.prompts import (
     QualityPrompt,
     get_quality_prompt_by_id,
     get_quality_prompt_ids,
@@ -23,7 +23,7 @@ from mlx_vq.quality.prompts import (
     get_quality_prompts,
     quality_prompt_metadata,
 )
-from mlx_vq.quality.teacher_cache import build_teacher_cache_payload
+from keep.quality.teacher_cache import build_teacher_cache_payload
 
 BYTES_PER_GIB = 1024**3
 SOURCE_MEMORY_GUARD_EXIT_CODE = 23

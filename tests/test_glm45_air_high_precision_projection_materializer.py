@@ -9,7 +9,7 @@ import mlx.core as mx
 import numpy as np
 from safetensors.numpy import save_file
 
-from mlx_vq.io.load import inspect_safetensors, load_high_precision_switch_linear
+from keep.io.load import inspect_safetensors, load_high_precision_switch_linear
 
 
 def _load_materializer_module():

@@ -3,7 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from mlx_vq.quality import rc_gates
+from keep.quality import rc_gates
 
 
 _SCRIPT_PATH = Path(__file__).resolve().parents[1] / "benchmarks" / "run_glm45_air_rc_pipeline.py"

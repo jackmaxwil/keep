@@ -6,8 +6,8 @@ from pathlib import Path
 
 from huggingface_hub import get_safetensors_metadata, hf_hub_download
 
-from mlx_vq.convert.inspect_hf import fetch_hf_config
-from mlx_vq.convert.qwen_moe import (
+from keep.convert.inspect_hf import fetch_hf_config
+from keep.convert.qwen_moe import (
     QWEN36_35B_A3B_MODEL_ID,
     QWEN36_35B_A3B_MODEL_TYPE,
     QWEN36_35B_A3B_REVISION,

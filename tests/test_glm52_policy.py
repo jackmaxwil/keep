@@ -4,14 +4,14 @@ import mlx.core as mx
 import pytest
 from mlx.utils import tree_flatten
 
-from mlx_vq.models.glm52_policy import (
+from ramp.models.glm52_policy import (
     GLM52Precision,
     classify_glm52_parameter,
     installed_glm52_support,
     is_vq_routed_expert,
     validate_glm52_config,
 )
-from mlx_vq.models.profiles import get_profile
+from ramp.models.profiles import get_profile
 
 
 GLM52_CONFIG = {

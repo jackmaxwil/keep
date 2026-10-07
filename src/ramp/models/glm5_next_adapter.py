@@ -48,7 +48,7 @@ from mlx_lm.models.base import BaseModelArgs
 from mlx_lm.models.cache import ArraysCache, KVCache
 from mlx_lm.models.gated_delta import gated_delta_kernel, gated_delta_ops
 
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
 from ramp.models.deepseek_v4_flash_adapter import (
     DeepseekV4FlashMLP,
     HyperConnection,

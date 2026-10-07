@@ -12,7 +12,7 @@ from huggingface_hub import snapshot_download
 from mlx.utils import tree_flatten
 from mlx_lm.models.glm4_moe import Model, ModelArgs
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
 
 
 GLM45_AIR_REVISION = "a24ceef6ce4f3536971efe9b778bdaa1bab18daa"

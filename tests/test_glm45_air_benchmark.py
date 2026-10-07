@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-import mlx_vq.benchmark.glm45_air as glm45_air_benchmark
-from mlx_vq.benchmark.glm45_air import (
+import ramp.benchmark.glm45_air as glm45_air_benchmark
+from ramp.benchmark.glm45_air import (
     append_jsonl,
     build_benchmark_record,
     ComponentTimer,

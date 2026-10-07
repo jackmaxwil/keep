@@ -10,7 +10,7 @@ import numpy as np
 from safetensors import safe_open
 from safetensors.numpy import save_file
 
-import mlx_vq.convert.glm52_recovery_materialize as materialize
+import keep.convert.glm52_recovery_materialize as materialize
 
 
 def _write_json(path: Path, value: object) -> str:

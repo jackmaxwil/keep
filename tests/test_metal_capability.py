@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from mlx_vq.kernels.metal_capability import (
+from ramp.kernels.metal_capability import (
     probe_mpp_tensor_ops,
     probe_mpp_tensor_ops_accumulation_semantics,
     probe_mpp_tensor_ops_cooperative_matmul,
@@ -148,7 +148,7 @@ import json
 import sys
 
 before = "mlx.core" in sys.modules
-module = importlib.import_module("mlx_vq.kernels.metal_capability")
+module = importlib.import_module("ramp.kernels.metal_capability")
 after_import = "mlx.core" in sys.modules
 probe = module.probe_mpp_tensor_ops_symbols()
 after_probe = "mlx.core" in sys.modules

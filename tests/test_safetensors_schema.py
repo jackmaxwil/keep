@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from mlx_vq.env import safetensors_integer_roundtrip_ok, verify_environment
-from mlx_vq.codebook.e8 import E8_1BIT_PACKED_SHA256, E8P_PACKED_ABS_SHA256
-from mlx_vq.io.schema import QuantizationConfig, VQTensorSpec, codebook_metadata_for_bits
+from keep.env import safetensors_integer_roundtrip_ok, verify_environment
+from keep.vq.e8 import E8_1BIT_PACKED_SHA256, E8P_PACKED_ABS_SHA256
+from keep.io.schema import QuantizationConfig, VQTensorSpec, codebook_metadata_for_bits
 
 
 def test_environment_api_gate() -> None:

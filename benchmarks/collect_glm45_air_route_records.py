@@ -7,12 +7,12 @@ from pathlib import Path
 import mlx.core as mx
 from mlx_lm.models.base import create_attention_mask
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
-from mlx_vq.quality.calibration import prompt_token_ids
-from mlx_vq.quality.ebss import build_route_record
-from mlx_vq.quality.imatrix_collection import parse_layer_selection, selected_prompts
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from keep.quality.calibration import prompt_token_ids
+from keep.quality.ebss import build_route_record
+from keep.quality.imatrix_collection import parse_layer_selection, selected_prompts
 
 DEFAULT_LAYERS = "1-45"
 DEFAULT_ARTIFACT_DIR = "artifacts/glm-4.5-air-vq"

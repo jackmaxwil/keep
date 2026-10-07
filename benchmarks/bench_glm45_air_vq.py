@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from mlx_vq.benchmark.glm45_air import (
+from ramp.benchmark.glm45_air import (
     append_jsonl,
     enforce_context_caps,
     format_markdown_summary,
@@ -13,7 +13,7 @@ from mlx_vq.benchmark.glm45_air import (
     scenario_defaults,
     validate_context_gate,
 )
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
 
 
 def main() -> None:

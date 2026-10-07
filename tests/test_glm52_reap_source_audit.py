@@ -16,21 +16,21 @@ from benchmarks.materialize_glm52_reap_groups import (
     _sha256_file,
     _validate_prior_artifact_identity,
 )
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     GLM52_REAP_CONFIG_SHA256,
     GLM52_REAP_INDEX_SHA256,
     GLM52_REAP_PROFILE_NAME,
     audit_glm52_reap_source_index,
     audit_glm52_reap_source_payloads,
 )
-from mlx_vq.convert.stream_convert import (
+from keep.convert.stream_convert import (
     SafetensorsIndex,
     SourceWeightEncoding,
     VQExpertGroup,
     load_safetensors_index,
     vq_group_output_filename,
 )
-from mlx_vq.models.profiles import get_profile
+from ramp.models.profiles import get_profile
 
 
 def _fixture_profile(*, experts: int = 1):

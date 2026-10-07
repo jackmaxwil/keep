@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from mlx_vq.build.rc_diff import compare_promotion_to_rc
+from keep.build.rc_diff import compare_promotion_to_rc
 
 
 def _accepted_summary() -> dict:

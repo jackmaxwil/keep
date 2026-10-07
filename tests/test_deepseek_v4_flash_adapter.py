@@ -28,8 +28,8 @@ from mlx.utils import tree_flatten, tree_unflatten
 from mlx_lm.models.base import create_attention_mask
 from mlx_lm.models.cache import CacheList
 
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.quality.dsv4_mtp_runtime import (
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from keep.quality.dsv4_mtp_runtime import (
     generate_dsv4_autoregressive,
     generate_dsv4_speculative,
 )
@@ -583,7 +583,7 @@ def test_swiglu_limit_changes_the_routed_output_and_matches_a_reference():
     LimitedSwiGLU and plain SwiGLU disagree.
     """
 
-    from mlx_vq.nn.switch_linear import HighPrecisionSwitchLinear
+    from ramp.nn.switch_linear import HighPrecisionSwitchLinear
 
     experts, in_dim, hidden = 2, 8, 4
     rng = np.random.default_rng(1010)
@@ -642,7 +642,7 @@ def test_default_activation_hook_is_bit_identical_to_plain_swiglu():
     default branch has to be the same expression, not merely a close one.
     """
 
-    from mlx_vq.nn.switch_linear import HighPrecisionSwitchLinear
+    from ramp.nn.switch_linear import HighPrecisionSwitchLinear
 
     experts, in_dim, hidden = 2, 8, 4
     rng = np.random.default_rng(2020)

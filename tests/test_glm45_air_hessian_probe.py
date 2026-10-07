@@ -6,18 +6,18 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8p_packed_abs_grid, encode_e8p_rtn
-from mlx_vq.convert.stream_convert import (
+from keep.vq.e8 import e8p_packed_abs_grid, encode_e8p_rtn
+from keep.convert.stream_convert import (
     convert_vq_groups_from_safetensors,
     load_safetensors_index,
     plan_streaming_conversion_from_index,
 )
-from mlx_vq.quality.hessian_rounding import (
+from keep.quality.hessian_rounding import (
     imatrix_weighted_reassign_codes,
     materialize_hessian_rounding_candidate,
 )
-from mlx_vq.quality.imatrix import ProjectionImatrixEntry
-from mlx_vq.validate.glm45_air_hessian_probe import (
+from keep.quality.imatrix import ProjectionImatrixEntry
+from keep.validate.glm45_air_hessian_probe import (
     evaluate_glm45_air_hessian_probe,
     hessian_weighted_reassign_codes,
 )

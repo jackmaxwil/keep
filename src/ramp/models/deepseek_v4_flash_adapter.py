@@ -56,7 +56,7 @@ Divergences from the vendored source
 1. ``DeepseekV4MoE.switch_mlp`` is not a dense ``SwitchGLU``. Routed experts are
    the tensors KEEP compresses, so :class:`DeepseekV4FlashVQMoE` starts with
    ``switch_mlp = None`` and takes a
-   :class:`~mlx_vq.models.glm4_moe_adapter.QuantizedVQSwitchGLU` from
+   :class:`~ramp.models.glm4_moe_adapter.QuantizedVQSwitchGLU` from
    :func:`bind_deepseek_v4_flash_vq_experts`. This is the same shape as the
    GLM-5.2 adapter and is what makes "zero dense routed parameters" true by
    construction rather than by audit.
@@ -144,9 +144,9 @@ from mlx_lm.models.switch_layers import SwitchGLU
 
 from keep.convert.fp4_expert import dequantize_fp4_expert
 from keep.convert.fp8_block import dequantize_fp8_block
-from mlx_vq.io.load import load_quantized_vq_switch_linear
-from mlx_vq.io.source_safetensors import read_safetensors_file_header
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from keep.io.load import load_quantized_vq_switch_linear
+from keep.io.source_safetensors import read_safetensors_file_header
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
 
 __all__ = [
     "DEEPSEEK_V4_FLASH_TEACHER_WINDOW_TOKENS",

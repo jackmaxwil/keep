@@ -7,7 +7,7 @@ Date: 2026-08-21. Basis: committed Task 2 and Task 4 evidence on this machine
 >
 > The 0.0934906005x component ratio below was **not measuring E8P kernel
 > performance**. It was measuring a Python import bug: `load_native()` in
-> `src/mlx_vq/kernels/nax.py` never registered `sys.modules["_vqnax"]`, so its
+> `src/ramp/kernels/nax.py` never registered `sys.modules["_vqnax"]`, so its
 > `importlib.import_module` fast path was dead and every call re-globbed the
 > 78-file build tree (including a redundant recursive `build/**/_vqnax*.so` that
 > re-matched the same path) and re-executed the 3.5 MB extension. The M=1 E8P path

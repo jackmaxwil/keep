@@ -1,10 +1,13 @@
-"""KEEP quantization helpers."""
+"""Quantization helpers."""
 
-from keep._alias import install_alias_package
+from keep.quant.rht import apply_inverse_rht_np, apply_rht_np, deterministic_rht_signs
+from keep.quant.rtn import QuantizedWeight, dequantize_weight_np, quantize_weight_rtn
 
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.quant",
-    globals(),
-    child_modules=("rht", "rtn"),
-)
+__all__ = [
+    "QuantizedWeight",
+    "apply_inverse_rht_np",
+    "apply_rht_np",
+    "dequantize_weight_np",
+    "deterministic_rht_signs",
+    "quantize_weight_rtn",
+]

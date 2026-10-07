@@ -8,10 +8,10 @@ from typing import Any
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.load import inspect_safetensors
+from ramp.benchmark.glm45_air import append_jsonl
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.load import inspect_safetensors
 
 
 _LAYER_RE = re.compile(r"^model\.layers\.(?P<layer>\d+)\.")

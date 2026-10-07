@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from mlx_vq.codebook.e8 import (
+from keep.vq.e8 import (
     E8_1BIT_PACKED_SHA256,
     E8P_PACKED_ABS_SHA256,
     QUIP_SHARP_SOURCE_COMMIT,

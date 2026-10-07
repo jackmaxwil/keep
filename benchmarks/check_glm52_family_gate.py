@@ -9,8 +9,8 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.build.hashing import teacher_cache_artifact_hash
-from mlx_vq.quality.glm52_family import (
+from keep.build.hashing import teacher_cache_artifact_hash
+from keep.quality.glm52_family import (
     GLM52_FAMILY_GATE_V1_CHECK_NAMES,
     GLM52_FAMILY_GATE_V1_MISSING_REQUIREMENTS,
     GLM52_FAMILY_GATE_V1_SCHEMA_VERSION,
@@ -45,14 +45,14 @@ from mlx_vq.quality.glm52_family import (
     validate_glm52_non_vq_evidence,
     validate_glm52_production_generation,
 )
-from mlx_vq.quality.glm52_teacher_cache import (
+from keep.quality.glm52_teacher_cache import (
     GLM52TeacherCacheAudit,
     GLM52TeacherCacheContract,
     MANIFEST_FILENAME as TEACHER_CACHE_MANIFEST_FILENAME,
     audit_glm52_teacher_cache,
 )
-from mlx_vq.quality.glm52_candidate_eval import compare_glm52_candidate_caches
-from mlx_vq.quality.glm52_route_diagnostics import (
+from keep.quality.glm52_candidate_eval import compare_glm52_candidate_caches
+from keep.quality.glm52_route_diagnostics import (
     compare_route_trace_artifacts,
     validate_capture_authority,
 )

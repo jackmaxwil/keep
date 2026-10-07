@@ -6,7 +6,7 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     load_conversion_manifest,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,

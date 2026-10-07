@@ -13,11 +13,11 @@ import numpy as np
 import pytest
 from safetensors.numpy import save_file
 
-from mlx_vq.codebook.e8 import e8_1bit_packed, e8p_packed_abs_grid
-from mlx_vq.convert.stream_convert import SafetensorsIndex
-from mlx_vq.io.schema import codebook_metadata_for_bits
-from mlx_vq.models.profiles import ModelProfile, get_profile
-from mlx_vq.validate import glm52_vq
+from keep.vq.e8 import e8_1bit_packed, e8p_packed_abs_grid
+from keep.convert.stream_convert import SafetensorsIndex
+from keep.io.schema import codebook_metadata_for_bits
+from ramp.models.profiles import ModelProfile, get_profile
+from keep.validate import glm52_vq
 
 
 MODEL_ID = "fixture/glm52-reap"

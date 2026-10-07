@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
     load_conversion_manifest,

@@ -8,12 +8,12 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.convert.stream_convert import (
+from keep.convert.stream_convert import (
     convert_vq_groups_from_safetensors,
     load_safetensors_index,
     plan_streaming_conversion_from_index,
 )
-from mlx_vq.validate.glm52_vq import validate_glm52_vq
+from keep.validate.glm52_vq import validate_glm52_vq
 
 
 def _write_tiny_glm52_sparse_checkpoint(tmp_path):

@@ -9,7 +9,7 @@ import mlx.core as mx
 import numpy as np
 from safetensors import safe_open
 
-from mlx_vq.convert.qwen_moe import (
+from keep.convert.qwen_moe import (
     QWEN36_35B_A3B_MODEL_ID,
     QwenMoeConversionGroup,
     QwenMoeConversionPlan,
@@ -20,7 +20,7 @@ from mlx_vq.convert.qwen_moe import (
     plan_qwen_moe_conversion_from_index,
     qwen_moe_group_output_filename,
 )
-from mlx_vq.quant.rtn import quantize_weight_rtn
+from keep.quant.rtn import quantize_weight_rtn
 
 
 def _qwen36_index() -> dict[str, object]:

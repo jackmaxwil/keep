@@ -8,14 +8,14 @@ from typing import Any
 
 import numpy as np
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.stream_convert import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.stream_convert import (
     _read_tensor_from_shard,
     load_safetensors_index,
     plan_streaming_conversion_from_index,
 )
-from mlx_vq.quant.rht import deterministic_rht_signs
-from mlx_vq.quality.learned_rotation_training import (
+from keep.quant.rht import deterministic_rht_signs
+from keep.quality.learned_rotation_training import (
     dense_rht_rotation_matrix,
     train_learned_rht_signs_np,
     train_learned_rotation_np,

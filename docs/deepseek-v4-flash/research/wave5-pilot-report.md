@@ -27,7 +27,7 @@ Ruff clean on all three new files.
 
 Files:
 
-* `src/mlx_vq/convert/dsv4_vq_pilot.py` — the measurement logic.
+* `src/keep/convert/dsv4_vq_pilot.py` — the measurement logic.
 * `benchmarks/pilot_dsv4_vq_materialization.py` — CLI: `sweep` / `control` /
   `block-probe` / `layer-fit` / `schedule` / `monitor`.
 * `tests/test_dsv4_vq_pilot.py` — 57 headless tests (no checkpoint, no GPU).
@@ -141,7 +141,7 @@ measured 8.936e-2 on 16 stratified experts and 8.960e-2 on all 256 — 0.3% apar
 
 ### Levers tested and rejected
 
-* **RHT / incoherence processing** (`mlx_vq.quality.rotation_search`). It
+* **RHT / incoherence processing** (`keep.quality.rotation_search`). It
   *hurts* here. Rotating destroys the per-column imatrix (a Hadamard makes the
   diagonal uniform at its mean), and on `down` — whose importance spans 180x
   across input columns — that costs more than the incoherence gain: 9.18e-2
@@ -157,7 +157,7 @@ measured 8.936e-2 on 16 stratified experts and 8.960e-2 on all 256 — 0.3% apar
 ## 3. What "2.5 and 3.0 bpw" means, reconciled
 
 A rate-accounting discrepancy worth naming before anyone reads a ladder label
-as a storage number. `mlx_vq.quality.dynamic_precision`'s tier menu labels E8P
+as a storage number. `keep.quality.dynamic_precision`'s tier menu labels E8P
 as `effective_bits_per_weight: 3.0` and E8-1bit as `2.0` — those are *planner
 budget* labels. Actual storage from `estimate_vq_storage` is
 `code_bits/8 + 16/group_size`: **2.031** and **1.031** bpw. A 1 bpw gap.

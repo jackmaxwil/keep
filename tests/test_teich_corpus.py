@@ -4,7 +4,7 @@ import copy
 
 import pytest
 
-from mlx_vq.quality.teich_corpus import (
+from keep.quality.teich_corpus import (
     assign_session_disjoint_splits,
     build_keep_best_window_row,
     build_keep_prompt_row,

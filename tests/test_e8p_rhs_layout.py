@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from mlx_vq.codebook.e8 import decode_e8p, e8p_packed_abs_grid
-from mlx_vq.kernels.e8p_rhs_layout import (
+from keep.vq.e8 import decode_e8p, e8p_packed_abs_grid
+from ramp.kernels.e8p_rhs_layout import (
     E8PNextKernelFamilyCandidate,
     build_e8p_component_stream_contract,
     build_e8p_component_stream_partial_reduction_contract,
@@ -321,7 +321,7 @@ def test_pack_e8p_split_byte_factor_reuse_tiles_reconstructs_split_byte_oracle()
 
 
 def test_pack_e8p_expert_kblock_factor_reuse_tiles_share_luts_across_output_tiles() -> None:
-    from mlx_vq.kernels import e8p_rhs_layout as layout
+    from ramp.kernels import e8p_rhs_layout as layout
 
     rows = np.arange(128, dtype=np.uint16)[:, None]
     words = np.arange(8, dtype=np.uint16)[None, :]

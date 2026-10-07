@@ -4,14 +4,14 @@ import json
 
 import numpy as np
 
-from mlx_vq.quality.calibration import (
+from keep.quality.calibration import (
     build_activation_record,
     compare_routing_records,
     per_expert_kld_contribution,
     summarize_activation,
     summarize_route_records,
 )
-from mlx_vq.quality.prompts import QualityPrompt
+from keep.quality.prompts import QualityPrompt
 
 
 def test_summarize_activation_reports_finite_magnitude_stats() -> None:

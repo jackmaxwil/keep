@@ -13,7 +13,7 @@ DESIGN DECISIONS
 1. Supervision boundary convention -- SHIFT-BY-ONE (next-token targets)
 ----------------------------------------------------------------------
 Verified empirically on all 257 rows and confirmed against the original
-builder (``src/mlx_vq/quality/teich_corpus.py::build_keep_prompt_row``):
+builder (``src/keep/quality/teich_corpus.py::build_keep_prompt_row``):
 
     target_token_ids[i] == encoded_token_ids[positions[i] + 1]     (257/257)
     target_token_ids[i] == encoded_token_ids[positions[i]]         (0/257)
@@ -200,13 +200,13 @@ The GLM-era pack carried ``split`` in {"train","holdout"} and
 ``tuning_eligible == (split == "train")``. Live consumers gate on exactly those
 two field names:
 
-    src/mlx_vq/quality/glm52_adapter_training.py:506   teich rows: requires
+    src/keep/quality/glm52_adapter_training.py:506   teich rows: requires
         split == "train" and tuning_eligible is True to permit tuning
-    src/mlx_vq/quality/glm52_teich_training_cache.py:507   split vocabulary is
+    src/keep/quality/glm52_teich_training_cache.py:507   split vocabulary is
         {"train","validation","holdout"}, tuning_eligible == (split == "train")
-    src/mlx_vq/quality/glm52_recovery.py:160          requires split ==
+    src/keep/quality/glm52_recovery.py:160          requires split ==
         "selection" and tuning_eligible is True
-    src/mlx_vq/quality/glm52_teacher_cache.py:560     requires
+    src/keep/quality/glm52_teacher_cache.py:560     requires
         tuning_eligible == (split == "selection")
 
 Carrying the GLM-era values through verbatim would leave 35 of the 37 new
@@ -230,7 +230,7 @@ gates on.
 8. token_ids_sha256
 -------------------
 Recomputed per row with the corpus's own recipe, reused from
-``mlx_vq.quality.teich_corpus`` to keep one definition:
+``keep.quality.teich_corpus`` to keep one definition:
 ``sha256(json.dumps(ids, sort_keys=True, separators=(",", ":"),
 ensure_ascii=False))``. Verified to reproduce all 257 source digests.
 
@@ -254,7 +254,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mlx_vq.quality.teich_corpus import _token_ids_sha256  # noqa: E402
+from keep.quality.teich_corpus import _token_ids_sha256  # noqa: E402
 
 SCRIPT_VERSION = "retokenize_teich_dsv4/2.0.0"
 
@@ -779,10 +779,10 @@ def main(argv: list[str] | None = None) -> int:
             ),
             "glm_era_fields_preserved": ["glm_era_split", "glm_era_tuning_eligible"],
             "consumer_gates_checked": [
-                "src/mlx_vq/quality/glm52_adapter_training.py:506",
-                "src/mlx_vq/quality/glm52_recovery.py:160",
-                "src/mlx_vq/quality/glm52_teich_training_cache.py:507",
-                "src/mlx_vq/quality/glm52_teacher_cache.py:560",
+                "src/keep/quality/glm52_adapter_training.py:506",
+                "src/keep/quality/glm52_recovery.py:160",
+                "src/keep/quality/glm52_teich_training_cache.py:507",
+                "src/keep/quality/glm52_teacher_cache.py:560",
             ],
             "leak_averted": (
                 "Inheriting the GLM-era values would have labelled 35 of 37 campaign-holdout "

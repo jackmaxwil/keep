@@ -7,13 +7,13 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build.cli import _format_plan_next_row_summary
-from mlx_vq.build.executor import execute_plan
-from mlx_vq.build.plan_next import PlanNextError, propose_next_step
-from mlx_vq.build.recipe import load_recipe, validate_recipe
-from mlx_vq.build.ops import REGISTRY
-from mlx_vq.build.runner import plan_recipe
-from mlx_vq.quality.plan_next import (
+from keep.build.cli import _format_plan_next_row_summary
+from keep.build.executor import execute_plan
+from keep.build.plan_next import PlanNextError, propose_next_step
+from keep.build.recipe import load_recipe, validate_recipe
+from keep.build.ops import REGISTRY
+from keep.build.runner import plan_recipe
+from keep.quality.plan_next import (
     QUALITY_PLAN_DOMAIN_QUOTAS,
     _quality_plan_candidates,
     _select_quality_plan_rows,

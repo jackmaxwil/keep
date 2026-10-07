@@ -7,9 +7,9 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io import source_safetensors
-from mlx_vq.io.source_safetensors import (
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io import source_safetensors
+from keep.io.source_safetensors import (
     read_indexed_safetensors_tensor_mlx,
     read_safetensors_tensor_header,
     read_safetensors_tensor_mlx,

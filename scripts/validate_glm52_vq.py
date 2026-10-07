@@ -6,8 +6,8 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.convert.inspect_hf import GLM52_MODEL_ID, fetch_hf_config
-from mlx_vq.validate.glm52_vq import validate_glm52_vq
+from keep.convert.inspect_hf import GLM52_MODEL_ID, fetch_hf_config
+from keep.validate.glm52_vq import validate_glm52_vq
 
 
 def _load_config(*, model_id: str, revision: str, config_path: str | None) -> dict:

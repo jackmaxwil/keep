@@ -5,11 +5,11 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build.cli import main as keep_main
-from mlx_vq.build.ops import REGISTRY
-from mlx_vq.build.recipe import RecipeError, load_recipe, parse_recipe, validate_recipe
-from mlx_vq.build.runner import plan_recipe
-from mlx_vq.build.highlevel import compile_high_level, is_high_level_recipe
+from keep.build.cli import main as keep_main
+from keep.build.ops import REGISTRY
+from keep.build.recipe import RecipeError, load_recipe, parse_recipe, validate_recipe
+from keep.build.runner import plan_recipe
+from keep.build.highlevel import compile_high_level, is_high_level_recipe
 
 
 def _write_highlevel(tmp_path: Path, raw: dict) -> Path:

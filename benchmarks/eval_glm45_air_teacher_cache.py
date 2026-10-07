@@ -12,18 +12,18 @@ from typing import Any
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.models.glm45_air_vq_adapter import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from ramp.models.glm45_air_vq_adapter import (
     has_dense_glm45_air_routed_expert_parameters,
     has_unbound_glm45_air_vq_experts,
 )
-from mlx_vq.quality.teacher_cache import (
+from keep.quality.teacher_cache import (
     evaluate_teacher_cache_row,
     read_teacher_cache_rows,
     summarize_teacher_cache_records,

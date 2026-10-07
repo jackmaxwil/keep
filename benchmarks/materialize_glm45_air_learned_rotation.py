@@ -5,8 +5,8 @@ import argparse
 import json
 from pathlib import Path
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.quality.learned_rotation_materialization import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.quality.learned_rotation_materialization import (
     materialize_learned_rotation_projection_candidates,
 )
 

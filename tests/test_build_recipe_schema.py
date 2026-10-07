@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from mlx_vq.build.ops import REGISTRY
-from mlx_vq.build.recipe import (
+from keep.build.ops import REGISTRY
+from keep.build.recipe import (
     InputRef,
     RecipeError,
     parse_recipe,

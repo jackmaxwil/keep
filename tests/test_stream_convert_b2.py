@@ -10,9 +10,9 @@ from pathlib import Path
 import pytest
 from safetensors import safe_open
 
-import mlx_vq.convert.stream_convert as stream_convert
-from mlx_vq.codebook.e8 import E8P_PACKED_ABS_SHA256
-from mlx_vq.convert.stream_convert import (
+import keep.convert.stream_convert as stream_convert
+from keep.vq.e8 import E8P_PACKED_ABS_SHA256
+from keep.convert.stream_convert import (
     TensorAction,
     _read_tensor_from_shard,
     convert_vq_group_from_safetensors,
@@ -24,10 +24,10 @@ from mlx_vq.convert.stream_convert import (
     plan_streaming_conversion_from_index,
     source_shard_inventory,
 )
-from mlx_vq.io.load import load_quantized_vq_switch_linear
-from mlx_vq.quant.rotation import apply_rotation_np
-from mlx_vq.quant.rht import apply_rht_np, deterministic_rht_signs
-from mlx_vq.quant.rtn import quantize_weight_rtn
+from keep.io.load import load_quantized_vq_switch_linear
+from keep.quant.rotation import apply_rotation_np
+from keep.quant.rht import apply_rht_np, deterministic_rht_signs
+from keep.quant.rtn import quantize_weight_rtn
 
 import mlx.core as mx
 import numpy as np

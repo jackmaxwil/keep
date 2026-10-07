@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mlx_vq.convert.recovery_checkpoint import (
+from keep.convert.recovery_checkpoint import (
     ProgressReport,
     completed_experts,
     record_expert_done,

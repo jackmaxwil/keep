@@ -26,7 +26,7 @@ def acceptance_gate(hours: float, *, max_hours: float = 12.0) -> bool:
 
 
 def measure_backend(backend: str, *, n_codewords: int, seed: int) -> dict:  # pragma: no cover - host timing
-    from mlx_vq.quant.rtn import nearest_e8p_codes_diagonal_hessian
+    from keep.quant.rtn import nearest_e8p_codes_diagonal_hessian
 
     rng = np.random.default_rng(seed)
     vecs = (rng.standard_normal((n_codewords, 8)) * 0.6).astype(np.float32)

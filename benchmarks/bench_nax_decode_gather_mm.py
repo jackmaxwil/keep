@@ -23,8 +23,8 @@ import time
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import decode_weight_matrix, e8p_full_grid
-from mlx_vq.ops.vq_switch import gather_vqmm_sorted_routes
+from keep.vq.e8 import decode_weight_matrix, e8p_full_grid
+from ramp.ops.vq_switch import gather_vqmm_sorted_routes
 
 
 def _time_ms(fn, *, warmup: int, iterations: int) -> float:

@@ -13,13 +13,13 @@ from typing import Any
 
 
 def _producer_api() -> Any:
-    module_name = "mlx_vq.quality.glm52_teacher_cache_producer"
+    module_name = "keep.quality.glm52_teacher_cache_producer"
     existing = sys.modules.get(module_name)
     if existing is not None:
         return existing
     module_path = (
         Path(__file__).resolve().parents[1]
-        / "src/mlx_vq/quality/glm52_teacher_cache_producer.py"
+        / "src/keep/quality/glm52_teacher_cache_producer.py"
     )
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:

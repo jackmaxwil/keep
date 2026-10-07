@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from mlx_vq.validate.qwen_vq import validate_qwen_vq
+from keep.validate.qwen_vq import validate_qwen_vq
 
 
 def main() -> None:

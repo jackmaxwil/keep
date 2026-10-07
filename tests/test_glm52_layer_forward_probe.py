@@ -11,9 +11,9 @@ import pytest
 import yaml
 from mlx.utils import tree_flatten
 
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.models.glm52_vq_adapter import GLM52VQModelArgs, Glm52VQDecoderLayer
-from mlx_vq.models.profiles import ModelProfile, profile_to_dict
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm52_vq_adapter import GLM52VQModelArgs, Glm52VQDecoderLayer
+from ramp.models.profiles import ModelProfile, profile_to_dict
 
 
 SCRIPT_PATH = Path(__file__).parents[1] / "benchmarks" / "probe_glm52_layer_forward.py"

@@ -10,12 +10,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build import executor
-from mlx_vq.build.executor import execute_plan
-from mlx_vq.build.ledger import Ledger
-from mlx_vq.build.ops import REGISTRY
-from mlx_vq.build.recipe import load_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build import executor
+from keep.build.executor import execute_plan
+from keep.build.ledger import Ledger
+from keep.build.ops import REGISTRY
+from keep.build.recipe import load_recipe
+from keep.build.runner import plan_recipe
 
 # Stub "trainer": refuses an existing output dir (like the real primitives),
 # then writes a manifest with sidecars and a training-log evidence line.

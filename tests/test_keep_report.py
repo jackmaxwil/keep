@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from mlx_vq.build.report import render_html, render_terminal
-from mlx_vq.build.cli import main as keep_main
+from keep.build.report import render_html, render_terminal
+from keep.build.cli import main as keep_main
 
 
 def _write_json(path: Path, value: object) -> None:

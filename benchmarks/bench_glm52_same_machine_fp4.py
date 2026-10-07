@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 def _benchmark_api() -> Any:
-    """Load the isolated contract without executing ``mlx_vq.quality.__init__``.
+    """Load the isolated contract without executing ``keep.quality.__init__``.
 
     The package initializer currently imports MLX through unrelated GLM45
     surfaces.  Keeping this command's contract path MLX-free is necessary for
@@ -32,7 +32,7 @@ def _benchmark_api() -> Any:
     existing = sys.modules.get(name)
     if existing is not None:
         return existing
-    path = Path(__file__).resolve().parents[1] / "src/mlx_vq/quality/glm52_benchmark.py"
+    path = Path(__file__).resolve().parents[1] / "src/keep/quality/glm52_benchmark.py"
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise RuntimeError("could not load GLM52 benchmark contract module")
@@ -180,12 +180,12 @@ def _candidate_operations(args: argparse.Namespace, policy: Mapping[str, Any]) -
 
     import mlx.core as mx
 
-    from mlx_vq.models.glm52_composite_loader import (
+    from ramp.models.glm52_composite_loader import (
         assert_glm52_production_inputs_unchanged,
         load_authenticated_glm52_composite,
         validate_glm52_production_inputs,
     )
-    from mlx_vq.models.glm52_vq_adapter import GLM52VQModel
+    from ramp.models.glm52_vq_adapter import GLM52VQModel
 
     token_ids = _prompt_ids(args.prompt_token_ids_json)
     validated = validate_glm52_production_inputs(
@@ -287,8 +287,8 @@ def _control_operations(args: argparse.Namespace, policy: Mapping[str, Any]) -> 
 
     import mlx.core as mx
 
-    from mlx_vq.models.glm52_source_teacher import run_glm52_source_teacher
-    from mlx_vq.quality.glm52_teacher_cache_producer import load_glm52_source_teacher_workload
+    from ramp.models.glm52_source_teacher import run_glm52_source_teacher
+    from keep.quality.glm52_teacher_cache_producer import load_glm52_source_teacher_workload
 
     token_ids = _prompt_ids(args.prompt_token_ids_json)
     contract = _load_teacher_contract(args.prompt_pack_json, args.source_contract_json)
@@ -354,7 +354,7 @@ def _measure_role(
         identity, operations = _candidate_operations(args, policy)
     else:
         identity, operations = _control_operations(args, policy)
-    from mlx_vq.benchmark.metrics import collect_metric_snapshot, collect_vm_stat_counts
+    from ramp.benchmark.metrics import collect_metric_snapshot, collect_vm_stat_counts
 
     warmups, repetitions = _run_protocol(
         role=role,

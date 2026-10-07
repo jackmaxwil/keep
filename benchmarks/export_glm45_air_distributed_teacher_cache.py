@@ -23,7 +23,7 @@ import numpy as np
 from mlx_lm.models.base import create_attention_mask
 from mlx_lm.utils import load_model, load_tokenizer
 
-from mlx_vq.quality.prompts import (
+from keep.quality.prompts import (
     QualityPrompt,
     get_quality_prompt_by_id,
     get_quality_prompt_ids,
@@ -2995,7 +2995,7 @@ def _run_local_sequential_export_multi_window_stage_processes(
                     _local_sequential_stage_view_roots_json(stage_view_roots)
                 )
 
-            from mlx_vq.quality.teacher_cache import (
+            from keep.quality.teacher_cache import (
                 build_teacher_cache_payload,
                 build_teacher_cache_topk_payload,
             )
@@ -3407,7 +3407,7 @@ def _run_local_sequential_export_stage_processes(
                     }
                 )
 
-            from mlx_vq.quality.teacher_cache import (
+            from keep.quality.teacher_cache import (
                 build_teacher_cache_payload,
                 build_teacher_cache_topk_payload,
             )
@@ -3612,7 +3612,7 @@ def _run_local_sequential_export(
             **mlx_memory_settings,
         }
 
-        from mlx_vq.quality.teacher_cache import (
+        from keep.quality.teacher_cache import (
             build_teacher_cache_payload,
             build_teacher_cache_topk_payload,
         )
@@ -4397,7 +4397,7 @@ def main() -> None:
                     metadata=metadata_update,
                 )
             else:
-                from mlx_vq.quality.teacher_cache import (
+                from keep.quality.teacher_cache import (
                     build_teacher_cache_payload,
                     build_teacher_cache_topk_payload,
                 )

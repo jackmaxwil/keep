@@ -11,13 +11,13 @@ import pytest
 
 
 MODULE_PATH = (
-    Path(__file__).parents[1] / "src" / "mlx_vq" / "models" / "glm52_source_teacher.py"
+    Path(__file__).parents[1] / "src" / "ramp" / "models" / "glm52_source_teacher.py"
 )
 
 
 def _api() -> Any:
     assert MODULE_PATH.is_file(), "the GLM52 source-teacher forward runner is missing"
-    return importlib.import_module("mlx_vq.models.glm52_source_teacher")
+    return importlib.import_module("ramp.models.glm52_source_teacher")
 
 
 def _expert_weights() -> dict[int, dict[str, np.ndarray]]:
@@ -46,7 +46,7 @@ def _tiny_model() -> Any:
     import mlx.core as mx
     from mlx.utils import tree_map_with_path
 
-    from mlx_vq.models.glm52_vq_adapter import (
+    from ramp.models.glm52_vq_adapter import (
         GLM52VQModel,
         glm52_vq_args_from_config,
     )
@@ -246,7 +246,7 @@ def test_pipeline_on_is_byte_identical_to_pipeline_off_for_tiny_teacher_cache(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     api = _api()
-    cache_api = importlib.import_module("mlx_vq.quality.glm52_teacher_cache")
+    cache_api = importlib.import_module("keep.quality.glm52_teacher_cache")
     prompts = ([1, 2, 3, 4, 5], [6, 7, 8], [9, 10, 11, 12])
     prompt_rows = tuple(
         cache_api.GLM52TeacherCachePrompt(

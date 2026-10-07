@@ -9,18 +9,18 @@ import mlx.nn as nn
 import numpy as np
 from mlx_lm.models.base import create_attention_mask
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
-from mlx_vq.quality.calibration import prompt_token_ids
-from mlx_vq.quality.imatrix import (
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from keep.quality.calibration import prompt_token_ids
+from keep.quality.imatrix import (
     ROUTED_PROJECTIONS,
     accumulate_routed_projection_imatrix,
     build_air_imatrix_collection_plan,
     load_projection_imatrix_manifest,
     write_projection_imatrix_sidecars,
 )
-from mlx_vq.quality.imatrix_collection import (
+from keep.quality.imatrix_collection import (
     ImatrixAccumulator,
     finalize_entries,
     merge_entries,
@@ -28,7 +28,7 @@ from mlx_vq.quality.imatrix_collection import (
     parse_projection_selection,
     selected_prompts,
 )
-from mlx_vq.quality.prompts import QualityPrompt, get_quality_prompts
+from keep.quality.prompts import QualityPrompt, get_quality_prompts
 
 
 DEFAULT_LAYERS = "1-45"

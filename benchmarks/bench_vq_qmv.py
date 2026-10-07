@@ -8,8 +8,8 @@ from dataclasses import asdict, dataclass
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.kernels.vq_qmv import vq_qmv
+from keep.vq.e8 import e8_1bit_packed
+from ramp.kernels.vq_qmv import vq_qmv
 
 
 @dataclass(frozen=True)

@@ -15,9 +15,9 @@ from mlx_lm.models import qwen3_5_moe
 
 from benchmarks.probe_qwen_moe_binding import probe_qwen_moe_binding_artifact
 from benchmarks.probe_qwen_non_expert_binding import probe_qwen_non_expert_binding_source
-from mlx_vq.codebook.e8 import cosine_similarity
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.convert.qwen_moe import (
+from keep.vq.e8 import cosine_similarity
+from keep.convert.stream_convert import load_safetensors_index
+from keep.convert.qwen_moe import (
     QWEN36_35B_A3B_MODEL_ID,
     QwenMoeConversionGroup,
     QwenMoeConversionPlan,
@@ -25,13 +25,13 @@ from mlx_vq.convert.qwen_moe import (
     convert_qwen_moe_groups_from_safetensors,
     qwen_moe_group_output_filename,
 )
-from mlx_vq.models.qwen_moe_adapter import (
+from ramp.models.qwen_moe_adapter import (
     bind_qwen_non_expert_weights,
     bind_qwen_moe_vq_experts,
     has_unbound_qwen_moe_vq_experts,
     load_qwen_moe_switch_glu,
 )
-from mlx_vq.validate.qwen_vq import (
+from keep.validate.qwen_vq import (
     DenseDequantLinear,
     audit_qwen_moe_materialization_manifest,
     get_module_by_path,

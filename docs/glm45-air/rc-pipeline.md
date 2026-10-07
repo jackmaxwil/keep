@@ -2,10 +2,8 @@
 
 This is the GLM-4.5-Air release-candidate workflow for **KEEP** (the
 KL-distilled Expert Encoding and Precision method) running on **RAMP** (the
-Routed Accelerated MoE Pipeline). The legacy `mlx_vq` package remains available
-as an import shim during the Air ladder, but new public code should use `keep.*`
-for method/quality/artifact surfaces and `ramp.*` for runtime/kernels/benchmark
-surfaces.
+Routed Accelerated MoE Pipeline). Method, quality and artifact code lives in
+`keep.*`, and runtime, kernel and benchmark code in `ramp.*`.
 
 This repo now treats the accepted GLM-4.5-Air rank-4 low-rank residual artifact
 as the balanced RC baseline:

@@ -1,23 +1,7 @@
-"""KEEP declarative build recipes (alias of ``mlx_vq.build``)."""
+"""Declarative build recipes for KEEP artifacts.
 
-from keep._alias import install_alias_package
-
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.build",
-    globals(),
-    child_modules=(
-        "cli",
-        "executor",
-        "gate_profiles",
-        "gates",
-        "hashing",
-        "highlevel",
-        "ledger",
-        "ops",
-        "plan_next",
-        "promote",
-        "recipe",
-        "runner",
-    ),
-)
+A recipe (one YAML per candidate under ``recipes/``) declares an ordered
+graph of steps over the existing deterministic primitives. The runner
+content-addresses each step, reuses completed steps, and records the full
+lineage as ``build_steps`` in the output artifact manifest.
+"""

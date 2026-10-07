@@ -27,14 +27,14 @@ from benchmarks.bench_dsv4_flash_layer_slice_prefill import (
     ShardReader,
     load_layer_experts,
 )
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.io.load import load_quantized_vq_switch_linear
-from mlx_vq.ops import vq_switch
-from mlx_vq.quality.dsv4_teacher_agreement import heavy_job_lock, vq_artifact_identity
+from keep.io.load import load_quantized_vq_switch_linear
+from ramp.ops import vq_switch
+from keep.quality.dsv4_teacher_agreement import heavy_job_lock, vq_artifact_identity
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HEAVY_JOB_LOCK = REPO_ROOT / ".keep-heavy-job.lock"

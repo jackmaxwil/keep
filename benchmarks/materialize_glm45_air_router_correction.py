@@ -7,11 +7,11 @@ from typing import Any
 
 import mlx.core as mx
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
 )
-from mlx_vq.io.router_correction import (
+from keep.io.router_correction import (
     load_conversion_manifest,
     write_router_correction_artifact_manifest,
     write_router_correction_sidecar,

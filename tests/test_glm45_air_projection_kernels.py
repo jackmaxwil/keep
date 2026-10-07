@@ -7,8 +7,8 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-import mlx_vq.benchmark.projection_kernels as projection_kernels
-from mlx_vq.benchmark.projection_kernels import (
+import ramp.benchmark.projection_kernels as projection_kernels
+from ramp.benchmark.projection_kernels import (
     _call_dense_or_mlx,
     _call_mlx_gather_mm_bf16_routed,
     _call_mlx_q2_routed,
@@ -32,8 +32,8 @@ from mlx_vq.benchmark.projection_kernels import (
     run_loaded_projection_variant,
     run_projection_variant,
 )
-from mlx_vq.codebook.e8 import e8p_packed_abs_grid
-from mlx_vq.kernels import nax
+from keep.vq.e8 import e8p_packed_abs_grid
+from ramp.kernels import nax
 
 
 def _write_e8p_projection_artifact(
@@ -2410,7 +2410,7 @@ def test_decode_bandwidth_floor_report_uses_m1_read_bytes_and_measured_bandwidth
 
 
 def test_diagnostic_metal_source_is_packaged_with_kernel_sources() -> None:
-    path = Path(__file__).resolve().parents[1] / "src" / "mlx_vq" / "kernels" / "gather_vqmm_diagnostics.metal"
+    path = Path(__file__).resolve().parents[1] / "src" / "ramp" / "kernels" / "gather_vqmm_diagnostics.metal"
 
     assert path.exists()
     assert "DIAGNOSTIC_MODE" in path.read_text()

@@ -6,16 +6,16 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
-from mlx_vq.kernels.gather_vqmm import (
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
+from ramp.kernels.gather_vqmm import (
     gather_vqmm_m1_kernel,
     gather_vqmm_mma_cwdecode_blocks_kernel,
     gather_vqmm_mma_k32_cwdecode_blocks_kernel,
     gather_vqmm_mma_k64_cwdecode_blocks_kernel,
     gather_vqmm_mma_k128_cwdecode_blocks_kernel,
 )
-import mlx_vq.ops.vq_switch as vq_switch
-from mlx_vq.ops.vq_switch import gather_vqmm, vq_switch_qmv
+import ramp.ops.vq_switch as vq_switch
+from ramp.ops.vq_switch import gather_vqmm, vq_switch_qmv
 
 
 def _switch_fixture(seed: int = 314) -> tuple[QuantizedVQSwitchLinear, np.ndarray, np.ndarray]:
@@ -218,7 +218,7 @@ def test_sorted_route_helper_auto_uses_air_projection_roles(monkeypatch) -> None
         calls.append("down" if kwargs["output_dims"] > kwargs["input_dims"] else "gate_up")
         return mx.zeros((kwargs["route_count"], kwargs["output_dims"]), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_gate_up_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_gate_up_blocks)
 
     gate_routes = 8192
     down_routes = 16384
@@ -356,7 +356,7 @@ def test_gather_vqmm_explicit_lhs_uses_in_kernel_activation_indexing(monkeypatch
         )
         return mx.zeros((rhs_indices.shape[0], 6), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_lhs_kernel", fake_gather_vqmm_lhs_kernel)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_lhs_kernel", fake_gather_vqmm_lhs_kernel)
 
     actual = gather_vqmm(
         mx.array(x),
@@ -419,8 +419,8 @@ def test_gather_vqmm_auto_routes_small_batches_direct_and_large_batches_sorted(m
         )
         return mx.zeros((rhs_indices.shape[0], 6), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_m1_kernel", fake_m1_direct)
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_tiled_down_kernel", fake_sorted)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_m1_kernel", fake_m1_direct)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_tiled_down_kernel", fake_sorted)
 
     small = gather_vqmm(
         mx.array(x[:1]),
@@ -487,8 +487,8 @@ def test_gather_vqmm_direct_strategy_wins_over_sorted_indices(monkeypatch) -> No
     def fail_sorted(*_args, **_kwargs):
         raise AssertionError("route_strategy='direct' must not dispatch sorted_tiled")
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_kernel", fake_direct)
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_tiled_down_kernel", fail_sorted)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_kernel", fake_direct)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_tiled_down_kernel", fail_sorted)
 
     tiled_x = mx.array(np.tile(x[:1], (64, 1)))
     tiled_indices = mx.array(np.tile(indices[:1], (64, 1)))
@@ -552,7 +552,7 @@ def test_gather_vqmm_auto_uses_block_mma_for_large_down_projection(monkeypatch) 
         )
         return mx.zeros((kwargs["route_count"], 32), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_mma_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_mma_blocks)
 
     actual = gather_vqmm(
         x,
@@ -616,7 +616,7 @@ def test_gather_vqmm_auto_uses_large_block_mma_for_very_large_down_projection(mo
         )
         return mx.zeros((kwargs["route_count"], 32), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_large_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_large_blocks)
 
     actual = gather_vqmm(
         x,
@@ -680,7 +680,7 @@ def test_gather_vqmm_auto_uses_block_mma_for_large_gate_up_projection(monkeypatc
         )
         return mx.zeros((kwargs["route_count"], 8), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_mma_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_cwdecode_blocks_kernel", fake_mma_blocks)
 
     actual = gather_vqmm(
         x,
@@ -744,7 +744,7 @@ def test_gather_vqmm_auto_uses_k32_cwdecode_for_aligned_gate_up_projection(monke
         )
         return mx.zeros((kwargs["route_count"], 8), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_k32_cwdecode_blocks_kernel", fake_k32_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_k32_cwdecode_blocks_kernel", fake_k32_blocks)
 
     actual = gather_vqmm(
         x,
@@ -808,7 +808,7 @@ def test_gather_vqmm_auto_uses_k64_cwdecode_for_64_aligned_gate_up_projection(mo
         )
         return mx.zeros((kwargs["route_count"], 8), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_k64_cwdecode_blocks_kernel", fake_k64_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_k64_cwdecode_blocks_kernel", fake_k64_blocks)
 
     actual = gather_vqmm(
         x,
@@ -852,7 +852,7 @@ def test_gather_vqmm_block_mma_matches_direct_when_enabled(monkeypatch) -> None:
     indices = mx.array(
         rng.integers(0, 5, size=(64, 3), dtype=np.int32),
     )
-    monkeypatch.setattr("mlx_vq.ops.vq_switch._GATE_UP_MMA_ROUTE_THRESHOLD", 16)
+    monkeypatch.setattr("ramp.ops.vq_switch._GATE_UP_MMA_ROUTE_THRESHOLD", 16)
 
     actual = gather_vqmm(
         x,
@@ -897,7 +897,7 @@ def test_gather_vqmm_down_block_mma_matches_direct_when_enabled(monkeypatch) -> 
     indices = mx.array(
         rng.integers(0, 5, size=(64, 3), dtype=np.int32),
     )
-    monkeypatch.setattr("mlx_vq.ops.vq_switch._DOWN_BLOCK_MMA_ROUTE_THRESHOLD", 16)
+    monkeypatch.setattr("ramp.ops.vq_switch._DOWN_BLOCK_MMA_ROUTE_THRESHOLD", 16)
 
     actual = gather_vqmm(
         x,
@@ -942,8 +942,8 @@ def test_gather_vqmm_large_block_mma_matches_direct_when_enabled(monkeypatch) ->
     indices = mx.array(
         rng.integers(0, 5, size=(64, 3), dtype=np.int32),
     )
-    monkeypatch.setattr("mlx_vq.ops.vq_switch._DOWN_BLOCK_MMA_ROUTE_THRESHOLD", 16)
-    monkeypatch.setattr("mlx_vq.ops.vq_switch._LARGE_BLOCK_MMA_ROUTE_THRESHOLD", 16)
+    monkeypatch.setattr("ramp.ops.vq_switch._DOWN_BLOCK_MMA_ROUTE_THRESHOLD", 16)
+    monkeypatch.setattr("ramp.ops.vq_switch._LARGE_BLOCK_MMA_ROUTE_THRESHOLD", 16)
 
     actual = gather_vqmm(
         x,
@@ -1373,7 +1373,7 @@ def test_gather_vqmm_air_down_352_dispatches_k64_cwdecode(monkeypatch) -> None:
         )
         return mx.zeros((kwargs["route_count"], output_dims), dtype=x_arg.dtype)
 
-    monkeypatch.setattr("mlx_vq.ops.vq_switch.gather_vqmm_mma_k64_cwdecode_blocks_kernel", fake_k64_blocks)
+    monkeypatch.setattr("ramp.ops.vq_switch.gather_vqmm_mma_k64_cwdecode_blocks_kernel", fake_k64_blocks)
 
     actual = gather_vqmm(
         x,

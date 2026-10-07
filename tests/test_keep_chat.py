@@ -5,7 +5,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from mlx_vq.build.chat import (
+from keep.build.chat import (
     ChatConfig,
     ChatError,
     ChatSession,

@@ -8,12 +8,12 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     continuous_sidecar_relpath,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.io.router_correction import load_router_correction_sidecar, router_corrections_enabled
+from keep.io.router_correction import load_router_correction_sidecar, router_corrections_enabled
 
 
 def _load_cli():

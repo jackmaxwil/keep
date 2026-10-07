@@ -496,7 +496,7 @@ def test_qwen_teacher_logits_probe_emits_compact_rows(
 ) -> None:
     import mlx.core as mx
 
-    from mlx_vq.io.source_safetensors import read_safetensors_tensor_mlx
+    from keep.io.source_safetensors import read_safetensors_tensor_mlx
 
     policy = define_qwen_family_gate_policy(
         model_id="Qwen/Qwen3.6-35B-A3B",

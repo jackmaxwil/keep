@@ -27,7 +27,7 @@ RAMP is **compression-agnostic** — it runs any low-bit routed MoE; KEEP is one
 - **RAMP** (engine): serves them. Package `ramp` (kernels, routing, prefill/decode, Lane S).
 
 The repo is `keep`, containing both `keep` and the reusable `ramp` package.
-`mlx_vq` is the original package. `keep` and `ramp` re-export from it while code moves, and new code goes in `keep` or `ramp`.
+Method code lives in `keep`, runtime code in `ramp`.
 
 ## Published model names
 Format: `<Base>[-REAP]-KEEP-<size>[-<bpw>]`

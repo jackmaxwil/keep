@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.build.promote import PromotionError, promote_step
+from keep.build.promote import PromotionError, promote_step
 
 from tests.test_build_runner_resume import _stubbed_plan
-from mlx_vq.build.executor import execute_plan
+from keep.build.executor import execute_plan
 
 
 def test_promote_completed_step_creates_symlink_and_stamps_status(tmp_path: Path) -> None:

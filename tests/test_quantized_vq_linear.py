@@ -5,16 +5,16 @@ import json
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.codebook.e8 import e8_1bit_packed
-from mlx_vq.io.load import (
+from keep.vq.e8 import e8_1bit_packed
+from keep.io.load import (
     current_rss_bytes,
     dense_equivalent_bytes,
     infer_vq_linear_dims,
     inspect_safetensors,
     load_quantized_vq_linear,
 )
-from mlx_vq.io.schema import QuantizationConfig
-from mlx_vq.kernels.vq_qmv import vq_qmv_reference_np
+from keep.io.schema import QuantizationConfig
+from ramp.kernels.vq_qmv import vq_qmv_reference_np
 
 
 def _dtype_name(dtype: object) -> str:

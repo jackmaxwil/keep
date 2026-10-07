@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from mlx_vq.convert.inspect_hf import summarize_config, validate_glm45_air, validate_glm52
-from mlx_vq.convert.stream_convert import estimate_vq_storage, plan_from_config
+from keep.convert.inspect_hf import summarize_config, validate_glm45_air, validate_glm52
+from keep.convert.stream_convert import estimate_vq_storage, plan_from_config
 
 
 GLM52_CONFIG = {

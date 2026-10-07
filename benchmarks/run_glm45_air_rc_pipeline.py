@@ -11,14 +11,14 @@ from typing import Any
 
 from huggingface_hub import hf_hub_download
 
-from mlx_vq.benchmark.quant_compare import audit_vq_artifact_prefill_compatibility
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from ramp.benchmark.quant_compare import audit_vq_artifact_prefill_compatibility
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
 from keep import verify_environment
-from mlx_vq.quality.plan_next import (
+from keep.quality.plan_next import (
     _quality_plan_candidates,
     _select_quality_plan_rows,
 )
-from mlx_vq.quality.rc_gates import (
+from keep.quality.rc_gates import (
     BALANCED_HARD_TARGETS,
     COMMUNITY_WOW_TARGETS,
     LANE_S_TIMING_RELATIVE_SPREAD_MAX,

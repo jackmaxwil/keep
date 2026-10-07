@@ -73,7 +73,7 @@ claims are reproduced by
 
 ## 2. The existing kernel family
 
-`src/mlx_vq/kernels/gather_vqmm.py` registers fifteen `mx.fast.metal_kernel`
+`src/ramp/kernels/gather_vqmm.py` registers fifteen `mx.fast.metal_kernel`
 objects (fourteen pre-existing plus this increment's verify kernel). Two
 families matter for verify.
 
@@ -294,7 +294,7 @@ descriptor build is ever revived (see §5).
 The hardware gate passes: `mx.device_info()["architecture"]` is
 `applegpu_g17s`, which satisfies both dflash's `applegpu_g17*` prefix test and
 omlx's stricter `applegpu_g(\d+)([a-z])` with `gen >= 17`, on Darwin 25.4.0
-(macOS 26.x, ≥ 26.2 required). `src/mlx_vq/kernels/nax.py` already exposes
+(macOS 26.x, ≥ 26.2 required). `src/ramp/kernels/nax.py` already exposes
 `nax_e8_fp16_sorted_steel_matmul` and `nax_e8p_fp16_sorted_steel_matmul`, wired
 into `gather_vqmm_sorted_routes` under `implementation="nax_e8"/"nax_e8p"`, so
 the plumbing exists.

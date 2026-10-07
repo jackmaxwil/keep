@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import cosine_similarity, e8p_full_grid
-from mlx_vq.quant.rtn import (
+from keep.vq.e8 import cosine_similarity, e8p_full_grid
+from keep.quant.rtn import (
     dequantize_weight_np,
     nearest_codebook_indices_diagonal_hessian,
     quantize_weight_rtn,
@@ -14,7 +14,7 @@ from mlx_vq.quant.rtn import (
 def _require_mlx_runtime():
     try:
         import mlx.core as mx
-        from mlx_vq.nn.linear import QuantizedVQLinear
+        from ramp.nn.linear import QuantizedVQLinear
 
         probe = mx.array([0.0], dtype=mx.float32)
         mx.eval(probe)

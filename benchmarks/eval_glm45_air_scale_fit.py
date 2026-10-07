@@ -6,11 +6,11 @@ from pathlib import Path
 
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
-from mlx_vq.quality.prompts import QualityPrompt, get_quality_prompts
-from mlx_vq.validate.glm45_air_scale_fit import evaluate_glm45_air_scale_fit
-from mlx_vq.validate.glm45_air_vq import capture_glm45_air_moe_input_states, select_input_state_rows
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
+from keep.quality.prompts import QualityPrompt, get_quality_prompts
+from keep.validate.glm45_air_scale_fit import evaluate_glm45_air_scale_fit
+from keep.validate.glm45_air_vq import capture_glm45_air_moe_input_states, select_input_state_rows
 
 
 def _load_config(*, model_id: str, revision: str, config_path: str | None) -> dict:

@@ -11,15 +11,15 @@ import numpy as np
 from huggingface_hub import hf_hub_download
 from mlx_lm.models.base import create_attention_mask
 
-from mlx_vq.benchmark.glm45_air import load_resident_air
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.glm45_air import load_resident_air
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
-from mlx_vq.quality.layer_probe_attribution import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from keep.quality.layer_probe_attribution import (
     LayerProbeTarget,
     load_layer_probe_state_bundle,
     parse_layer_spec,
@@ -27,8 +27,8 @@ from mlx_vq.quality.layer_probe_attribution import (
     summarize_layer_probe_records,
     write_layer_probe_state_bundle,
 )
-from mlx_vq.quality.teacher_cache import read_teacher_cache_rows
-from mlx_vq.validate.glm45_air_vq import validate_glm45_air_vq
+from keep.quality.teacher_cache import read_teacher_cache_rows
+from keep.validate.glm45_air_vq import validate_glm45_air_vq
 
 
 DEFAULT_LAYERS = "1,6,11,16,21,26,31,36,41,45"

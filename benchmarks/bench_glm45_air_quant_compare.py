@@ -10,14 +10,14 @@ from typing import Any
 import mlx.core as mx
 from huggingface_hub import hf_hub_download
 
-from mlx_vq.benchmark.metrics import collect_vm_stat_counts, wait_for_memory_quiet
-from mlx_vq.benchmark.glm45_air import (
+from ramp.benchmark.metrics import collect_vm_stat_counts, wait_for_memory_quiet
+from ramp.benchmark.glm45_air import (
     append_jsonl,
     run_generation_benchmark,
     run_mlx_quantized_routed_generation_benchmark,
     scenario_defaults,
 )
-from mlx_vq.benchmark.quant_compare import (
+from ramp.benchmark.quant_compare import (
     add_comparison_metadata,
     aggregate_repetition_records,
     audit_vq_artifact_prefill_compatibility,
@@ -28,8 +28,8 @@ from mlx_vq.benchmark.quant_compare import (
     official_conversion_memory_preflight,
     validate_mlx_routed_group_size,
 )
-from mlx_vq.benchmark.vq2_preflight import run_vq2_preflight
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from ramp.benchmark.vq2_preflight import run_vq2_preflight
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
 
 
 ENGINE_CONFIG = {

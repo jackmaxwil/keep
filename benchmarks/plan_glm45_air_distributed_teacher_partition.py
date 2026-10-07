@@ -9,8 +9,8 @@ from typing import Any
 
 from huggingface_hub import snapshot_download
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.stream_convert import load_safetensors_index
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.stream_convert import load_safetensors_index
 
 
 GLM45_AIR_REVISION = "a24ceef6ce4f3536971efe9b778bdaa1bab18daa"

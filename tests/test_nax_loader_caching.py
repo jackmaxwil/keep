@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from mlx_vq.kernels import nax
+from ramp.kernels import nax
 
 
 def test_load_native_returns_one_module_per_process() -> None:

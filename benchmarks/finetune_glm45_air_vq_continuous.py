@@ -12,22 +12,22 @@ import mlx.nn as nn
 import numpy as np
 from mlx_lm.models.base import create_attention_mask
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.io.continuous_sidecar import (
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.io.logit_bias import copy_declared_logit_bias_sidecar
-from mlx_vq.io.source_safetensors import read_safetensors_tensor_mlx
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
-from mlx_vq.quality.mlx_surrogate import (
+from keep.io.logit_bias import copy_declared_logit_bias_sidecar
+from keep.io.source_safetensors import read_safetensors_tensor_mlx
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from keep.quality.mlx_surrogate import (
     RouteLocalSwitchLinearSurrogate,
     switch_linear_layer_sidecar,
 )
-from mlx_vq.quality.teacher_cache import (
+from keep.quality.teacher_cache import (
     read_teacher_cache_rows,
     validate_teacher_cache_metadata,
 )

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.quality.ebss import build_ebss_prompt_selection
+from keep.quality.ebss import build_ebss_prompt_selection
 
 
 def load_route_records_jsonl(path: Path) -> list[dict[str, Any]]:

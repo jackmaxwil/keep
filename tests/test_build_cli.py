@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.build.cli import (
+from keep.build.cli import (
     _resolve_repair_from_step,
     _run_optional_rc_diff,
     build_parser,
 )
-from mlx_vq.build.recipe import load_recipe, parse_recipe
+from keep.build.recipe import load_recipe, parse_recipe
 
 
 def _accepted_summary() -> dict:

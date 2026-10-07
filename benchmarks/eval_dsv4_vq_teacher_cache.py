@@ -33,7 +33,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
-from mlx_vq.quality.dsv4_teacher_agreement import (  # noqa: E402
+from keep.quality.dsv4_teacher_agreement import (  # noqa: E402
     DEFAULT_POSITION_SLICE,
     agreement_verdict,
     heavy_job_lock,
@@ -43,7 +43,7 @@ from mlx_vq.quality.dsv4_teacher_agreement import (  # noqa: E402
     summarize_agreement_records,
     vq_artifact_identity,
 )
-from mlx_vq.quality.dsv4_teacher_runner import (  # noqa: E402
+from keep.quality.dsv4_teacher_runner import (  # noqa: E402
     DEFAULT_IO_THREADS,
     DEFAULT_PREFILL_CHUNK_TOKENS,
 )

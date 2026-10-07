@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = REPO_ROOT / "src/mlx_vq/quality/glm52_candidate_eval.py"
+MODULE_PATH = REPO_ROOT / "src/keep/quality/glm52_candidate_eval.py"
 SPEC = importlib.util.spec_from_file_location("glm52_candidate_eval_under_test", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 candidate_module = importlib.util.module_from_spec(SPEC)
@@ -1047,15 +1047,15 @@ def _install_fake_candidate_runtime(
             self.mlp = FakeMoE(layer_index) if layer_index >= 3 else (lambda value: np.zeros_like(value))
 
     fake_mx = FakeMX("mlx.core")
-    fake_adapter = ModuleType("mlx_vq.models.glm52_vq_adapter")
+    fake_adapter = ModuleType("ramp.models.glm52_vq_adapter")
     fake_adapter.Glm52VQMoE = FakeMoE
-    fake_composite = ModuleType("mlx_vq.models.glm52_composite_loader")
+    fake_composite = ModuleType("ramp.models.glm52_composite_loader")
     fake_composite.assert_glm52_production_inputs_unchanged = lambda _fingerprint: None
     fake_base = ModuleType("mlx_lm.models.base")
     fake_base.create_causal_mask = lambda length, right_padding: np.zeros((length, length), dtype=np.float32)
     monkeypatch.setitem(sys.modules, "mlx.core", fake_mx)
-    monkeypatch.setitem(sys.modules, "mlx_vq.models.glm52_vq_adapter", fake_adapter)
-    monkeypatch.setitem(sys.modules, "mlx_vq.models.glm52_composite_loader", fake_composite)
+    monkeypatch.setitem(sys.modules, "ramp.models.glm52_vq_adapter", fake_adapter)
+    monkeypatch.setitem(sys.modules, "ramp.models.glm52_composite_loader", fake_composite)
     monkeypatch.setitem(sys.modules, "mlx_lm.models.base", fake_base)
 
     model = SimpleNamespace(
@@ -1282,7 +1282,7 @@ def test_candidate_producer_audits_recovery_before_load_and_forwards_v2_authorit
     monkeypatch.setattr(
         candidate_module.importlib,
         "import_module",
-        lambda name: FakeComposite if name == "mlx_vq.models.glm52_composite_loader" else original_import(name),
+        lambda name: FakeComposite if name == "ramp.models.glm52_composite_loader" else original_import(name),
     )
     monkeypatch.setattr(
         candidate_module,
@@ -1499,7 +1499,7 @@ def test_recovery_trace_identity_mutation_rolls_back_all_outputs_and_cleanly_ret
         candidate_module.importlib,
         "import_module",
         lambda name: composite
-        if name == "mlx_vq.models.glm52_composite_loader"
+        if name == "ramp.models.glm52_composite_loader"
         else original_import(name),
     )
     monkeypatch.setattr(
@@ -1614,7 +1614,7 @@ def test_candidate_producer_rejects_recovery_identity_mismatch_before_load(
         kwargs["source_loader"]()
 
     original_import = candidate_module.importlib.import_module
-    monkeypatch.setattr(candidate_module.importlib, "import_module", lambda name: composite if name == "mlx_vq.models.glm52_composite_loader" else original_import(name))
+    monkeypatch.setattr(candidate_module.importlib, "import_module", lambda name: composite if name == "ramp.models.glm52_composite_loader" else original_import(name))
     monkeypatch.setattr(candidate_module, "_load_teacher_producer_api", lambda: SimpleNamespace(produce_glm52_teacher_cache=fake_produce))
     monkeypatch.setattr(candidate_module, "_contract_from_cache_manifest", lambda *_args, **_kwargs: teacher_contract)
     monkeypatch.setattr(candidate_module, "_load_json_object", lambda *_args, **_kwargs: {"prompt": "authenticated"})
@@ -1667,10 +1667,10 @@ def test_candidate_route_capture_requires_complete_frozen_pack_before_production
 def test_recovery_leaf_audit_loads_without_validate_package_initialization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delitem(sys.modules, "mlx_vq.validate", raising=False)
+    monkeypatch.delitem(sys.modules, "keep.validate", raising=False)
     monkeypatch.delitem(
         sys.modules,
-        "mlx_vq.validate.glm52_recovery_artifact",
+        "keep.validate.glm52_recovery_artifact",
         raising=False,
     )
 
@@ -1679,7 +1679,7 @@ def test_recovery_leaf_audit_loads_without_validate_package_initialization(
     assert api.audit_glm52_recovery_mixed_artifact.__name__ == (
         "audit_glm52_recovery_mixed_artifact"
     )
-    assert "mlx_vq.validate" not in sys.modules
+    assert "keep.validate" not in sys.modules
 
 
 def test_eval_cli_has_produce_and_compare_without_tuning_hooks() -> None:

@@ -10,12 +10,12 @@ from typing import Any
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     collect_metric_snapshot,
     collect_vm_stat_counts,
     reset_mlx_peak_memory,
 )
-from mlx_vq.models.qwen_moe_adapter import load_qwen_moe_switch_glu
+from ramp.models.qwen_moe_adapter import load_qwen_moe_switch_glu
 
 
 SwitchLoader = Callable[[str | Path, int], Any]

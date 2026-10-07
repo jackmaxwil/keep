@@ -10,7 +10,7 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.quality.teacher_cache import (
+from keep.quality.teacher_cache import (
     build_teacher_cache_payload,
     build_teacher_cache_topk_payload,
     evaluate_teacher_cache_row,
@@ -19,7 +19,7 @@ from mlx_vq.quality.teacher_cache import (
     validate_teacher_cache_metadata,
     validate_teacher_cache_row,
 )
-from mlx_vq.io.logit_bias import write_logit_bias_artifact_manifest, write_logit_bias_sidecar
+from keep.io.logit_bias import write_logit_bias_artifact_manifest, write_logit_bias_sidecar
 
 
 def _load_eval_teacher_cache_cli():

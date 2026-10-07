@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-import mlx_vq.convert.dsv4_resident as resident_module
-from mlx_vq.convert.dsv4_resident import (
+import keep.convert.dsv4_resident as resident_module
+from keep.convert.dsv4_resident import (
     audit_dsv4_resident_package,
     pack_dsv4_resident_safetensors,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
+from keep.convert.stream_convert import load_safetensors_index
 
 
 def _raw_safetensors(

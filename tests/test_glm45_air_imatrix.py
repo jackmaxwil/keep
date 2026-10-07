@@ -7,21 +7,21 @@ import mlx.core as mx
 import numpy as np
 import pytest
 
-from mlx_vq.quality.calibration_importance import (
+from keep.quality.calibration_importance import (
     ProjectionImatrixEntry,
     accumulate_routed_projection_imatrix,
     build_air_imatrix_collection_plan,
     imatrix_entries_from_activation_records,
     write_projection_imatrix_sidecars,
 )
-from mlx_vq.quality.calibration import build_activation_record
-from mlx_vq.quality.imatrix_collection import (
+from keep.quality.calibration import build_activation_record
+from keep.quality.imatrix_collection import (
     finalize_entries,
     merge_entries,
     parse_layer_selection,
     parse_projection_selection,
 )
-from mlx_vq.quality.prompts import QualityPrompt
+from keep.quality.prompts import QualityPrompt
 
 
 imatrix_module = sys.modules[accumulate_routed_projection_imatrix.__module__]

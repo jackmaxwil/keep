@@ -1,10 +1,33 @@
-"""KEEP VQ codebook and vector-quantization helpers."""
+"""Reference E8-family codebooks."""
 
-from keep._alias import install_alias_package
-
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.codebook",
-    globals(),
-    child_modules=("e8",),
+from keep.vq.e8 import (
+    E8_1BIT_PACKED_SHA256,
+    E8P_PACKED_ABS_SHA256,
+    QUIP_SHARP_SOURCE_COMMIT,
+    decode_e8_1bit,
+    decode_e8p,
+    decode_weight_matrix,
+    e8_1bit_grid,
+    e8_1bit_packed,
+    e8p_abs_grid,
+    e8p_full_grid,
+    e8p_packed_abs_grid,
+    encode_e8_1bit_rtn,
+    encode_e8p_rtn,
 )
+
+__all__ = [
+    "E8_1BIT_PACKED_SHA256",
+    "E8P_PACKED_ABS_SHA256",
+    "QUIP_SHARP_SOURCE_COMMIT",
+    "decode_e8_1bit",
+    "decode_e8p",
+    "decode_weight_matrix",
+    "e8_1bit_grid",
+    "e8_1bit_packed",
+    "e8p_abs_grid",
+    "e8p_full_grid",
+    "e8p_packed_abs_grid",
+    "encode_e8_1bit_rtn",
+    "encode_e8p_rtn",
+]

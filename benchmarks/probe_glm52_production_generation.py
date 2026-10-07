@@ -15,13 +15,13 @@ import mlx.core as mx
 from mlx_lm.generate import generate_step, generation_stream
 from mlx_lm.utils import load_tokenizer
 
-from mlx_vq.benchmark.metrics import (
+from ramp.benchmark.metrics import (
     MemoryPhaseTracer,
     collect_metric_snapshot,
     reset_mlx_peak_memory,
     wait_for_memory_quiet,
 )
-from mlx_vq.models.glm52_composite_loader import (
+from ramp.models.glm52_composite_loader import (
     GLM52_ACCEPTED_TENSOR_PAYLOAD_BPW,
     GLM52_ACCEPTED_TENSOR_PAYLOAD_BYTES,
     _canonical_sha256,
@@ -35,8 +35,8 @@ from mlx_vq.models.glm52_composite_loader import (
     validate_glm52_production_inputs,
     validate_glm52_routed_manifest_policy,
 )
-from mlx_vq.models.glm52_vq_adapter import GLM52VQModel
-from mlx_vq.quality.glm52_family import (
+from ramp.models.glm52_vq_adapter import GLM52VQModel
+from keep.quality.glm52_family import (
     GLM52_EOS_TOKEN_IDS,
     GLM52_TOKENIZER_BASE_VOCAB_SIZE,
     GLM52_TOKENIZER_LENGTH,

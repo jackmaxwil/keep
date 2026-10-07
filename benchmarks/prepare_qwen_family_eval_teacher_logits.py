@@ -8,8 +8,8 @@ from typing import Any
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.source_safetensors import read_indexed_safetensors_tensor_mlx
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.source_safetensors import read_indexed_safetensors_tensor_mlx
 
 
 def _load_json(path: str | Path) -> dict[str, Any]:

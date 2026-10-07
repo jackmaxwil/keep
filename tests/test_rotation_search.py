@@ -7,9 +7,9 @@ import sys
 import numpy as np
 import pytest
 
-from mlx_vq.quant.rht import apply_inverse_rht_np, apply_rht_np
+from keep.quant.rht import apply_inverse_rht_np, apply_rht_np
 
-MODULE_PATH = Path(__file__).parents[1] / "src/mlx_vq/quality/rotation_search.py"
+MODULE_PATH = Path(__file__).parents[1] / "src/keep/quality/rotation_search.py"
 SPEC = importlib.util.spec_from_file_location("rotation_search", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 rotation_search = importlib.util.module_from_spec(SPEC)
@@ -56,8 +56,8 @@ def _metal_ok() -> bool:
 def test_quantized_switch_linear_rht_matches_equivalent_unrotated_weight() -> None:
     import mlx.core as mx
 
-    from mlx_vq.codebook.e8 import decode_weight_matrix, e8_1bit_packed
-    from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
+    from keep.vq.e8 import decode_weight_matrix, e8_1bit_packed
+    from ramp.nn.switch_linear import QuantizedVQSwitchLinear
 
     rng = np.random.default_rng(20260712)
     codes = rng.integers(0, 256, size=(1, 3, 1), dtype=np.uint8)

@@ -16,15 +16,15 @@ import pytest
 import yaml
 from mlx.utils import tree_flatten
 
-from mlx_vq.convert.stream_convert import SafetensorsIndex, load_safetensors_index
-from mlx_vq.io import source_safetensors
-from mlx_vq.io.source_safetensors import read_safetensors_tensor_bytes
-from mlx_vq.models.glm52_vq_adapter import (
+from keep.convert.stream_convert import SafetensorsIndex, load_safetensors_index
+from keep.io import source_safetensors
+from keep.io.source_safetensors import read_safetensors_tensor_bytes
+from ramp.models.glm52_vq_adapter import (
     GLM52VQModel,
     GLM52VQModelArgs,
     bind_glm52_non_vq_weights,
 )
-from mlx_vq.models.profiles import ModelProfile, get_profile, profile_to_dict
+from ramp.models.profiles import ModelProfile, get_profile, profile_to_dict
 
 
 MODEL_ID = "fixture/glm52-reap"
@@ -51,7 +51,7 @@ class _SourceFixture:
 
 
 def _api():
-    return importlib.import_module("mlx_vq.convert.glm52_non_vq")
+    return importlib.import_module("keep.convert.glm52_non_vq")
 
 
 def _sha256(path: Path) -> str:
@@ -735,7 +735,7 @@ def test_non_vq_pack_cli_emits_audited_evidence(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "mlx_vq.convert.glm52_non_vq",
+            "keep.convert.glm52_non_vq",
             "--source-dir",
             str(source.root),
             "--index-path",

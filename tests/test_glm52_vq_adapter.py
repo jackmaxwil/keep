@@ -9,9 +9,9 @@ import numpy as np
 import pytest
 from mlx.utils import tree_flatten
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.models import glm52_vq_adapter
-from mlx_vq.models.glm52_vq_adapter import (
+from keep.convert.stream_convert import load_safetensors_index
+from ramp.models import glm52_vq_adapter
+from ramp.models.glm52_vq_adapter import (
     GLM52VQModel,
     GLM52VQModelArgs,
     Glm52VQDecoderLayer,
@@ -24,8 +24,8 @@ from mlx_vq.models.glm52_vq_adapter import (
     glm52_vq_args_from_config,
     has_unbound_vq_experts,
 )
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.models.profiles import ModelProfile
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.profiles import ModelProfile
 
 
 def _tiny_args() -> GLM52VQModelArgs:

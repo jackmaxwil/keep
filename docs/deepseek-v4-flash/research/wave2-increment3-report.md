@@ -25,7 +25,7 @@ increment 1 deliberately refused to fake:
 
 Files: `src/ramp/models/deepseek_v4_flash_adapter.py`,
 `tests/test_deepseek_v4_flash_adapter.py`,
-`src/mlx_vq/quality/dsv4_teacher_runner.py`,
+`src/keep/quality/dsv4_teacher_runner.py`,
 `tests/test_dsv4_teacher_runner.py`,
 `benchmarks/produce_dsv4_teacher_cache.py`.
 

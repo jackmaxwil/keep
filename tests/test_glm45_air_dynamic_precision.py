@@ -5,8 +5,8 @@ import json
 import numpy as np
 from safetensors.numpy import save_file
 
-import mlx_vq.quality.dynamic_precision as dynamic_precision_module
-from mlx_vq.quality.dynamic_precision import (
+import keep.quality.dynamic_precision as dynamic_precision_module
+from keep.quality.dynamic_precision import (
     DynamicTensorProfile,
     attach_high_precision_source_manifest_to_materialization_plan,
     attach_imatrix_manifest_to_materialization_plan,
@@ -31,7 +31,7 @@ from mlx_vq.quality.dynamic_precision import (
     validate_dynamic_precision_approval_batch_objective,
     validate_dynamic_precision_tier_map_report,
 )
-from mlx_vq.quality.imatrix import (
+from keep.quality.imatrix import (
     accumulate_routed_projection_imatrix,
     build_air_imatrix_collection_plan,
     load_projection_imatrix_manifest,

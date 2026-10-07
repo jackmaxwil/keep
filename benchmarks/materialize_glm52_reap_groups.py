@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     GLM52_REAP_EXPECTED_GROUPS,
     GLM52_REAP_EXPECTED_LAYER_IDS,
     GLM52_REAP_PROJECTIONS,
@@ -18,7 +18,7 @@ from mlx_vq.convert.glm52_reap import (
     audit_glm52_reap_source_index,
     audit_glm52_reap_source_payloads,
 )
-from mlx_vq.convert.stream_convert import (
+from keep.convert.stream_convert import (
     SourceWeightEncoding,
     VQExpertGroup,
     convert_vq_groups_from_safetensors,
@@ -26,8 +26,8 @@ from mlx_vq.convert.stream_convert import (
     plan_streaming_conversion_from_index,
     vq_group_output_filename,
 )
-from mlx_vq.io.schema import codebook_metadata_for_bits
-from mlx_vq.models.profiles import load_profile
+from keep.io.schema import codebook_metadata_for_bits
+from ramp.models.profiles import load_profile
 
 
 CANONICAL_MANIFEST_NAME = "conversion-manifest.json"

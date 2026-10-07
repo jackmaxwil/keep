@@ -9,15 +9,15 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     GLM52_REAP_CONFIG_SHA256,
     GLM52_REAP_INDEX_SHA256,
     audit_glm52_reap_source_index,
     audit_glm52_reap_source_payloads,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.models.profiles import load_profile
-from mlx_vq.quality.glm52_family import (
+from keep.convert.stream_convert import load_safetensors_index
+from ramp.models.profiles import load_profile
+from keep.quality.glm52_family import (
     GLM52_MODEL_VOCAB_SIZE,
     GLM52_PINNED_TOKENIZER_FILES,
     PINNED_GLM52_MODEL_ID,

@@ -8,15 +8,15 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     continuous_sidecar_relpath,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.io.logit_bias import load_logit_bias_sidecar, logit_bias_enabled
-from mlx_vq.io.logit_bias import copy_declared_logit_bias_sidecar
-from mlx_vq.io.logit_bias import write_logit_bias_artifact_manifest
-from mlx_vq.io.logit_bias import write_logit_bias_sidecar
+from keep.io.logit_bias import load_logit_bias_sidecar, logit_bias_enabled
+from keep.io.logit_bias import copy_declared_logit_bias_sidecar
+from keep.io.logit_bias import write_logit_bias_artifact_manifest
+from keep.io.logit_bias import write_logit_bias_sidecar
 
 
 def _load_cli():

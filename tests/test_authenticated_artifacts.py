@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.io import authenticated_artifacts as artifacts
-from mlx_vq.io.authenticated_artifacts import (
+from keep.io import authenticated_artifacts as artifacts
+from keep.io.authenticated_artifacts import (
     AuthenticatedFile,
     DescriptorSnapshot,
     PublicationCorruptError,
@@ -286,7 +286,7 @@ def test_descriptor_snapshot_partial_failure_closes_retained_fds(
         return real(*args, **kwargs)
 
     monkeypatch.setattr(
-        "mlx_vq.io.authenticated_artifacts.clone_or_copy_authenticated", fail_second
+        "keep.io.authenticated_artifacts.clone_or_copy_authenticated", fail_second
     )
     before = len(os.listdir("/dev/fd"))
     with pytest.raises(RuntimeError, match="injected copy failure"):
@@ -308,7 +308,7 @@ def test_clone_fallback_is_explicit_and_space_is_bounded(
     source_path.write_bytes(b"payload")
     source = AuthenticatedFile.open(source_path, label="source")
     monkeypatch.setattr(
-        "mlx_vq.io.authenticated_artifacts._try_fclonefileat",
+        "keep.io.authenticated_artifacts._try_fclonefileat",
         lambda *_args, **_kwargs: False,
     )
     try:
@@ -320,7 +320,7 @@ def test_clone_fallback_is_explicit_and_space_is_bounded(
                 required_free_bytes=7,
             )
         monkeypatch.setattr(
-            "mlx_vq.io.authenticated_artifacts.os.fstatvfs",
+            "keep.io.authenticated_artifacts.os.fstatvfs",
             lambda _descriptor: type(
                 "Filesystem", (), {"f_bavail": 6, "f_frsize": 1}
             )(),

@@ -73,7 +73,7 @@ tokens at high and max reasoning effort. The technical report is arXiv
    (`e4m3`, 128x128 weight blocks, `ue8m0` scales). Expert tensors must be
    dequantized from FP8 blocks to BF16 before VQ codebook fitting, or the
    quantizer must learn to consume FP8 blocks directly. KEEP has no FP8 path
-   today — `src/mlx_vq/convert/nvfp4.py` is NVFP4 and is adjacent machinery,
+   today — `src/keep/convert/nvfp4.py` is NVFP4 and is adjacent machinery,
    not a substitute.
 
    > **Correction, 2026-08-11 (measured from the real shards, revision
@@ -98,7 +98,7 @@ tokens at high and max reasoning effort. The technical report is arXiv
    > 284 GB figure assumed FP8 experts. BF16-dequantized is still ~568 GB.
 2. **The DSA attention path is already DeepSeek-shaped.** GLM-5.2's adapter
    subclasses `mlx_lm.models.deepseek_v32.DeepseekV32Attention`
-   (`src/mlx_vq/models/glm52_vq_adapter.py:313`). The `ModelArgs` field set of
+   (`src/ramp/models/glm52_vq_adapter.py:313`). The `ModelArgs` field set of
    mlx-lm 0.31.3's `deepseek_v32` matches DeepSeek-V4-Flash's `config.json`
    field-for-field on every attention and MoE field that matters. mlx-lm has
    no `deepseek_v4` module yet, so the adapter must supply the model class, but
@@ -242,16 +242,16 @@ structural coupling is real and lives in four places:
 1. **`src/glm52_enforcement/`** — 120 Python modules of campaign, submission,
    fence, watchdog, and spend-enforcement logic, named for the model family it
    happens to have been written against.
-2. **`src/mlx_vq/models/`** — five GLM-5.2 modules totalling 4,312 lines
+2. **`src/ramp/models/`** — five GLM-5.2 modules totalling 4,312 lines
    (`glm52_vq_adapter.py`, `glm52_composite_loader.py`,
    `glm52_source_teacher.py`, `glm52_long_context_attention.py`,
    `glm52_policy.py`), alongside per-family GLM-4.5-Air and Qwen equivalents.
-3. **`src/mlx_vq/models/__init__.py`** — a hand-maintained export map with
+3. **`src/ramp/models/__init__.py`** — a hand-maintained export map with
    family-specific symbol names (`bind_glm52_vq_experts`,
    `bind_glm45_air_vq_experts`, `bind_qwen_*`). There is no family-agnostic
    adapter protocol; each family invents its own binder names, so adding a
    family means editing shared files rather than registering a new one.
-4. **`src/mlx_vq/models/profiles.py`** — `ConverterKind` is a closed
+4. **`src/ramp/models/profiles.py`** — `ConverterKind` is a closed
    `Literal["glm_stream", "qwen_moe_groups", "glm52_vq_groups"]` with a matching
    `ALLOWED_CONVERTERS` frozenset. A new family cannot be expressed without
    editing this type.

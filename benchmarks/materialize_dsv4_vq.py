@@ -41,7 +41,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mlx_vq.convert.dsv4_vq_materialize import (
+from keep.convert.dsv4_vq_materialize import (
     PROJECTIONS,
     BlockSpec,
     MaterializePolicy,
@@ -57,7 +57,7 @@ from mlx_vq.convert.dsv4_vq_materialize import (
     verify_bind_roundtrip,
     write_block_record,
 )
-from mlx_vq.convert.dsv4_vq_pilot import write_json
+from keep.convert.dsv4_vq_pilot import write_json
 
 DEFAULT_CHECKPOINT = Path.home() / "models" / "DeepSeek-V4-Flash-0731"
 DEFAULT_CALIBRATION = Path.home() / "keep-artifacts" / "dsv4-teacher-calibration"
@@ -180,8 +180,8 @@ def command_plan(args: argparse.Namespace) -> dict:
 def command_parity(args: argparse.Namespace) -> dict:
     """NumPy vs MLX on a real projection: speed and byte-parity together."""
 
-    from mlx_vq.convert.dsv4_vq_fit_mlx import compare_fit_backends
-    from mlx_vq.convert.dsv4_vq_materialize import (
+    from keep.convert.dsv4_vq_fit_mlx import compare_fit_backends
+    from keep.convert.dsv4_vq_materialize import (
         block_importance,
         decode_block_expert,
         read_block_experts,

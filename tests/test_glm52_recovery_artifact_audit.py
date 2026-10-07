@@ -17,10 +17,10 @@ import pytest
 from safetensors import safe_open
 from safetensors.numpy import save_file
 
-from mlx_vq.codebook.e8 import e8_1bit_packed, e8p_packed_abs_grid
-import mlx_vq.convert.glm52_recovery_materialize as recovery_materialize
-from mlx_vq.io.schema import codebook_metadata_for_bits
-from mlx_vq.models.profiles import ModelProfile, get_profile
+from keep.vq.e8 import e8_1bit_packed, e8p_packed_abs_grid
+import keep.convert.glm52_recovery_materialize as recovery_materialize
+from keep.io.schema import codebook_metadata_for_bits
+from ramp.models.profiles import ModelProfile, get_profile
 
 
 PROJECTIONS = ("gate_proj", "up_proj", "down_proj")
@@ -40,7 +40,7 @@ NON_ROUTED_PAYLOAD = 37_121_488_608
 CANONICAL_PAYLOAD_LIMIT = 112_000_000_000
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "src/mlx_vq/validate/glm52_recovery_artifact.py"
+    / "src/keep/validate/glm52_recovery_artifact.py"
 )
 
 
@@ -1191,7 +1191,7 @@ def test_materialize_fixture_manifest_passes_audit_without_schema_rewrite(
         ),
         raising=False,
     )
-    import mlx_vq.convert.nvfp4 as nvfp4
+    import keep.convert.nvfp4 as nvfp4
 
     monkeypatch.setattr(nvfp4, "resolve_modelopt_nvfp4_weight_bundle", lambda _map, name: name)
     monkeypatch.setattr(
@@ -1205,7 +1205,7 @@ def test_materialize_fixture_manifest_passes_audit_without_schema_rewrite(
     )
     monkeypatch.setitem(
         sys.modules,
-        "mlx_vq.convert.stream_convert",
+        "keep.convert.stream_convert",
         SimpleNamespace(load_safetensors_index=lambda _path: SimpleNamespace(weight_map={})),
     )
     output_root = tmp_path / "producer-output"

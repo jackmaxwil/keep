@@ -25,7 +25,7 @@ the evidence path that will satisfy it later.
 ## Adapter Contract
 
 Add or update a RAMP model adapter under `src/ramp/models/` while the legacy
-implementation still lives under `src/mlx_vq/models/`.
+implementation still lives under `src/ramp/models/`.
 
 - The adapter loads non-expert tensors from source shards without materializing
   routed dense expert tensors.
@@ -41,27 +41,24 @@ implementation still lives under `src/mlx_vq/models/`.
 - The adapter exposes enough metadata for benchmark and audit rows to report no
   dense routed experts and no unbound VQ experts.
 - The family registers a `FamilyBinding` in `ramp.models.registry` and its
-  converter kind via `mlx_vq.models.profiles.register_converter`, so nothing
+  converter kind via `ramp.models.profiles.register_converter`, so nothing
   about the family has to be edited into a shared module.
 
 Reference surfaces in the current GLM path:
 
 ```text
-src/mlx_vq/models/glm45_air_vq_adapter.py
-src/mlx_vq/models/glm4_moe_adapter.py
-src/mlx_vq/nn/switch_linear.py
-src/mlx_vq/io/load.py
+src/ramp/models/glm45_air_vq_adapter.py
+src/ramp/models/glm4_moe_adapter.py
+src/ramp/nn/switch_linear.py
+src/keep/io/load.py
 ```
 
-Canonical imports should use `ramp.models`, `ramp.nn`, and `keep.io` for new
-code. Existing `mlx_vq.*` imports remain supported as a compatibility shim.
-`ramp.models.registry` is the target seam for new families, introduced
-2026-08-11 with the DeepSeek-V4-Flash pivot: new family code lives in
-`ramp.models` / `keep.convert` and registers itself there rather than being
-edited into shared modules. It is a target, not a completed migration — the
-`mlx_vq.models` export map is still the live wiring for the families that
-predate it (GLM-4.5-Air, GLM-4-MoE, GLM-5.2, Qwen-MoE), and those keep
-resolving through it until they are moved deliberately.
+Runtime code lives in `ramp` (`ramp.models`, `ramp.nn`, `ramp.ops`,
+`ramp.kernels`) and method code in `keep` (`keep.convert`, `keep.io`,
+`keep.quality`). A new family registers a `FamilyBinding` in
+`ramp.models.registry` instead of being edited into shared modules. The
+families that predate the registry (GLM-4.5-Air, GLM-4-MoE, GLM-5.2,
+Qwen-MoE) also resolve through the `ramp.models` export map.
 
 ## Source Tensor Mapping
 

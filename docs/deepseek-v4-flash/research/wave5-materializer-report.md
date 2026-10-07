@@ -33,20 +33,20 @@ is machine state, not code. The sweep is one lunch break, not one overnight.**
 
 Files:
 
-* `src/mlx_vq/convert/dsv4_vq_materialize.py` — the materializer: block plan,
+* `src/keep/convert/dsv4_vq_materialize.py` — the materializer: block plan,
   per-block/per-expert/per-projection fit, atomic publication, SHA-256-verified
   resume, family-template manifest + audit, and the bind roundtrip.
-* `src/mlx_vq/convert/dsv4_vq_fit_mlx.py` — the MLX port of the fit hot paths,
+* `src/keep/convert/dsv4_vq_fit_mlx.py` — the MLX port of the fit hot paths,
   with the parity contract stated stage by stage.
 * `benchmarks/materialize_dsv4_vq.py` — CLI: `imatrix` / `plan` / `parity` /
   `block` / `verify-roundtrip` / `sweep` / `manifest` / `monitor`.
 * `tests/test_dsv4_materializer.py` — 49 headless tests over a synthetic FP4
   block (no checkpoint, no calibration run).
-* `src/mlx_vq/quality/dsv4_teacher_runner.py` — the coalesced span index
+* `src/keep/quality/dsv4_teacher_runner.py` — the coalesced span index
   generalized from "backbone layer" to "any MoE block", so `mtp.{0,1,2}` are
   reachable. `build_dsv4_expert_span_index(layers=...)` keeps its int-keyed
   contract and is now a wrapper.
-* `src/mlx_vq/quant/e8p_metal.py` — `encode_e8p_diagonal_hessian_fused_mx`, the
+* `src/keep/quant/e8p_metal.py` — `encode_e8p_diagonal_hessian_fused_mx`, the
   device-resident twin of the fused E8P search.
 
 Evidence committed to `artifacts/quality/dsv4-vq-materializer-20260814/` (32 KB,

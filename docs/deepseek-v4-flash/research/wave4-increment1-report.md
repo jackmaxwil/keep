@@ -23,7 +23,7 @@ out three hypotheses about where the remaining 5–10x actually lives.
 | Commit | Contents |
 | --- | --- |
 | `2a846f54` | `docs/deepseek-v4-flash/research/wave4-wide-m-vqmm-survey.md` — survey + baseline table |
-| `c2ce0229` | `src/mlx_vq/kernels/gather_vqmm_verify_mrows.metal`, host wrapper in `gather_vqmm.py`, ops seam in `vq_switch.py` |
+| `c2ce0229` | `src/ramp/kernels/gather_vqmm_verify_mrows.metal`, host wrapper in `gather_vqmm.py`, ops seam in `vq_switch.py` |
 | `05a86cdb` | `tests/test_gather_vqmm_verify_rows.py` — byte-exact parity gate |
 | `7e29f45e` | `benchmarks/bench_gather_vqmm_verify_rows.py` |
 | `61c58c73` | this report |
@@ -33,8 +33,8 @@ Commits are ordered survey → kernel → harness → bench rather than the brie
 survey → harness → kernel → bench, so the test suite passes at every commit
 rather than at three of four.
 
-Files touched: `src/mlx_vq/kernels/`, `src/mlx_vq/ops/vq_switch.py`,
-`src/mlx_vq/nn/switch_linear.py` (one validation tuple, review finding M3),
+Files touched: `src/ramp/kernels/`, `src/ramp/ops/vq_switch.py`,
+`src/ramp/nn/switch_linear.py` (one validation tuple, review finding M3),
 `tests/`, `benchmarks/`, `docs/`, and this report. No model weights were loaded.
 
 ## Parity contract satisfied
@@ -214,7 +214,7 @@ Ranked by measured value, not by plan order.
    gap to hardware bandwidth, which dwarfs everything else here.
 4. **Do not build the NAX M=16 verify path.** The hardware gate passes
    (`applegpu_g17s`, Darwin 25.4.0) and the plumbing exists in
-   `src/mlx_vq/kernels/nax.py`, but its 16-row cooperative-tensor tile is
+   `src/ramp/kernels/nax.py`, but its 16-row cooperative-tensor tile is
    mismatched to 12–48 routes over 12–46 distinct experts, it is fp16 throughout
    so cannot be byte-exact, and omlx's own measurement (prefill 828 → 400 tok/s
    when custom block kernels displaced NAX on M5 Max) plus its 1024-route floor

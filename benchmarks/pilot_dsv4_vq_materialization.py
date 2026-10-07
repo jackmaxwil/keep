@@ -44,7 +44,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from mlx_vq.convert.dsv4_vq_pilot import (
+from keep.convert.dsv4_vq_pilot import (
     PROJECTION_SHAPE,
     RATE_LADDER,
     GroupSizePolicy,
@@ -126,8 +126,8 @@ def _rate_points(max_bpw: float | None) -> list[tuple[int, int]]:
 
 
 def command_sweep(args: argparse.Namespace) -> dict[str, object]:
-    from mlx_vq.codebook.e8 import e8_1bit_grid, e8p_full_grid
-    from mlx_vq.quality.rotation_search import (
+    from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
+    from keep.quality.rotation_search import (
         evaluate_rotation_gain,
         generate_rht_signs,
     )
@@ -397,7 +397,7 @@ def command_control(args: argparse.Namespace) -> dict[str, object]:
 
     import mlx.core as mx
 
-    from mlx_vq.convert.dsv4_vq_pilot import projection_error
+    from keep.convert.dsv4_vq_pilot import projection_error
 
     layers = [int(value) for value in args.layers]
     stats = aggregate_calibration_importance(
@@ -486,8 +486,8 @@ def command_control(args: argparse.Namespace) -> dict[str, object]:
 def command_block_probe(args: argparse.Namespace) -> dict[str, object]:
     """Whole-expert output error through the SwiGLU, per layer and rate point."""
 
-    from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy, reconstruct_quantized
-    from mlx_vq.convert.glm52_recovery_materialize import (
+    from keep.convert.dsv4_vq_pilot import expert_block_proxy, reconstruct_quantized
+    from keep.convert.glm52_recovery_materialize import (
         quantize_weight_importance_aware,
     )
 

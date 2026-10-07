@@ -8,22 +8,22 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     GLM52_REAP_EXPECTED_GROUPS,
     GLM52_REAP_EXPECTED_LAYER_IDS,
     GLM52_REAP_PROJECTIONS,
     GLM52_REAP_SOURCE_DECODER,
     audit_glm52_reap_source_index,
 )
-from mlx_vq.convert.glm52_non_vq import audit_glm52_non_vq_package
-from mlx_vq.convert.stream_convert import (
+from keep.convert.glm52_non_vq import audit_glm52_non_vq_package
+from keep.convert.stream_convert import (
     SourceWeightEncoding,
     VQExpertGroup,
     load_safetensors_index,
     plan_streaming_conversion_from_index,
 )
-from mlx_vq.models.profiles import load_profile
-from mlx_vq.validate.glm52_artifact import (
+from ramp.models.profiles import load_profile
+from keep.validate.glm52_artifact import (
     audit_glm52_reap_materialization_manifest,
     audit_glm52_reap_source_accounting,
 )

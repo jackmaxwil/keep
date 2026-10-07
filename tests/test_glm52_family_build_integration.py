@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from mlx_vq.build.ops import REGISTRY, StepContext
-from mlx_vq.build.recipe import RecipeError, StepSpec, load_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build.ops import REGISTRY, StepContext
+from keep.build.recipe import RecipeError, StepSpec, load_recipe
+from keep.build.runner import plan_recipe
 
 
 MODEL_ID = "0xSero/glm-5.2-reap-504B-v2"

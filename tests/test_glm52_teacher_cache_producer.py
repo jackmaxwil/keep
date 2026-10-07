@@ -18,10 +18,10 @@ from typing import Any
 import numpy as np
 import pytest
 
-QUALITY_ROOT = Path(__file__).resolve().parents[1] / "src/mlx_vq/quality"
+QUALITY_ROOT = Path(__file__).resolve().parents[1] / "src/keep/quality"
 CACHE_PATH = QUALITY_ROOT / "glm52_teacher_cache.py"
 CACHE_SPEC = importlib.util.spec_from_file_location(
-    "mlx_vq.quality.glm52_teacher_cache", CACHE_PATH
+    "keep.quality.glm52_teacher_cache", CACHE_PATH
 )
 assert CACHE_SPEC is not None and CACHE_SPEC.loader is not None
 cache_module = importlib.util.module_from_spec(CACHE_SPEC)
@@ -49,7 +49,7 @@ produce_glm52_teacher_cache = producer_module.produce_glm52_teacher_cache
 
 
 def _is_fake_sensitive_module(name: str) -> bool:
-    return name == "mlx" or name.startswith(("mlx.", "mlx_lm", "mlx_vq."))
+    return name == "mlx" or name.startswith(("mlx.", "mlx_lm", "keep.", "ramp."))
 
 
 @pytest.fixture(autouse=True)
@@ -260,7 +260,7 @@ def _raw_safetensors(tensors: dict[str, tuple[str, tuple[int, ...], bytes]]) -> 
 def _load_headless_modelopt_expert_resolver(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Load the real resolver factory without initializing a Metal device."""
 
-    source_path = Path(__file__).resolve().parents[1] / "src/mlx_vq/models/glm52_source_teacher.py"
+    source_path = Path(__file__).resolve().parents[1] / "src/ramp/models/glm52_source_teacher.py"
     module_name = "glm52_teacher_cache_headless_source_teacher_test"
     mlx = ModuleType("mlx")
     mlx_core = ModuleType("mlx.core")
@@ -273,12 +273,12 @@ def _load_headless_modelopt_expert_resolver(monkeypatch: pytest.MonkeyPatch) -> 
     mlx_lm_base.create_causal_mask = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
     mlx_utils = ModuleType("mlx.utils")
     mlx_utils.tree_flatten = lambda *_args, **_kwargs: []  # type: ignore[attr-defined]
-    adapter = ModuleType("mlx_vq.models.glm52_vq_adapter")
+    adapter = ModuleType("ramp.models.glm52_vq_adapter")
     adapter.GLM52VQModel = object  # type: ignore[attr-defined]
     adapter.Glm52VQMoE = object  # type: ignore[attr-defined]
-    io_load = ModuleType("mlx_vq.io.load")
+    io_load = ModuleType("keep.io.load")
     io_load.inspect_safetensors = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
-    io_source = ModuleType("mlx_vq.io.source_safetensors")
+    io_source = ModuleType("keep.io.source_safetensors")
     io_source.read_safetensors_file_header = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
     io_source.read_safetensors_tensor_bytes = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
     io_source.read_safetensors_tensor_mlx = lambda *_args, **_kwargs: None  # type: ignore[attr-defined]
@@ -290,9 +290,9 @@ def _load_headless_modelopt_expert_resolver(monkeypatch: pytest.MonkeyPatch) -> 
         "mlx_lm.models": mlx_lm_models,
         "mlx_lm.models.base": mlx_lm_base,
         "mlx.utils": mlx_utils,
-        "mlx_vq.models.glm52_vq_adapter": adapter,
-        "mlx_vq.io.load": io_load,
-        "mlx_vq.io.source_safetensors": io_source,
+        "ramp.models.glm52_vq_adapter": adapter,
+        "keep.io.load": io_load,
+        "keep.io.source_safetensors": io_source,
     }.items():
         monkeypatch.setitem(sys.modules, name, module)
     spec = importlib.util.spec_from_file_location(module_name, source_path)
@@ -450,7 +450,7 @@ def test_full_source_blob_inventory_matches_non_vq_audit_convention(
     mlx.core = mlx_core  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "mlx", mlx)
     monkeypatch.setitem(sys.modules, "mlx.core", mlx_core)
-    non_vq_module = __import__("mlx_vq.convert.glm52_non_vq", fromlist=["*"])
+    non_vq_module = __import__("keep.convert.glm52_non_vq", fromlist=["*"])
     source_weight_map = producer_module._source_weight_map_from_index_bytes(index_bytes)
     expected_inventory_sha256 = producer_module.canonical_sha256(
         {
@@ -1440,7 +1440,7 @@ def test_inventory_hash_pool_is_drained_before_first_mlx_metal_use(
 def test_fake_mlx_tests_do_not_replace_canonical_source_teacher_modules() -> None:
     mx = importlib.import_module("mlx.core")
     try:
-        source_teacher = importlib.import_module("mlx_vq.models.glm52_source_teacher")
+        source_teacher = importlib.import_module("ramp.models.glm52_source_teacher")
     except RuntimeError as error:
         if "No Metal device available" in str(error):
             pytest.skip("Metal is unavailable in this test environment")

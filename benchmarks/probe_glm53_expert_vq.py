@@ -32,7 +32,7 @@ import numpy as np
 from huggingface_hub import HfFileSystem, get_safetensors_metadata
 
 from keep.convert.fp8_block import dequantize_fp8_block
-from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy, fit_projection, rate_bpw, reconstruct_quantized
+from keep.convert.dsv4_vq_pilot import expert_block_proxy, fit_projection, rate_bpw, reconstruct_quantized
 from ramp.models.glm5_next_policy import GLM5_NEXT_MODEL_ID, GLM5_NEXT_REVISION
 
 PROJECTIONS = ("gate", "up", "down")

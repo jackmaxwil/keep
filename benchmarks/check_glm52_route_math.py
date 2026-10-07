@@ -15,7 +15,7 @@ def _load_api() -> Any:
     module_path = (
         Path(__file__).parents[1]
         / "src"
-        / "mlx_vq"
+        / "keep"
         / "quality"
         / "glm52_route_diagnostics.py"
     )

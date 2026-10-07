@@ -10,10 +10,10 @@ from mlx.utils import tree_flatten
 
 from mlx_lm.models.glm4_moe import ModelArgs
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.logit_bias import write_logit_bias_artifact_manifest, write_logit_bias_sidecar
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.models.glm45_air_vq_adapter import (
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.logit_bias import write_logit_bias_artifact_manifest, write_logit_bias_sidecar
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm45_air_vq_adapter import (
     GLM45AirVQModel,
     GLM45AirVQMoE,
     bind_glm45_air_non_expert_precision_policy,

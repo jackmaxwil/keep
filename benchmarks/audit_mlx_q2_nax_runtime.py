@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from typing import Iterable
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
-from mlx_vq.benchmark.nax_audit import (
+from ramp.benchmark.glm45_air import append_jsonl
+from ramp.benchmark.nax_audit import (
     ProjectionName,
     q2_nax_capture_plan_records,
     q2_nax_runtime_cases,

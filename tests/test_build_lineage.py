@@ -8,10 +8,10 @@ import numpy as np
 import yaml
 from safetensors.numpy import save_file
 
-from mlx_vq.build.lineage import build_legacy_lineage_recipe
-from mlx_vq.build.ops import REGISTRY
-from mlx_vq.build.recipe import parse_recipe, validate_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build.lineage import build_legacy_lineage_recipe
+from keep.build.ops import REGISTRY
+from keep.build.recipe import parse_recipe, validate_recipe
+from keep.build.runner import plan_recipe
 
 
 def _write_manifest(

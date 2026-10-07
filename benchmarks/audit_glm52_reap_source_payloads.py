@@ -6,12 +6,12 @@ import json
 import sys
 from pathlib import Path
 
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     audit_glm52_reap_source_index,
     audit_glm52_reap_source_payloads,
 )
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.models.profiles import load_profile
+from keep.convert.stream_convert import load_safetensors_index
+from ramp.models.profiles import load_profile
 
 
 def _sha256_file(path: str | Path) -> str:

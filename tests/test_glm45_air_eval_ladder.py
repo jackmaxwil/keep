@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import numpy as np
 
-from mlx_vq.quality.gates import (
+from keep.quality.gates import (
     evaluate_quality_gate,
     validate_ladder_cache_metadata,
     validate_ladder_route_coverage,
 )
-from mlx_vq.quality.prompts import (
+from keep.quality.prompts import (
     get_quality_prompts,
     prompt_text_hash,
     validate_quality_prompt_splits,
 )
-from mlx_vq.quality.teacher_cache import summarize_teacher_cache_records
+from keep.quality.teacher_cache import summarize_teacher_cache_records
 
 
 def _record(

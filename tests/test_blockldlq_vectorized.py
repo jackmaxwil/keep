@@ -13,13 +13,13 @@ import pytest
 
 def _load_kronecker_hessian_module() -> ModuleType:
     module_name = "_test_blockldlq_kronecker_hessian"
-    module_path = Path(__file__).parents[1] / "src" / "mlx_vq" / "quality" / "kronecker_hessian.py"
+    module_path = Path(__file__).parents[1] / "src" / "keep" / "quality" / "kronecker_hessian.py"
     mlx_module = ModuleType("mlx")
     mlx_core_module = ModuleType("mlx.core")
     mlx_module.core = mlx_core_module
-    mlx_vq_module = ModuleType("mlx_vq")
-    codebook_module = ModuleType("mlx_vq.codebook")
-    e8_module = ModuleType("mlx_vq.codebook.e8")
+    keep_module = ModuleType("keep")
+    codebook_module = ModuleType("keep.vq")
+    e8_module = ModuleType("keep.vq.e8")
     e8_module.CODEWORD_DIM = 8
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     assert spec is not None and spec.loader is not None
@@ -30,9 +30,9 @@ def _load_kronecker_hessian_module() -> ModuleType:
             module_name: module,
             "mlx": mlx_module,
             "mlx.core": mlx_core_module,
-            "mlx_vq": mlx_vq_module,
-            "mlx_vq.codebook": codebook_module,
-            "mlx_vq.codebook.e8": e8_module,
+            "keep": keep_module,
+            "keep.vq": codebook_module,
+            "keep.vq.e8": e8_module,
         },
     ):
         spec.loader.exec_module(module)

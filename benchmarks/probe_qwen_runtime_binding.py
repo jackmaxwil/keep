@@ -9,9 +9,9 @@ import mlx.core as mx
 import numpy as np
 from transformers import AutoTokenizer
 
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.source_safetensors import read_safetensors_tensor_header
-from mlx_vq.models.qwen_moe_adapter import (
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.source_safetensors import read_safetensors_tensor_header
+from ramp.models.qwen_moe_adapter import (
     bind_qwen_moe_vq_experts,
     bind_qwen_non_expert_weights,
     has_unbound_qwen_moe_vq_experts,

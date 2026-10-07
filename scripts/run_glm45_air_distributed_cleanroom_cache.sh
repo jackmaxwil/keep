@@ -581,7 +581,7 @@ write_wrappers_and_probes() {
   rm -rf "$TMP_SRC_ROOT"
   mkdir -p "$TMP_SRC_ROOT"
   rm -f "$TMP_SRC_ARCHIVE"
-  (cd "$ROOT/src" && tar -cf "$TMP_SRC_ARCHIVE" mlx_vq keep ramp)
+  (cd "$ROOT/src" && tar -cf "$TMP_SRC_ARCHIVE" keep ramp)
   tar -xf "$TMP_SRC_ARCHIVE" -C "$TMP_SRC_ROOT"
   ssh "${SSH_OPTS[@]}" "$PEER_SSH" "rm -rf '$TMP_SRC_ROOT' && mkdir -p '$TMP_SRC_ROOT'"
   scp "${SSH_OPTS[@]}" "$TMP_SRC_ARCHIVE" "$PEER_SSH:$TMP_SRC_ARCHIVE" >/dev/null

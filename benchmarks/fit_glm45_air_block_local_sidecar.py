@@ -11,25 +11,25 @@ import mlx.nn as nn
 import numpy as np
 from huggingface_hub import snapshot_download
 
-from mlx_vq.benchmark.glm45_air import append_jsonl, load_resident_air
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.continuous_sidecar import (
+from ramp.benchmark.glm45_air import append_jsonl, load_resident_air
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.io.source_safetensors import read_indexed_safetensors_tensor_mlx
-from mlx_vq.models.glm45_air_vq_adapter import GLM45AirVQMoE
-from mlx_vq.quality.mlx_surrogate import (
+from keep.io.source_safetensors import read_indexed_safetensors_tensor_mlx
+from ramp.models.glm45_air_vq_adapter import GLM45AirVQMoE
+from keep.quality.mlx_surrogate import (
     fit_low_rank_residual_sidecar_least_squares,
     fit_output_bias_sidecar_least_squares,
     fit_scale_delta_output_bias_sidecar_least_squares,
     fit_scale_delta_sidecar_least_squares,
 )
-from mlx_vq.quality.teacher_cache import read_teacher_cache_rows, validate_teacher_cache_metadata
-from mlx_vq.validate.glm45_air_vq import capture_glm45_air_moe_input_states
+from keep.quality.teacher_cache import read_teacher_cache_rows, validate_teacher_cache_metadata
+from keep.validate.glm45_air_vq import capture_glm45_air_moe_input_states
 
 
 def _target_projection(model, *, layer: int, projection: str):

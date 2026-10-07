@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from mlx_vq.build import doctor, get_model
-from mlx_vq.build.cli import main as keep_main
+from keep.build import doctor, get_model
+from keep.build.cli import main as keep_main
 
 
 DiskUsage = namedtuple("DiskUsage", "total used free")

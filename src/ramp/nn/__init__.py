@@ -1,10 +1,6 @@
-"""RAMP quantized neural-network modules."""
+"""MLX neural-network modules for VQ inference."""
 
-from keep._alias import install_alias_package
+from ramp.nn.linear import QuantizedVQLinear
+from ramp.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
 
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.nn",
-    globals(),
-    child_modules=("linear", "switch_linear"),
-)
+__all__ = ["HighPrecisionSwitchLinear", "QuantizedVQLinear", "QuantizedVQSwitchLinear"]

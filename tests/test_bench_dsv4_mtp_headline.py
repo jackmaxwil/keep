@@ -8,7 +8,7 @@ import pytest
 
 from benchmarks import bench_dsv4_mtp_headline as benchmark
 from benchmarks.bench_dsv4_mtp_headline import summarize_dsv4_mtp_rows
-from mlx_vq.benchmark import metrics
+from ramp.benchmark import metrics
 
 FIX1_ROOT = (
     Path(__file__).resolve().parents[1]

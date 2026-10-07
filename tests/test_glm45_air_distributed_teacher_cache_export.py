@@ -9,7 +9,7 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.quality.prompts import QualityPrompt
+from keep.quality.prompts import QualityPrompt
 
 
 def _load_export_cli():

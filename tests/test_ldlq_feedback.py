@@ -10,34 +10,34 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from mlx_vq.codebook.e8 import e8_1bit_grid, e8p_full_grid, encode_e8_1bit_rtn, encode_e8p_rtn
+from keep.vq.e8 import e8_1bit_grid, e8p_full_grid, encode_e8_1bit_rtn, encode_e8p_rtn
 
 
 def _load_quality_modules() -> tuple[ModuleType, ModuleType]:
     root = Path(__file__).parents[1]
-    quality_package = ModuleType("mlx_vq.quality")
-    quality_package.__path__ = [str(root / "src" / "mlx_vq" / "quality")]
+    quality_package = ModuleType("keep.quality")
+    quality_package.__path__ = [str(root / "src" / "keep" / "quality")]
     mlx_module = ModuleType("mlx")
     mlx_core_module = ModuleType("mlx.core")
     mlx_module.core = mlx_core_module
     modules = {
         "mlx": mlx_module,
         "mlx.core": mlx_core_module,
-        "mlx_vq.quality": quality_package,
+        "keep.quality": quality_package,
     }
     with patch.dict(sys.modules, modules):
-        kh_name = "mlx_vq.quality.kronecker_hessian"
+        kh_name = "keep.quality.kronecker_hessian"
         kh_spec = importlib.util.spec_from_file_location(
-            kh_name, root / "src" / "mlx_vq" / "quality" / "kronecker_hessian.py"
+            kh_name, root / "src" / "keep" / "quality" / "kronecker_hessian.py"
         )
         assert kh_spec is not None and kh_spec.loader is not None
         kh_module = importlib.util.module_from_spec(kh_spec)
         sys.modules[kh_name] = kh_module
         kh_spec.loader.exec_module(kh_module)
 
-        feedback_name = "mlx_vq.quality.ldlq_feedback"
+        feedback_name = "keep.quality.ldlq_feedback"
         feedback_spec = importlib.util.spec_from_file_location(
-            feedback_name, root / "src" / "mlx_vq" / "quality" / "ldlq_feedback.py"
+            feedback_name, root / "src" / "keep" / "quality" / "ldlq_feedback.py"
         )
         assert feedback_spec is not None and feedback_spec.loader is not None
         feedback_module = importlib.util.module_from_spec(feedback_spec)

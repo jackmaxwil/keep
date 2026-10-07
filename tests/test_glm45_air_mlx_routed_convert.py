@@ -6,9 +6,9 @@ from pathlib import Path
 import mlx.core as mx
 import numpy as np
 
-from mlx_vq.convert.mlx_routed_quant import convert_mlx_routed_quant_layer
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.models.glm45_air_vq_adapter import load_glm45_air_mlx_quantized_switch_glu
+from keep.convert.mlx_routed_quant import convert_mlx_routed_quant_layer
+from keep.convert.stream_convert import load_safetensors_index
+from ramp.models.glm45_air_vq_adapter import load_glm45_air_mlx_quantized_switch_glu
 
 
 def _write_tiny_expert_source(path: Path) -> Path:

@@ -654,7 +654,7 @@ def verify_task5_cache(
             repo, PRODUCER_COMMIT, "benchmarks/produce_dsv4_teacher_cache.py"
         ),
         "teacher_runner_sha256": _git_blob_sha256(
-            repo, PRODUCER_COMMIT, "src/mlx_vq/quality/dsv4_teacher_runner.py"
+            repo, PRODUCER_COMMIT, "src/keep/quality/dsv4_teacher_runner.py"
         ),
     }
     _require(

@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 import sys
 
-from mlx_vq.codebook.e8 import e8_1bit_grid, e8p_full_grid
+from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
 
-_MODULE_PATH = Path(__file__).parents[1] / "src/mlx_vq/quality/ebss.py"
+_MODULE_PATH = Path(__file__).parents[1] / "src/keep/quality/ebss.py"
 _SPEC = importlib.util.spec_from_file_location("_ebss_under_test", _MODULE_PATH)
 assert _SPEC is not None and _SPEC.loader is not None
 _EBSS = importlib.util.module_from_spec(_SPEC)

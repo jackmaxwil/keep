@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import plistlib
 
-from mlx_vq.benchmark.nax_audit import (
+from ramp.benchmark.nax_audit import (
     Q2NaxRuntimeCase,
     q2_nax_capture_plan_records,
     q2_nax_runtime_cases,
@@ -12,7 +12,7 @@ from mlx_vq.benchmark.nax_audit import (
     summarize_xctrace,
     mlx_metallib_nax_inventory,
 )
-import mlx_vq.benchmark.nax_audit as nax_audit
+import ramp.benchmark.nax_audit as nax_audit
 
 
 def test_mlx_metallib_nax_inventory_reports_expected_kernel_families() -> None:

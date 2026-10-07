@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 
-from mlx_vq.codebook.e8 import (
+from keep.vq.e8 import (
     e8_1bit_grid,
     e8p_full_grid,
     encode_e8p_rtn,
     encode_e8p_rtn_diagonal_hessian,
 )
-from mlx_vq.quant.rtn import nearest_codebook_indices_diagonal_hessian
+from keep.quant.rtn import nearest_codebook_indices_diagonal_hessian
 
 
 def _exhaustive(vectors, diagonal):
@@ -83,7 +83,7 @@ def test_exact_tie_breaks_to_lowest_code() -> None:
 
 
 def test_dispatcher_numpy_backend_matches_exhaustive() -> None:
-    from mlx_vq.quant.rtn import nearest_e8p_codes_diagonal_hessian
+    from keep.quant.rtn import nearest_e8p_codes_diagonal_hessian
 
     rng = np.random.default_rng(55)
     vecs = (rng.standard_normal((4000, 8)) * 0.6).astype(np.float32)
@@ -95,7 +95,7 @@ def test_dispatcher_numpy_backend_matches_exhaustive() -> None:
 
 
 def test_materialize_fast_path_matches_exhaustive_end_to_end() -> None:
-    from mlx_vq.convert.glm52_recovery_materialize import (
+    from keep.convert.glm52_recovery_materialize import (
         quantize_weight_importance_aware,
     )
 
@@ -123,8 +123,8 @@ def test_materialize_fast_path_matches_exhaustive_end_to_end() -> None:
 
 
 def test_materialize_batched_e8_matches_per_codeword_numpy(monkeypatch) -> None:
-    import mlx_vq.convert.glm52_recovery_materialize as materialize
-    from mlx_vq.quant.rtn import nearest_e8_codes_diagonal_hessian
+    import keep.convert.glm52_recovery_materialize as materialize
+    from keep.quant.rtn import nearest_e8_codes_diagonal_hessian
 
     rng = np.random.default_rng(20260714)
     weight = (rng.standard_normal((5, 32)) * 0.3).astype(np.float32)
@@ -215,7 +215,7 @@ def test_materialize_batched_e8_matches_per_codeword_numpy(monkeypatch) -> None:
 def test_dispatcher_default_backend_is_byte_identical_numpy() -> None:
     # The default (no backend argument) must be the deterministic, byte-identity
     # NumPy path — never the Metal accelerator. Guards the reviewed regression.
-    from mlx_vq.quant.rtn import nearest_e8p_codes_diagonal_hessian
+    from keep.quant.rtn import nearest_e8p_codes_diagonal_hessian
 
     rng = np.random.default_rng(999)
     vecs = (rng.standard_normal((4000, 8)) * 0.6).astype(np.float32)

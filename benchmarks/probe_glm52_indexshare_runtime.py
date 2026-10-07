@@ -12,20 +12,20 @@ import numpy as np
 from mlx.utils import tree_flatten
 from mlx_lm.models.base import create_attention_mask
 
-from mlx_vq.convert.glm52_reap import (
+from keep.convert.glm52_reap import (
     GLM52_REAP_CONFIG_SHA256,
     GLM52_REAP_INDEX_SHA256,
     GLM52_REAP_PROFILE_NAME,
 )
-from mlx_vq.models.glm4_moe_adapter import QuantizedVQSwitchGLU
-from mlx_vq.models.glm52_policy import validate_glm52_config
-from mlx_vq.models.glm52_vq_adapter import (
+from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+from ramp.models.glm52_policy import validate_glm52_config
+from ramp.models.glm52_vq_adapter import (
     GLM52VQModel,
     GLM52VQModelArgs,
     Glm52VQMoE,
     audit_glm52_indexshare_static_contract,
 )
-from mlx_vq.models.profiles import get_profile
+from ramp.models.profiles import get_profile
 
 
 PROBE_RECORD_TYPE = "glm52_indexshare_runtime_probe"

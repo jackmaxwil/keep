@@ -11,21 +11,21 @@ import numpy as np
 from huggingface_hub import snapshot_download
 from safetensors import safe_open
 
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.load import (
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.load import (
     infer_vq_switch_linear_dims,
     inspect_safetensors,
     load_quantized_vq_switch_linear,
 )
-from mlx_vq.quality.dynamic_precision import (
+from keep.quality.dynamic_precision import (
     DynamicTensorProfile,
     allocate_dynamic_precision_tiers,
     build_dynamic_precision_tier_map_report,
 )
-from mlx_vq.quality.hessian_rounding import imatrix_weighted_reassign_codes
-from mlx_vq.quality.imatrix import load_projection_imatrix_manifest
-from mlx_vq.validate.glm45_air_vq import _expert_weight_name, _read_named_tensor
+from keep.quality.hessian_rounding import imatrix_weighted_reassign_codes
+from keep.quality.imatrix import load_projection_imatrix_manifest
+from keep.validate.glm45_air_vq import _expert_weight_name, _read_named_tensor
 
 
 ROUTED_PROJECTIONS = ("gate_proj", "up_proj", "down_proj")

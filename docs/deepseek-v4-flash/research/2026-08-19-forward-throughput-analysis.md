@@ -70,9 +70,9 @@ term plus the 1.25x harness term, neither of which the plan modelled.
 
 The eval times the forward and the metrics with two disjoint clocks:
 
-- `src/mlx_vq/quality/dsv4_teacher_agreement.py:1590-1599` — `forward_seconds` wraps
+- `src/keep/quality/dsv4_teacher_agreement.py:1590-1599` — `forward_seconds` wraps
   **only** `layer_major_prefill`.
-- `src/mlx_vq/quality/dsv4_teacher_agreement.py:1603-1612` — `metric_seconds` wraps
+- `src/keep/quality/dsv4_teacher_agreement.py:1603-1612` — `metric_seconds` wraps
   the `_student_logit_slices` → `_SessionAccumulator.add` loop.
 
 `forward_seconds + metric_seconds` reproduces the session wall time to within 0.2 s
@@ -115,7 +115,7 @@ The premise expected the 138-file VQ layout to read worse than the source's sing
 contiguous span. The telemetry says the opposite on every axis.
 
 Both engines share one streaming loop (`layer_major_prefill`,
-`src/mlx_vq/quality/dsv4_teacher_runner.py:1097`) and one stats object
+`src/keep/quality/dsv4_teacher_runner.py:1097`) and one stats object
 (`Dsv4StreamStats`, `:521-554`). Per 43-layer pass, from `rows.jsonl` deltas:
 
 | | source mxfp4 | VQ E8P | |
@@ -190,7 +190,7 @@ longer.
 The eval binds `QuantizedVQSwitchLinear` with `route_strategy` left at its default
 `"auto"` (`switch_linear.py:108`); the bind proof records
 `"route_backend": "gather_vqmm_auto"`. `auto` resolves at
-`src/mlx_vq/ops/vq_switch.py:926-942`:
+`src/ramp/ops/vq_switch.py:926-942`:
 
 ```python
 if sorted_indices or route_count >= _SORTED_TILED_ROUTE_THRESHOLD:   # 128
@@ -425,6 +425,6 @@ Primary sources:
 - `~/keep-artifacts/dsv4-quality-gate/{run,bind-proof}-*.json`
 - `artifacts/benchmarks/glm45-air-decode-component-profile.jsonl`
 - `docs/deepseek-v4-flash/research/wave4-wide-m-vqmm-survey.md`
-- `src/mlx_vq/quality/dsv4_teacher_agreement.py`,
-  `src/mlx_vq/quality/dsv4_teacher_runner.py`,
-  `src/mlx_vq/ops/vq_switch.py`, `src/mlx_vq/nn/switch_linear.py`
+- `src/keep/quality/dsv4_teacher_agreement.py`,
+  `src/keep/quality/dsv4_teacher_runner.py`,
+  `src/ramp/ops/vq_switch.py`, `src/ramp/nn/switch_linear.py`

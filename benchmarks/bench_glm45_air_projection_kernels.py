@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
-from mlx_vq.benchmark.projection_kernels import (
+from ramp.benchmark.glm45_air import append_jsonl
+from ramp.benchmark.projection_kernels import (
     build_projection_fixture_from_vq_artifact,
     build_projection_fixture,
     decode_bandwidth_floor_report,

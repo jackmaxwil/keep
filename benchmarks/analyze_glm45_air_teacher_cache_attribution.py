@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from mlx_vq.quality.teacher_cache_attribution import (
+from keep.quality.teacher_cache_attribution import (
     build_teacher_cache_attribution_report,
     load_teacher_cache_run,
 )

@@ -7,14 +7,14 @@ from pathlib import Path
 import numpy as np
 import mlx.core as mx
 
-from mlx_vq.io.continuous_sidecar import (
+from keep.io.continuous_sidecar import (
     continuous_parameters_enabled,
     copy_declared_continuous_sidecars,
     load_switch_linear_continuous_sidecar,
     write_continuous_artifact_manifest,
     write_continuous_sidecar,
 )
-from mlx_vq.nn.switch_linear import QuantizedVQSwitchLinear
+from ramp.nn.switch_linear import QuantizedVQSwitchLinear
 
 
 def _load_finetune_cli():

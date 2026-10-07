@@ -13,7 +13,7 @@ import json
 import numpy as np
 import pytest
 
-from mlx_vq.convert.dsv4_vq_pilot import (
+from keep.convert.dsv4_vq_pilot import (
     PROJECTION_INPUT_SPACE,
     RATE_LADDER,
     GroupSizePolicy,
@@ -58,7 +58,7 @@ def test_rate_bpw_matches_stream_convert_storage_model(code_bits, group_size, ex
 def test_rate_bpw_agrees_with_estimate_vq_storage():
     """The pilot's rate model must be the shipped one, not a parallel guess."""
 
-    from mlx_vq.convert.stream_convert import estimate_vq_storage
+    from keep.convert.stream_convert import estimate_vq_storage
 
     weights = 2048 * 4096
     for code_bits, group_size in RATE_LADDER:
@@ -194,7 +194,7 @@ def test_route_weighted_mean_rejects_ragged_input():
 def test_reconstruct_quantized_round_trips_the_shipped_quantizer():
     """Decode must invert the packing the GLM lineage's quantizer produces."""
 
-    from mlx_vq.convert.glm52_recovery_materialize import (
+    from keep.convert.glm52_recovery_materialize import (
         quantize_weight_importance_aware,
     )
 
@@ -212,7 +212,7 @@ def test_reconstruct_quantized_round_trips_the_shipped_quantizer():
 
 
 def test_reconstruct_quantized_handles_the_eight_bit_codebook():
-    from mlx_vq.convert.glm52_recovery_materialize import (
+    from keep.convert.glm52_recovery_materialize import (
         quantize_weight_importance_aware,
     )
 
@@ -278,7 +278,7 @@ def test_limited_swiglu_matches_the_adapter_implementation():
 
     import mlx.core as mx
 
-    from mlx_vq.convert.dsv4_vq_pilot import limited_swiglu
+    from keep.convert.dsv4_vq_pilot import limited_swiglu
     from ramp.models.deepseek_v4_flash_adapter import _limited_swiglu
 
     rng = np.random.default_rng(21)
@@ -291,7 +291,7 @@ def test_limited_swiglu_matches_the_adapter_implementation():
 
 
 def test_limited_swiglu_clamps_gate_above_and_up_on_both_sides():
-    from mlx_vq.convert.dsv4_vq_pilot import limited_swiglu
+    from keep.convert.dsv4_vq_pilot import limited_swiglu
 
     # The clamp is deliberately asymmetric on the gate: min(gate, limit) only.
     got = limited_swiglu(np.array([[50.0, -50.0]]), np.array([[50.0, -50.0]]), 10.0)
@@ -306,7 +306,7 @@ def test_limited_swiglu_clamps_gate_above_and_up_on_both_sides():
 
 
 def test_expert_block_proxy_is_zero_for_an_identical_reconstruction():
-    from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy
+    from keep.convert.dsv4_vq_pilot import expert_block_proxy
 
     rng = np.random.default_rng(31)
     weights = {
@@ -322,7 +322,7 @@ def test_expert_block_proxy_is_zero_for_an_identical_reconstruction():
 
 
 def test_expert_block_proxy_grows_with_the_perturbation():
-    from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy
+    from keep.convert.dsv4_vq_pilot import expert_block_proxy
 
     rng = np.random.default_rng(32)
     weights = {
@@ -344,7 +344,7 @@ def test_expert_block_proxy_grows_with_the_perturbation():
 
 
 def test_expert_block_proxy_rejects_a_missing_projection():
-    from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy
+    from keep.convert.dsv4_vq_pilot import expert_block_proxy
 
     weights = {
         "gate": np.ones((2, 4), dtype=np.float32),
@@ -358,7 +358,7 @@ def test_expert_block_proxy_rejects_a_missing_projection():
 
 
 def test_expert_block_proxy_rejects_a_negative_sigma():
-    from mlx_vq.convert.dsv4_vq_pilot import expert_block_proxy
+    from keep.convert.dsv4_vq_pilot import expert_block_proxy
 
     weights = {
         "gate": np.ones((2, 4), dtype=np.float32),

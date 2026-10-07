@@ -5,9 +5,9 @@ from pathlib import Path
 
 import yaml
 
-from mlx_vq.build.ops import OpDef, REGISTRY
-from mlx_vq.build.recipe import load_recipe
-from mlx_vq.build.runner import plan_recipe
+from keep.build.ops import OpDef, REGISTRY
+from keep.build.recipe import load_recipe
+from keep.build.runner import plan_recipe
 
 
 MODEL_ID = "0xSero/glm-5.2-reap-504B-v2"
@@ -99,7 +99,7 @@ def test_glm52_non_vq_pack_op_maps_resumable_cli_and_exact_outputs(
         "uv",
         "run",
         "python",
-        "src/mlx_vq/convert/glm52_non_vq.py",
+        "src/keep/convert/glm52_non_vq.py",
     ]
     assert "--resume" in argv
     assert argv[argv.index("--source-dir") + 1] == str(paths["source_dir"])

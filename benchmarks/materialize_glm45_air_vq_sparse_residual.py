@@ -8,21 +8,21 @@ import mlx.core as mx
 import numpy as np
 from huggingface_hub import hf_hub_download, snapshot_download
 
-from mlx_vq.benchmark.glm45_air import append_jsonl
-from mlx_vq.codebook.e8 import decode_weight_matrix
-from mlx_vq.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
-from mlx_vq.convert.stream_convert import load_safetensors_index
-from mlx_vq.io.continuous_sidecar import (
+from ramp.benchmark.glm45_air import append_jsonl
+from keep.vq.e8 import decode_weight_matrix
+from keep.convert.inspect_hf import GLM45_AIR_MODEL_ID, fetch_hf_config
+from keep.convert.stream_convert import load_safetensors_index
+from keep.io.continuous_sidecar import (
     copy_declared_continuous_sidecars,
     link_seed_artifact_groups,
     load_conversion_manifest,
 )
-from mlx_vq.io.sparse_residual import (
+from keep.io.sparse_residual import (
     write_sparse_residual_artifact_manifest,
     write_sparse_residual_rows,
 )
-from mlx_vq.quality.layer_probe_attribution import build_sparse_residual_rows_from_plan_report
-from mlx_vq.validate.glm45_air_vq import (
+from keep.quality.layer_probe_attribution import build_sparse_residual_rows_from_plan_report
+from keep.validate.glm45_air_vq import (
     _expert_weight_name,
     _load_switch_glu,
     _read_named_tensor,

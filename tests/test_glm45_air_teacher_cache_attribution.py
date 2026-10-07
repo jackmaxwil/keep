@@ -8,7 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
-from mlx_vq.quality.teacher_cache_attribution import (
+from keep.quality.teacher_cache_attribution import (
     TeacherCacheRun,
     build_teacher_cache_attribution_report,
 )

@@ -15,13 +15,13 @@ from uuid import uuid4
 
 
 def _candidate_api() -> Any:
-    module_name = "mlx_vq.quality.glm52_candidate_eval"
+    module_name = "keep.quality.glm52_candidate_eval"
     existing = sys.modules.get(module_name)
     if existing is not None:
         return existing
     module_path = (
         Path(__file__).resolve().parents[1]
-        / "src/mlx_vq/quality/glm52_candidate_eval.py"
+        / "src/keep/quality/glm52_candidate_eval.py"
     )
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     if spec is None or spec.loader is None:

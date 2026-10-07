@@ -1,10 +1,5 @@
-"""RAMP routed expert operations."""
+"""VQ operator wrappers built on MLX custom kernels."""
 
-from keep._alias import install_alias_package
+from ramp.ops.vq_switch import gather_vqmm, vq_switch_qmv
 
-__getattr__, __dir__ = install_alias_package(
-    __name__,
-    "mlx_vq.ops",
-    globals(),
-    child_modules=("vq_switch",),
-)
+__all__ = ["gather_vqmm", "vq_switch_qmv"]
