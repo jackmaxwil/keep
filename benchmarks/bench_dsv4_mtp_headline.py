@@ -53,6 +53,17 @@ FORBIDDEN_WIRED_ENV = (
     "GLM_SINGLE_HOST_MLX_WIRED_LIMIT_GB",
 )
 EXPECTED_VERIFY_IMPLEMENTATION = "nax_e8p_m32n64"
+#: Rows written by this harness. Version 1 rows (the committed Task 4
+#: evidence) are judged by their original outbound-only rule; version 2 rows
+#: must also stay under :data:`INBOUND_GATE`.
+ROW_SCHEMA_VERSION = 2
+#: Inbound-paging ceiling for a clean version 2 row, in ``vm_stat`` pages
+#: (16 KiB on Apple silicon, so 4,096 pages is 64 MiB). ``vm_stat`` counts are
+#: system-wide, so zero is not attainable: the cleanest Task 4 row still saw
+#: 144 page-ins. The rows that faulted their working set back in saw 7,296 to
+#: 304,047. Pages returning from swap are never acceptable.
+INBOUND_GATE = {"max_pageins": 4096, "max_swapins": 0, "max_decompressions": 4096}
+RESIDENT_FORMATS = ("bf16", "mxfp8")
 BENCHMARK_SOURCE_PATH = Path(__file__).resolve()
 RUNTIME_SOURCE_PATH = (REPO_ROOT / "src/keep/quality/dsv4_mtp_runtime.py").resolve()
 
@@ -199,6 +210,38 @@ def _prompt(pack: Path, prompt_tokens: int) -> tuple[Any, mx.array, dict[str, An
 
 
 def _row_clean(row: Mapping[str, Any]) -> bool:
+    """Whether a row is admissible evidence under its own schema's rule."""
+
+    version = row.get("schema_version", 1)
+    if type(version) is not int or version not in (1, ROW_SCHEMA_VERSION):
+        raise ValueError(f"unsupported headline row schema_version {version!r}")
+    outbound_clean = _row_clean_outbound(row)
+    if version == 1:
+        return outbound_clean
+    # Validate the inbound record even when the row is already dirty, so a
+    # malformed v2 row cannot hide behind an outbound failure.
+    inbound_clean = _row_clean_inbound(row)
+    return outbound_clean and inbound_clean
+
+
+def _row_clean_inbound(row: Mapping[str, Any]) -> bool:
+    gate = row.get("inbound_gate")
+    if not isinstance(gate, Mapping) or dict(gate) != INBOUND_GATE:
+        raise ValueError("headline inbound gate is missing or differs from the harness")
+    deltas = {}
+    for counter in ("pageins", "swapins", "decompressions"):
+        value = row.get(f"{counter}_delta")
+        if type(value) is not int or value < 0:
+            raise ValueError(f"headline {counter}_delta must be a nonnegative integer")
+        deltas[counter] = value
+    return (
+        deltas["pageins"] <= INBOUND_GATE["max_pageins"]
+        and deltas["swapins"] <= INBOUND_GATE["max_swapins"]
+        and deltas["decompressions"] <= INBOUND_GATE["max_decompressions"]
+    )
+
+
+def _row_clean_outbound(row: Mapping[str, Any]) -> bool:
     quiet = row.get("quiet")
     if not isinstance(quiet, Mapping):
         raise TypeError("headline quiet record is missing or malformed")
@@ -530,6 +573,11 @@ def _summarize_dsv4_mtp_rows(
     spec_signatures: set[str] = set()
     compact_stats: dict[int, dict[str, Any]] = {}
     prompt_authority = _validate_prompt_pack(rows[0])
+    resident_formats = {str(row.get("resident_format", "bf16")) for row in rows}
+    if len(resident_formats) != 1 or not resident_formats <= set(RESIDENT_FORMATS):
+        raise ValueError(
+            f"headline rows mix or misstate resident formats: {sorted(resident_formats)}"
+        )
     for row in rows:
         if row.get("record_type") != "dsv4_mtp_headline_row_v1":
             raise ValueError("unexpected DSV4 MTP headline row type")
@@ -626,6 +674,7 @@ def _summarize_dsv4_mtp_rows(
         "clean_pairs": len(clean_pairs),
         "dirty_pairs": len(pairs) - len(clean_pairs),
         "min_clean_pairs": min_clean_pairs,
+        "resident_format": next(iter(resident_formats)),
         "orders": dict(sorted(orders.items())),
         "artifact_identity": representative_row["artifact_identity"],
         "artifact_identity_sha256": identity_sha,
@@ -770,7 +819,9 @@ def _load(args: argparse.Namespace):
             payload_receipt=receipt,
             expected_payload_receipt_sha256=args.content_receipt_sha256,
         )
-    loaded = load_authenticated_dsv4_composite(inputs)
+    loaded = load_authenticated_dsv4_composite(
+        inputs, resident_format=getattr(args, "resident_format", "bf16")
+    )
     mx.eval(loaded.model.parameters())
     return loaded
 
@@ -800,6 +851,8 @@ def _bind_proof(args: argparse.Namespace) -> dict[str, Any]:
         "harness_identity": _current_harness_identity(),
         "harness_identity_sha256": _canonical_sha256(_current_harness_identity()),
         "resident_bound_count": non_vq.bound_count,
+        "resident_format": non_vq.resident_format,
+        "resident_mxfp8_repacked_tensors": len(non_vq.mxfp8_repacked_tensors),
         "resident_backbone_bound_count": non_vq.backbone_bound_count,
         "resident_mtp_bound_count": non_vq.mtp_bound_count,
         "resident_bound_names_sha256": _canonical_sha256(
@@ -856,6 +909,15 @@ def _run_row(args: argparse.Namespace) -> dict[str, Any]:
         window_seconds=args.quiet_window_seconds,
         max_attempts=args.quiet_max_attempts,
     )
+    rewarm = bool(getattr(args, "rewarm_after_quiet", False))
+    if rewarm:
+        # The quiet window is idle time in which macOS may compress the
+        # working set the warmup just heated. Touch it again, untimed, so the
+        # timed window measures steady state rather than decompression.
+        if args.role == "baseline":
+            generate_dsv4_autoregressive(loaded.model, prompt, max_new_tokens=3)
+        else:
+            generate_dsv4_speculative(loaded.model, prompt, max_new_tokens=4)
     thermal = _thermal_snapshot()
     before_vm = collect_vm_stat_counts()
     reset_mlx_peak_memory()
@@ -877,17 +939,15 @@ def _run_row(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
     elapsed = time.perf_counter() - started
-    after_vm = collect_vm_stat_counts()
+    # One snapshot carries the outbound and inbound deltas for the window.
     metrics = collect_metric_snapshot(previous_vm_stat_counts=before_vm)
-    pageins_delta = (
-        None
-        if before_vm is None or after_vm is None
-        else int(after_vm.get("pageins", 0)) - int(before_vm.get("pageins", 0))
-    )
     tokens = list(result.token_ids)
     row = {
         "record_type": "dsv4_mtp_headline_row_v1",
-        "schema_version": 1,
+        "schema_version": ROW_SCHEMA_VERSION,
+        "inbound_gate": dict(INBOUND_GATE),
+        "resident_format": getattr(args, "resident_format", "bf16"),
+        "rewarm_after_quiet": rewarm,
         "fresh_process": True,
         "pid": os.getpid(),
         "ppid": os.getppid(),
@@ -911,7 +971,6 @@ def _run_row(args: argparse.Namespace) -> dict[str, Any]:
         "speculative_stats": spec_stats,
         "quiet": quiet,
         "thermal": thermal,
-        "pageins_delta": pageins_delta,
         "wired_limit_environment_absent": True,
         **metrics,
     }
@@ -980,6 +1039,9 @@ def _series(args: argparse.Namespace) -> None:
         str(args.quiet_window_seconds),
         "--quiet-max-attempts",
         str(args.quiet_max_attempts),
+        "--resident-format",
+        args.resident_format,
+        *(["--rewarm-after-quiet"] if args.rewarm_after_quiet else []),
     ]
     env = dict(os.environ)
     env["KEEP_TASK4_LOCK_HELD"] = "1"
@@ -1031,6 +1093,20 @@ def _common_artifact_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--resident-dir", type=Path, default=DEFAULT_RESIDENT)
     parser.add_argument("--vq-dir", type=Path, default=DEFAULT_VQ)
+    parser.add_argument(
+        "--resident-format",
+        choices=RESIDENT_FORMATS,
+        default="bf16",
+        help="bind FP8 residents decoded to bf16 (default) or as their mxfp8 source bytes",
+    )
+
+
+def _rewarm_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--rewarm-after-quiet",
+        action="store_true",
+        help="re-run the untimed warmup after the quiet window, before timing",
+    )
 
 
 def main() -> None:
@@ -1055,6 +1131,7 @@ def main() -> None:
     row.add_argument("--role", choices=("baseline", "speculative"), required=True)
     row.add_argument("--quiet-window-seconds", type=float, default=5.0)
     row.add_argument("--quiet-max-attempts", type=int, default=3)
+    _rewarm_arg(row)
     row.add_argument("--output", type=Path, required=True)
     row.set_defaults(func=_run_row, heavy=True)
 
@@ -1085,6 +1162,7 @@ def main() -> None:
     series.add_argument("--min-clean-pairs", type=int, default=3)
     series.add_argument("--quiet-window-seconds", type=float, default=5.0)
     series.add_argument("--quiet-max-attempts", type=int, default=3)
+    _rewarm_arg(series)
     series.add_argument("--output-dir", type=Path, required=True)
     series.set_defaults(func=_series, heavy=True)
 
