@@ -149,6 +149,7 @@ from keep.convert.fp8_block import (
     repack_fp8_block_as_mxfp8,
 )
 from keep.io.load import load_quantized_vq_switch_linear
+from ramp.kernels.hc_sinkhorn import fused_hc_sinkhorn, fused_hc_sinkhorn_enabled
 from keep.io.source_safetensors import read_safetensors_file_header
 from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
 
@@ -807,6 +808,34 @@ def _hc_split_sinkhorn_ops(
     return pre, post, comb
 
 
+@mx.compile
+def _hc_split_logits_ops(
+    mixes: mx.array,
+    scale: mx.array,
+    base: mx.array,
+    hc_mult: int,
+    eps: float,
+) -> tuple[mx.array, mx.array, mx.array]:
+    """``_hc_split_sinkhorn_ops`` up to the comb logits, for the fused sinkhorn.
+
+    ``pre`` and ``post`` are computed exactly as there; only the sinkhorn on
+    the returned logits moves to :func:`ramp.kernels.hc_sinkhorn.fused_hc_sinkhorn`.
+    """
+
+    mixes = mixes.astype(mx.float32)
+    scale = scale.astype(mx.float32)
+    base = base.astype(mx.float32)
+    pre_scale, post_scale, comb_scale = scale[0], scale[1], scale[2]
+    pre = mx.sigmoid(mixes[..., :hc_mult] * pre_scale + base[:hc_mult]) + eps
+    post = 2 * mx.sigmoid(
+        mixes[..., hc_mult : 2 * hc_mult] * post_scale + base[hc_mult : 2 * hc_mult]
+    )
+    logits = mixes[..., 2 * hc_mult :].reshape(
+        *mixes.shape[:-1], hc_mult, hc_mult
+    ) * comb_scale + base[2 * hc_mult :].reshape(hc_mult, hc_mult)
+    return pre, post, logits
+
+
 class HyperConnection(nn.Module):
     def __init__(self, config: DeepseekV4FlashVQModelArgs):
         super().__init__()
@@ -824,14 +853,24 @@ class HyperConnection(nn.Module):
         y = x.astype(mx.float32)
         z = mx.fast.rms_norm(y.flatten(-2), None, self.norm_eps)
         mixes = z @ self.fn.T
-        pre, post, comb = _hc_split_sinkhorn_ops(
-            mixes,
-            self.scale,
-            self.base,
-            self.hc_mult,
-            self.sinkhorn_iters,
-            self.hc_eps,
-        )
+        if fused_hc_sinkhorn_enabled():
+            # Opt-in (RAMP_HC_SINKHORN=metal): one dispatch for the whole
+            # sinkhorn instead of a few per iteration. Not bit-identical.
+            pre, post, logits = _hc_split_logits_ops(
+                mixes, self.scale, self.base, self.hc_mult, self.hc_eps
+            )
+            comb = fused_hc_sinkhorn(
+                logits, iters=self.sinkhorn_iters, eps=self.hc_eps
+            )
+        else:
+            pre, post, comb = _hc_split_sinkhorn_ops(
+                mixes,
+                self.scale,
+                self.base,
+                self.hc_mult,
+                self.sinkhorn_iters,
+                self.hc_eps,
+            )
         return (pre[..., None] * y).sum(axis=2).astype(x.dtype), post, comb
 
 
