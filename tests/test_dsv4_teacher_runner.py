@@ -1796,7 +1796,7 @@ class TestReapCollection:
             accumulator=accumulator,
             collect_spaces=IMATRIX_SPACES if accumulator is not None else (),
             release_after_layer=False,
-            reap=reap,
+            route_observers=() if reap is None else (reap,),
         )
         return args, out
 
@@ -1887,6 +1887,15 @@ class TestReapCollection:
         stats = ReapStats.load(report["output"])
         assert len(stats.sessions) == 2
         assert stats.routed_slots.sum() == report["routed_slots"] > 0
+
+        # The same pass records each session's routing for the residency replay.
+        first = sorted((out / "sessions").glob("*.npz"))[0]
+        with np.load(first, allow_pickle=False) as archive:
+            route_ids = archive["routes__expert_ids"]
+            assert route_ids.dtype == np.int16
+            assert route_ids.shape[1:] == (args.num_hidden_layers, args.num_experts_per_tok)
+            assert route_ids.shape[0] > 0
+            assert archive["routes__gate_weights"].shape == route_ids.shape
 
         # A session without REAP arrays (e.g. produced before this existed)
         # makes the finalizer refuse rather than under-count.

@@ -1163,7 +1163,7 @@ def layer_major_prefill(
     on_layer: Callable[[int, int], None] | None = None,
     release_after_layer: bool = True,
     dspark_taps: dict[int, list[Any]] | None = None,
-    reap: Any | None = None,
+    route_observers: Sequence[Any] = (),
 ) -> list[Any]:
     """Prefill the whole backbone layer-outer, chunk-inner.
 
@@ -1185,11 +1185,14 @@ def layer_major_prefill(
     to be a dict of lists rather than one concatenated array: the taps for layer
     40 are complete before layer 41 has run at all.
 
-    ``reap`` is an optional :class:`keep.quality.reap.ReapAccumulator`. It
-    takes the model's own gate weights and each routed expert's output before
-    gating, so it scores experts against the routing the model actually uses.
-    Like the imatrix it reads tensors the forward already computes and leaves
-    the forward bit-identical.
+    ``route_observers`` receive every chunk's routing as the model computed
+    it: ``add_chunk(layer=, expert_ids=, gate_weights=, expert_outputs=)``
+    with the model's own gate weights and each routed expert's output before
+    gating, then ``eval_pending()`` per chunk and ``flush_device()`` per
+    layer. :class:`keep.quality.reap.ReapAccumulator` and
+    :class:`keep.quality.expert_residency.RouteRecorder` are the two users.
+    Like the imatrix, observers read tensors the forward already computes and
+    leave it bit-identical.
     """
 
     import mlx.core as mx
@@ -1292,7 +1295,7 @@ def layer_major_prefill(
                 )
             mask = masks[chunk_index]
 
-            if accumulator is None and reap is None:
+            if accumulator is None and not route_observers:
                 hidden[chunk_index] = layer(h, mask, layer_cache, piece)
                 if layer_index in tap_layers:
                     tap = _dspark_tap(hidden[chunk_index])
@@ -1324,8 +1327,8 @@ def layer_major_prefill(
 
             flat_inds = inds.reshape(-1, inds.shape[-1])
             flat_scores = scores.reshape(-1, scores.shape[-1]).astype(mx.float32)
-            if reap is not None:
-                reap.add_chunk(
+            for observer in route_observers:
+                observer.add_chunk(
                     layer=layer_index,
                     expert_ids=flat_inds,
                     gate_weights=flat_scores,
@@ -1333,7 +1336,8 @@ def layer_major_prefill(
                 )
             if accumulator is None:
                 mx.eval(hidden[chunk_index])
-                reap.eval_pending()
+                for observer in route_observers:
+                    observer.eval_pending()
                 continue
             if collect_hidden:
                 rows = moe_input.reshape(-1, moe_input.shape[-1]).astype(mx.float32)
@@ -1363,8 +1367,8 @@ def layer_major_prefill(
                 )
             mx.eval(hidden[chunk_index])
             accumulator.eval_pending()
-            if reap is not None:
-                reap.eval_pending()
+            for observer in route_observers:
+                observer.eval_pending()
 
         switch_mlp.down_hook = None
         layer.ffn.switch_mlp = None
@@ -1373,8 +1377,8 @@ def layer_major_prefill(
             expert_provider.release(layer_index)
         if accumulator is not None:
             accumulator.flush_device()
-        if reap is not None:
-            reap.flush_device()
+        for observer in route_observers:
+            observer.flush_device()
         mx.clear_cache()
         if on_layer is not None:
             on_layer(layer_index, n_chunks)
@@ -2702,11 +2706,19 @@ def _produce_sessions(
         token_ids = mx.array(session.token_ids.astype(np.int64)[None, :])
         accumulator = None
         reap = None
+        routes = None
+        observers: tuple[Any, ...] = ()
         collect: tuple[str, ...] = ()
         if mode == "calibration":
+            from keep.quality.expert_residency import (
+                ROUTE_RECORD_TOKENS,
+                RouteRecorder,
+            )
             from keep.quality.reap import ReapAccumulator
 
             reap = ReapAccumulator(layers=layers, num_experts=num_experts)
+            routes = RouteRecorder(layers=layers, max_tokens=ROUTE_RECORD_TOKENS)
+            observers = (reap, routes)
             accumulator = _ImatrixAccumulator(
                 layers=layers,
                 num_experts=num_experts,
@@ -2736,13 +2748,14 @@ def _produce_sessions(
             collect_spaces=collect,
             on_layer=on_layer,
             dspark_taps=taps,
-            reap=reap,
+            route_observers=observers,
         )
 
         if mode == "calibration":
             arrays = {
                 **calibration_session_arrays(accumulator),
                 **reap.stats(session=session.prompt_id).as_arrays(),
+                **routes.as_arrays(),
             }
             validate_dsv4_calibration_capture(
                 arrays, layers=layers, num_experts=num_experts
