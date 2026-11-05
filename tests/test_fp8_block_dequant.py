@@ -9,6 +9,7 @@ from keep.convert.fp8_block import (
     decode_e4m3,
     decode_ue8m0,
     dequantize_fp8_block,
+    repack_fp8_block_as_mxfp8,
 )
 
 
@@ -170,3 +171,144 @@ def test_block_dequant_rejects_non_ndarray_inputs():
         dequantize_fp8_block([[0x38]], scales)  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         dequantize_fp8_block(codes, [[1.0]])  # type: ignore[arg-type]
+
+
+# --------------------------------------------------------------------------
+# Lossless mxfp8 repack (residents kept as their source bytes)
+# --------------------------------------------------------------------------
+
+
+def _finite_fp8_pair(rng, rows, cols, block=(128, 128)):
+    codes = rng.integers(0, 256, size=(rows, cols)).astype(np.uint8)
+    codes = np.where((codes & 0x7F) == 0x7F, 0x7E, codes).astype(np.uint8)
+    blocks = (-(-rows // block[0]), -(-cols // block[1]))
+    scales = rng.integers(110, 140, size=blocks).astype(np.uint8)
+    return codes, scales
+
+
+def test_mxfp8_repack_layout_is_a_pure_byte_relabel():
+    rng = np.random.default_rng(0)
+    codes, scales = _finite_fp8_pair(rng, 256, 384)
+    packed, group_scales = repack_fp8_block_as_mxfp8(codes, scales)
+
+    assert packed.dtype == np.uint32 and packed.shape == (256, 96)
+    assert group_scales.dtype == np.uint8 and group_scales.shape == (256, 12)
+    # The code bytes are untouched, four to a little-endian word.
+    np.testing.assert_array_equal(packed.astype("<u4").view(np.uint8).reshape(256, 384), codes)
+    # Every 32-wide group carries its 128x128 block's exponent.
+    for r in (0, 127, 128, 255):
+        for g in range(12):
+            assert group_scales[r, g] == scales[r // 128, (g * 32) // 128]
+    # The result never aliases the caller's buffer.
+    original = int(codes[0, 0])
+    codes[0, 0] ^= 0x01
+    assert int(packed.astype("<u4").view(np.uint8).reshape(-1)[0]) == original
+
+
+def test_mxfp8_repack_handles_ragged_blocks():
+    rng = np.random.default_rng(1)
+    codes, scales = _finite_fp8_pair(rng, 200, 160)  # partial row and column blocks
+    packed, group_scales = repack_fp8_block_as_mxfp8(codes, scales)
+    assert packed.shape == (200, 40) and group_scales.shape == (200, 5)
+    assert group_scales[199, 4] == scales[1, 1]
+    assert group_scales[127, 3] == scales[0, 0]
+
+
+def test_mxfp8_repack_accepts_exact_power_of_two_float_scales():
+    rng = np.random.default_rng(2)
+    codes, byte_scales = _finite_fp8_pair(rng, 128, 256)
+    float_scales = decode_ue8m0(byte_scales)
+    _, from_bytes = repack_fp8_block_as_mxfp8(codes, byte_scales)
+    _, from_floats = repack_fp8_block_as_mxfp8(codes, float_scales)
+    np.testing.assert_array_equal(from_bytes, from_floats)
+
+
+@pytest.mark.parametrize(
+    "bad_scale",
+    [np.float32(0.3), np.float32(0.0), np.float32(np.nan), np.float32(-2.0)],
+)
+def test_mxfp8_repack_refuses_scales_that_would_need_rounding(bad_scale):
+    codes = np.zeros((128, 128), dtype=np.uint8)
+    with pytest.raises(ValueError):
+        repack_fp8_block_as_mxfp8(codes, np.full((1, 1), bad_scale, dtype=np.float32))
+
+
+def test_mxfp8_repack_refuses_nan_scale_byte():
+    codes = np.zeros((128, 128), dtype=np.uint8)
+    with pytest.raises(ValueError, match="NaN"):
+        repack_fp8_block_as_mxfp8(codes, np.full((1, 1), 255, dtype=np.uint8))
+
+
+@pytest.mark.parametrize(
+    ("shape", "block", "message"),
+    [
+        ((128, 48), (128, 128), "multiple of the mxfp8 group"),
+        ((128, 128), (128, 48), "straddle"),
+    ],
+)
+def test_mxfp8_repack_refuses_groups_that_cross_scales(shape, block, message):
+    codes = np.zeros(shape, dtype=np.uint8)
+    scales = np.full((-(-shape[0] // block[0]), -(-shape[1] // block[1])), 127, dtype=np.uint8)
+    with pytest.raises(ValueError, match=message):
+        repack_fp8_block_as_mxfp8(codes, scales, block_size=block)
+
+
+def test_mxfp8_repack_validates_inputs():
+    codes = np.zeros((128, 128), dtype=np.uint8)
+    with pytest.raises(ValueError, match="does not match"):
+        repack_fp8_block_as_mxfp8(codes, np.full((2, 1), 127, dtype=np.uint8))
+    with pytest.raises(ValueError, match="uint8"):
+        repack_fp8_block_as_mxfp8(codes.astype(np.int8), np.full((1, 1), 127, dtype=np.uint8))
+    with pytest.raises(ValueError, match="group size"):
+        repack_fp8_block_as_mxfp8(codes, np.full((1, 1), 127, dtype=np.uint8), group_size=64)
+    with pytest.raises(ValueError, match="uint8"):
+        repack_fp8_block_as_mxfp8(codes, np.full((1, 1), 127, dtype=np.int32))
+
+
+@pytest.mark.mlx
+@pytest.mark.parametrize("dtype_name", ["float32", "bfloat16", "float16"])
+def test_mxfp8_repack_dequantizes_bit_identically_in_mlx(dtype_name):
+    """The load-bearing claim: the byte copy changes no weight, in any dtype."""
+
+    mx = pytest.importorskip("mlx.core")
+    rng = np.random.default_rng(3)
+    codes, scales = _finite_fp8_pair(rng, 256, 384)
+    if dtype_name == "float16":
+        # Keep products inside float16's range so the comparison is meaningful.
+        scales = rng.integers(118, 128, size=scales.shape).astype(np.uint8)
+    dtype = getattr(mx, dtype_name)
+    packed, group_scales = repack_fp8_block_as_mxfp8(codes, scales)
+
+    ours = mx.array(dequantize_fp8_block(codes, scales)).astype(dtype)
+    theirs = mx.dequantize(
+        mx.array(packed),
+        mx.array(group_scales),
+        group_size=32,
+        bits=8,
+        mode="mxfp8",
+        dtype=dtype,
+    )
+    view = mx.uint32 if dtype_name == "float32" else mx.uint16
+    assert theirs.dtype == dtype
+    np.testing.assert_array_equal(np.array(theirs.view(view)), np.array(ours.view(view)))
+
+
+@pytest.mark.mlx
+def test_mxfp8_weights_only_matmul_matches_the_decoded_weight():
+    mx = pytest.importorskip("mlx.core")
+    rng = np.random.default_rng(4)
+    codes, scales = _finite_fp8_pair(rng, 64, 256)
+    packed, group_scales = repack_fp8_block_as_mxfp8(codes, scales)
+    weight = mx.array(dequantize_fp8_block(codes, scales))
+    x = mx.array(rng.normal(size=(3, 256)).astype(np.float32))
+
+    got = np.array(
+        mx.quantized_matmul(
+            x, mx.array(packed), mx.array(group_scales), transpose=True, group_size=32, bits=8, mode="mxfp8"
+        )
+    )
+    want = np.array(x @ weight.T)
+    # Same weights, different accumulation order: bound the float32 error by
+    # the magnitude of the summed terms, not of the (possibly cancelled) result.
+    bound = 1e-5 * (np.abs(np.array(x)) @ np.abs(np.array(weight)).T)
+    assert np.all(np.abs(got - want) <= bound)

@@ -636,13 +636,25 @@ def validate_dsv4_composite_inputs(
 
 def load_authenticated_dsv4_composite(
     inputs: Dsv4ValidatedCompositeInputs,
+    *,
+    resident_format: str = "bf16",
 ) -> Dsv4LoadedComposite:
-    """Construct and bind exactly the authenticated resident+routed model."""
+    """Construct and bind exactly the authenticated resident+routed model.
+
+    ``resident_format="mxfp8"`` keeps FP8 residents as their source bytes
+    (weights-only mxfp8, bit-identical weights) instead of decoding them to
+    bf16; see :func:`bind_deepseek_v4_flash_non_vq_weights`. The artifact and
+    its identity are the same either way -- only the in-memory layout differs.
+    """
 
     args = deepseek_v4_flash_args_from_config(inputs.config)
     model = DeepseekV4FlashVQModel(args, with_mtp=True)
     non_vq = bind_deepseek_v4_flash_non_vq_weights(
-        model, inputs.resident_dir, include_mtp=True, strict=True
+        model,
+        inputs.resident_dir,
+        include_mtp=True,
+        strict=True,
+        resident_format=resident_format,
     )
     backbone = bind_deepseek_v4_flash_vq_experts(
         model,
