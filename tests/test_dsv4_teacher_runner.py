@@ -1781,6 +1781,123 @@ class TestFinalize:
         assert gate["importance_sum"].shape == (args.hidden_size,)
 
 
+class TestReapCollection:
+    """REAP saliency rides the calibration pass without touching the forward."""
+
+    def _prefill(self, *, reap=None, accumulator=None):
+        args, model = _tiny_model()
+        experts = _tiny_experts(args)
+        ids = mx.array(np.random.default_rng(5).integers(0, args.vocab_size, (1, 48)))
+        out = layer_major_prefill(
+            model,
+            ids,
+            chunk=16,
+            expert_provider=InMemoryExpertProvider(experts),
+            accumulator=accumulator,
+            collect_spaces=IMATRIX_SPACES if accumulator is not None else (),
+            release_after_layer=False,
+            reap=reap,
+        )
+        return args, out
+
+    def test_reap_alone_and_with_the_imatrix_leave_the_forward_unchanged(self):
+        from keep.quality.reap import ReapAccumulator
+
+        args, plain = self._prefill()
+        layers = range(args.num_hidden_layers)
+        _, reap_only = self._prefill(
+            reap=ReapAccumulator(layers=layers, num_experts=args.n_routed_experts)
+        )
+        _, both = self._prefill(
+            reap=ReapAccumulator(layers=layers, num_experts=args.n_routed_experts),
+            accumulator=_ImatrixAccumulator(
+                layers=layers,
+                num_experts=args.n_routed_experts,
+                dims={"hidden": args.hidden_size, "down": args.moe_intermediate_size},
+            ),
+        )
+        for a, b, c in zip(plain, reap_only, both):
+            assert mx.array_equal(a, b) and mx.array_equal(a, c)
+
+    def test_reap_sees_the_same_routes_and_gate_weights_as_the_imatrix(self):
+        from keep.quality.reap import ReapAccumulator
+
+        args, _ = _tiny_model()
+        layers = list(range(args.num_hidden_layers))
+        reap = ReapAccumulator(layers=layers, num_experts=args.n_routed_experts)
+        imatrix = _ImatrixAccumulator(
+            layers=layers,
+            num_experts=args.n_routed_experts,
+            dims={"hidden": args.hidden_size, "down": args.moe_intermediate_size},
+        )
+        self._prefill(reap=reap, accumulator=imatrix)
+        stats = reap.stats()
+        arrays = imatrix.as_arrays()
+        np.testing.assert_array_equal(stats.route_count, arrays["route_count__hidden"])
+        np.testing.assert_allclose(
+            stats.gate_sum, arrays["affinity_score_sum__hidden"], rtol=1e-6
+        )
+        assert np.all(stats.gate_norm_sum[stats.route_count > 0] > 0)
+        validate_dsv4_calibration_capture(
+            {**arrays, **stats.as_arrays()},
+            layers=layers,
+            num_experts=args.n_routed_experts,
+        )
+
+    def test_capture_validation_refuses_reap_counts_that_disagree(self):
+        from keep.quality.reap import ReapAccumulator
+
+        args, _ = _tiny_model()
+        layers = list(range(args.num_hidden_layers))
+        reap = ReapAccumulator(layers=layers, num_experts=args.n_routed_experts)
+        imatrix = _ImatrixAccumulator(
+            layers=layers,
+            num_experts=args.n_routed_experts,
+            dims={"hidden": args.hidden_size, "down": args.moe_intermediate_size},
+        )
+        self._prefill(reap=reap, accumulator=imatrix)
+        arrays = {**imatrix.as_arrays(), **reap.stats().as_arrays()}
+        counts = arrays["reap__route_count"].copy()
+        nonzero = np.argwhere(counts > 1)[0]
+        counts[tuple(nonzero)] -= 1
+        counts[nonzero[0], (nonzero[1] + 1) % counts.shape[1]] += 1
+        arrays["reap__route_count"] = counts
+        with pytest.raises(ValueError, match="REAP"):
+            validate_dsv4_calibration_capture(
+                arrays, layers=layers, num_experts=args.n_routed_experts
+            )
+
+    def test_calibration_run_writes_reap_stats_and_finalize_sums_them(self, tmp_path):
+        from keep.quality.dsv4_teacher_runner import finalize_dsv4_reap_stats
+        from keep.quality.reap import ReapStats
+
+        args, model = _tiny_model()
+        experts = _tiny_experts(args)
+        pack = _write_tiny_pack(tmp_path / "pack.json", vocab=args.vocab_size)
+        out = tmp_path / "out"
+        run_dsv4_teacher_production(
+            mode="calibration",
+            pack_path=pack,
+            out_dir=out,
+            chunk=16,
+            workload_loader=_tiny_loader(args, model, experts),
+        )
+        report = finalize_dsv4_reap_stats(out)
+        assert report["session_count"] == 2
+        stats = ReapStats.load(report["output"])
+        assert len(stats.sessions) == 2
+        assert stats.routed_slots.sum() == report["routed_slots"] > 0
+
+        # A session without REAP arrays (e.g. produced before this existed)
+        # makes the finalizer refuse rather than under-count.
+        victim = sorted((out / "sessions").glob("*.npz"))[0]
+        with np.load(victim, allow_pickle=False) as archive:
+            kept = {k: archive[k] for k in archive.files if not k.startswith("reap__")}
+        np.savez(victim, **kept)
+        with pytest.raises(ValueError, match="no REAP statistics"):
+            finalize_dsv4_reap_stats(out)
+
+
 class TestStreamStats:
     def test_device_rate_uses_busy_time_not_the_overlapped_span(self):
         """The span is not a throughput; only ``io_busy_seconds`` is.

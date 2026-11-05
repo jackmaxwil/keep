@@ -92,6 +92,7 @@ __all__ = [
     "build_dsv4_expert_span_index",
     "calibration_session_arrays",
     "finalize_dsv4_calibration_imatrix",
+    "finalize_dsv4_reap_stats",
     "layer_major_prefill",
     "load_dsv4_streaming_workload",
     "load_dsv4_teich_pack",
@@ -1162,6 +1163,7 @@ def layer_major_prefill(
     on_layer: Callable[[int, int], None] | None = None,
     release_after_layer: bool = True,
     dspark_taps: dict[int, list[Any]] | None = None,
+    reap: Any | None = None,
 ) -> list[Any]:
     """Prefill the whole backbone layer-outer, chunk-inner.
 
@@ -1182,6 +1184,12 @@ def layer_major_prefill(
     :meth:`DeepseekV4FlashBackbone.__call__`. Layer-major order is why this has
     to be a dict of lists rather than one concatenated array: the taps for layer
     40 are complete before layer 41 has run at all.
+
+    ``reap`` is an optional :class:`keep.quality.reap.ReapAccumulator`. It
+    takes the model's own gate weights and each routed expert's output before
+    gating, so it scores experts against the routing the model actually uses.
+    Like the imatrix it reads tensors the forward already computes and leaves
+    the forward bit-identical.
     """
 
     import mlx.core as mx
@@ -1284,7 +1292,7 @@ def layer_major_prefill(
                 )
             mask = masks[chunk_index]
 
-            if accumulator is None:
+            if accumulator is None and reap is None:
                 hidden[chunk_index] = layer(h, mask, layer_cache, piece)
                 if layer_index in tap_layers:
                     tap = _dspark_tap(hidden[chunk_index])
@@ -1316,6 +1324,17 @@ def layer_major_prefill(
 
             flat_inds = inds.reshape(-1, inds.shape[-1])
             flat_scores = scores.reshape(-1, scores.shape[-1]).astype(mx.float32)
+            if reap is not None:
+                reap.add_chunk(
+                    layer=layer_index,
+                    expert_ids=flat_inds,
+                    gate_weights=flat_scores,
+                    expert_outputs=routed.reshape(-1, *routed.shape[-2:]),
+                )
+            if accumulator is None:
+                mx.eval(hidden[chunk_index])
+                reap.eval_pending()
+                continue
             if collect_hidden:
                 rows = moe_input.reshape(-1, moe_input.shape[-1]).astype(mx.float32)
                 accumulator.add_chunk(
@@ -1344,6 +1363,8 @@ def layer_major_prefill(
                 )
             mx.eval(hidden[chunk_index])
             accumulator.eval_pending()
+            if reap is not None:
+                reap.eval_pending()
 
         switch_mlp.down_hook = None
         layer.ffn.switch_mlp = None
@@ -1352,6 +1373,8 @@ def layer_major_prefill(
             expert_provider.release(layer_index)
         if accumulator is not None:
             accumulator.flush_device()
+        if reap is not None:
+            reap.flush_device()
         mx.clear_cache()
         if on_layer is not None:
             on_layer(layer_index, n_chunks)
@@ -1933,6 +1956,19 @@ def validate_dsv4_calibration_capture(
             raise ValueError(
                 f"route_count__{space} rows must sum to total_route_count__{space}"
             )
+    if any(str(name).startswith("reap__") for name in capture):
+        from keep.quality.reap import ReapStats
+
+        reap = ReapStats.from_arrays(capture)  # validates shapes and invariants
+        if reap.layers.tolist() != stored_layers.tolist():
+            raise ValueError("calibration REAP layer set drifted")
+        if reap.num_experts != int(num_experts):
+            raise ValueError("calibration REAP expert count drifted")
+        hidden_counts = capture.get("route_count__hidden")
+        if hidden_counts is not None and not np.array_equal(
+            np.asarray(hidden_counts), reap.route_count
+        ):
+            raise ValueError("REAP route counts disagree with the imatrix route counts")
 
 
 def calibration_session_arrays(
@@ -2665,8 +2701,12 @@ def _produce_sessions(
         started = time.perf_counter()
         token_ids = mx.array(session.token_ids.astype(np.int64)[None, :])
         accumulator = None
+        reap = None
         collect: tuple[str, ...] = ()
         if mode == "calibration":
+            from keep.quality.reap import ReapAccumulator
+
+            reap = ReapAccumulator(layers=layers, num_experts=num_experts)
             accumulator = _ImatrixAccumulator(
                 layers=layers,
                 num_experts=num_experts,
@@ -2696,10 +2736,14 @@ def _produce_sessions(
             collect_spaces=collect,
             on_layer=on_layer,
             dspark_taps=taps,
+            reap=reap,
         )
 
         if mode == "calibration":
-            arrays = calibration_session_arrays(accumulator)
+            arrays = {
+                **calibration_session_arrays(accumulator),
+                **reap.stats(session=session.prompt_id).as_arrays(),
+            }
             validate_dsv4_calibration_capture(
                 arrays, layers=layers, num_experts=num_experts
             )
@@ -2795,6 +2839,53 @@ def _atomic_json(path: Path, payload: Any) -> None:
 # ---------------------------------------------------------------------------
 # Calibration finalize -> imatrix sidecars
 # ---------------------------------------------------------------------------
+
+
+def finalize_dsv4_reap_stats(
+    out_dir: str | Path, *, output: str | Path | None = None
+) -> dict[str, Any]:
+    """Sum every calibration session's REAP statistics into one file.
+
+    Fails closed if any calibration session lacks them (for example a session
+    produced before REAP collection existed), because a saliency missing some
+    sessions would silently under-score whatever those sessions routed to.
+    """
+
+    from keep.quality.reap import REAP_ARRAY_PREFIX, ReapStats
+
+    root = Path(out_dir)
+    session_files = sorted((root / "sessions").glob("*.npz"))
+    if not session_files:
+        raise ValueError(f"no session outputs under {root / 'sessions'}")
+    total: ReapStats | None = None
+    missing: list[str] = []
+    for path in session_files:
+        with np.load(path, allow_pickle=False) as archive:
+            capture = {name: archive[name] for name in archive.files}
+        if _identity_text(capture, "record_type") != "dsv4_teacher_calibration_v1":
+            raise ValueError(f"{path} is not a calibration capture")
+        if not any(name.startswith(REAP_ARRAY_PREFIX) for name in capture):
+            missing.append(path.name)
+            continue
+        stats = ReapStats.from_arrays(capture, sessions=(_identity_text(capture, "prompt_id"),))
+        total = stats if total is None else total.merged(stats)
+    if missing:
+        raise ValueError(
+            f"{len(missing)} calibration sessions have no REAP statistics "
+            f"(rerun them): {missing[:5]}"
+        )
+    assert total is not None
+    target = Path(output) if output is not None else root / "reap-stats.npz"
+    total.save(target)
+    return {
+        "record_type": "dsv4_reap_stats_finalize",
+        "session_count": len(session_files),
+        "layers": total.layers.tolist(),
+        "num_experts": total.num_experts,
+        "routed_slots": int(total.routed_slots.sum()),
+        "never_routed_experts": int((total.route_count == 0).sum()),
+        "output": str(target),
+    }
 
 
 def finalize_dsv4_calibration_imatrix(
