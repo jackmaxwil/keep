@@ -19,13 +19,27 @@ the decode would silently run on the wrong bit patterns.
 
 Pure numpy so it runs headless; the MLX fast path can come later if decode
 throughput matters.
+
+:func:`repack_fp8_block_as_mxfp8` is the lossless alternative to decoding: it
+re-lays the same e4m3 bytes and ue8m0 exponents out in MLX's ``mxfp8`` layout
+(group 32 along the input axis), so a resident can stay at 8.25 bits per weight
+instead of expanding to bf16, with every dequantized value bit-identical.
 """
 
 from __future__ import annotations
 
 import numpy as np
 
-__all__ = ["decode_e4m3", "decode_ue8m0", "dequantize_fp8_block"]
+__all__ = [
+    "MXFP8_GROUP_SIZE",
+    "decode_e4m3",
+    "decode_ue8m0",
+    "dequantize_fp8_block",
+    "repack_fp8_block_as_mxfp8",
+]
+
+#: MLX ``mxfp8`` supports exactly one group size: 32 elements per E8M0 scale.
+MXFP8_GROUP_SIZE = 32
 
 _E4M3_TABLE: np.ndarray | None = None
 
@@ -130,3 +144,112 @@ def dequantize_fp8_block(
             c0, c1 = j * block_cols, min((j + 1) * block_cols, cols)
             decoded[r0:r1, c0:c1] *= row_scales[j]
     return decoded
+
+
+def _power_of_two_scales_as_ue8m0(scales: np.ndarray) -> np.ndarray:
+    """Encode literal power-of-two multipliers as ue8m0 bytes, or refuse.
+
+    Only exact powers of two in ``2**-127 .. 2**127`` have an E8M0 encoding.
+    Anything else would need rounding, and rounding is exactly what a lossless
+    repack must never do, so it raises instead.
+    """
+
+    values = scales.astype(np.float64)
+    if not np.all(np.isfinite(values)) or np.any(values <= 0.0):
+        raise ValueError("power-of-two block scales must be finite and positive")
+    mantissa, exponent = np.frexp(values)
+    if np.any(mantissa != 0.5):
+        raise ValueError(
+            "block scales are not all exact powers of two; an mxfp8 repack "
+            "would have to round them, so it is refused"
+        )
+    unbiased = exponent.astype(np.int64) - 1
+    if np.any(unbiased < -127) or np.any(unbiased > 127):
+        raise ValueError("power-of-two block scales are outside the E8M0 range")
+    return (unbiased + 127).astype(np.uint8)
+
+
+def repack_fp8_block_as_mxfp8(
+    codes: np.ndarray,
+    scales: np.ndarray,
+    *,
+    block_size: tuple[int, int] = (128, 128),
+    group_size: int = MXFP8_GROUP_SIZE,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Re-lay block-scaled e4m3 weights out as MLX ``mxfp8`` without changing a bit.
+
+    Returns ``(packed, group_scales)``:
+
+    - ``packed``: ``uint32`` of shape ``(rows, cols // 4)``, the unchanged e4m3
+      code bytes read little-endian four to a word, which is the element order
+      ``mx.dequantize(..., mode="mxfp8")`` expects.
+    - ``group_scales``: ``uint8`` of shape ``(rows, cols // 32)``, each block's
+      ue8m0 exponent repeated over the rows and the 32-wide column groups the
+      block covers.
+
+    Dequantizing the result reproduces :func:`dequantize_fp8_block` exactly:
+    e4m3 times a power of two is representable in float32 and bf16 alike.
+    Building the same weights with ``mx.quantize(..., mode="mxfp8")`` instead is
+    *not* exact -- it re-derives each group's exponent by rounding -- so this
+    function is the only supported way to produce an mxfp8 resident.
+
+    Requires ``cols % 32 == 0`` and ``block_size[1] % 32 == 0`` so every
+    32-wide group sits inside one source block. ue8m0 byte 255 (NaN) is
+    refused rather than bound.
+    """
+
+    if not isinstance(codes, np.ndarray):
+        raise ValueError(f"codes must be a numpy ndarray, got {type(codes).__name__}")
+    if not isinstance(scales, np.ndarray):
+        raise ValueError(f"scales must be a numpy ndarray, got {type(scales).__name__}")
+    if codes.dtype != np.uint8:
+        raise ValueError(f"e4m3 codes must be uint8, got {codes.dtype}")
+    if codes.ndim != 2:
+        raise ValueError(f"codes must be 2-D, got shape {codes.shape}")
+    if group_size != MXFP8_GROUP_SIZE:
+        raise ValueError(
+            f"mxfp8 has a fixed group size of {MXFP8_GROUP_SIZE}, got {group_size!r}"
+        )
+    block_rows, block_cols = block_size
+    for label, value in (("block_size[0]", block_rows), ("block_size[1]", block_cols)):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, np.integer))
+            or value <= 0
+        ):
+            raise ValueError(f"{label} must be a positive int, got {value!r}")
+    rows, cols = codes.shape
+    if cols % group_size != 0:
+        raise ValueError(
+            f"input dimension {cols} is not a multiple of the mxfp8 group size {group_size}"
+        )
+    if block_cols % group_size != 0:
+        raise ValueError(
+            f"block width {block_cols} is not a multiple of the mxfp8 group size "
+            f"{group_size}, so a group would straddle two source scales"
+        )
+    expected = (-(-rows // block_rows), -(-cols // block_cols))
+    if scales.shape != expected:
+        raise ValueError(
+            f"scales shape {scales.shape} does not match "
+            f"{expected} blocks for weight {codes.shape} "
+            f"at block size {block_size}"
+        )
+    if scales.dtype == np.uint8:
+        if np.any(scales == 255):
+            raise ValueError("ue8m0 byte 255 is NaN; refusing to repack a NaN block scale")
+        exponents = scales
+    elif np.issubdtype(scales.dtype, np.floating):
+        exponents = _power_of_two_scales_as_ue8m0(scales)
+    else:
+        raise ValueError(
+            f"scales must be uint8 (ue8m0-encoded) or a floating dtype holding "
+            f"powers of two, got dtype {scales.dtype}"
+        )
+
+    # ``astype`` copies, so the result never aliases the caller's code buffer.
+    packed = np.ascontiguousarray(codes).view("<u4").astype(np.uint32)
+    groups_per_block = block_cols // group_size
+    group_scales = np.repeat(np.repeat(exponents, block_rows, axis=0)[:rows], groups_per_block, axis=1)
+    group_scales = np.ascontiguousarray(group_scales[:, : cols // group_size], dtype=np.uint8)
+    return packed, group_scales
