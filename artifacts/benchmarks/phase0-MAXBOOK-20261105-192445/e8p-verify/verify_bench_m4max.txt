@@ -1,0 +1,8 @@
+M= 1 distinct experts   6.0  old 0.770 ms  new 0.195 ms  x3.96  197 GB/s distinct  diff 3.0e-04
+M= 2 distinct experts  11.8  old 1.445 ms  new 0.314 ms  x4.60  240 GB/s distinct  diff 5.7e-04
+M= 4 distinct experts  23.1  old 2.809 ms  new 0.537 ms  x5.23  275 GB/s distinct  diff 2.8e-04
+M= 8 distinct experts  43.8  old 5.532 ms  new 0.998 ms  x5.54  280 GB/s distinct  diff 4.7e-04
+M=11 distinct experts  59.0  old 4.444 ms  new 1.360 ms  x3.27  277 GB/s distinct  diff 4.5e-04
+M=16 distinct experts  79.7  old 5.366 ms  new 1.932 ms  x2.78  263 GB/s distinct  diff 5.0e-04
+M=21 distinct experts  99.4  old 7.073 ms  new 2.539 ms  x2.79  250 GB/s distinct  diff 5.1e-04
+M=32 distinct experts 136.2  old 39.129 ms  new 4.493 ms  x8.71  194 GB/s distinct  diff 5.2e-04

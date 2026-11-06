@@ -37,14 +37,19 @@ __all__ = [
 ]
 
 E8P_M1_ENV = "RAMP_E8P_M1"
+#: Token rows the kernel serves: M=1 decode and MTP verify windows. Wider
+#: calls (prefill) keep the sorted-route kernels, which share expert decode.
+E8P_MAX_TOKENS = 32
 _KERNEL_DIR = Path(__file__).resolve().parent
 _ON = {"1", "on", "true", "yes"}
 _OFF = {"0", "off", "false", "no"}
 
 
-@cache
 def default_enabled() -> bool:
-    """On for a Metal GPU without NAX; NAX GPUs keep their tensor-unit kernels."""
+    """On for a Metal GPU without NAX; NAX GPUs keep their tensor-unit kernels.
+
+    Not cached: ``nax.is_available`` already is, and tests patch it.
+    """
 
     import mlx.core as mx
 
@@ -71,7 +76,7 @@ def should_use_e8p_m1(
 
     return (
         code_bits == 16
-        and tokens == 1
+        and 1 <= tokens <= E8P_MAX_TOKENS
         and not sorted_indices
         and route_strategy in ("auto", "direct")
         and e8p_m1_enabled()
@@ -99,7 +104,7 @@ def _chunk(codewords: int, groups: int) -> int:
     raise ValueError(f"E8P M=1 needs codewords per scale group divisible by 4, got {codewords}/{groups}")
 
 
-def _launch(x, codes, scales, codebook, rhs_indices, *, output_dims, rows_per_simdgroup, simdgroups, per_route):
+def _launch(x, codes, scales, codebook, rhs_indices, *, output_dims, rows_per_simdgroup, simdgroups, x_div):
     import mlx.core as mx
 
     from ramp.kernels.gather_vqmm import _qmv_output_dtype
@@ -110,12 +115,12 @@ def _launch(x, codes, scales, codebook, rhs_indices, *, output_dims, rows_per_si
     rows_per_tile = rows_per_simdgroup * simdgroups
     output_dtype = _qmv_output_dtype(x.dtype)
     (out,) = _kernel()(
-        inputs=[mx.contiguous(x), codes, scales, codebook, rhs_indices.reshape(1, routes)],
+        inputs=[mx.contiguous(x), codes, scales, codebook, rhs_indices.reshape(-1)],
         template=[
             ("ROWS_PER_SG", rows_per_simdgroup),
             ("SIMDGROUPS", simdgroups),
             ("CHUNK", _chunk(int(codes.shape[2]), int(scales.shape[2]))),
-            ("PER_ROUTE", int(per_route)),
+            ("X_DIV", int(x_div)),
             ("OUT_T", output_dtype),
         ],
         grid=(32 * simdgroups, (output_dims + rows_per_tile - 1) // rows_per_tile, routes),
@@ -137,17 +142,19 @@ def e8p_m1_token_layout(
     rows_per_simdgroup: int = 4,
     simdgroups: int = 1,
 ):
-    """One activation row against ``top_k`` experts: ``[1, top_k, out]``."""
+    """Token ``t``'s row against its ``top_k`` experts: ``[tokens, top_k, out]``."""
 
-    if x.shape[0] != 1 or rhs_indices.ndim != 2 or rhs_indices.shape[0] != 1:
-        raise ValueError("token-layout E8P M=1 needs x [1, in] and rhs_indices [1, top_k]")
-    return _launch(
+    if x.ndim != 2 or rhs_indices.ndim != 2 or rhs_indices.shape[0] != x.shape[0]:
+        raise ValueError("token-layout E8P needs x [tokens, in] and rhs_indices [tokens, top_k]")
+    tokens, top_k = int(rhs_indices.shape[0]), int(rhs_indices.shape[1])
+    out = _launch(
         x, codes, scales, codebook, rhs_indices,
         output_dims=output_dims,
         rows_per_simdgroup=rows_per_simdgroup,
         simdgroups=simdgroups,
-        per_route=False,
+        x_div=top_k,
     )
+    return out.reshape(tokens, top_k, output_dims)
 
 
 def e8p_m1_per_route(
@@ -171,6 +178,6 @@ def e8p_m1_per_route(
         output_dims=output_dims,
         rows_per_simdgroup=rows_per_simdgroup,
         simdgroups=simdgroups,
-        per_route=True,
+        x_div=1,
     )
     return out.reshape(routes, output_dims)

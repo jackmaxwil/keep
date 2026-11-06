@@ -1,4 +1,6 @@
-// Single-token (M=1) gather matvec for 16-bit E8P codes on GPUs without NAX.
+// Few-token (M=1 decode, M<=32 verify) gather matvec for 16-bit E8P codes on
+// GPUs without NAX. One threadgroup column per route: route r multiplies
+// activation row r / X_DIV by expert rhs_indices[r].
 //
 // Each simdgroup owns ROWS_PER_SG output rows. A lane takes CHUNK (4 or 8)
 // consecutive codewords: one 8- or 16-byte load per row, so a simdgroup reads
@@ -15,21 +17,20 @@
 // each threadgroup first decodes the abs grid into half2 pairs, and a
 // codeword then costs one threadgroup read plus one XOR per pair for signs.
 //
-// PER_ROUTE=0: one activation row for every route (gate/up).
-// PER_ROUTE=1: route r reads activation row r (down).
+// X_DIV=top_k: token t's routes share activation row t (gate/up).
+// X_DIV=1: every route has its own activation row (down).
 uint simd_lane = thread_index_in_simdgroup;
 uint simd_id = simdgroup_index_in_threadgroup;
 uint tg_lane = thread_position_in_threadgroup.x;
 uint row_tile = threadgroup_position_in_grid.y;
 uint route = threadgroup_position_in_grid.z;
 
-uint top_k = uint(rhs_indices_shape[1]);
-uint expert = uint(rhs_indices[route % top_k]);
+uint expert = uint(rhs_indices[route]);
 uint out_dim = uint(codes_shape[1]);
 uint codewords = uint(codes_shape[2]);
 uint groups = uint(scales_shape[2]);
 uint codewords_per_group = codewords / groups;
-uint x_row = uint(PER_ROUTE) != 0u ? route * codewords * 8u : 0u;
+uint x_row = (route / uint(X_DIV)) * codewords * 8u;
 
 // (1024 + n) * 0.5 - 516 = (n - 8) / 2, exact in half.
 threadgroup uint4 decoded[256];

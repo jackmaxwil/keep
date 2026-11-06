@@ -23,7 +23,10 @@ def _metal_available() -> bool:
     [
         ({}, True),
         ({"code_bits": 8}, False),
-        ({"tokens": 2}, False),
+        ({"tokens": 2}, True),  # MTP verify window
+        ({"tokens": 32}, True),
+        ({"tokens": 33}, False),  # prefill keeps the sorted-route kernels
+        ({"tokens": 0}, False),
         ({"sorted_indices": True}, False),
         ({"route_strategy": "sorted_tiled"}, False),
         ({"route_strategy": "direct"}, True),
@@ -41,16 +44,12 @@ def test_default_is_on_only_for_a_metal_gpu_without_nax(monkeypatch, metal, nax,
 
     monkeypatch.setattr(mx.metal, "is_available", lambda: metal)
     monkeypatch.setattr(nax_module, "is_available", lambda: nax)
-    e8p_m1.default_enabled.cache_clear()
-    try:
-        for value in (None, "", "auto"):
-            if value is None:
-                monkeypatch.delenv(e8p_m1.E8P_M1_ENV, raising=False)
-            else:
-                monkeypatch.setenv(e8p_m1.E8P_M1_ENV, value)
-            assert e8p_m1.e8p_m1_enabled() is expected
-    finally:
-        e8p_m1.default_enabled.cache_clear()
+    for value in (None, "", "auto"):
+        if value is None:
+            monkeypatch.delenv(e8p_m1.E8P_M1_ENV, raising=False)
+        else:
+            monkeypatch.setenv(e8p_m1.E8P_M1_ENV, value)
+        assert e8p_m1.e8p_m1_enabled() is expected
 
 
 def test_flag_overrides_the_default_and_is_validated(monkeypatch):
@@ -141,6 +140,41 @@ def test_token_and_per_route_kernels_match_the_dense_decode(group_size, inp, out
     )
     want = np.stack([xr[r] @ dense[e].T for r, e in enumerate((5, 0, 3))])
     np.testing.assert_allclose(np.array(got.astype(mx.float32)), want, rtol=1e-4, atol=1e-3)
+
+
+@pytest.mark.skipif(not _metal_available(), reason="needs a Metal GPU")
+@pytest.mark.parametrize("tokens", [2, 5])
+def test_multi_token_verify_layouts_match_the_dense_decode(tokens):
+    layer = _layer(experts=6, out=64, inp=128, seed=5)
+    dense = _dense(layer)
+    rng = np.random.default_rng(6)
+    rhs = np.stack([rng.choice(6, 3, replace=False) for _ in range(tokens)]).astype(np.uint32)
+
+    x = rng.normal(size=(tokens, 128)).astype(np.float32)
+    got = e8p_m1.e8p_m1_token_layout(
+        mx.array(x), layer.codes, layer.effective_scales(), layer.codebook, mx.array(rhs), output_dims=64
+    )
+    want = np.stack([[x[t] @ dense[e].T for e in rhs[t]] for t in range(tokens)])
+    np.testing.assert_allclose(np.array(got.astype(mx.float32)), want, rtol=1e-4, atol=1e-3)
+
+    xr = rng.normal(size=(tokens * 3, 128)).astype(np.float32)
+    got = e8p_m1.e8p_m1_per_route(
+        mx.array(xr), layer.codes, layer.effective_scales(), layer.codebook, mx.array(rhs.reshape(-1)), output_dims=64
+    )
+    want = np.stack([xr[r] @ dense[e].T for r, e in enumerate(rhs.reshape(-1))])
+    np.testing.assert_allclose(np.array(got.astype(mx.float32)), want, rtol=1e-4, atol=1e-3)
+
+
+def test_glu_skips_the_sorted_prefill_path_for_few_token_e8p(monkeypatch):
+    from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
+
+    glu = QuantizedVQSwitchGLU(gate_proj=_layer(out=32, inp=64), up_proj=_layer(out=32, inp=64), down_proj=_layer(out=64, inp=32))
+    x = mx.zeros((1, 16, 64))
+    indices = mx.zeros((1, 16, 6), dtype=mx.uint32)  # 96 routes: past the sorted-prefill threshold
+    monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "1")
+    assert glu._can_use_shared_sorted_route_prefill(x, indices) is False
+    monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "0")
+    assert glu._can_use_shared_sorted_route_prefill(x, indices) is (glu.gate_proj.route_strategy != "direct")
 
 
 def test_chunk_never_straddles_a_scale_group():

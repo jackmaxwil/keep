@@ -66,6 +66,12 @@ script above runs on the Mac.
 - `benchmarks/bench_dsv4_mtp_headline.py` validates speculative rows against
   `EXPECTED_VERIFY_IMPLEMENTATION = "nax_e8p_m32n64"`, so MTP headline rows
   cannot validate on an M4 until the verify window has a non-NAX E8P kernel.
+  On a synthetic V4-Flash FFN (256 experts, top-6, 43 chained FFNs per sync)
+  the same kernel now also serves MTP verify windows (<= 32 tokens): 2.6-5.5x
+  the previous M4 path at 2-21 tokens and 9x at 32, outputs within 5.7e-4.
+  It still is not traced as a verify implementation, so the MTP headline
+  harness, which expects `nax_e8p_m32n64`, needs updating before M4 rows can
+  validate.
 - Decoding each E8P codeword once was tried on the M4 Max on 2026-11-05 and
   made the kernel slower (113 vs 154 GB/s, kernel alone, 256 calls per sync).
   The compiler already lifts the per-codeword work out of the 8-dimension loop.

@@ -393,7 +393,7 @@ class QuantizedVQSwitchLinear(nn.Module):
             flat_indices = indices.reshape((-1,))
             if indices.ndim >= 2 and should_use_e8p_m1(
                 code_bits=self.code_bits,
-                tokens=route_shape[0],
+                tokens=flat_indices.shape[0] // route_shape[-1],
                 sorted_indices=sorted_indices,
                 route_strategy=self.route_strategy,
             ):

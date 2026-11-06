@@ -414,6 +414,9 @@ def test_e8p_auto_prefill_production_path_warns_and_falls_back_without_native(
 
     monkeypatch.setattr(glm4_moe_adapter.nax, "is_available", lambda: False)
     monkeypatch.setattr(glm4_moe_adapter, "gather_vqmm_sorted_routes", recording_helper)
+    # Without NAX, 16-bit E8P at <= 32 tokens now takes ramp.kernels.e8p_m1 by
+    # default; this pins the sorted-route fallback behind it.
+    monkeypatch.setenv("RAMP_E8P_M1", "0")
 
     with pytest.warns(
         RuntimeWarning,

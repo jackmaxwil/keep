@@ -94,6 +94,12 @@ or Mac-local files), plus 22 newly passing tests.
 
 - MTP headline rows require the M5-only `nax_e8p_m32n64`, so they won't
   validate on an M4.
+  On a synthetic V4-Flash FFN (256 experts, top-6, 43 chained FFNs per sync)
+  the same kernel now also serves MTP verify windows (<= 32 tokens): 2.6-5.5x
+  the previous M4 path at 2-21 tokens and 9x at 32, outputs within 5.7e-4.
+  It still is not traced as a verify implementation, so the MTP headline
+  harness, which expects `nax_e8p_m32n64`, needs updating before M4 rows can
+  validate.
 - Decoding each E8P codeword once was tried on the M4 Max on 2026-11-05 and
   made the kernel slower (113 vs 154 GB/s, kernel alone, 256 calls per sync).
   The compiler already lifts the per-codeword work out of the 8-dimension loop.
