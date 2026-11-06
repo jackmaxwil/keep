@@ -7,7 +7,8 @@
 #   pod.sh gpu            GPU pod (1-8 GPUs, 80 GB+ each): calibration sweep, reap-select,
 #                         eval sweep (teacher + every candidate side by side), scores
 #   pod.sh prune KEEP     CPU pod: write the pruned HF checkpoint for the Mac to pull
-#   pod.sh all            one GPU pod does everything: fetch || pack, gpu, prune $PRUNE
+#   pod.sh smoke          GPU pod: the longest calibration record through all 40 layers; memory check
+#   pod.sh all            one GPU pod does everything: fetch || pack, smoke, gpu, prune $PRUNE
 #
 # Everything lives under /workspace (a network volume, or the pod's own volume
 # disk in single-pod mode).
@@ -20,9 +21,11 @@ KIT=$W/keep/scripts/runpod/v41_reap
 HF=$W/v41-hf
 OUT=$W/out
 CANDIDATES=${CANDIDATES:-"256 192 128 96"}
-PRUNE=${PRUNE:-"192 96"}                # REAP 50% and REAP 75% of 384 experts
-MAX_GPU_HOURS=${MAX_GPU_HOURS:-8}       # hard stop for the GPU pod (1xH100 ~ $2.69/h, 1xH200 $3.59-5.29/h)
-export PYTHONPATH=$W/keep/src HF_HUB_ENABLE_HF_TRANSFER=1
+PRUNE=${PRUNE:-"192"}                   # REAP 50%. REAP 75% (96) after the Mac pulls 192: 1.2 TB holds one
+MAX_GPU_HOURS=${MAX_GPU_HOURS:-8}       # hard stop for the GPU pod (1xH100 SXM secure $3.99/h)
+export PYTHONPATH=$W/keep/src
+# ssh sessions miss the pod's env (RUNPOD_POD_ID, the pod-scoped RUNPOD_API_KEY): load it, never print it
+if [[ -z "${RUNPOD_POD_ID:-}" && -r /etc/rp_environment ]]; then source /etc/rp_environment; fi
 
 watchdog() {  # whatever happens next, the pod stops at MAX_GPU_HOURS; a failed stage stops it at once
   [[ -n "${WATCHDOG_STARTED:-}" ]] && return
@@ -36,15 +39,17 @@ log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$W/pod.log"; }
 stop_pod() {
   log "stopping pod: $*"
   if [[ -n "${RUNPOD_POD_ID:-}" ]] && command -v runpodctl >/dev/null; then
-    runpodctl stop pod "$RUNPOD_POD_ID" || log "runpodctl stop FAILED: stop the pod by hand"
+    runpodctl pod stop "$RUNPOD_POD_ID" || runpodctl stop pod "$RUNPOD_POD_ID" || log "runpodctl stop FAILED: stop the pod by hand"
   else
     log "no runpodctl/RUNPOD_POD_ID: stop the pod by hand"
   fi
 }
 
 fetch_small() {  # tokenizer, configs, encoding/ and inference/: all pack and collect need besides weights
-  pip install -q "huggingface_hub[hf_transfer]>=0.34" "datasets>=3" tokenizers
-  hf download "$MODEL_ID" --revision "$REVISION" --local-dir "$HF" --include "*.json" "encoding/*" "inference/*"
+  pip install -q "huggingface_hub>=0.34" "datasets>=3" tokenizers
+  hf download "$MODEL_ID" --revision "$REVISION" --local-dir "$HF" \
+    --include "*.json" --include "encoding/*" --include "inference/*"
+  test -f "$HF/model.safetensors.index.json" || { log "fetch_small: no index json in $HF"; return 1; }
 }
 
 fetch() {
@@ -95,14 +100,47 @@ sweep() {  # one collect.py per GPU, sessions sharded across them; extra args go
   done
 }
 
+gpu_setup() {
+  [[ -f "$W/pip-freeze-gpu.txt" ]] && return
+  pip install -q -r "$HF/inference/requirements.txt"
+  pip freeze > "$W/pip-freeze-gpu.txt"
+  nvidia-smi --query-gpu=name,memory.total --format=csv | tee -a "$W/pod.log"
+}
+
+smoke() {  # the longest calibration record through all 40 layers, before any sweep
+  watchdog
+  gpu_setup
+  python3 - "$W/pack/v41-pack.jsonl" "$W/smoke/pack.jsonl" <<'PY'
+import json, pathlib, sys
+rows = [json.loads(line) for line in open(sys.argv[1]) if line.strip()]
+row = max((r for r in rows if r["split"] == "calibration"), key=lambda r: len(r["token_ids"]))
+row["session"] = "smoke"
+pathlib.Path(sys.argv[2]).parent.mkdir(parents=True, exist_ok=True)
+pathlib.Path(sys.argv[2]).write_text(json.dumps(row) + "\n")
+print("smoke record", row["id"], len(row["token_ids"]), "tokens")
+PY
+  rm -rf "$W/smoke/calibration" "$W/smoke"/progress-*
+  python3 "$KIT/collect.py" --hf-path "$HF" --pack "$W/smoke/pack.jsonl" --out "$W/smoke" --sweep calibration \
+    2>&1 | tee "$W/smoke.log"
+  python3 - "$W/smoke" <<'PY'
+import glob, json, sys
+import numpy as np
+(entry,) = [json.loads(line) for f in glob.glob(sys.argv[1] + "/progress-*.jsonl") for line in open(f)]
+with np.load(sys.argv[1] + "/calibration/sessions/smoke.npz") as z:
+    slots = z["reap__routed_slots"]
+    assert (slots == slots[0]).all() and slots[0] > 0, slots
+    assert np.isfinite(z["reap__gate_norm_sum"]).all() and np.isfinite(z["importance_sum__hidden"]).all()
+print("smoke ok:", json.dumps(entry))
+sys.exit(0 if entry["max_gpu_gb"] < 76 else f"smoke: {entry['max_gpu_gb']} GB peak is too close to 80 GB")
+PY
+  log "smoke passed: $(tail -1 "$W/smoke.log")"
+}
+
 gpu() {
   local deadline
   deadline=$(date -u -d "+$((MAX_GPU_HOURS * 60 - 20)) minutes" +%FT%TZ)
   watchdog
-
-  pip install -q -r "$HF/inference/requirements.txt"
-  pip freeze > "$W/pip-freeze-gpu.txt"
-  nvidia-smi --query-gpu=name,memory.total --format=csv | tee -a "$W/pod.log"
+  gpu_setup
 
   sweep calibration
 
@@ -139,11 +177,12 @@ all() {
   local fetch_pid=$!
   pack > "$W/pack.log" 2>&1
   wait "$fetch_pid" || { log "fetch failed: see $W/fetch.log"; return 1; }
+  smoke
   gpu
   for keep in $PRUNE; do prune "$keep"; done
   log "all done: $(echo "$PRUNE" | sed "s|[0-9]*|$W/v41-reap&|g"). Pod left running for the Mac to pull; watchdog still armed."
 }
 
-stage=${1:?usage: pod.sh fetch|pack|gpu|prune KEEP|all}
+stage=${1:?usage: pod.sh fetch|pack|smoke|gpu|prune KEEP|all}
 shift
 "$stage" "$@"
