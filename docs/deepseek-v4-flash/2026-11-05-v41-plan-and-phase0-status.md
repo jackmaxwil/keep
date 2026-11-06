@@ -1,7 +1,10 @@
 # DeepSeek-V4.1-Flash on one 128 GB Mac: plan and Phase 0 status
 
 Date: 2026-11-05. Branch `jack/hopeful-cori-iszsfq`, draft PR jackmaxwil/keep#3.
-Target machine: M4 Max, 128 GB, 409.4 GB/s measured MLX read.
+Target machine: M4 Max, 40-core GPU, 128 GB. Memory bandwidth is 546 GB/s
+theoretical; MLX reads 474-477 GB/s (1 GiB reductions) and a bf16 matvec
+458 GB/s, measured 2026-11-05. The 409.4 GB/s used for the estimates below is
+an older, lower measurement, so those estimates are conservative.
 
 ## The plan in brief
 

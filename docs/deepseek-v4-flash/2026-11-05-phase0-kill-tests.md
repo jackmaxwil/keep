@@ -1,7 +1,7 @@
 # Phase 0 kill tests: toward DeepSeek-V4.1-Flash on one 128 GB Mac
 
-Date: 2026-11-05. Target machine: the M4 Max (128 GB, 409.4 GB/s measured
-MLX read). Phase 0 is the work that needs no V4.1 download and can be proven
+Date: 2026-11-05. Target machine: the M4 Max (40-core GPU, 128 GB; 546 GB/s
+theoretical, 474-477 GB/s measured MLX read on 2026-11-05). Phase 0 is the work that needs no V4.1 download and can be proven
 on the V4-Flash artifact. Every runtime change below is **opt-in**; defaults
 are unchanged until the kill test that guards it passes on the target Mac.
 
