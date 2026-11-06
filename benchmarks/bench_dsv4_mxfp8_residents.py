@@ -13,7 +13,10 @@ Two checks in one fresh process:
 Verdict, from the ranked plan: **KILL** if any bit differs, if mxfp8 is less
 than 1.5x the bf16 speed, or if it is more than 10% slower than affine-8.
 Speed is judged on the summed per-call medians across the chosen tensors, the
-way one decode step reads them.
+way one decode step reads them. Each timed sample chains ``--calls-per-sync``
+dependent calls (default 43, one per V4-Flash layer) before one ``mx.eval``,
+as one decode step does; v1 synced after every sub-millisecond call and so
+mostly measured CPU-GPU round trips.
 
 Inputs: a resident package or the source checkpoint (``--checkpoint``, a
 directory with ``model.safetensors.index.json``), or ``--synthetic`` FP8
@@ -50,7 +53,7 @@ from keep.io.source_safetensors import read_safetensors_file_header
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HEAVY_JOB_LOCK = REPO_ROOT / ".keep-heavy-job.lock"
-RECORD_TYPE = "dsv4_mxfp8_resident_kill_test_v1"
+RECORD_TYPE = "dsv4_mxfp8_resident_kill_test_v2"
 FP8_BLOCK = (128, 128)
 
 #: DeepSeek-V4-Flash-0731 resident shapes (out, in) as they ship, from the
@@ -151,14 +154,31 @@ def check_exactness(codes: np.ndarray, scales: np.ndarray) -> dict[str, Any]:
 
 
 def _median_call_ms(
-    fn: Callable[[int], mx.array], *, iterations: int, warmup: int
+    fn: Callable[[int, mx.array], mx.array],
+    x: mx.array,
+    *,
+    iterations: int,
+    warmup: int,
+    calls_per_sync: int,
 ) -> float:
+    """Median ms per call over ``iterations`` samples of chained calls.
+
+    Each call's activation depends on the previous call's output, like
+    consecutive layers in one decode step, so the GPU cannot overlap them.
+    """
+
+    def sample(index: int) -> float:
+        started = time.perf_counter()
+        y = x
+        for j in range(calls_per_sync):
+            out = fn(index * calls_per_sync + j, y)
+            y = y + out.reshape(-1)[:1].astype(y.dtype) * 1e-6
+        mx.eval(y)
+        return (time.perf_counter() - started) * 1_000.0 / calls_per_sync
+
     for i in range(warmup):
-        mx.eval(fn(i))
-    started = time.perf_counter()
-    for i in range(iterations):
-        mx.eval(fn(i))
-    return (time.perf_counter() - started) * 1_000.0 / iterations
+        sample(i)
+    return statistics.median(sample(i) for i in range(iterations))
 
 
 def time_variants(
@@ -171,6 +191,7 @@ def time_variants(
     rounds: int,
     seed: int,
     groups: int = 1,
+    calls_per_sync: int = 43,
 ) -> dict[str, Any]:
     """Per-call M=1 latency for bf16, mxfp8 and affine-8 g64, interleaved.
 
@@ -201,16 +222,16 @@ def time_variants(
     x_shape = (1, groups, 1, cols) if groups > 1 else (1, cols)
     x = mx.random.normal(x_shape, key=mx.random.key(seed)).astype(mx.bfloat16)
 
-    def bf16(i: int) -> mx.array:
+    def bf16(i: int, x: mx.array) -> mx.array:
         return x @ bf16_copies[i % copies].swapaxes(-1, -2)
 
-    def mxfp8(i: int) -> mx.array:
+    def mxfp8(i: int, x: mx.array) -> mx.array:
         j = i % copies
         return mx.quantized_matmul(
             x, packed_copies[j], scale_copies[j], transpose=True, group_size=32, bits=8, mode="mxfp8"
         )
 
-    def affine8(i: int) -> mx.array:
+    def affine8(i: int, x: mx.array) -> mx.array:
         w, s, b = affine_copies[i % copies]
         return mx.quantized_matmul(x, w, s, b, transpose=True, group_size=64, bits=8)
 
@@ -222,7 +243,13 @@ def time_variants(
         rotated = order[round_index % len(order) :] + order[: round_index % len(order)]
         for name in rotated:
             samples[name].append(
-                _median_call_ms(variants[name], iterations=iterations, warmup=warmup)
+                _median_call_ms(
+                    variants[name],
+                    x,
+                    iterations=iterations,
+                    warmup=warmup,
+                    calls_per_sync=calls_per_sync,
+                )
             )
     weight_bytes = {
         "bf16": rows * cols * 2,
@@ -304,6 +331,7 @@ def run(
     rounds: int,
     seed: int,
     exactness_only: bool,
+    calls_per_sync: int = 43,
 ) -> dict[str, Any]:
     if (checkpoint is None) == (synthetic_shapes is None):
         raise ValueError("pass exactly one of checkpoint or synthetic_shapes")
@@ -330,6 +358,7 @@ def run(
                 rounds=rounds,
                 seed=seed,
                 groups=GROUPED_TENSORS.get(tensor, 1),
+                calls_per_sync=calls_per_sync,
             )
         mx.clear_cache()
     return {
@@ -350,6 +379,7 @@ def run(
             "warmup": warmup,
             "rounds": rounds,
             "seed": seed,
+            "calls_per_sync": calls_per_sync,
         },
         "exactness": exactness,
         "timings": timings,
@@ -365,8 +395,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--layer", type=int, default=20)
     parser.add_argument("--tensors", default=",".join(V4_FLASH_RESIDENT_SHAPES))
     parser.add_argument("--copies", type=int, default=8)
-    parser.add_argument("--iterations", type=int, default=200)
-    parser.add_argument("--warmup", type=int, default=20)
+    parser.add_argument("--iterations", type=int, default=20, help="timed samples per round")
+    parser.add_argument("--calls-per-sync", type=int, default=43, help="chained calls per mx.eval")
+    parser.add_argument("--warmup", type=int, default=3)
     parser.add_argument("--rounds", type=int, default=5)
     parser.add_argument("--seed", type=int, default=20261105)
     parser.add_argument("--exactness-only", action="store_true")
@@ -394,6 +425,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             rounds=args.rounds,
             seed=args.seed,
             exactness_only=args.exactness_only,
+            calls_per_sync=args.calls_per_sync,
         )
 
     if args.no_lock:

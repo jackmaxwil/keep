@@ -74,3 +74,8 @@ script above runs on the Mac.
   dependent FFNs per `mx.eval`, as one decode step does. On the M4 Max it
   gives **TUNE**: 122-126 GB/s best (8-16 rows per threadgroup), 2.4-2.5x
   production's 50.5 GB/s, outputs within 6.4e-4. Quote only v2 rows.
+- `bench_dsv4_mxfp8_residents.py` v1 also synced after every call. v2
+  (`dsv4_mxfp8_resident_kill_test_v2`) chains 43 dependent calls per
+  `mx.eval`. On the M4 Max the verdict flips from KILL to **PASS** in two runs:
+  mxfp8 is 1.66x bf16 and takes 1.01-1.05x affine-8's time, still bit-exact.
+  The large tensors reach 350-450 GB/s.
