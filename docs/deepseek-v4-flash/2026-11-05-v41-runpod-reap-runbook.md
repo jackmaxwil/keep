@@ -2,6 +2,10 @@
 
 Date: 2026-11-05. Budget: $497. Kit: `scripts/runpod/v41_reap/`.
 
+> **2026-11-06:** the GPU stage now runs on one GPU (or several, data-parallel),
+> streaming the weights one layer at a time with no `convert.py` step. See
+> `2026-11-06-v41-reap-single-gpu-design.md`. The 8×H200 / TP8 steps below are kept for the record.
+
 ## Goal
 
 The V4-Flash artifacts are gone. This run makes new V4.1 artifacts on rented

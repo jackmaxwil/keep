@@ -1,8 +1,11 @@
-"""Teacher pass for DeepSeek-V4.1-Flash on a GPU node: REAP, imatrix, routes, logits.
+"""REAP, imatrix, routes and teacher logits for DeepSeek-V4.1-Flash, on one GPU.
 
-Runs DeepSeek's own reference inference code (``inference/model.py`` at the
-pinned revision) under ``torchrun``, with one change: ``MoE.forward`` is
-replaced by a copy that also records, for every routed slot,
+DeepSeek's own reference code (``inference/model.py`` at the pinned revision)
+runs one layer at a time through ``stream.LayerStreamer``. Weights come straight
+from the HF shards (no ``convert.py``), and any GPU of 80 GB or more works.
+Design: ``docs/deepseek-v4-flash/2026-11-06-v41-reap-single-gpu-design.md``.
+
+``MoE.forward`` is replaced by a copy that also records, for every routed slot,
 
 - REAP statistics (``keep.quality.reap.ReapStats`` arrays, ``reap__*``);
 - imatrix sums for the two expert input spaces (``hidden`` = the post
@@ -11,28 +14,32 @@ replaced by a copy that also records, for every routed slot,
 - the first ``ROUTE_RECORD_TOKENS`` routes of each session (``routes__*``),
   for ``benchmarks/replay_dsv4_expert_residency.py``.
 
-Eval sessions also capture top-K teacher logits at their supervised positions,
-in the teacher runner's ``logits`` schema. Output, per session, is one npz under
-``<out>/<split>/sessions/``, so KEEP's existing ``finalize-reap`` and imatrix
-finalizers read it unchanged.
+Two sweeps over the weights:
+
+- ``--sweep calibration`` writes REAP + imatrix + routes per calibration session.
+- ``--sweep eval`` runs the teacher and every ``--survivors`` student side by
+  side. The teacher writes REAP + routes and top-K logits per eval session. Each
+  student is scored against the teacher's top-K (KL, NLL, top-1 agreement) and
+  written to ``<out>/student-KEEP/``.
+
+Output is one npz per session under ``<out>/<split>/sessions/``, so KEEP's
+``finalize-reap``, the imatrix finalizers and ``score.py`` read it unchanged.
 
 The replacement forward computes exactly what the reference does (same ops,
-same order); ``tests/test_runpod_v41_reap.py`` checks it, bit for bit,
-against a CPU copy of the reference Gate / Expert / MoE. One approximation: the reference folds the gate weight
-in *before* w2 (``w2(g * h)``), so the expert output norm ``||f||`` is taken as
-``||w2(g * h)|| / g``. With FP8 activation quantization in w2 that differs
-from ``||w2(h)||`` by rounding only.
+same order). ``tests/test_runpod_v41_reap.py`` checks it bit for bit against a
+CPU copy of the reference Gate / Expert / MoE, and ``tests/test_runpod_v41_stream.py``
+checks both sweeps against ``Transformer.forward``. One approximation: the
+reference folds the gate weight in *before* w2 (``w2(g * h)``), so the expert
+output norm ``||f||`` is taken as ``||w2(g * h)|| / g``. With FP8 activation
+quantization in w2 that differs from ``||w2(h)||`` by rounding only.
 
-Usage (on the pod, from the reference ``inference`` directory)::
+Usage, on the pod, one process per GPU (``--shard I/N`` splits the sessions)::
 
-    torchrun --nproc-per-node 8 /workspace/keep/scripts/runpod/v41_reap/collect.py \\
-        --ckpt-path /workspace/v41-tp8 --config config.json \\
-        --pack /workspace/pack/v41-pack.jsonl --out /workspace/out \\
-        --deadline-utc 2026-11-07T06:00:00Z
+    CUDA_VISIBLE_DEVICES=0 python3 collect.py --hf-path /workspace/v41-hf \\
+        --pack /workspace/pack/v41-pack.jsonl --out /workspace/out --sweep calibration --shard 0/1
 
-Then, after finalize-reap and reap-select on the teacher pass, the same command
-with ``--survivors 192=/workspace/out/survivors-192.json`` (repeatable) scores
-each candidate expert count against the teacher in ``<out>/student-KEEP/``.
+then finalize-reap and reap-select, then the same command with ``--sweep eval``
+and ``--survivors 192=/workspace/out/survivors-192.json`` (repeatable).
 """
 
 from __future__ import annotations
@@ -41,7 +48,6 @@ import argparse
 import datetime as dt
 import hashlib
 import json
-import os
 import sys
 import time
 from collections import OrderedDict
@@ -107,8 +113,8 @@ class SessionStats:
         rows, top_k = indices.shape
         if record:  # rank 0 only: identical on every rank
             self.routed_slots[layer] += rows * top_k
-            for space in SPACES:
-                self.imatrix[space]["total_route_count"][layer] += rows * top_k
+            for m in self.imatrix.values():
+                m["total_route_count"][layer] += rows * top_k
             room = ROUTE_RECORD_TOKENS - self.route_tokens[layer]
             if room > 0:
                 self.route_ids[layer].append(indices[:room].to("cpu").numpy().astype(np.int16))
@@ -132,6 +138,8 @@ class SessionStats:
         abs_max = (out64.abs().amax(dim=-1) / g).max()
         r["abs_max"][layer, expert] = torch.maximum(r["abs_max"][layer, expert], abs_max)
         for space, rows in (("hidden", x), ("down", h)):
+            if space not in self.imatrix:
+                continue
             sq = rows.double().square()
             m = self.imatrix[space]
             m["importance_sum"][layer, expert] += sq.sum(dim=0)
@@ -146,8 +154,8 @@ class SessionStats:
             op = dist.ReduceOp.MAX if name in ("norm_max", "abs_max") else dist.ReduceOp.SUM
             dist.all_reduce(value, op=op)
         dist.all_reduce(self.routed_slots)
-        for space in SPACES:
-            for value in self.imatrix[space].values():
+        for m in self.imatrix.values():
+            for value in m.values():
                 dist.all_reduce(value)
 
     def arrays(self, layers: list[int]) -> dict[str, np.ndarray]:
@@ -162,8 +170,7 @@ class SessionStats:
         for name, value in self.reap.items():
             arr = np_(value)
             out[f"{REAP_PREFIX}{name}"] = np.rint(arr).astype(np.int64) if name == "route_count" else arr
-        for space in SPACES:
-            m = self.imatrix[space]
+        for space, m in self.imatrix.items():
             # float32 on disk, as KEEP's validator requires (sums stay float64 until here)
             out[f"importance_sum__{space}"] = np_(m["importance_sum"]).astype(np.float32)
             out[f"affinity_weighted_importance__{space}"] = np_(m["affinity_weighted_importance"]).astype(np.float32)
@@ -344,90 +351,200 @@ def save_npz(path: Path, arrays: dict[str, np.ndarray]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Sweeps (stream.LayerStreamer: one GPU, one layer at a time)
+# ---------------------------------------------------------------------------
+
+TEACHER = "teacher"
+
+
+def chunk_sessions(sessions: list[tuple[str, list[dict[str, Any]]]], budget: int, streams: int) -> list[list[tuple[str, list[dict[str, Any]]]]]:
+    """Whole sessions, in order, up to ``budget`` resident tokens (tokens x streams) per chunk."""
+
+    chunks: list[list[tuple[str, list[dict[str, Any]]]]] = []
+    size = 0
+    for name, records in sessions:
+        n = sum(len(r["token_ids"]) for r in records) * streams
+        if not chunks or (chunks[-1] and size + n > budget):
+            chunks.append([])
+            size = 0
+        chunks[-1].append((name, records))
+        size += n
+    return chunks
+
+
+def survivor_masks(table: dict[str, Any], n_experts: int) -> dict[int, Any]:
+    """reap-select table -> {layer: bool tensor, True = pruned}. Masking the router to -inf
+    equals slicing it (tests/test_reap.py), so one set of weights scores every candidate."""
+
+    import torch
+
+    masks = {}
+    for layer, kept in table["survivors"].items():
+        mask = torch.ones(n_experts, dtype=torch.bool)
+        mask[torch.as_tensor(kept)] = False
+        masks[int(layer)] = mask
+    return masks
+
+
+def install_hooks(streamer: Any, *, top_k: int, rows_per_slice: int) -> dict[str, Any]:
+    """Patch the reference MoE and the streamer's head once; returns the shared ``state``."""
+
+    import torch
+    import torch.nn.functional as F
+
+    state: dict[str, Any] = {"rank": 0, "stats": None, "positions": None, "teacher": None}
+    streamer.ref.MoE.forward = make_moe_forward(streamer.ref, torch, F, None, state)
+    streamer.head.forward = make_head_forward(streamer.head, torch, F, None, state, top_k=top_k, rows_per_slice=rows_per_slice)
+    return state
+
+
+def run_chunk(
+    streamer: Any,
+    state: dict[str, Any],
+    chunk: list[tuple[str, list[dict[str, Any]]]],
+    *,
+    split: str,
+    students: dict[str, dict[int, Any]],
+    dims: dict[str, int],
+    device: Any,
+) -> dict[tuple[str, str], dict[str, np.ndarray]]:
+    """One pass over the weights for ``chunk``; returns arrays per (stream, session).
+
+    Calibration: the teacher only, REAP + imatrix + routes per session.
+    Eval: the teacher (REAP + routes + top-K logits) and every student (scored against
+    the teacher) side by side. Teacher records go through the MoE per session, so the
+    stats stay per session; each student's records go through it together.
+    """
+
+    import torch
+    from stream import Item
+
+    args = streamer.args
+    n_layers, n_experts = int(args.n_layers), int(args.n_routed_experts)
+    stats = {
+        name: SessionStats(torch=torch, n_layers=n_layers, n_experts=n_experts, dims=dims if split == "calibration" else {}, device=device)
+        for name, _ in chunk
+    }
+    items: list[Item] = []
+    streams_of: dict[str, list[tuple[str, Item]]] = {}
+    for name, records in chunk:
+        for record in records:
+            tokens = torch.as_tensor([record["token_ids"]], dtype=torch.long, device=device)
+            for stream in (TEACHER, *students) if split == "eval" else (TEACHER,):
+                item = Item(tokens=tokens, group=(TEACHER, name) if stream == TEACHER else (stream, None))
+                items.append(item)
+                streams_of.setdefault(name, []).append((stream, item))
+
+    def before_moe(layer: int, block: Any, key: tuple[str, str | None]) -> None:
+        stream, name = key
+        bias = block.ffn.gate.bias
+        if not hasattr(block, "full_bias"):
+            block.full_bias = bias.data.clone()
+        bias.data.copy_(block.full_bias)
+        mask = students[stream].get(layer) if stream != TEACHER else None
+        if mask is not None:
+            bias.data[mask.to(bias.device)] = float("-inf")
+        state["stats"] = stats[name] if stream == TEACHER and layer < n_layers else None
+
+    with torch.inference_mode():
+        streamer.forward(items, before_moe)
+    state["stats"] = None
+
+    layers = list(range(n_layers))
+    results: dict[tuple[str, str], dict[str, np.ndarray]] = {}
+    for name, records in chunk:
+        results[(TEACHER, name)] = stats[name].arrays(layers)
+        if split != "eval":
+            continue
+        (record,) = records
+        positions = target_positions(record)
+        targets = np.asarray(record["token_ids"], dtype=np.int64)[positions + 1]
+        state["positions"] = torch.as_tensor(positions, device=device)
+        state["targets"] = torch.as_tensor(targets, device=device)
+        base = {"positions": positions.astype(np.int32), "target_token_ids": targets.astype(np.int32)}
+        state["teacher"] = None
+        for stream, item in streams_of[name]:  # the teacher first, then the students it scores
+            state["captured"] = {k: [] for k in CAPTURE_KEYS}
+            with torch.inference_mode():
+                streamer.head(streamer.final_hidden(item))
+            cap = {k: np.concatenate(v) for k, v in state["captured"].items() if v}
+            results.setdefault((stream, name), {}).update(base | cap)
+            if stream == TEACHER:
+                state["teacher"] = {  # the fp16 values the npz keeps, as the old two-pass flow read them
+                    "ids": torch.as_tensor(cap["topk_logit_ids"].astype(np.int64), device=device),
+                    "logprob": torch.as_tensor(cap["topk_logit_values"].astype(np.float32) - cap["logsumexp"][:, None], device=device),
+                    "targets": state["targets"],
+                }
+        state["positions"] = state["targets"] = state["teacher"] = None
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--ckpt-path", required=True, help="convert.py output: model{rank}-mp{N}.safetensors + tokenizer")
-    parser.add_argument("--config", default="config.json", help="reference inference/config.json")
+    parser.add_argument("--hf-path", required=True, type=Path, help="the pinned HF checkpoint (safetensors shards + tokenizer)")
+    parser.add_argument("--ref-dir", type=Path, help="reference inference/ directory (default: HF_PATH/inference)")
     parser.add_argument("--pack", required=True, type=Path)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--sweep", required=True, choices=("calibration", "eval"))
+    parser.add_argument(
+        "--survivors", action="append", default=[], metavar="KEEP=PATH",
+        help="eval sweep (repeatable): also run a student with the router masked to this reap-select "
+        "table, scored against the teacher, into <out>/student-KEEP/",
+    )
+    parser.add_argument("--chunk-tokens", type=int, default=524288, help="resident tokens per weight pass (x streams)")
+    parser.add_argument("--shard", default="0/1", help="I/N: this process takes every Nth session from I")
     parser.add_argument("--max-seq-len", type=int, default=16384)
     parser.add_argument("--top-k", type=int, default=2048, help="teacher logits kept per eval position")
     parser.add_argument("--rows-per-slice", type=int, default=256)
-    parser.add_argument("--deadline-utc", help="stop cleanly after the session running at this time")
-    parser.add_argument(
-        "--survivors", action="append", default=[], metavar="KEEP=PATH",
-        help="student pass (repeatable): mask the router to a reap-select table, score eval sessions "
-        "against the teacher run in --out, write <out>/student-KEEP/",
-    )
+    parser.add_argument("--deadline-utc", help="stop cleanly before the first chunk that starts after this time")
     parser.add_argument("--skip-hash-check", action="store_true", help="tests only")
     args = parser.parse_args(argv)
+    if args.survivors and args.sweep != "eval":
+        parser.error("--survivors needs --sweep eval")
+    shard, n_shards = map(int, args.shard.split("/"))
 
     import torch
-    import torch.distributed as dist
-    import torch.nn.functional as F
-    from safetensors.torch import load_model
     from transformers import AutoTokenizer
 
-    here = Path.cwd()
-    model_py = here / "model.py"
-    digest = hashlib.sha256(model_py.read_bytes()).hexdigest()
-    if not args.skip_hash_check and digest != REFERENCE_MODEL_PY_SHA256:
-        raise SystemExit(f"{model_py} sha256 {digest} is not the pinned reference ({REFERENCE_MODEL_PY_SHA256})")
-    sys.path.insert(0, str(here))
-    import model as ref
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import stream
 
-    world_size = int(os.getenv("WORLD_SIZE", "1"))
-    rank = int(os.getenv("RANK", "0"))
-    local_rank = int(os.getenv("LOCAL_RANK", "0"))
-    if world_size > 1:
-        dist.init_process_group("nccl")
-    torch.cuda.set_device(local_rank)
+    ref_dir = args.ref_dir or args.hf_path / "inference"
+    digest = hashlib.sha256((ref_dir / "model.py").read_bytes()).hexdigest()
+    if not args.skip_hash_check and digest != REFERENCE_MODEL_PY_SHA256:
+        raise SystemExit(f"{ref_dir / 'model.py'} sha256 {digest} is not the pinned reference ({REFERENCE_MODEL_PY_SHA256})")
+    ref = stream.import_reference(ref_dir)
+
     torch.cuda.memory._set_allocator_settings("expandable_segments:True")
     torch.set_default_dtype(torch.bfloat16)
+    torch.set_default_device("cuda")
     torch.manual_seed(33377335)
-
-    with open(args.config) as f:
-        config = json.load(f)
-    model_args = ref.ModelArgs(**config)
+    model_args = ref.ModelArgs(**json.loads((ref_dir / "config.json").read_text()))
     model_args.max_batch_size = 1
     model_args.max_seq_len = args.max_seq_len
-    tokenizer = AutoTokenizer.from_pretrained(args.ckpt_path)
-    with torch.device("cuda"):
-        model = ref.Transformer(model_args, tokenizer)
-    load_model(model, os.path.join(args.ckpt_path, f"model{rank}-mp{world_size}.safetensors"))
-    torch.set_default_device("cuda")
-    model.eval()
-    original_bias = {
-        (layer, leaf): getattr(block.ffn.gate, leaf).data.clone()
-        for layer, block in enumerate(model.layers)
-        for leaf in ("bias", "bias_vl")
-        if getattr(block.ffn.gate, leaf) is not None
-    }
 
-    def mask_router(table_path: Path | None) -> str | None:
-        """Masking the router to -inf equals slicing it (tests/test_reap.py), so one
-        loaded checkpoint scores every candidate expert count."""
+    ckpt = stream.HFCheckpoint(args.hf_path)
+    layout = ref.EngramLayout.from_args(model_args)
+    hash_state = None
+    if layout is not None:
+        with torch.device("cuda"):
+            hash_state = ref.NgramHashState(model_args, layout, AutoTokenizer.from_pretrained(args.hf_path))
+    engram_rows = {layer: stream.EngramRows.from_checkpoint(ckpt, layer, ref.fp8_block_size) for layer in model_args.engram_layer_ids}
+    streamer = stream.LayerStreamer(ref, model_args, ckpt.load, engram_rows, hash_state, "cuda")
+    state = install_hooks(streamer, top_k=args.top_k, rows_per_slice=args.rows_per_slice)
 
-        for (layer, leaf), value in original_bias.items():
-            getattr(model.layers[layer].ffn.gate, leaf).data.copy_(value)
-        if table_path is None:
-            return None
-        for layer, kept in json.loads(table_path.read_text())["survivors"].items():
-            gate = model.layers[int(layer)].ffn.gate
-            mask = torch.ones(gate.bias.shape[0], dtype=torch.bool, device=gate.bias.device)
-            mask[torch.as_tensor(kept, device=mask.device)] = False
-            for leaf in ("bias", "bias_vl"):
-                if (int(layer), leaf) in original_bias:
-                    getattr(gate, leaf).data[mask] = float("-inf")
-        return hashlib.sha256(table_path.read_bytes()).hexdigest()
-
-    state: dict[str, Any] = {"rank": rank, "stats": None, "positions": None}
-    ref.MoE.forward = make_moe_forward(ref, torch, F, dist, state)
-    model.head.forward = make_head_forward(model.head, torch, F, dist, state, top_k=args.top_k, rows_per_slice=args.rows_per_slice)
+    n_experts = int(model_args.n_routed_experts)
+    students: dict[str, dict[int, Any]] = {}
+    survivors_sha: dict[str, str] = {}
+    for spec in args.survivors:
+        keep, _, table = spec.partition("=")
+        students[keep] = survivor_masks(json.loads(Path(table).read_text()), n_experts)
+        survivors_sha[keep] = hashlib.sha256(Path(table).read_bytes()).hexdigest()
 
     run_config = {
         "model_id": MODEL_ID,
@@ -436,115 +553,65 @@ def main(argv: list[str] | None = None) -> int:
         "pack_sha256": hashlib.sha256(args.pack.read_bytes()).hexdigest(),
         "max_seq_len": args.max_seq_len,
         "top_k": args.top_k,
-        "world_size": world_size,
+        "driver": "layer-streamed, world_size 1",
     }
+    text = json.dumps(run_config, indent=2, sort_keys=True) + "\n"
+    config_path = args.out / "run-config.json"
+    args.out.mkdir(parents=True, exist_ok=True)
+    if not config_path.exists() or config_path.read_text() != text:
+        config_path.write_text(text)
     config_sha = hashlib.sha256(json.dumps(run_config, sort_keys=True).encode()).hexdigest()
-    if rank == 0:
-        args.out.mkdir(parents=True, exist_ok=True)
-        (args.out / "run-config.json").write_text(json.dumps(run_config, indent=2, sort_keys=True) + "\n")
+    teacher_config_sha = hashlib.sha256(text.encode()).hexdigest()
 
+    def target(stream_name: str, name: str) -> Path:
+        root = args.out if stream_name == TEACHER else args.out / f"student-{stream_name}"
+        return root / args.sweep / "sessions" / f"{name}.npz"
+
+    streams = (TEACHER, *students)
+    todo = [
+        (name, records)
+        for i, (name, records) in enumerate(item for item in load_sessions(args.pack).items() if item[1][0]["split"] == args.sweep)
+        if i % n_shards == shard and not all(target(s, name).exists() for s in streams)
+    ]
+    for name, records in todo:
+        if any(len(r["token_ids"]) > args.max_seq_len for r in records):
+            raise ValueError(f"session {name} has a record over --max-seq-len {args.max_seq_len}")
     deadline = None
     if args.deadline_utc:
         deadline = dt.datetime.fromisoformat(args.deadline_utc.replace("Z", "+00:00")).timestamp()
-    n_layers = int(model_args.n_layers)
-    n_experts = int(model_args.n_routed_experts)
     dims = {"hidden": int(model_args.dim), "down": int(model_args.moe_inter_dim)}
-    layers = list(range(n_layers))
-    sessions = load_sessions(args.pack)
     started = time.time()
-    teacher_config_sha = hashlib.sha256((args.out / "run-config.json").read_bytes()).hexdigest() if rank == 0 else ""
-
-    def run_pass(out_dir: Path, survivors_sha: str | None) -> bool:
-        """One pass over the pack. Teacher pass when ``survivors_sha`` is None, else a
-        masked-router student pass over the eval sessions. False once the deadline hits."""
-
-        student = survivors_sha is not None
-        progress = out_dir / "progress.jsonl"
-        for name, records in sessions.items():
-            split = records[0]["split"]
-            target = out_dir / split / "sessions" / f"{name}.npz"
-            if target.exists() or (student and split != "eval"):
-                continue
-            if deadline is not None and time.time() > deadline:
-                if rank == 0:
-                    print(f"deadline reached before session {name}; stopping cleanly", flush=True)
-                return False
-            t0 = time.time()
-            stats = None if student else SessionStats(torch=torch, n_layers=n_layers, n_experts=n_experts, dims=dims, device="cuda")
-            state["stats"] = stats
-            state["captured"] = {k: [] for k in CAPTURE_KEYS}
-            if student:
-                with np.load(args.out / "eval" / "sessions" / f"{name}.npz") as teacher:
-                    state["teacher"] = {
-                        "ids": torch.as_tensor(teacher["topk_logit_ids"].astype(np.int64), device="cuda"),
-                        "logprob": torch.as_tensor(
-                            teacher["topk_logit_values"].astype(np.float32) - teacher["logsumexp"][:, None], device="cuda"
-                        ),
-                        "targets": torch.as_tensor(teacher["target_token_ids"].astype(np.int64), device="cuda"),
-                    }
-            tokens_seen = 0
-            logits_arrays: dict[str, np.ndarray] = {}
-            for record in records:
-                ids = record["token_ids"]
-                if len(ids) > args.max_seq_len:
-                    raise ValueError(f"{record['id']} has {len(ids)} tokens > --max-seq-len")
-                positions = target_positions(record) if split == "eval" else None
-                state["positions"] = None if positions is None else torch.as_tensor(positions, device="cuda")
-                if positions is not None:
-                    state["targets"] = torch.as_tensor(np.asarray(ids, dtype=np.int64)[positions + 1], device="cuda")
-                with torch.inference_mode():
-                    model.forward(torch.as_tensor([ids], dtype=torch.long, device="cuda"), 0)
-                tokens_seen += len(ids)
-                if positions is not None:
-                    logits_arrays = {
-                        "positions": positions.astype(np.int32),
-                        "target_token_ids": np.asarray(ids, dtype=np.int32)[positions + 1],
-                    }
-                    if rank == 0:
-                        logits_arrays.update({k: np.concatenate(v) for k, v in state["captured"].items() if v})
-            state["positions"] = state["targets"] = state["teacher"] = state["stats"] = None
-            if stats is not None:
-                stats.reduce(dist)
-            if rank == 0:
-                arrays = identity(session=name, split=split, records=records, config_sha=config_sha, chunk=args.max_seq_len)
-                if stats is not None:
-                    stat_arrays = stats.arrays(layers)
-                    if split == "eval":  # REAP + routes only: per-split saliency, not ~0.9 GB of imatrix per sample
-                        stat_arrays = {k: v for k, v in stat_arrays.items() if k.split("__")[-1] not in SPACES}
-                    arrays.update(stat_arrays)
-                arrays.update(logits_arrays)
-                if student:
-                    arrays["record_type"] = np.asarray("dsv4_masked_student_eval_v1")
-                    arrays["survivors_sha256"] = np.asarray(survivors_sha)
-                    arrays["teacher_run_config_sha256"] = np.asarray(teacher_config_sha)
-                save_npz(target, arrays)
-                entry = {
-                    "session": name,
-                    "split": split,
-                    "tokens": tokens_seen,
-                    "seconds": round(time.time() - t0, 3),
-                    "tok_per_s": round(tokens_seen / max(time.time() - t0, 1e-9), 1),
-                    "elapsed_h": round((time.time() - started) / 3600, 3),
-                }
-                with progress.open("a") as handle:
-                    handle.write(json.dumps(entry) + "\n")
-                print(json.dumps(entry), flush=True)
-            del stats
-            torch.cuda.empty_cache()
-        return True
-
-    passes: list[tuple[Path, Path | None]] = [(args.out, None)]
-    for item in args.survivors:
-        keep, _, table = item.partition("=")
-        passes.append((args.out / f"student-{int(keep)}", Path(table)))
-    for out_dir, table in passes:
-        if rank == 0:
-            print(f"pass -> {out_dir}", flush=True)
-        if not run_pass(out_dir, mask_router(table)):
+    progress = args.out / f"progress-{args.sweep}-{shard}of{n_shards}.jsonl"
+    for chunk in chunk_sessions(todo, args.chunk_tokens, len(streams)):
+        if deadline is not None and time.time() > deadline:
+            print("deadline reached; stopping cleanly", flush=True)
             break
-    if world_size > 1:
-        dist.barrier()
-        dist.destroy_process_group()
+        t0 = time.time()
+        results = run_chunk(streamer, state, chunk, split=args.sweep, students=students, dims=dims, device="cuda")
+        for name, records in chunk:
+            ident = identity(session=name, split=args.sweep, records=records, config_sha=config_sha, chunk=args.max_seq_len)
+            for stream_name in streams:
+                arrays = ident | results[(stream_name, name)]
+                if stream_name != TEACHER:
+                    arrays["record_type"] = np.asarray("dsv4_masked_student_eval_v1")
+                    arrays["survivors_sha256"] = np.asarray(survivors_sha[stream_name])
+                    arrays["teacher_run_config_sha256"] = np.asarray(teacher_config_sha)
+                save_npz(target(stream_name, name), arrays)
+        tokens = sum(len(r["token_ids"]) for _, records in chunk for r in records)
+        entry = {
+            "sessions": [name for name, _ in chunk],
+            "tokens": tokens,
+            "streams": len(streams),
+            "seconds": round(time.time() - t0, 3),
+            "tok_per_s": round(tokens * len(streams) / max(time.time() - t0, 1e-9), 1),
+            "max_gpu_gb": round(torch.cuda.max_memory_allocated() / 2**30, 1),
+            "elapsed_h": round((time.time() - started) / 3600, 3),
+        }
+        with progress.open("a") as handle:
+            handle.write(json.dumps(entry) + "\n")
+        print(json.dumps(entry), flush=True)
+        del results
+        torch.cuda.empty_cache()
     return 0
 
 

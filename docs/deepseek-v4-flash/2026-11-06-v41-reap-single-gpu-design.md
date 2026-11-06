@@ -47,12 +47,15 @@ weight resident is what forced the 8-GPU pod.
    time, that state has to be saved per micro-batch and restored before the
    next layer. The candidate mask is the large part, up to about 16 KB per
    token at 16K context. It gets bit-packed, or kept in host RAM.
-4. **Precompute the Engram lookups during the pack stage, on the CPU.** The
-   rows Engram fetches depend only on the token ids
-   (`NgramHashState` → `embed(hash_ids)`); the gate needs the hidden state, but
-   the lookup does not. Gathering the rows once per token (24 × 256 values,
-   about 6.5 KB per token per Engram layer, about 48 GB in all) means the GPU
-   never touches the 196 GB tables, and the GPU pass makes no random IO.
+4. **Gather the Engram rows on the host, at run time.** The rows Engram
+   fetches depend only on the token ids (`NgramHashState` → `embed(hash_ids)`);
+   the gate needs the hidden state, but the lookup does not. A stand-in for
+   `ParallelEngramEmbedding` memory-maps the two 196 GB tables straight from the
+   shard files, gathers the FP8 rows and scales a chunk needs (24 × 256 values
+   per token per Engram layer) and dequantizes them exactly as the module does.
+   The tables never reach the GPU. I first planned to precompute the rows in
+   the pack stage (about 48 GB on disk); the run-time gather does the same
+   thing with no extra stage and no extra disk.
 5. **Do the whole job in two sweeps over the weights.**
    - **Sweep A, calibration** (4 chunks on an 80 GB GPU, 2 on an H200): writes
      the REAP stats, imatrix and routes, then `finalize-reap` and
@@ -63,8 +66,12 @@ weight resident is what forced the 8-GPU pod.
      KL / NLL change / top-1 agreement, in the same npz schema as now. That
      replaces the separate student `torchrun` pass.
 
-   Weight IO is about 320 GB per sweep once Engram is precomputed: 2-3 minutes
-   from NVMe, overlapped with compute.
+   Every chunk is one pass over the backbone weights, about 320 GB without the
+   Engram tables. A chunk holds `--chunk-tokens` resident tokens (default 512K,
+   counting each stream), so one 80 GB GPU makes about 7 calibration passes and
+   5 eval passes. That is about 4 TB of reads. From NVMe this is 20-30 minutes,
+   overlapped with compute by a one-layer prefetch, and less when the pod's
+   page cache holds the shards.
 6. **Use as many GPUs as are free, data-parallel by chunk.** Chunks are
    independent, so any pod with 1 to 8 GPUs of the Hopper or Blackwell
    class (80 GB or more) works. The stats are sums, so the shards add together
@@ -91,9 +98,11 @@ weight resident is what forced the 8-GPU pod.
 
 | File | Change |
 |---|---|
-| `collect.py` | Replace the `torchrun` driver with the one-layer-at-a-time driver. Keep `SessionStats`, the MoE hook, the head capture and the npz writers. |
-| `build_pack.py` | Add the Engram row precompute. |
-| `pod.sh` | Drop `convert` and the TP8 directory. `gpu` becomes sweep A, select, then sweep B. |
+| `stream.py` (new) | `HFCheckpoint` (per-layer loads with `convert.py`'s fixups), `EngramRows` (host gather), `LayerStreamer` (the reference `Block`s one layer at a time, with `shared_attn` saved and restored per record). |
+| `torch_kernel.py` (new) | Plain-torch stand-ins for `kernel.py`, for the CPU tests. |
+| `collect.py` | The `torchrun` driver is replaced by `--sweep calibration|eval`, `--shard I/N` and `--chunk-tokens`. `SessionStats`, the MoE hook, the head capture and the npz schemas are unchanged. |
+| `build_pack.py` | No change. |
+| `pod.sh` | `convert` and the TP8 directory are gone. `gpu` runs one `collect.py` per GPU for sweep A, then select, then sweep B. |
 | `prune.py`, `score.py`, `finalize-reap`, `reap-select` | No change. |
 
 ## Validation before any spend
@@ -112,6 +121,19 @@ weight resident is what forced the 8-GPU pod.
 
    This is the test that catches mistakes in saving and restoring
    `shared_attn`.
+
+   **Status (2026-11-06): done.** `tests/test_runpod_v41_stream.py` runs the
+   pinned `model.py` and `engram.py` (copied to `tests/fixtures/v41_reference/`)
+   on a 6-layer toy with every feature above. The streamed hidden state equals
+   `Transformer.forward` bit for bit, with one MoE batch per chunk and with one
+   per record, and a record's output does not depend on its chunk-mates. Breaking
+   any one `shared_attn` field, the clone of block buffers, or the Engram lookup
+   fails the test. Both sweeps are checked too:
+   - calibration REAP, imatrix and route stats match the reference per session
+     (route counts exactly, sums to 1e-6);
+   - eval teacher logits match;
+   - a keep-all student scores KL 0;
+   - a keep-4-of-8 student's NLL matches the reference with that router mask.
 2. **First 10 minutes on the pod:** run the same equivalence test with the real
    tilelang kernels at tiny size, then one real 16K record through all 40
    layers. Check the teacher NLL is sensible, and measure GPU memory and tok/s.
@@ -125,17 +147,15 @@ $2.69/h, and 1×H200 costs $3.59/h on community cloud or $5.29/h on secure.
 | Stage | Time on 1×H100 |
 |---|---|
 | fetch and pack, in parallel | 1-3 h |
-| Engram precompute | under 1 h |
 | sweeps A and B | about 1-2 h |
 | prune 192 and 96 | about 1 h |
 
-The total is about 4-7 h, roughly **$15-25**, against $125-340 for the TP8
-plan. The disk needed is about 1.3 TB:
+The total is about 3-6 h, roughly **$10-25**, against $125-340 for the TP8
+plan. The disk needed is about 1.2 TB:
 
 | Item | Size |
 |---|---|
 | HF source | 510 GB |
-| Engram rows | 48 GB |
 | out | about 30 GB |
 | REAP-192 | 366 GB |
 | REAP-96 | 293 GB |
@@ -146,8 +166,10 @@ plan. The disk needed is about 1.3 TB:
   H100 and H200 are the safe target. The RTX PRO 6000 (SM120) is not verified.
 - **`shared_attn` state:** saving and restoring it is the subtle part, and the
   CPU equivalence test covers it.
-- **Engram precompute:** this relies on `embed(hash_ids)` being a pure row
+- **Engram host gather:** this relies on `embed(hash_ids)` being a pure row
   gather. I checked the code: `ParallelEngramEmbedding.forward` gathers FP8
-  rows and their scales, then dequantizes. The pack can therefore store the
-  raw FP8 rows and scales (about 6.3 KB per token per layer), and the driver
-  dequantizes them exactly as the module does.
+  rows and their scales, then dequantizes, and the CPU test runs the real
+  module's math through the stand-in.
+- **Indexer memory at 16K context:** the indexer's `bshd,btd->bsht` einsum is
+  about 16 GB for one 16K record. It should fit on 80 GB, but the first pod
+  minutes must check `max_gpu_gb` in the progress log before the full run.
