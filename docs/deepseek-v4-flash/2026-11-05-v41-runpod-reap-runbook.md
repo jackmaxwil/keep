@@ -127,6 +127,66 @@ The pod stays up so the Mac can pull the results. The watchdog stops it at
 The Mac cannot hold both checkpoints at once (423 GB free), so pull one at a
 time.
 
+## Getting an 8×H200 pod (lessons from 2026-11-06)
+
+No 8×H200 pod could be created on 2026-11-06, even though the catalog listed
+stock. These are the lessons from that day.
+
+**Tools:**
+
+- **Use the official Runpod plugin.** Install it with
+  `claude plugin marketplace add runpod/runpod-plugins-official` and
+  `claude plugin install runpod@runpod`, then sign in through `/mcp` →
+  runpod. It signs in with OAuth, so no API key ends up on disk. Its MCP tools
+  are REST v2 and read live state.
+- **Check stock for the GPU count you need:**
+  `get-gpu-type id="NVIDIA H200" include=AVAILABILITY product=POD count=8`.
+  This returns stock per data center, the host CUDA versions that have
+  capacity, the minimum RAM and vCPU, and `maxCount`. `runpodctl gpu list` is
+  not enough: its `stockStatus` is the best status across all data centers and
+  is counted for a single GPU.
+- **Get the price and CUDA matrix for many types at once:**
+  `get-capacity gpuCount=8`.
+- **Create the pod with REST v2 `create-pod`.** The body must include `disk`,
+  `mounts` or `templateId`. Without one of them you get *"You must either
+  provide a template id or pod configuration parameters"*.
+
+**What the catalog showed, and what happened:**
+
+- **Catalog:** 8×H200 secure was "Low", only in EUR-IS-5 and only on CUDA 13.2
+  hosts, at $5.29/GPU/h ($42.32/h). Those hosts had 1510 GB RAM and 160 vCPU.
+  B200, H200 NVL and every H100 variant showed no 8-GPU stock.
+- **Every H200 create failed with the same 400** (*"There are no longer any
+  instances available"*):
+  - with the host specs pinned (`allowedCudaVersions`, `minRamPerGpu`,
+    `minVcpuCountPerGpu`);
+  - with 1400 GB and 1100 GB volume disks;
+  - with community cloud;
+  - with no data-center filter;
+  - with a bare single H200.
+- **The control worked.** A 1×RTX 4090 with the same image and ports was
+  created at once. So the account, the image (`runpod/pytorch:1.5.0-cu1281-torch291-ubuntu2404`)
+  and the request shape were all fine; H200 itself was unplaceable.
+
+**What to take from it:**
+
+- **Catalog stock is not a reservation.** A "Low" reading can be a host that is
+  already held. Runpod's create-pod docs say a create can fail for capacity on
+  a GPU the catalog just reported as available.
+- **The 400 means one of two things.** It covers both a broken request and no
+  capacity, so separate them with a cheap control pod. If the control succeeds,
+  the request is fine and the problem is capacity. Disk size, ports and CUDA
+  pinning were not the cause.
+- **Do not run tight retry loops against the API.** A loop of creates every
+  90 s was stopped as spam. Check by hand from time to time, then create once.
+- **The image does not limit placement.** A CUDA 12.8 image runs on CUDA 13.2
+  hosts.
+
+**Fix the local Claude CLI first if plugin install fails.** Old npm installs of
+`@anthropic-ai/claude-code` crash on Node 26. Remove them with
+`npm uninstall -g --prefix <prefix> @anthropic-ai/claude-code`, so that
+`claude` resolves to a working install.
+
 ## Steps (network-volume mode)
 
 Only you can do the steps marked **(you)**. I do not enter credentials or
