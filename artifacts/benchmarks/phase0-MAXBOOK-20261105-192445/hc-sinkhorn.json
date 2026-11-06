@@ -1,0 +1,28 @@
+{
+  "device": "Device(gpu, 0)",
+  "mlx_version": "0.31.2",
+  "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "reasons": [],
+  "record_type": "ramp_hc_sinkhorn_kill_test_v1",
+  "rows": [
+    {
+      "compiled_ms_per_call": 1.407559666025918,
+      "compiled_ms_per_decode_step": 121.05013127822895,
+      "fused_ms_per_call": 0.3815831679967232,
+      "fused_ms_per_decode_step": 32.816152447718196,
+      "max_relative_diff": 5.69557300877932e-07,
+      "rows": 1,
+      "speedup": 3.688736254839221
+    },
+    {
+      "compiled_ms_per_call": 0.9860470839776099,
+      "compiled_ms_per_decode_step": 84.80004922207445,
+      "fused_ms_per_call": 1.9785255839815363,
+      "fused_ms_per_decode_step": 170.15320022241212,
+      "max_relative_diff": 1.4791691000937135e-06,
+      "rows": 1024,
+      "speedup": 0.4983746947529043
+    }
+  ],
+  "verdict": "PASS"
+}

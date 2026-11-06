@@ -85,7 +85,7 @@ def test_hyper_connection_output_with_the_flag(monkeypatch):
         HyperConnection,
     )
 
-    args = DeepseekV4FlashVQModelArgs(hidden_size=64, hc_mult=HC, num_hidden_layers=1, compress_ratios=[0])
+    args = DeepseekV4FlashVQModelArgs(hidden_size=64, hc_mult=HC, num_hidden_layers=1, num_hash_layers=0, compress_ratios=[0])
     hc = HyperConnection(args)
     rng = np.random.default_rng(1)
     hc.fn = mx.array(rng.normal(size=hc.fn.shape).astype(np.float32) * 0.05)
