@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 
 import numpy as np
 import pytest
@@ -44,21 +43,10 @@ def test_flag_is_off_by_default_and_validated(monkeypatch):
         e8p_m1.e8p_m1_enabled()
 
 
-def test_per_route_source_only_offsets_the_activation_reads():
-    original = (Path(e8p_m1.__file__).parent / "gather_vqmm_m1.metal").read_text()
-    rewritten = e8p_m1.per_route_x_source()
-    assert rewritten.count("route * (codewords * 8u)") == 2
-    # Nothing else changed: undoing the two rewrites restores the file exactly.
-    restored = rewritten
-    for old, new in e8p_m1._X_INDEX_REWRITES:
-        restored = restored.replace(new, old)
-    assert restored == original
-
-
-def _layer(code_bits=16, experts=4, out=32, inp=64, seed=0):
+def _layer(code_bits=16, experts=4, out=32, inp=64, seed=0, group_size=32):
     rng = np.random.default_rng(seed)
     weight = mx.array(rng.normal(size=(experts, out, inp)).astype(np.float32))
-    return QuantizedVQSwitchLinear.from_weights(weight, group_size=32, code_bits=code_bits)
+    return QuantizedVQSwitchLinear.from_weights(weight, group_size=group_size, code_bits=code_bits)
 
 
 def test_switch_linear_routes_m1_16bit_calls_to_the_new_kernels(monkeypatch):
@@ -110,28 +98,36 @@ def _dense(layer) -> np.ndarray:
 
 
 @pytest.mark.skipif(not _metal_available(), reason="needs a Metal GPU")
-@pytest.mark.parametrize("rows_per_threadgroup", [8, 32])
-def test_token_and_per_route_kernels_match_the_dense_decode(rows_per_threadgroup):
-    layer = _layer(experts=6, out=96, inp=128, seed=3)
+# group 32 -> 4 codewords per group (4-codeword loads); 64 -> 8 (8-codeword
+# loads). inp=768 makes lanes take more than one step; out=93 leaves a
+# ragged last tile.
+@pytest.mark.parametrize("group_size,inp,out", [(32, 128, 96), (64, 768, 93)])
+@pytest.mark.parametrize("rows_per_simdgroup,simdgroups", [(1, 1), (8, 1), (4, 4)])
+def test_token_and_per_route_kernels_match_the_dense_decode(group_size, inp, out, rows_per_simdgroup, simdgroups):
+    layer = _layer(experts=6, out=out, inp=inp, seed=3, group_size=group_size)
+    kw = {"output_dims": out, "rows_per_simdgroup": rows_per_simdgroup, "simdgroups": simdgroups}
     dense = _dense(layer)
     rng = np.random.default_rng(4)
     rhs = mx.array([[5, 0, 3]], dtype=mx.uint32)
 
-    x = rng.normal(size=(1, 128)).astype(np.float32)
-    got = e8p_m1.e8p_m1_token_layout(
-        mx.array(x), layer.codes, layer.effective_scales(), layer.codebook, rhs,
-        output_dims=96, rows_per_threadgroup=rows_per_threadgroup,
-    )
+    x = rng.normal(size=(1, inp)).astype(np.float32)
+    got = e8p_m1.e8p_m1_token_layout(mx.array(x), layer.codes, layer.effective_scales(), layer.codebook, rhs, **kw)
     want = np.stack([x[0] @ dense[e].T for e in (5, 0, 3)])[None]
     np.testing.assert_allclose(np.array(got.astype(mx.float32)), want, rtol=1e-4, atol=1e-3)
 
-    xr = rng.normal(size=(3, 128)).astype(np.float32)
+    xr = rng.normal(size=(3, inp)).astype(np.float32)
     got = e8p_m1.e8p_m1_per_route(
-        mx.array(xr), layer.codes, layer.effective_scales(), layer.codebook, rhs.reshape(-1),
-        output_dims=96, rows_per_threadgroup=rows_per_threadgroup,
+        mx.array(xr), layer.codes, layer.effective_scales(), layer.codebook, rhs.reshape(-1), **kw
     )
     want = np.stack([xr[r] @ dense[e].T for r, e in enumerate((5, 0, 3))])
     np.testing.assert_allclose(np.array(got.astype(mx.float32)), want, rtol=1e-4, atol=1e-3)
+
+
+def test_chunk_never_straddles_a_scale_group():
+    assert e8p_m1._chunk(512, 8) == 8  # V4-Flash gate/up: 64 codewords per group
+    assert e8p_m1._chunk(16, 4) == 4
+    with pytest.raises(ValueError, match="divisible by 4"):
+        e8p_m1._chunk(12, 2)
 
 
 def test_benchmark_synthetic_layers_match_the_shipped_byte_accounting():

@@ -8,18 +8,17 @@ threadgroup per output element. ``gather_vqmm_m1.metal`` already carries an
 E8P branch; nothing dispatched to it.
 
 With ``RAMP_E8P_M1=1`` (opt-in until ``benchmarks/bench_e8p_m1.py`` passes on
-the target Mac), M=1 calls with 16-bit codes use:
+the target Mac), M=1 calls with 16-bit codes use ``e8p_m1.metal``:
 
 - :func:`e8p_m1_token_layout` for gate/up (one activation row, top-k
-  experts): the existing M=1 kernel with ``CODE_BITS=16``.
-- :func:`e8p_m1_per_route` for down (one activation row *per route*): the
-  same kernel source with the activation read offset by route. It is built as
-  a separate kernel from a text substitution, so the production 8-bit kernel
-  stays byte-identical.
+  experts).
+- :func:`e8p_m1_per_route` for down (one activation row *per route*).
 
-The E8P branch decodes each codeword once per dimension, but the compiler lifts
-the per-codeword work out of that loop: a decode-once rewrite measured slower
-on the M4 Max (113 vs 154 GB/s, 2026-11-05).
+The kernel gives each simdgroup several rows, loads 4-8 codewords per lane at
+once, and decodes the abs grid once per threadgroup. On the M4 Max that is
+1.6-2.0x the generic M=1 kernel's E8P branch, which it replaces here; the
+production 8-bit M=1 kernel is untouched. A loads-only stub reaches ~410 GB/s,
+so decode ALU is still the limit.
 """
 
 from __future__ import annotations
@@ -33,7 +32,6 @@ __all__ = [
     "e8p_m1_enabled",
     "e8p_m1_per_route",
     "e8p_m1_token_layout",
-    "per_route_x_source",
     "should_use_e8p_m1",
 ]
 
@@ -41,10 +39,6 @@ E8P_M1_ENV = "RAMP_E8P_M1"
 _KERNEL_DIR = Path(__file__).resolve().parent
 _ON = {"1", "on", "true", "yes"}
 _OFF = {"", "0", "off", "false", "no"}
-_X_INDEX_REWRITES = (
-    ("uint x_base = cw * 8u;", "uint x_base = route * (codewords * 8u) + cw * 8u;"),
-    ("uint x_idx = cw * 8u + dim;", "uint x_idx = route * (codewords * 8u) + cw * 8u + dim;"),
-)
 
 
 def e8p_m1_enabled() -> bool:
@@ -70,38 +64,52 @@ def should_use_e8p_m1(
     )
 
 
-def per_route_x_source() -> str:
-    """``gather_vqmm_m1.metal`` with the activation row chosen by route."""
-
-    source = (_KERNEL_DIR / "gather_vqmm_m1.metal").read_text()
-    for old, new in _X_INDEX_REWRITES:
-        count = source.count(old)
-        if count != 1:
-            raise RuntimeError(
-                f"gather_vqmm_m1.metal changed: expected one {old!r}, found {count}"
-            )
-        source = source.replace(old, new)
-    return source
-
-
 @cache
-def _per_route_kernel():
+def _kernel():
     import mlx.core as mx
 
     return mx.fast.metal_kernel(
-        name="ramp_e8p_m1_per_route_x",
+        name="ramp_e8p_m1",
         input_names=["x", "codes", "scales", "codebook", "rhs_indices"],
         output_names=["out"],
-        source=per_route_x_source(),
-        header=(_KERNEL_DIR / "common_e8.metal").read_text(),
+        source=(_KERNEL_DIR / "e8p_m1.metal").read_text(),
     )
 
 
-def _launch_shape(output_dims: int, rows_per_threadgroup: int) -> tuple[int, int]:
-    lanes_per_row = 256 // rows_per_threadgroup
-    if rows_per_threadgroup * lanes_per_row != 256 or lanes_per_row < 1:
-        raise ValueError("rows_per_threadgroup must divide 256")
-    return lanes_per_row, (output_dims + rows_per_threadgroup - 1) // rows_per_threadgroup
+def _chunk(codewords: int, groups: int) -> int:
+    """Codewords per wide load: a chunk must not straddle a row or scale group."""
+
+    for chunk in (8, 4):
+        if codewords % groups == 0 and (codewords // groups) % chunk == 0:
+            return chunk
+    raise ValueError(f"E8P M=1 needs codewords per scale group divisible by 4, got {codewords}/{groups}")
+
+
+def _launch(x, codes, scales, codebook, rhs_indices, *, output_dims, rows_per_simdgroup, simdgroups, per_route):
+    import mlx.core as mx
+
+    from ramp.kernels.gather_vqmm import _qmv_output_dtype
+
+    if rows_per_simdgroup < 1 or simdgroups < 1 or simdgroups > 32:
+        raise ValueError("rows_per_simdgroup must be >= 1 and simdgroups in 1..32")
+    routes = int(rhs_indices.size)
+    rows_per_tile = rows_per_simdgroup * simdgroups
+    output_dtype = _qmv_output_dtype(x.dtype)
+    (out,) = _kernel()(
+        inputs=[mx.contiguous(x), codes, scales, codebook, rhs_indices.reshape(1, routes)],
+        template=[
+            ("ROWS_PER_SG", rows_per_simdgroup),
+            ("SIMDGROUPS", simdgroups),
+            ("CHUNK", _chunk(int(codes.shape[2]), int(scales.shape[2]))),
+            ("PER_ROUTE", int(per_route)),
+            ("OUT_T", output_dtype),
+        ],
+        grid=(32 * simdgroups, (output_dims + rows_per_tile - 1) // rows_per_tile, routes),
+        threadgroup=(32 * simdgroups, 1, 1),
+        output_shapes=[(1, routes, output_dims)],
+        output_dtypes=[output_dtype],
+    )
+    return out
 
 
 def e8p_m1_token_layout(
@@ -112,26 +120,19 @@ def e8p_m1_token_layout(
     rhs_indices,
     *,
     output_dims: int,
-    rows_per_threadgroup: int = 32,
-    use_threadgroup_codebook: bool = True,
+    rows_per_simdgroup: int = 4,
+    simdgroups: int = 1,
 ):
     """One activation row against ``top_k`` experts: ``[1, top_k, out]``."""
 
-    from ramp.kernels.gather_vqmm import gather_vqmm_m1_kernel_unchecked
-
     if x.shape[0] != 1 or rhs_indices.ndim != 2 or rhs_indices.shape[0] != 1:
         raise ValueError("token-layout E8P M=1 needs x [1, in] and rhs_indices [1, top_k]")
-    return gather_vqmm_m1_kernel_unchecked(
-        x,
-        codes,
-        scales,
-        codebook,
-        rhs_indices,
+    return _launch(
+        x, codes, scales, codebook, rhs_indices,
         output_dims=output_dims,
-        code_bits=16,
-        rows_per_threadgroup=rows_per_threadgroup,
-        use_threadgroup_codebook=use_threadgroup_codebook,
-        use_decoded_codebook=False,
+        rows_per_simdgroup=rows_per_simdgroup,
+        simdgroups=simdgroups,
+        per_route=False,
     )
 
 
@@ -143,33 +144,19 @@ def e8p_m1_per_route(
     rhs_indices,
     *,
     output_dims: int,
-    rows_per_threadgroup: int = 32,
-    use_threadgroup_codebook: bool = True,
+    rows_per_simdgroup: int = 4,
+    simdgroups: int = 1,
 ):
     """Route ``r``'s activation row against expert ``rhs_indices[r]``: ``[routes, out]``."""
-
-    import mlx.core as mx
-
-    from ramp.kernels.gather_vqmm import _qmv_output_dtype
 
     routes = int(rhs_indices.size)
     if x.ndim != 2 or x.shape[0] != routes:
         raise ValueError(f"per-route E8P M=1 needs x [{routes}, in], got {tuple(x.shape)}")
-    lanes_per_row, row_tiles = _launch_shape(output_dims, rows_per_threadgroup)
-    output_dtype = _qmv_output_dtype(x.dtype)
-    (out,) = _per_route_kernel()(
-        inputs=[mx.contiguous(x), codes, scales, codebook, rhs_indices.reshape(1, routes)],
-        template=[
-            ("ROWS_PER_TG", rows_per_threadgroup),
-            ("LANES_PER_ROW", lanes_per_row),
-            ("OUT_T", output_dtype),
-            ("CODE_BITS", 16),
-            ("USE_THREADGROUP_CODEBOOK", int(use_threadgroup_codebook)),
-            ("USE_DECODED_CODEBOOK", 0),
-        ],
-        grid=(256, row_tiles, routes),
-        threadgroup=(256, 1, 1),
-        output_shapes=[(1, routes, output_dims)],
-        output_dtypes=[output_dtype],
+    out = _launch(
+        x, codes, scales, codebook, rhs_indices,
+        output_dims=output_dims,
+        rows_per_simdgroup=rows_per_simdgroup,
+        simdgroups=simdgroups,
+        per_route=True,
     )
     return out.reshape(routes, output_dims)

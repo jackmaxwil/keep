@@ -4,8 +4,8 @@ Times one routed FFN at decode shape (gate, up and down for top-6 experts) two
 ways in the same process:
 
 - ``production``: today's dispatch (the scalar kernel on M1-M4; NAX on M5);
-- ``e8p_m1``: ``RAMP_E8P_M1=1``, the M=1 E8P kernels, swept over row packing
-  and threadgroup codebook staging.
+- ``e8p_m1``: ``RAMP_E8P_M1=1``, the M=1 E8P kernel, swept over rows per
+  simdgroup and simdgroups per threadgroup.
 
 Effective bandwidth is the expert bytes one FFN reads (6 experts x 3
 projections of 2-bit codes plus their scales) over the median time per FFN.
@@ -130,15 +130,15 @@ def run(
     import ramp.nn.switch_linear as switch_linear
 
     try:
-        for rows_per_tg, tg_codebook in sweep:
+        for rows_per_sg, simdgroups in sweep:
             switch_linear.e8p_m1_token_layout = (
-                lambda *a, _r=rows_per_tg, _c=tg_codebook, **k: original_token(
-                    *a, rows_per_threadgroup=_r, use_threadgroup_codebook=_c, **k
+                lambda *a, _r=rows_per_sg, _s=simdgroups, **k: original_token(
+                    *a, rows_per_simdgroup=_r, simdgroups=_s, **k
                 )
             )
             switch_linear.e8p_m1_per_route = (
-                lambda *a, _r=rows_per_tg, _c=tg_codebook, **k: original_route(
-                    *a, rows_per_threadgroup=_r, use_threadgroup_codebook=_c, **k
+                lambda *a, _r=rows_per_sg, _s=simdgroups, **k: original_route(
+                    *a, rows_per_simdgroup=_r, simdgroups=_s, **k
                 )
             )
             got = [np.array(_ffn(layers, x, r, intermediate).astype(mx.float32)) for r in routes_list[:4]]
@@ -149,8 +149,8 @@ def run(
             ms = _median_ms(layers, x, routes_list, intermediate, iterations, warmup, ffns_per_sync)
             configs.append(
                 {
-                    "rows_per_threadgroup": rows_per_tg,
-                    "threadgroup_codebook": tg_codebook,
+                    "rows_per_simdgroup": rows_per_sg,
+                    "simdgroups": simdgroups,
                     "median_ms_per_ffn": ms,
                     "effective_gb_per_s": ffn_bytes / (ms / 1e3) / 1e9,
                     "speedup_over_production": production_ms / ms,
@@ -191,7 +191,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--ffns-per-sync", type=int, default=43, help="chained FFNs per mx.eval (V4-Flash has 43 layers)")
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--seed", type=int, default=20261105)
-    parser.add_argument("--sweep", default="8:1,16:1,32:1,64:1,32:0", help="rows_per_threadgroup:tg_codebook,...")
+    parser.add_argument("--sweep", default="4:1,8:1,4:4,2:4,16:1", help="rows_per_simdgroup:simdgroups,...")
     parser.add_argument("--output-json", type=Path)
     args = parser.parse_args(argv)
 
@@ -215,8 +215,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         }
     sweep = []
     for item in args.sweep.split(","):
-        rows, codebook = item.split(":")
-        sweep.append((int(rows), codebook.strip() == "1"))
+        rows, simdgroups = item.split(":")
+        sweep.append((int(rows), int(simdgroups)))
     result = {
         "record_type": "ramp_e8p_m1_kill_test_v2",
         "device": str(mx.default_device()),
