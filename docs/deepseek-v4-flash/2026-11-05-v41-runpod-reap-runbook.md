@@ -103,7 +103,31 @@ reference prefill plus a Python expert loop. Check it on the first sessions. If
 `tok_per_s` is under 1,000 after the first 3 sessions, stop and rethink. At
 that rate the teacher pass alone takes more than an hour.
 
-## Steps
+## Single-pod mode (what actually ran, 2026-11-06)
+
+On 2026-11-06, 8×H200 was out of capacity in every data center that offers
+network volumes, so everything runs on one 8×H200 pod with a 2 TB volume disk:
+
+```bash
+MAX_GPU_HOURS=8 bash /workspace/keep/scripts/runpod/v41_reap/pod.sh all
+```
+
+That command runs these steps:
+
+- **fetch and pack:** run in parallel.
+- **convert:** writes the TP8 checkpoint.
+- **teacher pass:** runs over the pack.
+- **scoring:** checks N = 256/192/128/96.
+- **cleanup:** deletes the TP8 checkpoint.
+- **prune:** writes REAP 50% (N=192, ~366 GB) and REAP 75% (N=96, ~293 GB).
+
+The pod stays up so the Mac can pull the results. The watchdog stops it at
+8 h, and a failed stage stops it at once.
+
+The Mac cannot hold both checkpoints at once (423 GB free), so pull one at a
+time.
+
+## Steps (network-volume mode)
 
 Only you can do the steps marked **(you)**. I do not enter credentials or
 launch pods.

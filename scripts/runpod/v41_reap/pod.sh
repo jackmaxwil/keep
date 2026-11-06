@@ -6,9 +6,10 @@
 #   pod.sh pack           CPU pod: build the calibration + eval pack from public datasets
 #   pod.sh gpu            8xH200 pod: convert, teacher pass, candidate scoring; stops itself
 #   pod.sh prune KEEP     CPU pod: write the pruned HF checkpoint for the Mac to pull
+#   pod.sh all            one 8xH200 pod does everything: fetch || pack, gpu, prune $PRUNE
 #
-# Everything lives on one network volume mounted at /workspace, so stages can
-# run on different (cheap CPU / expensive GPU) pods.
+# Everything lives under /workspace (a network volume, or the pod's own volume
+# disk in single-pod mode).
 set -euo pipefail
 
 MODEL_ID=deepseek-ai/DeepSeek-V4.1-Flash-1017
@@ -18,9 +19,17 @@ KIT=$W/keep/scripts/runpod/v41_reap
 HF=$W/v41-hf
 TP8=$W/v41-tp8
 OUT=$W/out
-CANDIDATES=${CANDIDATES:-"256 224 192 160"}
+CANDIDATES=${CANDIDATES:-"256 192 128 96"}
+PRUNE=${PRUNE:-"192 96"}                # REAP 50% and REAP 75% of 384 experts
 MAX_GPU_HOURS=${MAX_GPU_HOURS:-6}       # hard stop for the GPU pod (8xH200 secure ~ $42/h)
 export PYTHONPATH=$W/keep/src HF_HUB_ENABLE_HF_TRANSFER=1
+
+watchdog() {  # whatever happens next, the pod stops at MAX_GPU_HOURS; a failed stage stops it at once
+  [[ -n "${WATCHDOG_STARTED:-}" ]] && return
+  export WATCHDOG_STARTED=1
+  ( sleep $((MAX_GPU_HOURS * 3600)); stop_pod "watchdog: ${MAX_GPU_HOURS}h limit" ) &
+  trap 'status=$?; [[ $status -ne 0 ]] && stop_pod "stage failed (status $status)"' EXIT
+}
 
 log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$W/pod.log"; }
 
@@ -33,8 +42,13 @@ stop_pod() {
   fi
 }
 
+fetch_small() {  # tokenizer, configs, encoding/ and inference/: all pack and convert need besides weights
+  pip install -q "huggingface_hub[hf_transfer]>=0.34" "datasets>=3" tokenizers
+  hf download "$MODEL_ID" --revision "$REVISION" --local-dir "$HF" --include "*.json" "encoding/*" "inference/*"
+}
+
 fetch() {
-  pip install -q "huggingface_hub[hf_transfer]>=0.34"
+  fetch_small
   hf download "$MODEL_ID" --revision "$REVISION" --local-dir "$HF"
   python3 - "$HF" "$MODEL_ID" "$REVISION" <<'EOF'
 import hashlib, sys
@@ -61,7 +75,6 @@ EOF
 }
 
 pack() {
-  pip install -q "datasets>=3" tokenizers huggingface_hub
   python3 -I "$KIT/build_pack.py" --model-dir "$HF" --out "$W/pack"
   log "pack built: $(python3 -c "import json;m=json.load(open('$W/pack/manifest.json'));print(m['records'],'records',m['sessions'],'sessions')")"
 }
@@ -69,9 +82,7 @@ pack() {
 gpu() {
   local deadline
   deadline=$(date -u -d "+$((MAX_GPU_HOURS * 60 - 20)) minutes" +%FT%TZ)
-  # Watchdog: whatever happens below, the pod stops at MAX_GPU_HOURS.
-  ( sleep $((MAX_GPU_HOURS * 3600)); stop_pod "watchdog: ${MAX_GPU_HOURS}h limit" ) &
-  trap 'stop_pod "gpu stage exited (status $?)"' EXIT
+  watchdog
 
   cd "$HF/inference"
   pip install -q -r requirements.txt
@@ -114,6 +125,20 @@ prune() {
   (cd "$W/v41-reap$keep" && sha256sum -c SHA256SUMS --quiet) && log "pruned checkpoint $W/v41-reap$keep verified"
 }
 
-stage=${1:?usage: pod.sh fetch|pack|gpu|prune KEEP}
+all() {
+  watchdog
+  fetch_small
+  log "fetch (weights) and pack in parallel"
+  fetch > "$W/fetch.log" 2>&1 &
+  local fetch_pid=$!
+  pack > "$W/pack.log" 2>&1
+  wait "$fetch_pid" || { log "fetch failed: see $W/fetch.log"; return 1; }
+  gpu
+  rm -rf "$TP8"  # 510 GB; the pruned checkpoints come from the HF source
+  for keep in $PRUNE; do prune "$keep"; done
+  log "all done: $(echo "$PRUNE" | sed "s|[0-9]*|$W/v41-reap&|g"). Pod left running for the Mac to pull; watchdog still armed."
+}
+
+stage=${1:?usage: pod.sh fetch|pack|gpu|prune KEEP|all}
 shift
 "$stage" "$@"
