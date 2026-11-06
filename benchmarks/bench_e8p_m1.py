@@ -10,7 +10,7 @@ ways in the same process:
 Effective bandwidth is the expert bytes one FFN reads (6 experts x 3
 projections of 2-bit codes plus their scales) over the median time. Verdict
 for the best ``e8p_m1`` configuration: **PASS** at >= 200 GB/s, **TUNE** at
-100-200 (decode the codeword once instead of per dimension, then re-measure),
+100-200 (tune; decoding each codeword once was tried and is slower),
 **KILL** under 100 (serve on the M5 instead). Outputs of the two paths are
 compared on every configuration.
 

@@ -17,9 +17,9 @@ the target Mac), M=1 calls with 16-bit codes use:
   a separate kernel from a text substitution, so the production 8-bit kernel
   stays byte-identical.
 
-The E8P branch decodes each codeword once per dimension. If the kill test
-lands under its bandwidth bar, decoding a codeword once into eight values is
-the first optimisation to try.
+The E8P branch decodes each codeword once per dimension, but the compiler lifts
+the per-codeword work out of that loop: a decode-once rewrite measured slower
+on the M4 Max (113 vs 154 GB/s, 2026-11-05).
 """
 
 from __future__ import annotations
