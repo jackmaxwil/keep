@@ -191,6 +191,36 @@ stock. These are the lessons from that day.
 `npm uninstall -g --prefix <prefix> @anthropic-ai/claude-code`, so that
 `claude` resolves to a working install.
 
+## Failure: the H100 sat idle for hours on prep work (2026-11-06)
+
+The 1×H100 SXM pod `m13sexafpkqia6` ($3.99/h, EUR-NO-2) ran `pod.sh all`.
+Its GPU stayed at 0% for more than 2 hours:
+
+- **19:14–20:10:** the 510 GB weight fetch and sha256 check, at about 160–210 MB/s.
+- **19:14 to 21:12 and later:** `build_pack.py`. Most of that time it was
+  streaming all 35 GB (gzip) of `common-pile/stackexchange_filtered` at about
+  7 MB/s, unauthenticated, to keep posts from five sites only.
+
+That is at least $9 of GPU time spent on work that needs no GPU. It also pushes
+the sweeps toward the 8 h watchdog. **This should have been caught before the
+pod was rented.** The single-GPU design copied "fetch and pack" from the
+8×H200 single-pod mode as GPU-pod time, and nobody questioned that or timed
+the pack.
+
+**Rules for the next run:**
+
+- **Do no prep on a GPU pod.** Build and validate the pack on the Mac or on a
+  cheap CPU pod first. It needs only the tokenizer and public data. Download
+  the weights to a network volume from a CPU pod. Then create the GPU pod on
+  that volume. Its first command is `pod.sh smoke`.
+- **Time slow inputs on cheap hardware.** Before any GPU spend, measure every
+  dataset stream and download in the pack.
+- **Don't stream a whole corpus to keep a slice of it.** For StackExchange,
+  read only the per-site files, or pre-filter once on a CPU and keep the
+  result. Set `HF_TOKEN` (Jack enters it himself) so streams aren't throttled.
+- **Count idle GPU time in the cost estimate.** If prep has to share the pod,
+  say up front how many idle GPU-hours it costs.
+
 ## Steps (network-volume mode)
 
 Only you can do the steps marked **(you)**. I do not enter credentials or
