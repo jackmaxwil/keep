@@ -32,6 +32,7 @@ import ast
 import hashlib
 import json
 import re
+import os
 import sys
 import urllib.request
 from collections import Counter, defaultdict
@@ -378,4 +379,10 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    status = main()
+    sys.stdout.flush()
+    # Streaming `datasets` leaves native worker threads behind, and interpreter
+    # finalization then aborts with PyGILState_Release (exit 134). That happened
+    # on 2026-11-06 after the pack was fully written, and it stopped the pod.
+    # Skip finalization: every output is already closed.
+    os._exit(status)
