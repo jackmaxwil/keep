@@ -7,8 +7,9 @@ projections fall through to the scalar kernel, which spends a whole 256-thread
 threadgroup per output element. ``gather_vqmm_m1.metal`` already carries an
 E8P branch; nothing dispatched to it.
 
-With ``RAMP_E8P_M1=1`` (opt-in until ``benchmarks/bench_e8p_m1.py`` passes on
-the target Mac), M=1 calls with 16-bit codes use ``e8p_m1.metal``:
+On a Metal GPU without the NAX kernels (M1-M4), M=1 calls with 16-bit codes
+use ``e8p_m1.metal`` by default, since ``benchmarks/bench_e8p_m1.py`` passed
+on the M4 Max (2026-11-05). ``RAMP_E8P_M1=1`` forces it on, ``=0`` off:
 
 - :func:`e8p_m1_token_layout` for gate/up (one activation row, top-k
   experts).
@@ -38,7 +39,18 @@ __all__ = [
 E8P_M1_ENV = "RAMP_E8P_M1"
 _KERNEL_DIR = Path(__file__).resolve().parent
 _ON = {"1", "on", "true", "yes"}
-_OFF = {"", "0", "off", "false", "no"}
+_OFF = {"0", "off", "false", "no"}
+
+
+@cache
+def default_enabled() -> bool:
+    """On for a Metal GPU without NAX; NAX GPUs keep their tensor-unit kernels."""
+
+    import mlx.core as mx
+
+    from ramp.kernels import nax
+
+    return bool(mx.metal.is_available()) and not nax.is_available()
 
 
 def e8p_m1_enabled() -> bool:
@@ -47,7 +59,9 @@ def e8p_m1_enabled() -> bool:
         return True
     if value in _OFF:
         return False
-    raise ValueError(f"{E8P_M1_ENV} must be on/off (1/0), got {value!r}")
+    if value in ("", "auto"):
+        return default_enabled()
+    raise ValueError(f"{E8P_M1_ENV} must be on/off/auto (1/0), got {value!r}")
 
 
 def should_use_e8p_m1(

@@ -35,9 +35,29 @@ def test_decision_table_with_the_flag_on(monkeypatch, kwargs, expected):
     assert e8p_m1.should_use_e8p_m1(**args) is expected
 
 
-def test_flag_is_off_by_default_and_validated(monkeypatch):
-    monkeypatch.delenv(e8p_m1.E8P_M1_ENV, raising=False)
+@pytest.mark.parametrize("metal,nax,expected", [(True, False, True), (True, True, False), (False, False, False)])
+def test_default_is_on_only_for_a_metal_gpu_without_nax(monkeypatch, metal, nax, expected):
+    from ramp.kernels import nax as nax_module
+
+    monkeypatch.setattr(mx.metal, "is_available", lambda: metal)
+    monkeypatch.setattr(nax_module, "is_available", lambda: nax)
+    e8p_m1.default_enabled.cache_clear()
+    try:
+        for value in (None, "", "auto"):
+            if value is None:
+                monkeypatch.delenv(e8p_m1.E8P_M1_ENV, raising=False)
+            else:
+                monkeypatch.setenv(e8p_m1.E8P_M1_ENV, value)
+            assert e8p_m1.e8p_m1_enabled() is expected
+    finally:
+        e8p_m1.default_enabled.cache_clear()
+
+
+def test_flag_overrides_the_default_and_is_validated(monkeypatch):
+    monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "0")
     assert e8p_m1.should_use_e8p_m1(code_bits=16, tokens=1, sorted_indices=False, route_strategy="auto") is False
+    monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "1")
+    assert e8p_m1.should_use_e8p_m1(code_bits=16, tokens=1, sorted_indices=False, route_strategy="auto") is True
     monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "maybe")
     with pytest.raises(ValueError, match=e8p_m1.E8P_M1_ENV):
         e8p_m1.e8p_m1_enabled()
@@ -74,14 +94,14 @@ def test_switch_linear_routes_m1_16bit_calls_to_the_new_kernels(monkeypatch):
 
 def test_switch_linear_leaves_8bit_and_flag_off_calls_alone(monkeypatch):
     def boom(*args, **kwargs):  # pragma: no cover - must not be called
-        raise AssertionError("opt-in kernel used without the flag or for 8-bit codes")
+        raise AssertionError("E8P M=1 kernel used with the flag off or for 8-bit codes")
 
     monkeypatch.setattr(switch_linear, "e8p_m1_token_layout", boom)
     monkeypatch.setattr(switch_linear, "e8p_m1_per_route", boom)
     monkeypatch.setattr(switch_linear, "gather_vqmm", lambda *a, **k: mx.zeros((3, 32)))
     monkeypatch.setattr(switch_linear, "gather_vqmm_m1_kernel", lambda *a, **k: mx.zeros((1, 3, 32)))
     indices = mx.array([[0, 2, 3]], dtype=mx.uint32)
-    monkeypatch.delenv(e8p_m1.E8P_M1_ENV, raising=False)
+    monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "0")
     _layer(code_bits=16)(mx.zeros((1, 64)), indices)
     monkeypatch.setenv(e8p_m1.E8P_M1_ENV, "1")
     _layer(code_bits=8)(mx.zeros((1, 64)), indices)

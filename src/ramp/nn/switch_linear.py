@@ -339,8 +339,8 @@ class QuantizedVQSwitchLinear(nn.Module):
                 sorted_indices=sorted_indices,
                 route_strategy=self.route_strategy,
             ):
-                # Opt-in (RAMP_E8P_M1=1): 16-bit codes at M=1 on GPUs without
-                # the NAX tensor-unit kernels, instead of the scalar fallback.
+                # 16-bit codes at M=1 on GPUs without the NAX tensor-unit
+                # kernels (default there; RAMP_E8P_M1=0/1 overrides).
                 y = e8p_m1_token_layout(
                     flat_x,
                     self.codes,

@@ -80,8 +80,10 @@ script above runs on the Mac.
   lanes load 8 codewords at once, and the abs grid is decoded once per
   threadgroup into half2 pairs, with signs applied by XOR. A loads-only stub
   of the same kernel reads at ~410 GB/s, so decode ALU is still half the
-  time. Not yet the default: it clears the bar by 1-3% while other jobs were
-  loading the machine.
+  time. Since 2026-11-05 it is the default on any Metal GPU without NAX
+  (`RAMP_E8P_M1` unset or `auto`); `RAMP_E8P_M1=0` turns it off, `=1` forces
+  it on. It clears the bar by only 1-3%, measured while other jobs were
+  loading the machine, so rerun the kill test on an idle machine.
 - `bench_dsv4_mxfp8_residents.py` v1 also synced after every call. v2
   (`dsv4_mxfp8_resident_kill_test_v2`) chains 43 dependent calls per
   `mx.eval`. On the M4 Max the verdict flips from KILL to **PASS** in two runs:
