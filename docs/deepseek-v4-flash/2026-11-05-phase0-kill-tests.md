@@ -19,7 +19,7 @@ path is gitignored, so force-add it (`git add -f`).
 | # | Change | Opt-in switch | Kill test | KILL when | If it passes |
 |---|---|---|---|---|---|
 | 1 | FP8 residents kept as source bytes (weights-only mxfp8, incl. `wo_a`) | `resident_format="mxfp8"`; `--resident-format mxfp8` on the headline harness | `benchmarks/bench_dsv4_mxfp8_residents.py` | any weight differs from the bf16 decode; mxfp8 < 1.5x bf16 at M=1; > 1.1x affine-8's time | bind the composite with mxfp8 and rerun the headline series |
-| 3 | Single-token E8P kernels for 16-bit codes on GPUs without NAX | `RAMP_E8P_M1=1` | `benchmarks/bench_e8p_m1.py` | outputs disagree, or < 100 GB/s effective on one routed FFN | >= 200 GB/s: make it the M4 default. 100-200: tune (decoding each codeword once was tried and is slower) |
+| 3 | Single-token E8P kernels for 16-bit codes on GPUs without NAX | `RAMP_E8P_M1=1` | `benchmarks/bench_e8p_m1.py` | outputs disagree, or < 100 GB/s effective per routed FFN, 43 chained FFNs per sync | >= 200 GB/s: make it the M4 default. 100-200: tune (decoding each codeword once was tried and is slower) |
 | 5 | Headline rows also gate memory coming back in (schema v2) | always on for new rows; v1 rows keep their rule | the next headline series | — | quote only v2 rows |
 | 6 | One-dispatch hyper-connection sinkhorn | `RAMP_HC_SINKHORN=metal` | `benchmarks/bench_hc_sinkhorn.py` | < 3x faster at decode shape, or > 2e-6 relative difference | set it for the headline |
 | R3 | REAP saliency from the real gate, in the calibration pass | always collected in `calibration` mode | `produce_dsv4_teacher_cache.py reap-select --keep 128` on V4-Flash stats | median pruned-set Jaccard vs route frequency >= 0.9 (REAP adds nothing) | use REAP order for the prune and the hot set |
@@ -69,7 +69,8 @@ script above runs on the Mac.
 - Decoding each E8P codeword once was tried on the M4 Max on 2026-11-05 and
   made the kernel slower (113 vs 154 GB/s, kernel alone, 256 calls per sync).
   The compiler already lifts the per-codeword work out of the 8-dimension loop.
-- `bench_e8p_m1.py` syncs after every FFN. Real decode syncs once per token,
-  and with 43 dependent FFNs per sync the same kernel reaches 118 GB/s (TUNE),
-  against 50 GB/s for production. Its KILL verdict at 52.8 GB/s mostly
-  measures sync overhead.
+- `bench_e8p_m1.py` v1 synced after every FFN and called KILL at 52.8 GB/s,
+  mostly CPU-GPU round trips. v2 (`ramp_e8p_m1_kill_test_v2`) chains 43
+  dependent FFNs per `mx.eval`, as one decode step does. On the M4 Max it
+  gives **TUNE**: 122-126 GB/s best (8-16 rows per threadgroup), 2.4-2.5x
+  production's 50.5 GB/s, outputs within 6.4e-4. Quote only v2 rows.

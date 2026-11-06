@@ -1,0 +1,63 @@
+{
+  "best": {
+    "effective_gb_per_s": 123.71473313984096,
+    "max_relative_diff_vs_production": 0.000643500650767237,
+    "median_ms_per_ffn": 0.30989486075731987,
+    "rows_per_threadgroup": 32,
+    "speedup_over_production": 2.4497149387742128,
+    "threadgroup_codebook": true
+  },
+  "configs": [
+    {
+      "effective_gb_per_s": 122.3088833198184,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.3134568721370035,
+      "rows_per_threadgroup": 8,
+      "speedup_over_production": 2.421877257534667,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 121.26227485943866,
+      "max_relative_diff_vs_production": 0.000638977624475956,
+      "median_ms_per_ffn": 0.3161623022860176,
+      "rows_per_threadgroup": 16,
+      "speedup_over_production": 2.4011530291798957,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 123.71473313984096,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.30989486075731987,
+      "rows_per_threadgroup": 32,
+      "speedup_over_production": 2.4497149387742128,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 114.24601252337658,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.33557897692188876,
+      "rows_per_threadgroup": 64,
+      "speedup_over_production": 2.2622217780444154,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 120.92889489763162,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.3170339068462856,
+      "rows_per_threadgroup": 32,
+      "speedup_over_production": 2.394551666092416,
+      "threadgroup_codebook": false
+    }
+  ],
+  "device": "Device(gpu, 0)",
+  "ffn_bytes": 38338560,
+  "ffns_per_sync": 43,
+  "mlx_version": "0.31.2",
+  "outputs_agree": true,
+  "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "production_effective_gb_per_s": 50.50168539272789,
+  "production_median_ms_per_ffn": 0.759154069846561,
+  "record_type": "ramp_e8p_m1_kill_test_v2",
+  "source": "synthetic",
+  "verdict": "TUNE"
+}

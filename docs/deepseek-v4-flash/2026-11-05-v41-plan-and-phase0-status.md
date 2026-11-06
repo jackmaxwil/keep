@@ -94,7 +94,8 @@ or Mac-local files), plus 22 newly passing tests.
 - Decoding each E8P codeword once was tried on the M4 Max on 2026-11-05 and
   made the kernel slower (113 vs 154 GB/s, kernel alone, 256 calls per sync).
   The compiler already lifts the per-codeword work out of the 8-dimension loop.
-- `bench_e8p_m1.py` syncs after every FFN. Real decode syncs once per token,
-  and with 43 dependent FFNs per sync the same kernel reaches 118 GB/s (TUNE),
-  against 50 GB/s for production. Its KILL verdict at 52.8 GB/s mostly
-  measures sync overhead.
+- `bench_e8p_m1.py` v1 synced after every FFN and called KILL at 52.8 GB/s,
+  mostly CPU-GPU round trips. v2 (`ramp_e8p_m1_kill_test_v2`) chains 43
+  dependent FFNs per `mx.eval`, as one decode step does. On the M4 Max it
+  gives **TUNE**: 122-126 GB/s best (8-16 rows per threadgroup), 2.4-2.5x
+  production's 50.5 GB/s, outputs within 6.4e-4. Quote only v2 rows.

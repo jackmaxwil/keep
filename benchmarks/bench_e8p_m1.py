@@ -8,7 +8,10 @@ ways in the same process:
   and threadgroup codebook staging.
 
 Effective bandwidth is the expert bytes one FFN reads (6 experts x 3
-projections of 2-bit codes plus their scales) over the median time. Verdict
+projections of 2-bit codes plus their scales) over the median time per FFN.
+Each timed sample chains ``--ffns-per-sync`` dependent FFNs (default 43, one
+per V4-Flash layer) before one ``mx.eval``, as one decode step does; syncing
+after every FFN measured mostly CPU-GPU round trips (v1 rows). Verdict
 for the best ``e8p_m1`` configuration: **PASS** at >= 200 GB/s, **TUNE** at
 100-200 (tune; decoding each codeword once was tried and is slower),
 **KILL** under 100 (serve on the M5 instead). Outputs of the two paths are
@@ -72,18 +75,39 @@ def _ffn(layers, x, routes, intermediate):
     return layers["down_proj"](act.reshape(1, routes.shape[-1], intermediate), routes)
 
 
-def _median_ms(fn, routes_list, iterations, warmup) -> float:
-    for i in range(warmup):
-        mx.eval(fn(routes_list[i % len(routes_list)]))
-    samples = []
-    for i in range(iterations):
+def _chain(layers, x, routes_seq, intermediate):
+    """Dependent FFNs, each feeding the next like consecutive decoder layers."""
+
+    for routes in routes_seq:
+        y = _ffn(layers, x, routes, intermediate)  # [1, k, hidden]
+        x = (x + y.sum(axis=1) * 1e-3).astype(x.dtype)
+    return x
+
+
+def _median_ms(layers, x, routes_list, intermediate, iterations, warmup, ffns_per_sync) -> float:
+    """Median ms per FFN, with ``ffns_per_sync`` chained FFNs per ``mx.eval``."""
+
+    def sample(i):
+        seq = [routes_list[(i * ffns_per_sync + j) % len(routes_list)] for j in range(ffns_per_sync)]
         started = time.perf_counter()
-        mx.eval(fn(routes_list[i % len(routes_list)]))
-        samples.append((time.perf_counter() - started) * 1e3)
-    return statistics.median(samples)
+        mx.eval(_chain(layers, x, seq, intermediate))
+        return (time.perf_counter() - started) * 1e3 / ffns_per_sync
+
+    for i in range(warmup):
+        sample(i)
+    return statistics.median(sample(i) for i in range(iterations))
 
 
-def run(layers, *, top_k: int, iterations: int, warmup: int, seed: int, sweep: Sequence[tuple[int, bool]]) -> dict:
+def run(
+    layers,
+    *,
+    top_k: int,
+    iterations: int,
+    warmup: int,
+    seed: int,
+    sweep: Sequence[tuple[int, bool]],
+    ffns_per_sync: int = 43,
+) -> dict:
     rng = np.random.default_rng(seed)
     experts = layers["gate_proj"].num_experts
     hidden = layers["gate_proj"].input_dims
@@ -97,7 +121,7 @@ def run(layers, *, top_k: int, iterations: int, warmup: int, seed: int, sweep: S
     ffn_bytes = top_k * sum(projection_bytes_per_expert(layers[p]) for p in PROJECTIONS)
 
     os.environ[e8p_m1.E8P_M1_ENV] = "0"
-    production_ms = _median_ms(lambda r: _ffn(layers, x, r, intermediate), routes_list, iterations, warmup)
+    production_ms = _median_ms(layers, x, routes_list, intermediate, iterations, warmup, ffns_per_sync)
     reference = [np.array(_ffn(layers, x, r, intermediate).astype(mx.float32)) for r in routes_list[:4]]
 
     configs = []
@@ -122,7 +146,7 @@ def run(layers, *, top_k: int, iterations: int, warmup: int, seed: int, sweep: S
                 float(np.max(np.abs(g - w)) / max(float(np.max(np.abs(w))), 1e-12))
                 for g, w in zip(got, reference)
             )
-            ms = _median_ms(lambda r: _ffn(layers, x, r, intermediate), routes_list, iterations, warmup)
+            ms = _median_ms(layers, x, routes_list, intermediate, iterations, warmup, ffns_per_sync)
             configs.append(
                 {
                     "rows_per_threadgroup": rows_per_tg,
@@ -144,6 +168,7 @@ def run(layers, *, top_k: int, iterations: int, warmup: int, seed: int, sweep: S
     verdict = "KILL" if not agrees or gb_s < KILL_GB_S else ("PASS" if gb_s >= PASS_GB_S else "TUNE")
     return {
         "ffn_bytes": ffn_bytes,
+        "ffns_per_sync": ffns_per_sync,
         "production_median_ms_per_ffn": production_ms,
         "production_effective_gb_per_s": ffn_bytes / (production_ms / 1e3) / 1e9,
         "configs": configs,
@@ -162,7 +187,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--intermediate", type=int, default=2048)
     parser.add_argument("--group-size", type=int, default=512)
     parser.add_argument("--top-k", type=int, default=6)
-    parser.add_argument("--iterations", type=int, default=200)
+    parser.add_argument("--iterations", type=int, default=50, help="timed samples, each --ffns-per-sync FFNs")
+    parser.add_argument("--ffns-per-sync", type=int, default=43, help="chained FFNs per mx.eval (V4-Flash has 43 layers)")
     parser.add_argument("--warmup", type=int, default=20)
     parser.add_argument("--seed", type=int, default=20261105)
     parser.add_argument("--sweep", default="8:1,16:1,32:1,64:1,32:0", help="rows_per_threadgroup:tg_codebook,...")
@@ -192,12 +218,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         rows, codebook = item.split(":")
         sweep.append((int(rows), codebook.strip() == "1"))
     result = {
-        "record_type": "ramp_e8p_m1_kill_test_v1",
+        "record_type": "ramp_e8p_m1_kill_test_v2",
         "device": str(mx.default_device()),
         "mlx_version": mx.__version__,
         "platform": platform.platform(),
         "source": "synthetic" if args.artifact_dir is None else str(args.artifact_dir),
-        **run(layers, top_k=args.top_k, iterations=args.iterations, warmup=args.warmup, seed=args.seed, sweep=sweep),
+        **run(
+            layers,
+            top_k=args.top_k,
+            iterations=args.iterations,
+            warmup=args.warmup,
+            seed=args.seed,
+            sweep=sweep,
+            ffns_per_sync=args.ffns_per_sync,
+        ),
     }
     text = json.dumps(result, indent=2, sort_keys=True)
     if args.output_json is not None:
