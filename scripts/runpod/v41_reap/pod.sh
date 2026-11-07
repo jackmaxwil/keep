@@ -23,6 +23,9 @@ OUT=$W/out
 CANDIDATES=${CANDIDATES:-"256 192 128 96"}
 PRUNE=${PRUNE:-"192"}                   # REAP 50%. REAP 75% (96) after the Mac pulls 192: 1.2 TB holds one
 MAX_GPU_HOURS=${MAX_GPU_HOURS:-8}       # hard stop for the GPU pod (1xH100 SXM secure $3.99/h)
+# Tokens (x streams) resident per chunk. The hidden state carried between layers costs ~63 KB/token
+# on the GPU: 524288 left ~65 GB in use and the 16K-record indexer's 16 GiB alloc OOMed (2026-11-07).
+CHUNK_TOKENS=${CHUNK_TOKENS:-262144}
 export PYTHONPATH=$W/keep/src
 # ssh sessions miss the pod's env (RUNPOD_POD_ID, the pod-scoped RUNPOD_API_KEY): load it, never print it
 if [[ -z "${RUNPOD_POD_ID:-}" && -r /etc/rp_environment ]]; then source /etc/rp_environment; fi
@@ -91,7 +94,7 @@ sweep() {  # one collect.py per GPU, sessions sharded across them; extra args go
   log "sweep $name on $n GPU(s)"
   for ((i = 0; i < n; i++)); do
     CUDA_VISIBLE_DEVICES=$i python3 "$KIT/collect.py" --hf-path "$HF" --pack "$W/pack/v41-pack.jsonl" \
-      --out "$OUT" --sweep "$name" --shard "$i/$n" --deadline-utc "$deadline" "$@" \
+      --out "$OUT" --sweep "$name" --shard "$i/$n" --deadline-utc "$deadline" --chunk-tokens "$CHUNK_TOKENS" "$@" \
       > "$W/sweep-$name-$i.log" 2>&1 &
     pids+=($!)
   done
