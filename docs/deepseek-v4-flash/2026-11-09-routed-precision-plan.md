@@ -1,7 +1,8 @@
 # Routed precision: implementation plan to 100%
 
-Written 2026-11-09. Target headline: *Precision as a Routed Dimension: unifying pruning,
-quantization and offloading in MoE inference*. Progress is scored with the fixed rubric in the
+Written 2026-11-09. Target headline (Jack, 2026-11-09, after the prior-art search below): *Offload
+the Residual, Not the Expert: Unifying Pruning, Quantization and Offloading in MoE Inference*. It
+replaces *Precision as a Routed Dimension*, whose first half MatMoE already covers. Progress is scored with the fixed rubric in the
 [recovery log](2026-11-08-v41-reap-recovery-log.md) ("Headline progress rubric"); this plan says
 what has to be built, run and measured for each rubric item, in what order, and what counts as
 done. Score today: **26 / 100**.
@@ -35,8 +36,8 @@ What none of them appears to do, and what the paper therefore has to stand on:
 3. **The sub-2-bit lattice regime** (1 and 2 bits per weight, E8 codes), on a 384-expert, top-6
    frontier model, on a 128 GB laptop.
 
-The headline can stay, because "unifying pruning, quantization and offloading" is the surviving
-claim. The first half of it is no longer new on its own, and the paper must cite and beat
+The new title leads with claim 1 and keeps "unifying pruning, quantization and offloading", the
+half of the original headline that survives. The paper must cite and beat
 MatMoE-style and DynaExq-style policies rather than only static baselines. If W0 finds a paper that
 already offloads nested residuals under per-token tiers, the paper becomes an empirical study of
 that design at 2 bits and below, and Jack decides whether to continue.

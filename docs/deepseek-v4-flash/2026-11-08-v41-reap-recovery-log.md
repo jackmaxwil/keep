@@ -621,3 +621,6 @@ to 100; partial credit only for measured progress).
   converted in place and verified value-identical, freeing 38 GB.
 - The first routed sweep swaps the τ = 0.41 variant for `s96`, a static hot set of 96 residuals with
   no admissions: the same codes and memory as the routed cache, so the comparison isolates routing.
+
+- Headline changed (Jack, 2026-11-09): *Offload the Residual, Not the Expert: Unifying Pruning, Quantization and Offloading in MoE Inference*. The rubric and its weights are unchanged; item 4's
+  comparison against a separate-copy cache is now the title's own claim.
