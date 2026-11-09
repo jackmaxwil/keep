@@ -138,9 +138,19 @@ In the order I would bet on them. X numbers refer to the plan.
    model loses precision instead of swapping. KEEP has already measured the failure this avoids
    (535,792 swapouts, 16.5× timing spread at 91 GB). This is specific to how unified memory and the
    macOS VM behave, and it turns "SSD churn" from writes into reads.
-4. **Pruning as specialization (X2).** If the tool-use result holds up against the resident full
-   model and on a downstream benchmark, a calibration-targeted prune is not only smaller but better
-   on its target domains. Large if true; the prior is that it is partly a teacher artifact.
+4. **Pruning as specialization (X2): checked the same day, and it is not that.** On the pod's
+   full-length outputs (27 eval sessions held locally) the student-192 NLL advantage appears in
+   every agent-style domain (tool-use −1.38 nats/token, agentic-python −0.33, agentic-rust −0.32,
+   bash −0.16), but only where the teacher is surprised. On positions where the teacher's NLL is at
+   most 2 the student is worse in every domain (+0.14 on tool-use). On tool-use, positions with
+   teacher NLL above 5 are 30% of the tokens and carry −1.29 of the −1.38. At the worst of them the
+   teacher's top prediction is its own tool-call markup (`｜DSML｜` after `<`) or end-of-sentence
+   after `>`, while the record continues with foreign markup that the source datasets embed in
+   message text. The full model is confidently wrong about text that is off its own format; the
+   pruned model is less confident and is penalized less. That is a softer distribution on
+   off-format data, not a better model. Two consequences: NLL on these domains is not a quality
+   measure, and KL against the teacher there mostly measures agreement on format expectations.
+   Lever dropped; the eval caveat stays.
 5. **One artifact for every budget.** Because quantization statistics survive pruning and one mass
    ranking yields nested expert sets (pm-144 ⊂ pm-160; 97% overlap between passes), a single set of
    files can serve any memory budget: nested in expert count and in bits. MatMoE nests bits only.

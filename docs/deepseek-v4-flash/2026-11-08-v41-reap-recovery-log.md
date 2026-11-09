@@ -633,3 +633,19 @@ to 100; partial credit only for measured progress).
   projection-level rungs (`--hi-proj`), admission traces (`--trace`), expert masks under
   `--dynamic`, and `routed_report.py --compare`. Passes 2, 2b and 3 are queued behind pass 1
   (`~/Models/v41-reap-run/jobs/queue2.sh`, 24 variants, about 11 h).
+
+### 2026-11-09: X1 on a pod (prune twice at the first cut), and X2 closed
+
+- X2 (the pruned model's better tool-use NLL) is an artifact, settled from the pod's stored
+  outputs: the advantage exists only on positions where the teacher is surprised by off-format text
+  inside the records. Details in the findings note.
+- X1 started. Design: mask the full model's router to the top 288 experts by total routed mass
+  (`x1/fm-288.json`, 97.5% of mass), run calibration on that masked model (`collect.py --mask`, 2 of
+  24 sessions, about 256K tokens), keep the top 192 by the new mass (`pt-192`), repeat once to 96
+  (`pt-96`), then score five students against the teacher on 54 eval sessions: shipped REAP-50,
+  one-pass total mass at 192 (`fm-192`, the criterion alone; it overlaps REAP-50 by 76.5%),
+  `pt-192`, the Mac's 96 inside REAP-50 (`pm-96`), and `pt-96`. Script: `x1_pod.sh`.
+- Runpod, US-NE-1 (H100 SXM Low there, RTX PRO 6000 as fallback, CPU pods available): network volume
+  `yqazs7aqe6` (600 GB) and CPU pod `hd0czk7klgonpi` (4 vCPU, $0.12/h) for the 510 GB fetch, the
+  wheels and the inputs, so the GPU pod starts on GPU work. Estimated GPU time 6.5–7.5 h at
+  $3.99/h. The volume stays for W4b.
