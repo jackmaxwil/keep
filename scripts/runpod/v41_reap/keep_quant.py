@@ -15,7 +15,7 @@ does not divide) uses 256 (2.0625 bpw). ``--code-bits 8`` uses KEEP's 1-bit E8 c
 same group sizes instead (1.031 / 1.0625 bpw). ``--residual-of DIR`` fits the residual of another
 run's codes (``W - decode(DIR)``) instead of ``W``: a nested code, whose base is usable alone and
 base + residual is the higher-precision tier; ``total_wrel_mse`` scores the sum against ``W``. Output: one ``layer-XX.npz`` per layer with
-``{w1,w2,w3}_codes`` uint16 ``[E, out, in/8]`` and ``{w1,w2,w3}_scales`` fp16 ``[E, out, in/g]``,
+``{w1,w2,w3}_codes`` (uint16, or uint8 for 1-bit codes) ``[E, out, in/8]`` and ``{w1,w2,w3}_scales`` fp16 ``[E, out, in/g]``,
 plus ``metrics.jsonl``. Finished layers are skipped, so the run can resume.
 """
 
@@ -123,7 +123,8 @@ def main(argv: list[str] | None = None) -> int:
                                                code_bits=args.code_bits, iterations=args.iterations, backend=args.backend)
                 if base is not None:
                     total[proj].append(projection_error(w, b + reconstruct_quantized(q), d).weighted_relative_mse)
-                arrays.setdefault(f"{proj}_codes", []).append(np.asarray(q.codes, dtype=np.uint16))
+                # 1-bit E8 codes are one byte; E8P codes are two
+                arrays.setdefault(f"{proj}_codes", []).append(np.asarray(q.codes, dtype=np.uint8 if args.code_bits == 8 else np.uint16))
                 arrays.setdefault(f"{proj}_scales", []).append(np.asarray(q.scales, dtype=np.float16))
                 errs[proj].append(metrics.weighted_relative_mse if hasattr(metrics, "weighted_relative_mse") else float("nan"))
         tmp = dest.with_suffix(".tmp.npz")

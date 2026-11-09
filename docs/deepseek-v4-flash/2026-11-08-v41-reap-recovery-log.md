@@ -605,3 +605,19 @@ to 100; partial credit only for measured progress).
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
 | | **Total** | 100 | **26** | |
+
+### 2026-11-09: prior art, plan, restart
+
+- A novelty search found MatMoE (arXiv 2611.01704, 1 Nov 2026: nested codes with per-expert
+  bit-width chosen from routing scores at run time), DynaExq (2511.15015: hot set at high precision
+  with async promotion), DyMoE (2603.19172), HOBBIT and MC-MoE. Per-token precision with nested
+  codes is no longer new by itself. What is left to claim: the nested residual as the offloaded
+  unit, tier 0 in the same policy, and the regime at 2 bits and below. Details and the full plan to
+  100%: [2026-11-09-routed-precision-plan.md](2026-11-09-routed-precision-plan.md).
+- The session restart killed both fits (sidecar at layer 9, nested at layer 8). The nested fit
+  resumed; the sidecar fit is sequential and restarted from layer 0. Jobs now run detached from
+  `~/Models/v41-reap-run/jobs/` so a session exit cannot stop them.
+- 1-bit codes are stored as uint8 from now on (`keep_quant.py`); the existing 48 layer files were
+  converted in place and verified value-identical, freeing 38 GB.
+- The first routed sweep swaps the τ = 0.41 variant for `s96`, a static hot set of 96 residuals with
+  no admissions: the same codes and memory as the routed cache, so the comparison isolates routing.
