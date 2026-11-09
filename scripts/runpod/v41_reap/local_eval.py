@@ -295,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
             if e not in cache:
                 tiers = []
                 for z in cache["z"]:
-                    grid = np_grids[int(z["code_bits"])]
+                    grid = np_grids[int(z.get("code_bits", 16))]  # the first E8P runs wrote no code_bits
                     tier = {}
                     for proj in ("w1", "w2", "w3"):
                         vec = grid[z[f"{proj}_codes"][e].astype(np.int64)]

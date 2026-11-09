@@ -61,7 +61,8 @@ def decode_codes(z, proj: str, e: int) -> np.ndarray:
 
     from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
 
-    grid = (e8p_full_grid() if int(z["code_bits"]) == 16 else e8_1bit_grid()).astype(np.float32)
+    bits = int(z["code_bits"]) if "code_bits" in z else 16  # the first E8P runs wrote no code_bits
+    grid = (e8p_full_grid() if bits == 16 else e8_1bit_grid()).astype(np.float32)
     vec = grid[z[f"{proj}_codes"][e].astype(np.int64)]  # [out, in/8, 8]
     scales = z[f"{proj}_scales"][e].astype(np.float32)
     vec = vec * np.repeat(scales, vec.shape[1] // scales.shape[-1], axis=-1)[..., None]
