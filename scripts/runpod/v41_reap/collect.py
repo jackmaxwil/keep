@@ -407,6 +407,7 @@ def run_chunk(
     students: dict[str, dict[int, Any]],
     dims: dict[str, int],
     device: Any,
+    teacher_mask: dict[int, Any] | None = None,
 ) -> dict[tuple[str, str], dict[str, np.ndarray]]:
     """One pass over the weights for ``chunk``; returns arrays per (stream, session).
 
@@ -414,6 +415,9 @@ def run_chunk(
     Eval: the teacher (REAP + routes + top-K logits) and every student (scored against
     the teacher) side by side. Teacher records go through the MoE per session, so the
     stats stay per session; each student's records go through it together.
+
+    ``teacher_mask`` (calibration only) masks the measured stream's router to a survivors table,
+    so the stats describe that pruned model's own routing and activations.
     """
 
     import torch
@@ -441,7 +445,7 @@ def run_chunk(
         if not hasattr(block, "full_bias"):
             block.full_bias = bias.data.clone()
         bias.data.copy_(block.full_bias)
-        mask = students[stream].get(layer) if stream != TEACHER else None
+        mask = students[stream].get(layer) if stream != TEACHER else (teacher_mask or {}).get(layer)
         if mask is not None:
             bias.data[mask.to(bias.device)] = float("-inf")
         state["stats"] = stats[name] if stream == TEACHER and layer < n_layers else None
@@ -496,6 +500,11 @@ def main(argv: list[str] | None = None) -> int:
         help="eval sweep (repeatable): also run a student with the router masked to this reap-select "
         "table, scored against the teacher, into <out>/student-KEEP/",
     )
+    parser.add_argument(
+        "--mask", type=Path,
+        help="calibration sweep: mask the router to this survivors table, so REAP, routes and imatrix "
+        "are measured on that pruned model's own routing (for re-ranking after a prune)",
+    )
     parser.add_argument("--chunk-tokens", type=int, default=524288, help="resident tokens per weight pass (x streams)")
     parser.add_argument("--shard", default="0/1", help="I/N: this process takes every Nth session from I")
     parser.add_argument("--max-seq-len", type=int, default=16384)
@@ -506,6 +515,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.survivors and args.sweep != "eval":
         parser.error("--survivors needs --sweep eval")
+    if args.mask and args.sweep != "calibration":
+        parser.error("--mask needs --sweep calibration")
     shard, n_shards = map(int, args.shard.split("/"))
 
     import torch
@@ -546,6 +557,7 @@ def main(argv: list[str] | None = None) -> int:
         students[keep] = survivor_masks(json.loads(Path(table).read_text()), n_experts)
         survivors_sha[keep] = hashlib.sha256(Path(table).read_bytes()).hexdigest()
 
+    teacher_mask = survivor_masks(json.loads(args.mask.read_text()), n_experts) if args.mask else None
     run_config = {
         "model_id": MODEL_ID,
         "revision": PINNED_REVISION,
@@ -555,6 +567,8 @@ def main(argv: list[str] | None = None) -> int:
         "top_k": args.top_k,
         "driver": "layer-streamed, world_size 1",
     }
+    if args.mask:
+        run_config["mask_sha256"] = hashlib.sha256(args.mask.read_bytes()).hexdigest()
     text = json.dumps(run_config, indent=2, sort_keys=True) + "\n"
     config_path = args.out / "run-config.json"
     args.out.mkdir(parents=True, exist_ok=True)
@@ -587,7 +601,8 @@ def main(argv: list[str] | None = None) -> int:
             print("deadline reached; stopping cleanly", flush=True)
             break
         t0 = time.time()
-        results = run_chunk(streamer, state, chunk, split=args.sweep, students=students, dims=dims, device="cuda")
+        results = run_chunk(streamer, state, chunk, split=args.sweep, students=students, dims=dims, device="cuda",
+                            teacher_mask=teacher_mask)
         for name, records in chunk:
             ident = identity(session=name, split=args.sweep, records=records, config_sha=config_sha, chunk=args.max_seq_len)
             for stream_name in streams:

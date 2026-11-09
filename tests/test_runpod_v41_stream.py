@@ -183,11 +183,12 @@ def _reference_stats(toy, collect, records, dims):
     return stats.arrays(LAYERS), hidden
 
 
-def _sweep(toy, collect, monkeypatch, chunk, split, students=None):
+def _sweep(toy, collect, monkeypatch, chunk, split, students=None, teacher_mask=None):
     streamer = _streamer(toy)
     monkeypatch.setattr(toy.ref.MoE, "forward", toy.ref.MoE.forward)  # install_hooks patches it; undo at teardown
     state = collect.install_hooks(streamer, top_k=16, rows_per_slice=7)
-    return collect.run_chunk(streamer, state, chunk, split=split, students=students or {}, dims=DIMS, device="cpu"), streamer
+    return collect.run_chunk(streamer, state, chunk, split=split, students=students or {}, dims=DIMS, device="cpu",
+                             teacher_mask=teacher_mask), streamer
 
 
 def _assert_stats_match(got, want):
@@ -211,6 +212,29 @@ def test_calibration_sweep_matches_reference(toy, monkeypatch):
     for name, _ in chunk:
         _assert_stats_match(results[("teacher", name)], want[name])
     assert results[("teacher", "cal-0")]["routes__expert_ids"].shape == (60, 6, 2)
+
+
+def test_masked_calibration_measures_the_pruned_models_routing(toy, monkeypatch):
+    import collect
+
+    chunk = [("cal-0", [_record(toy.records[0], "cal-0", "calibration")])]
+    gen = torch.Generator().manual_seed(3)
+    kept = {str(layer): sorted(torch.randperm(8, generator=gen)[:5].tolist()) for layer in LAYERS}
+    mask = collect.survivor_masks({"survivors": kept}, 8)
+    with torch.no_grad():
+        full = {layer: toy.model.layers[layer].ffn.gate.bias.clone() for layer in LAYERS}
+        for layer, m in mask.items():
+            toy.model.layers[layer].ffn.gate.bias[m] = float("-inf")
+        want = _reference_stats(toy, collect, chunk[0][1], DIMS)[0]
+        for layer, bias in full.items():
+            toy.model.layers[layer].ffn.gate.bias.copy_(bias)
+    results, _ = _sweep(toy, collect, monkeypatch, chunk, "calibration", teacher_mask=mask)
+    got = results[("teacher", "cal-0")]
+    _assert_stats_match(got, want)
+    for layer in LAYERS:  # nothing routes to a masked expert, and the unmasked run differs
+        assert got["reap__route_count"][layer][mask[layer].numpy()].sum() == 0
+    plain, _ = _sweep(toy, collect, monkeypatch, chunk, "calibration")
+    assert not np.array_equal(plain[("teacher", "cal-0")]["reap__route_count"], got["reap__route_count"])
 
 
 def test_eval_sweep_teacher_and_students_match_reference(toy, monkeypatch):
