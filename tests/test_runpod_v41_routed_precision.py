@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO / "scripts" / "runpod" / "v41_reap"))
 sys.path.insert(0, str(REPO / "src"))
 
 import local_eval  # noqa: E402
+import routed_report  # noqa: E402
 import precision_alloc  # noqa: E402
 
 
@@ -62,3 +63,30 @@ def test_nested_decoder_matches_local_eval():
     grid = e8_1bit_grid().astype(np.float32)
     want = (grid[z["w1_codes"][1].astype(np.int64)] * z["w1_scales"][1].astype(np.float32)[..., None]).reshape(4, -1)
     assert np.allclose(got, want)
+
+
+def test_residual_cache_oracle_and_trace():
+    ind = np.array([[0, 1], [2, 1], [2, 0], [3, 3]])
+    wts = np.array([[0.9, 0.1], [0.5, 0.1], [0.5, 0.2], [0.3, 0.3]])
+    counts = np.zeros((4, 5))
+    # record 0 = tokens 0-2: expert 0 has mass 1.1, expert 2 has 1.0, expert 1 has 0.2 -> hot {0, 2}
+    hi = local_eval.residual_cache(ind, wts, k=2, tau=0.3, bounds=[3, 1], warm=None, counts=counts, policy="oracle")
+    assert hi.tolist() == [[True, False], [True, False], [True, True], [True, True]]
+    assert counts[:, 4].sum() == 0  # the oracle never fetches
+    trace: list = []
+    local_eval.residual_cache(ind, wts, k=2, tau=0.3, bounds=[3, 1], warm=None, counts=counts, trace=trace)
+    assert trace == [(0, 0, 0), (0, 1, 2), (1, 0, 3)]  # (record, token in record, expert); gate 0.2 never admits
+
+
+def test_compare_bootstrap(tmp_path):
+    import json
+
+    rng = np.random.default_rng(1)
+    sessions = {f"s{i}": {"domain": f"d{i % 2}"} for i in range(4)}
+    for name, shift in (("a", 0.1), ("b", 0.0)):
+        (tmp_path / name).mkdir()
+        for s in sessions:
+            np.savez(tmp_path / name / f"{s}.npz", kl=np.abs(np.random.default_rng(hash(s) % 97).normal(1, 0.2, 500)) + shift)
+    (tmp_path / "summary.json").write_text(json.dumps({"variants": {"a": sessions, "b": sessions}}))
+    out = routed_report.compare(f"{tmp_path}:a", f"{tmp_path}:b", reps=200)
+    assert abs(out["kl_diff"] - 0.1) < 1e-9 and out["ci95"][0] <= 0.1 <= out["ci95"][1]

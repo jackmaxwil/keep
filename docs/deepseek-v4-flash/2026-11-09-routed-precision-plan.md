@@ -28,9 +28,15 @@ What none of them appears to do, and what the paper therefore has to stand on:
 
 1. **The offloaded unit is the nested residual.** Tiers span unified memory and SSD inside one
    code: the base is always resident, and a promotion reads only the residual (4.6 MB), never a
-   second full copy. Separate-copy systems (DynaExq, HOBBIT) pay 2 extra units of memory per hot
-   expert and 9.2 MB per promotion; at equal memory a nested design holds twice as many hot
-   experts. This is directly measurable in our harness.
+   second full copy. What that buys depends on how a separate-copy cache (DynaExq, HOBBIT) is run,
+   and both readings are measured (corrected 2026-11-09; the first draft claimed only the first):
+   - if it keeps the low copy of a hot expert, a hot expert costs 2 extra units and a nested design
+     holds twice as many hot experts at equal memory;
+   - if it drops the low copy and reads it back on demotion, memory is equal, but every
+     promote/demote cycle moves 3 units (2 in, 1 back) where a residual moves 1, and a demotion is
+     free. At an equal SSD rate the nested cache can admit three times as often.
+   The separate 2-bit copy is slightly more accurate than base + residual (error 0.090 against
+   0.101), so the nested design has to win on memory or on traffic, not on per-expert accuracy.
 2. **Tier 0 in the same policy.** Expert pruning (static tier 0), per-token slot dropping, precision
    and residency all come from one rule with one trade-off parameter.
 3. **The sub-2-bit lattice regime** (1 and 2 bits per weight, E8 codes), on a 384-expert, top-6
@@ -92,7 +98,7 @@ the same codes:
 |---|---|---|
 | S, static-nested | hot set = top K by pruned-model routed mass, never changes | `--cache-k K --tau 1e9` with `--cache-warm` |
 | R, routed-nested (ours) | LRU of K residuals, async admission at gate ≥ τ | `--cache-k K --tau τ` |
-| D, separate-copy cache (DynaExq / HOBBIT style) | high tier is a second flat 2-bit copy, so a hot expert costs 2 extra units and a promotion reads 9.2 MB; K = (B − N) / 2 | new: `--dynamic BASE\|HI` |
+| D, separate-copy cache (DynaExq / HOBBIT style) | high tier is a second flat 2-bit copy. Scored two ways from one run: keeping the low copy (N + 2K units, 2 units per fetch) or swapping it (N + K units, 3 units per cycle) | `--dynamic BASE\|HI`; `routed_report.py` prints both |
 | M, all-resident routed (MatMoE style) | every residual resident, tier by routing score | `--tau τ`, no cache; a latency baseline at 384 units |
 | O, per-session oracle | hot set = top K by that record's own routed mass; upper bound for any cache | new: `--cache-policy oracle` |
 
@@ -103,18 +109,22 @@ admission trace output for W6. Move the routed forward and `residual_cache` into
 
 Runs (each pass is 8 variants, about 3.5 h on the CPU):
 
-1. Pass 1 (chained now): N = 192; endpoints, S(96), R(96, τ 0.2 and 0.3), R(48, τ 0.2), M(τ 0.22),
+1. Pass 1 (chained): N = 192; endpoints, S(96), R(96, τ 0.2 and 0.3), R(48, τ 0.2), M(τ 0.22),
    per-token drop.
-2. Pass 2, B = 288: S and R at N = 160 and 144, D(192, 48), O(192, 96), τ 0.15.
-3. Pass 3: B = 240 and 336 with the best settings from pass 2, plus S, D and O at each.
-4. Pass 4: the winners and their baselines at 4,096 tokens per record (the pod's teacher logits
+2. Pass 2 (queued): O(96), R(96, τ 0.15), N = 144 all at tier 2, N = 160 with K = 128 routed and
+   static, S(48), and the two projection-level rungs (X5a).
+3. Pass 2b (queued), separate copies: K = 96 at τ 0.2, 0.3 and 0.4 and static; K = 48 and 144.
+4. Pass 3 (queued), budgets 240 and 336: R, S and O at K = 144; R(48, τ 0.3), O(48); N = 160 with
+   K = 80 routed and static.
+5. Pass 4: the winners and their baselines at 4,096 tokens per record (the pod's teacher logits
    cover whole records), so the cache is measured past its warm-up.
 
 Acceptance and scoring inside the item:
 
-- 10 points: R beats both S and D by at least 0.03 KL, bootstrap 95% interval excluding zero, at
-  one budget, with simulated SSD traffic at or below 2.5 GB/s at 30 tok/s (half the measured
-  sequential rate).
+- 10 points: R beats S by at least 0.03 KL, and beats D at equal memory and equal SSD rate (under
+  whichever of D's two accountings is better for D), bootstrap 95% interval excluding zero, at one
+  budget, with simulated SSD traffic at or below 2.5 GB/s at 30 tok/s (half the measured sequential
+  rate).
 - 15 points: the same at two of three budgets, confirmed at 4,096 tokens.
 - 25 points: reproduced on the full 384-expert model on a pod (W4b).
 
@@ -245,7 +255,7 @@ literature yet; each gets a search before it is claimed. Ordered by expected val
 | X1 | Prune twice at 384 → 192. REAP-50 was chosen on full-model routing with the per-route score; its KL (0.578) is the floor under everything here. | The same fix cut KL 15% at 192 → 96 (step 2c ablation); a second pass saturates (step 2d). | Calibration pass on the full model masked to 288 by total mass, re-rank to 192, eval against shipped REAP-50. | Pod, with W4b; about $15–25 extra |
 | X2 | Calibration-targeted pruning as specialization. | REAP-50 beats the full model by 1.22 nats/token on tool-use NLL; the pod's own student shows the same gap. Logged as an anomaly, never chased. | Per-position NLL of teacher and students on tool-use with the full model resident; then a downstream tool-use benchmark (W8). | Pod, same run as X1 |
 | X3 | Keep every expert, offload residuals, instead of pruning half. | V4.1 plan: each expert kept costs 0.359 GB of RAM at 2 bits "but adds no per-token reads", and the fit "forces a ~50% prune". All 384 one-bit bases cost the same memory as REAP-50 at 2 bits. | 384 bases + K residuals against REAP-50 at 2 bits (0.747) at equal resident memory. This is the title's claim at full scale. | Pod, W4b; the Mac sweep at 192 vs 96 is its proxy |
-| X4 | The OS page cache as the precision cache. Residuals are memory-mapped clean file pages; `mincore` asks whether one is resident, `madvise(WILLNEED)` requests it in the background, and the kernel evicts under pressure at no write cost. Precision degrades instead of the machine swapping. | Roadmap, 2026-08-21: at 90.99 GB of MLX-active memory 0 of 5 timing pairs were clean and the bind alone logged 535,792 swapouts. Anonymous memory at that footprint thrashes; clean file pages cannot. | In W6: replay the trace through `mmap` + `mincore`, with and without a memory hog, and measure hits, latency and swapouts. | Mac |
+| X4 | The OS page cache as the precision cache. Residuals are memory-mapped clean file pages; `mincore` asks whether one is resident, `madvise(WILLNEED)` requests it in the background, and the kernel evicts under pressure at no write cost. Precision degrades instead of the machine swapping. | Roadmap, 2026-08-21: at 90.99 GB of MLX-active memory byte-identical work spanned 16.5× in time and the bind alone logged 535,792 swapouts. Anonymous memory at that footprint thrashes; clean file pages cannot. | In W6: replay the trace through `mmap` + `mincore`, with and without a memory hog, and measure hits, latency and swapouts. | Mac |
 | X5 | A stronger base and finer rungs. The 1-bit base is the weak link. | Pilot: 1-bit codes gave a 0.56 block cosine; the SwiGLU amplifies projection error about 2.8×; 2 bits is "at its rate-distortion limit". Here, a static 1-bit tier added 0.025 KL at best. | (a) Projection-level tiers from the existing codes: residual for the down projection only (1.33 bits) or gate/up only (1.67 bits), no new fit. (b) The 2-bit base + 1-bit residual ladder, moved up from fallback to W4 pass 3. | Mac |
 | X6 | Budget by sensitivity, not routed mass. | Step 1: mass-based reallocation lost to uniform (1.046 vs 0.955 at 128) although layers 20–39 are far more concentrated than 0–19. | Mask a fixed share of experts in one layer band at a time and measure KL; allocate by measured sensitivity. Two eval passes. | Mac, after W4 |
 | X7 | A shared base across similar experts (base = one matrix per cluster, residual per expert). | None; speculative. | Functional similarity of experts on shared inputs for 3 layers; stop if experts are near-orthogonal. | Mac, about 1 h |

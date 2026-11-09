@@ -127,20 +127,31 @@ def expert_override(spec: str, n_experts: int, ckpt_survivors: dict):
 
 
 def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds: list[int],
-                   warm: np.ndarray | None, counts: np.ndarray) -> np.ndarray:
+                   warm: np.ndarray | None, counts: np.ndarray, policy: str = "lru",
+                   trace: list | None = None) -> np.ndarray:
     """Which (token, slot) pairs may run base + residual, under an LRU of ``k`` resident residuals.
 
     ``ind``/``wts``: [T, top_k] routed experts and gate weights, the records of ``bounds`` back to
     back. A slot runs high precision only if its expert's residual is already resident. After each
     token, every slot with gate >= ``tau`` admits (or refreshes) its residual: an async SSD fetch
     that serves the next token on, so decode never stalls. Each record starts from ``warm`` (or
-    empty). ``counts[e, 4]`` accumulates admissions, i.e. residual fetches."""
+    empty). ``counts[e, 4]`` accumulates admissions, i.e. residual fetches; ``trace`` collects
+    them as (record, token in record, expert).
+
+    ``policy="oracle"`` is the upper bound for any cache of ``k``: each record's hot set is its own
+    top ``k`` experts by routed gate weight, known in advance and never changed (no admissions)."""
 
     from collections import OrderedDict
 
     hi = np.zeros(ind.shape, dtype=bool)
     start = 0
-    for n in bounds:
+    for rec, n in enumerate(bounds):
+        if policy == "oracle":
+            mass = np.bincount(ind[start:start + n].ravel(), weights=wts[start:start + n].ravel(), minlength=counts.shape[0])
+            hot = np.argsort(-mass, kind="stable")[:k]
+            hi[start:start + n] = np.isin(ind[start:start + n], hot[mass[hot] > 0])
+            start += n
+            continue
         lru = OrderedDict((int(e), None) for e in (warm if warm is not None else []))
         for t in range(start, start + n):
             row = ind[t].tolist()
@@ -151,6 +162,8 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
                         lru.move_to_end(e)
                     else:
                         counts[e, 4] += 1
+                        if trace is not None:
+                            trace.append((rec, t - start, e))
                         lru[e] = None
                         if len(lru) > k:
                             lru.popitem(last=False)
@@ -172,7 +185,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--threads", type=int, default=os.cpu_count())
     p.add_argument("--expert-override", help="'fp4-bf16' or a keep_quant.py output directory")
     p.add_argument("--capture-imatrix", type=Path, help="measure the importance diagonal instead of scoring")
-    p.add_argument("--dynamic", help="BASE_DIR+RESIDUAL_DIR: per-token tiers, base alone or base + nested residual")
+    p.add_argument("--dynamic", help="per-token tiers. BASE_DIR+RESIDUAL_DIR: base alone or base + nested residual. "
+                   "BASE_DIR|HI_DIR: base alone or a separate high-precision copy (a hot expert then holds both)")
+    p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
+                   help="nested only, per variant: the high tier adds the residual for these projections only")
+    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle",
+                   help="with --cache-k: lru (default) or oracle (each record's own top-K, the upper bound)")
+    p.add_argument("--trace", action="append", default=[], metavar="NAME",
+                   help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")
     p.add_argument("--tau", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE")
     p.add_argument("--tau-drop", action="append", default=[], metavar="NAME=VALUE",
@@ -238,8 +258,13 @@ def main(argv: list[str] | None = None) -> int:
 
         from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
 
-        base_dir, _, res_dir = args.dynamic.partition("+")
+        copy_mode = "|" in args.dynamic  # the high tier is its own copy, not base + residual
+        base_dir, _, res_dir = args.dynamic.partition("|" if copy_mode else "+")
         base_dir, res_dir = Path(base_dir).expanduser(), Path(res_dir).expanduser()
+        hi_proj = {name: {"w2": ("w2",), "w1w3": ("w1", "w3")}[v] for name, _, v in (s.partition("=") for s in args.hi_proj)}
+        assert not (copy_mode and hi_proj), "--hi-proj needs nested codes"
+        policies = {name: v for name, _, v in (s.partition("=") for s in args.cache_policy)}
+        traces: dict[str, list] = {name: [] for name in args.trace}
         taus = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau)}
         tau_drop = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau_drop)}
         assert set(taus) == set(variants), "--tau needs one NAME=VALUE per --variant"
@@ -254,7 +279,12 @@ def main(argv: list[str] | None = None) -> int:
             dyn_counts[v] = np.zeros((n_layers_, n_local, 7))
 
         def simulate_cache(layer, ind, wts, k, tau, counts):
-            return residual_cache(ind, wts, k, tau, state["bounds"], None if warm is None else warm[layer, :k], counts)
+            v, found = state["variant"], []
+            hi = residual_cache(ind, wts, k, tau, state["bounds"], None if warm is None else warm[layer, :k], counts,
+                                policy=policies.get(v, "lru"), trace=found if v in traces else None)
+            if v in traces:
+                traces[v].extend((layer, *row) for row in found)
+            return hi
 
         def tier_weights(layer: int, e: int) -> tuple[dict, dict]:
             """(base, base + residual) bf16 weights of local expert ``e``, decoded once per layer."""
@@ -274,7 +304,7 @@ def main(argv: list[str] | None = None) -> int:
                         tier[proj] = vec.reshape(vec.shape[0], -1)
                     tiers.append(tier)
                 lo = {p: torch.as_tensor(w).bfloat16() for p, w in tiers[0].items()}
-                hi = {p: torch.as_tensor(tiers[0][p] + tiers[1][p]).bfloat16() for p in tiers[0]}
+                hi = {p: torch.as_tensor(tiers[1][p] if copy_mode else tiers[0][p] + tiers[1][p]).bfloat16() for p in tiers[0]}
                 cache[e] = (lo, hi)
             return cache[e]
 
@@ -303,6 +333,9 @@ def main(argv: list[str] | None = None) -> int:
                 counts[i, 6] += float(w[drop].sum())
                 hi_mask = hi_mask & ~drop
                 lo_w, hi_w = tier_weights(layer, i)
+                only = hi_proj.get(state["variant"])
+                if only is not None:  # a finer rung: the residual of some projections only
+                    hi_w = {p: hi_w[p] if p in only else lo_w[p] for p in lo_w}
                 for mask, tier, col in ((~hi_mask & ~drop, lo_w, 0), (hi_mask, hi_w, 1)):
                     if mask.any():
                         y[idx[mask]] += run_expert(x[idx[mask]], w[mask, None], tier, limit).float()
@@ -441,7 +474,16 @@ def main(argv: list[str] | None = None) -> int:
     for v, c in dyn_counts.items():  # per-token precision: how often (and with how much gate mass) the hi tier ran
         np.save(args.out / v / "tier-counts.npy", c)
         tot = c.sum(axis=(0, 1))
+        if v in traces:
+            t = np.asarray(traces[v], dtype=np.int32).reshape(-1, 4)
+            np.savez(args.out / v / "admissions.npz", layer=t[:, 0], record=t[:, 1], token=t[:, 2], expert=t[:, 3],
+                     records=np.asarray(list(records)), tokens=np.asarray(state["bounds"]))
+        kept = n_local if variants[v] is None else float(np.mean([int((~m).sum()) for m in variants[v].values()]))
+        # hi_units: memory (and bytes fetched) the high tier adds per expert, in units of one 1-bit expert
+        hi_units = 2.0 if copy_mode else len(hi_proj.get(v, ("w1", "w2", "w3"))) / 3
         summary["variants"][v]["_tiers"] = {"tau": taus[v], "cache_k": cache_k.get(v),
+                                            "policy": policies.get(v, "lru") if v in cache_k else None,
+                                            "copy_mode": copy_mode, "hi_units": hi_units, "n_bases": kept,
                                             "tau_drop": tau_drop.get(v, 0.0),
                                             "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),

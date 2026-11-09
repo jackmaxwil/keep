@@ -624,3 +624,12 @@ to 100; partial credit only for measured progress).
 
 - Headline changed (Jack, 2026-11-09): *Offload the Residual, Not the Expert: Unifying Pruning, Quantization and Offloading in MoE Inference*. The rubric and its weights are unchanged; item 4's
   comparison against a separate-copy cache is now the title's own claim.
+- Survey of the older KEEP documents, this campaign's findings with bootstrap intervals, and the
+  candidate levers X1–X7: [2026-11-09-keep-findings-and-levers.md](2026-11-09-keep-findings-and-levers.md).
+  Bootstrap (positions, paired): selection on pruned routing −0.177 KL [−0.200, −0.148]; second
+  prune pass −0.024 [−0.034, −0.012]; static allocator at 288 against 144 at 2 bits −0.003
+  [−0.009, +0.005].
+- Harness additions for W4: separate-copy high tier (`--dynamic BASE|HI`), oracle cache policy,
+  projection-level rungs (`--hi-proj`), admission traces (`--trace`), expert masks under
+  `--dynamic`, and `routed_report.py --compare`. Passes 2, 2b and 3 are queued behind pass 1
+  (`~/Models/v41-reap-run/jobs/queue2.sh`, 24 variants, about 11 h).
