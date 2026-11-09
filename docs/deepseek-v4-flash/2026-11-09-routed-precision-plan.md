@@ -234,3 +234,37 @@ The score moves only on measured results, so a failed acceptance test holds it w
    `quant/e8-nest-r1`.
 2. Download Qwen3-30B-A3B for W8.
 3. Whether the prior art in section 1 changes the title or the ambition.
+
+## 7. Candidate levers beyond the prior art (2026-11-09)
+
+From this campaign's results and a survey of the older KEEP documents. None is checked against the
+literature yet; each gets a search before it is claimed. Ordered by expected value.
+
+| # | Lever | Evidence in hand | Test | Where it runs |
+|---|---|---|---|---|
+| X1 | Prune twice at 384 → 192. REAP-50 was chosen on full-model routing with the per-route score; its KL (0.578) is the floor under everything here. | The same fix cut KL 15% at 192 → 96 (step 2c ablation); a second pass saturates (step 2d). | Calibration pass on the full model masked to 288 by total mass, re-rank to 192, eval against shipped REAP-50. | Pod, with W4b; about $15–25 extra |
+| X2 | Calibration-targeted pruning as specialization. | REAP-50 beats the full model by 1.22 nats/token on tool-use NLL; the pod's own student shows the same gap. Logged as an anomaly, never chased. | Per-position NLL of teacher and students on tool-use with the full model resident; then a downstream tool-use benchmark (W8). | Pod, same run as X1 |
+| X3 | Keep every expert, offload residuals, instead of pruning half. | V4.1 plan: each expert kept costs 0.359 GB of RAM at 2 bits "but adds no per-token reads", and the fit "forces a ~50% prune". All 384 one-bit bases cost the same memory as REAP-50 at 2 bits. | 384 bases + K residuals against REAP-50 at 2 bits (0.747) at equal resident memory. This is the title's claim at full scale. | Pod, W4b; the Mac sweep at 192 vs 96 is its proxy |
+| X4 | The OS page cache as the precision cache. Residuals are memory-mapped clean file pages; `mincore` asks whether one is resident, `madvise(WILLNEED)` requests it in the background, and the kernel evicts under pressure at no write cost. Precision degrades instead of the machine swapping. | Roadmap, 2026-08-21: at 90.99 GB of MLX-active memory 0 of 5 timing pairs were clean and the bind alone logged 535,792 swapouts. Anonymous memory at that footprint thrashes; clean file pages cannot. | In W6: replay the trace through `mmap` + `mincore`, with and without a memory hog, and measure hits, latency and swapouts. | Mac |
+| X5 | A stronger base and finer rungs. The 1-bit base is the weak link. | Pilot: 1-bit codes gave a 0.56 block cosine; the SwiGLU amplifies projection error about 2.8×; 2 bits is "at its rate-distortion limit". Here, a static 1-bit tier added 0.025 KL at best. | (a) Projection-level tiers from the existing codes: residual for the down projection only (1.33 bits) or gate/up only (1.67 bits), no new fit. (b) The 2-bit base + 1-bit residual ladder, moved up from fallback to W4 pass 3. | Mac |
+| X6 | Budget by sensitivity, not routed mass. | Step 1: mass-based reallocation lost to uniform (1.046 vs 0.955 at 128) although layers 20–39 are far more concentrated than 0–19. | Mask a fixed share of experts in one layer band at a time and measure KL; allocate by measured sensitivity. Two eval passes. | Mac, after W4 |
+| X7 | A shared base across similar experts (base = one matrix per cluster, residual per expert). | None; speculative. | Functional similarity of experts on shared inputs for 3 layers; stop if experts are near-orthogonal. | Mac, about 1 h |
+
+Smaller findings worth a paragraph in the paper or a note of their own:
+
+- Expert precision is a memory lever, not a speed lever, on this family: on V4-Flash, routed experts
+  were 11% of the 15.27 GB read per decoded token and attention 67% (roadmap, 2026-08-21). MatMoE's
+  latency argument for dynamic precision does not carry over; the memory argument does. The
+  `tok_s_bound` column of `routed_report.py` counts expert bytes only and is not a speed estimate.
+- Incoherence processing (the random rotation QuIP# relies on) made importance-aware E8P fits 15%
+  worse on the down projection, because it flattens a per-column importance that spans 180×
+  (wave-5 pilot).
+- A gate/up-swapped artifact loads, gives finite logits and scores cosine 0.9993; only a
+  discrimination ratio caught it. Cosine is not a correctness check.
+- Negative priors for the old recovery steps 4–5: on GLM-4.5-Air router distillation was rejected
+  (top-1 change slightly negative) and a rank-4 sidecar improved top-1 from 0.795 to 0.852 but ran
+  1.72× slower and failed the speed gate. Sidecars here are judged on quality per unit of memory and
+  on their per-token cost, and router distillation stays off the critical path.
+- A quality reference from outside: the Rapid-MLX V4.1 build is reported at KL 0.26 and top-1 85% on
+  a 256 GB M3 Ultra (local test plan, 2026-11-08). Our best 2-bit REAP-50 number is 0.747. A result
+  that impresses has to close most of that gap at about half the memory.

@@ -4,8 +4,10 @@
 - resident expert memory: every base (tier 1) plus K residuals per layer when cached, otherwise
   every residual too (nothing streamed), in units per layer (1 unit = one 1-bit expert) and GB.
 - SSD traffic: residual admissions per token, in MB/token and GB/s at ``--tok-s``.
-- unified-memory bytes read per token by routed experts (tier 1 = base, tier 2 = base + residual),
-  the decode bound at ``--bandwidth-gbs``.
+- unified-memory bytes read per token by routed experts (tier 1 = base, tier 2 = base + residual).
+  ``tok_s_bound`` divides ``--bandwidth-gbs`` by those bytes alone; routed experts were about 11%
+  of decode traffic on V4-Flash, so it is an upper bound on what expert tiers can buy, not a speed
+  estimate.
 
     python routed_report.py --eval ~/Models/v41-reap-run/evals/step4-routed [--eval ...]
 """
