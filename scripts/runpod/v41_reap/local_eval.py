@@ -349,6 +349,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.sidecar:  # sidecar_fit.py output: y += ([x, 1] @ U) @ Vt on every MoE call
         sidecars = {}
         for layer in range(int(model_args.n_layers)):
+            if not (args.sidecar / f"layer-{layer:02d}.npz").exists():
+                continue  # a fit still in progress: the layers it has are valid without the rest
             with np.load(args.sidecar / f"layer-{layer:02d}.npz") as z:
                 U, Vt = z["U"][:, : args.sidecar_rank or None], z["Vt"][: args.sidecar_rank or None]
                 sidecars[layer] = (torch.as_tensor(U), torch.as_tensor(Vt))
@@ -356,6 +358,8 @@ def main(argv: list[str] | None = None) -> int:
 
         def with_sidecar(self, x, image_mask=None):
             y = moe_forward(self, x, image_mask)
+            if self.layer_id not in sidecars:
+                return y
             U, Vt = sidecars[self.layer_id]
             xf = x.reshape(-1, x.size(-1)).float()
             corr = (xf @ U[:-1] + U[-1]) @ Vt

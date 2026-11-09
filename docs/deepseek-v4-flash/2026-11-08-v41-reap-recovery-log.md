@@ -649,3 +649,27 @@ to 100; partial credit only for measured progress).
   `yqazs7aqe6` (600 GB) and CPU pod `hd0czk7klgonpi` (4 vCPU, $0.12/h) for the 510 GB fetch, the
   wheels and the inputs, so the GPU pod starts on GPU work. Estimated GPU time 6.5–7.5 h at
   $3.99/h. The volume stays for W4b.
+
+### 2026-11-09: step-3 sidecars closed (worse end to end), and an eval-set caveat
+
+- The 4,096-token sidecar fit (rank 256, 62 records balanced over 13 domains, about 150K tokens)
+  stopped at layer 15 of 40: peak RSS 81.8 GB passed the 80 GB guard right after layer 14. Layers
+  1 and 14 are the two Engram layers; the pages their lookups touch stayed mapped. `sidecar_fit.py`
+  now unmaps each table after its layer and resumes from saved layers (resume not yet exercised).
+- Before resuming, the 15 fitted layers (0–14) were scored alone (`evals/step3-sidecar-l15`;
+  `local_eval.py --sidecar` now accepts a partial fit). Against the same 96 experts at 2 bits
+  without sidecars: KL 1.238 against 1.039, top-1 0.705 against 0.733; paired bootstrap
+  **+0.199 [+0.164, +0.219]**. The median per-position change is 0.0006. The harm is in
+  english-prose (+0.71, +1.15), english-chat (+0.34, +0.59) and business (+0.37, +0.48); the code,
+  agentic and tool-use sessions move by −0.11 to +0.12.
+- Layer-local holdout numbers said the opposite (holdout residual energy down 8–19% in the
+  large-gap layers, 79–93% in layers 8, 10 and 14). Cause not established. Energy-weighted error
+  on the fit's own records is not KL; an application mismatch between fit and eval is not excluded,
+  though it would be expected to hurt every domain. Same shape as the GLM-4.5-Air sidecar: a proxy
+  win that failed end to end. The fit is not resumed and the lever is closed.
+- Eval-set caveat found on the way: four of the 22 Mac eval sessions (`eval-00000`, `-00001`,
+  `-00004`, `-00005`; both agentic-python and both agentic-rust) have identical first 1,024
+  tokens, a shared system prompt. At 1,024 tokens the Mac set is 19 distinct texts and those two
+  domains measure the same one. Paired differences between variants are unaffected; domain means
+  at 1,024 tokens overweight that prompt. The 4,096-token confirmation pass (W4 pass 4) is where
+  those sessions diverge.

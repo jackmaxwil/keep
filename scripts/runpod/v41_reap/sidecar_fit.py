@@ -169,6 +169,9 @@ def fit(args: argparse.Namespace) -> int:
 
     streamer.load_layer = load_with_codes
     args.out.mkdir(parents=True, exist_ok=True)
+    # Resume: a layer with a metrics row keeps its saved sidecar; only the student is run through it.
+    done = {json.loads(line)["layer"] for line in (args.out / "metrics.jsonl").read_text().splitlines()} \
+        if (args.out / "metrics.jsonl").exists() else set()
     metrics = (args.out / "metrics.jsonl").open("a")
 
     def expert(x, w, w1, w2, w3, limit):
@@ -182,12 +185,23 @@ def fit(args: argparse.Namespace) -> int:
         shape, layer = x.size(), self.layer_id
         x = x.view(-1, dim)
         local = ids[layer]
+        # This layer's Engram lookups are done. Unmapping the table drops the pages they touched
+        # (tens of GB at 150k tokens) from RSS; left mapped, layers 1 and 14 together passed 80 GB.
+        engram_rows.pop(layer, None)
+        n = x.size(0)
+
+        def blocks():  # [x, 1] in row blocks, so no full fp32 copy of x is ever resident
+            for s in range(0, n, args.block_rows):
+                e = min(n, s + args.block_rows)
+                yield s, e, torch.cat([x[s:e].float(), torch.ones(e - s, 1, device=x.device)], dim=1)
+
         full_bias = self.gate.bias.data.clone()
-        weights, indices = self.gate(x, None)  # teacher: every expert in the checkpoint
-        y_t = torch.zeros_like(x, dtype=torch.float32)
-        for i in torch.unique(indices).tolist():
-            idx, top = torch.where(indices == i)
-            y_t[idx] += self.experts[i](x[idx], weights[idx, top, None]).float()
+        if layer not in done:
+            weights, indices = self.gate(x, None)  # teacher: every expert in the checkpoint
+            y_t = torch.zeros_like(x, dtype=torch.float32)
+            for i in torch.unique(indices).tolist():
+                idx, top = torch.where(indices == i)
+                y_t[idx] += self.experts[i](x[idx], weights[idx, top, None]).float()
         keep = set(student[layer])
         self.gate.bias.data[torch.as_tensor([e not in keep for e in local], device=x.device)] = float("-inf")
         weights, indices = self.gate(x, None)  # student: masked router, KEEP-decoded experts
@@ -200,17 +214,21 @@ def fit(args: argparse.Namespace) -> int:
             w = {p: t.to(x.device) for p, t in weights_of[local[i]].items()}
             y_s[idx] += expert(x[idx], weights[idx, top, None], w["w1"], w["w2"], w["w3"], limit).float()
 
+        if layer in done:
+            if args.apply:
+                with np.load(args.out / f"layer-{layer:02d}.npz") as z:
+                    U, Vt = torch.as_tensor(z["U"], device=x.device), torch.as_tensor(z["Vt"], device=x.device)
+                for s, e, xt in blocks():
+                    y_s[s:e] += (xt @ U) @ Vt
+            print(json.dumps({"layer": layer, "resumed": True, "seconds": round(time.time() - t0, 1)}), flush=True)
+            y_s += self.shared_experts(x).float()
+            return y_s.type_as(x).view(shape)
+
         energy = {s: float(y_t[m].pow(2).sum()) for s, m in (("fit", ~holdout), ("holdout", holdout))}
         r = y_t.sub_(y_s)  # in place: y_t is not needed past its energy
         del y_t
-        n = x.size(0)
         A = torch.zeros(dim + 1, dim + 1, dtype=torch.float64, device=x.device)
         B = torch.zeros(dim + 1, dim, dtype=torch.float64, device=x.device)
-
-        def blocks():  # [x, 1] in row blocks, so no full fp32 copy of x is ever resident
-            for s in range(0, n, args.block_rows):
-                e = min(n, s + args.block_rows)
-                yield s, e, torch.cat([x[s:e].float(), torch.ones(e - s, 1, device=x.device)], dim=1)
 
         for s, e, xt in blocks():
             m = ~holdout[s:e]
