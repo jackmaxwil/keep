@@ -175,6 +175,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dynamic", help="BASE_DIR+RESIDUAL_DIR: per-token tiers, base alone or base + nested residual")
     p.add_argument("--tau", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE")
+    p.add_argument("--tau-drop", action="append", default=[], metavar="NAME=VALUE",
+                   help="with --dynamic, per variant: a slot with gate weight < VALUE is skipped (rung 0 per token)")
     p.add_argument("--cache-k", action="append", default=[], metavar="NAME=K",
                    help="with --dynamic: hi tier only from an LRU of K resident residuals per layer, admitted at gate >= tau")
     p.add_argument("--cache-warm", type=Path, help="imatrix npz (reap__gate_norm_sum): warm-start each cache with the top-K")
@@ -239,6 +241,7 @@ def main(argv: list[str] | None = None) -> int:
         base_dir, _, res_dir = args.dynamic.partition("+")
         base_dir, res_dir = Path(base_dir).expanduser(), Path(res_dir).expanduser()
         taus = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau)}
+        tau_drop = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau_drop)}
         assert set(taus) == set(variants), "--tau needs one NAME=VALUE per --variant"
         np_grids = {16: e8p_full_grid().astype(np.float32), 8: e8_1bit_grid().astype(np.float32)}
         cache: dict = {"layer": None}
@@ -247,8 +250,8 @@ def main(argv: list[str] | None = None) -> int:
         warm = None
         if args.cache_warm:  # warm start: each layer's top-K experts by routed mass (the static hot set)
             warm = np.argsort(-np.load(args.cache_warm)["reap__gate_norm_sum"], axis=1, kind="stable")
-        for v in variants:  # [layer, expert, (lo slots, hi slots, lo gate mass, hi gate mass, admissions)]
-            dyn_counts[v] = np.zeros((n_layers_, n_local, 5))
+        for v in variants:  # [layer, expert, (lo slots, hi slots, lo mass, hi mass, admissions, dropped slots, dropped mass)]
+            dyn_counts[v] = np.zeros((n_layers_, n_local, 7))
 
         def simulate_cache(layer, ind, wts, k, tau, counts):
             return residual_cache(ind, wts, k, tau, state["bounds"], None if warm is None else warm[layer, :k], counts)
@@ -295,8 +298,12 @@ def main(argv: list[str] | None = None) -> int:
                 idx, top = torch.where(indices == i)
                 w = weights[idx, top]
                 hi_mask = w >= tau if hi_all is None else hi_all[idx, top]
+                drop = w < tau_drop.get(state["variant"], 0.0)  # rung 0 per token: the slot is skipped
+                counts[i, 5] += int(drop.sum())
+                counts[i, 6] += float(w[drop].sum())
+                hi_mask = hi_mask & ~drop
                 lo_w, hi_w = tier_weights(layer, i)
-                for mask, tier, col in ((~hi_mask, lo_w, 0), (hi_mask, hi_w, 1)):
+                for mask, tier, col in ((~hi_mask & ~drop, lo_w, 0), (hi_mask, hi_w, 1)):
                     if mask.any():
                         y[idx[mask]] += run_expert(x[idx[mask]], w[mask, None], tier, limit).float()
                         counts[i, col] += int(mask.sum())
@@ -435,9 +442,12 @@ def main(argv: list[str] | None = None) -> int:
         np.save(args.out / v / "tier-counts.npy", c)
         tot = c.sum(axis=(0, 1))
         summary["variants"][v]["_tiers"] = {"tau": taus[v], "cache_k": cache_k.get(v),
-                                            "hi_slot_share": float(tot[1] / tot[:2].sum()),
-                                            "hi_mass_share": float(tot[3] / tot[2:4].sum()),
-                                            "admissions_per_token_layer": float(tot[4] / (tot[:2].sum() / int(model_args.n_activated_experts)) / int(model_args.n_layers))}
+                                            "tau_drop": tau_drop.get(v, 0.0),
+                                            "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
+                                            "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),
+                                            "hi_mass_share": float(tot[3] / (tot[2:4].sum() + tot[6])),
+                                            "drop_mass_share": float(tot[6] / (tot[2:4].sum() + tot[6])),
+                                            "admissions_per_token_layer": float(tot[4] / ((tot[:2].sum() + tot[5]) / int(model_args.n_activated_experts)) / int(model_args.n_layers))}
         print(v, json.dumps(summary["variants"][v]["_tiers"]), flush=True)
     summary["peak_rss_gb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**30, 2)
     (args.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")

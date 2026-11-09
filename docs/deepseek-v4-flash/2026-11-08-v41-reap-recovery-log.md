@@ -516,3 +516,64 @@ Learnings:
   helps only marginally (0.025 at 192 units, nothing at 288). A low rung that pays needs to be
   better than this 1-bit E8 fit (errors 0.31/0.25), or dynamic, or both.
 - Step 2 is done; step 3 (residual sidecars) is next.
+
+## Precision as a routed dimension (the paper track)
+
+Working title: *Precision as a Routed Dimension: unifying pruning, quantization and offloading in
+MoE inference*. Jack, 2026-11-09: build, run, test, commit; this is the headline to reach.
+
+### Claim to test
+
+Static compression picks one precision per expert (or drops it) before inference. The router
+already decides, per token, how much each expert matters (its gate weight). Make precision a
+routed decision too: every (token, expert) slot runs at one of three tiers chosen at inference
+time, from codes nested so that each tier is a prefix of the next:
+
+| Tier | Weights | Lives in | Cost per use |
+|---|---|---|---|
+| 0 (drop) | none | nowhere | 0 |
+| 1 (base) | 1-bit E8 code | unified memory, always resident | 4.6 MB read |
+| 2 (base + residual) | 1-bit base + 1-bit E8 residual of it | residual in an LRU cache, misses on SSD | 9.2 MB read |
+
+Pruning is tier 0 (per expert or per token), quantization is the tier-1/tier-2 choice, and
+offloading is where the tier-2 residual lives. One policy (gate thresholds `tau_drop`, `tau`, and
+the cache size K) sets all three, and three costs fall out of it: resident memory (bases + K
+residuals per layer), SSD traffic (residual admissions per token), and unified-memory bytes read
+per token (the decode speed bound on Apple Silicon, 546 GB/s on the M4 Max).
+
+The cache never stalls decode: a slot gets tier 2 only if its residual is already resident; a slot
+with gate >= tau admits its residual by an async SSD read that serves later tokens. This is the
+HOBBIT-style "use a cheaper copy on a miss" (arXiv 2411.01433), with the cheaper copy being the
+prefix of the expensive one, so a hit costs only the residual's bytes and memory holds no
+duplicate.
+
+### Evidence so far
+
+- Nested codes are almost free: on layer 5 (2 experts), base + residual scores 0.103 (gate/up) and
+  0.083 (down) weighted relative MSE, against 0.090 / 0.074 for a flat 2-bit E8P fit (all-layer
+  means). The base alone is 0.31 / 0.25.
+- Static per-expert allocation (step 2c) beat REAP-75 + KEEP by 0.20 KL at equal memory, but the
+  ablation (2c, 2d) traced almost all of it to selection; a static 1-bit tier added 0.025. The
+  routed version has to beat that static frontier to carry the paper.
+
+### Tooling
+
+- `keep_quant.py --residual-of DIR`: the nested residual tier (`quant/e8-nest-r1`, all 192 experts
+  of REAP-50, running).
+- `local_eval.py --dynamic BASE+RESIDUAL --tau NAME=t --tau-drop NAME=t --cache-k NAME=K
+  --cache-warm NPZ`: per-slot tiers in the forward, with the LRU simulated in token order per
+  record (`residual_cache`, unit-tested). Writes `tier-counts.npy` per variant: per layer and
+  expert, slots and gate mass at each tier, and admissions.
+
+### The experiments that decide it
+
+1. Endpoints: all tier 2 (tau 0), all tier 1 (tau 1e9). Must land near flat 2-bit (0.747) and
+   flat 1-bit (1.358).
+2. Routed tiers, everything resident (no SSD): tau sweep. Bytes read per token against KL,
+   compared with static allocations at equal bytes.
+3. Routed tiers with offload: K in {48, 96} residuals per layer, tau in {0.2, 0.3}, warm-started
+   with the pruned-model hot set. Resident units = 192 + K. The bar: beat prec-288 (0.809 at 288
+   units, nothing streamed) at 288 units with an SSD rate the M4 Max sustains (about 5 GB/s
+   sequential; well under that at 30 tok/s).
+4. Per-token tier 0 (tau_drop): does skipping low-gate slots cost less KL than static pruning
+   saves?
