@@ -577,3 +577,31 @@ duplicate.
    sequential; well under that at 30 tok/s).
 4. Per-token tier 0 (tau_drop): does skipping low-gate slots cost less KL than static pruning
    saves?
+
+### Observation: two routing regimes by depth
+
+Share of REAP-50's routed mass (pruned-model capture) held by each layer's top 96 experts:
+layers 0–19 keep 0.72–0.83, layers 20–39 keep 0.94–0.98 (layer 32 0.86 is the one dip). Early
+layers route diffusely, late layers concentrate. The step-3 sidecar fit sees the same split: in
+layers 4–6 the 96-expert 2-bit student misses 25–31% of the teacher MoE's output energy on held-out
+tokens, and a rank-256 linear sidecar removes only 9–15% of it, while in layers 0–3 the gap is
+3–11% and the sidecar removes 36–76%. A fixed per-layer budget cannot follow this; per-token tiers
+can, since a diffuse layer simply routes more of its slots to the base tier.
+
+### Headline progress rubric
+
+Every major status update reports progress to the headline with this fixed rubric (weights sum
+to 100; partial credit only for measured progress).
+
+| # | Item | Weight | Score | State (2026-11-09) |
+|---|---|---:|---:|---|
+| 1 | Nested codes, all layers, validated | 10 | 5 | fit 6/40 layers; +12% error vs flat 2-bit |
+| 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
+| 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
+| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 0 | sweep chained after the nested fit |
+| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | code exists, unrun |
+| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 0 | |
+| 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
+| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
+| 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
+| | **Total** | 100 | **26** | |
