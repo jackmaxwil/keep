@@ -938,3 +938,13 @@ What it says:
   here; the unpruned model has not been run on this prompt.
 - Rubric unchanged at 50. Server stopped; nothing is running.
 
+### 2026-11-10: thinking finishes under sampling, given 12,000 tokens
+
+- Lattice cache, 144 residents, thinking on, default sampling, budget 12,000: 7,567 reasoning
+  tokens with no repeated sentence, then a 620-token answer whose script runs correctly.
+  400 s, 20.7 tok/s over 8,187 tokens, 62 GiB.
+- So with thinking on the model is slow to decide rather than broken, and greedy decoding is
+  what loops (on the exact pruned model too). Speed at 8,000 tokens of context is a quarter
+  below the 1,000-token figure; unattributed.
+- Rubric unchanged at 50. Server stopped; nothing is running.
+

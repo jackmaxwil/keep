@@ -476,6 +476,12 @@ Text, same prompt as before (a script that finds duplicate files by SHA-256):
   the fixed lattice set and the sampled run do not repeat. So neither the 2-bit codes nor the
   cache causes the failure with thinking on: the pruned checkpoint has it at full precision.
   Whether the unpruned model has it too is not known; that model is not on the Mac.
+- Given room, thinking does finish under default sampling: the lattice cache with a budget of
+  12,000 tokens reasoned for 7,567 tokens without repeating itself, then answered in 620 with
+  a script that runs correctly on the test tree. 400 s in all, 20.7 tok/s over the 8,187
+  tokens (1.5 installs per token, policy 2.4 ms per token). The drop from 26–28 tok/s at
+  1,000 tokens is not attributed; context length is the first suspect and the fixed set was
+  never timed this far out.
 - With the cache on, greedy output is not reproducible: install timing changes routing. Two
   runs diverged after 18 characters; a third matched the second.
 
