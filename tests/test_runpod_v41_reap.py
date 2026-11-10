@@ -286,6 +286,19 @@ def test_prune_copies_bytes_renumbers_and_slices(tmp_path):
     sums = (out / "SHA256SUMS").read_text()
     assert "tokenizer.json" in sums and "keep-prune.json" in sums
 
+    # --skip-shard: an untouched shard (the Engram tables) is indexed but not written
+    table = "model-00003-of-00003.safetensors"
+    _write_safetensors(src / table, {"layers.1.engram.embed.weight": ("F8_E4M3", [4, 4], rng.bytes(16))})
+    weight_map["layers.1.engram.embed.weight"] = table
+    (src / prune.INDEX).write_text(json.dumps({"metadata": {"total_size": 0}, "weight_map": weight_map}))
+    out2 = tmp_path / "out2"
+    assert prune.main(["--src", str(src), "--survivors", str(survivors), "--out", str(out2), "--skip-shard", table]) == 0
+    assert not (out2 / table).exists() and table not in (out2 / "SHA256SUMS").read_text()
+    assert json.loads((out2 / prune.INDEX).read_text())["weight_map"]["layers.1.engram.embed.weight"] == table
+    with pytest.raises(ValueError, match="cannot be skipped"):
+        prune.main(["--src", str(src), "--survivors", str(survivors), "--out", str(tmp_path / "out3"),
+                    "--skip-shard", "model-00001-of-00002.safetensors"])
+
 
 # --------------------------------------------------------------------------- pack builder
 

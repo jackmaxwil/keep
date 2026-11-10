@@ -741,3 +741,26 @@ What it says:
   expert bytes read per token by 5%.
 - Item 4's 10 points need R to beat D as well, so the score waits for pass 2b. Missing static
   point: 120 experts at flat 2 bits (240 units), to compare with c48 directly.
+
+### 2026-11-09: X1 result, re-base decision, plan revision 2
+
+- X1 finished in 1.6 h of GPU work (smoke 02:23 UTC, scores 03:59 UTC). Domain-mean KL on 54 eval
+  sessions: shipped REAP-50 0.716, one-pass total mass 0.532, prune-twice 0.546; at 96 experts the
+  Mac's pick 1.163 and prune-twice 1.154. Total mass against REAP-50: −0.184, session-level 95%
+  interval −0.277 to −0.128, better in 36 of 54 sessions; english-chat is worse (0.448 → 0.572).
+  Tables, intervals and the reading are in the
+  [findings note](2026-11-09-keep-findings-and-levers.md), section 5.1. Outputs:
+  `~/Models/v41-reap-run/x1/pod/` (scores, tables, per-position eval files, 2.4 GB).
+- Follow-up on the same pod while it was hot (`x1b_pod.sh`): 96 experts in one pass on full-model
+  routing (`fm96`, keeps 74.0% of mass) against two passes through `fm192` (`pf96`, 81.2% of the
+  192's mass).
+- Jack approved re-basing on the total-mass 192 and asked for a disk cleanup. Export running on
+  the pod's CPU alongside the follow-up: `prune.py --skip-shard` (new, tested) leaves out the two
+  Engram shards, which are byte-identical to REAP-50's, so the export is 152 GB instead of 341.
+  Network volume grown 600 → 680 GB to hold it (volumes cannot shrink; $48 a month until deleted).
+- Deleted on the Mac with Jack's confirmation, 373 GB: `~/Models/v41-reap75` (on Hugging Face),
+  `quant/e8p-prunedimp`, `sidecar/codes-prunedmass-96`, `sidecar/mac-4k-r256`, `sidecar/smoke`.
+- Plan revised ([revision 2](2026-11-09-routed-precision-plan.md)): re-base first (WR), main
+  ladder 2-bit base + 1-bit residual, W4b redefined, sidecars and prune-twice closed, X3 demoted,
+  X8 (domain-balanced selection) added, operating rules for pods and evals. Five predictions are
+  registered in the findings note, section 6, before the runs that test them.

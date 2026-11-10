@@ -135,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--survivors", required=True, type=Path, help="reap-select output for the backbone layers")
     parser.add_argument("--mtp-survivors", type=Path, help="optional survivor table for the mtp.* drafter")
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--skip-shard", action="append", default=[],
+                        help="a shard the plan leaves untouched (the Engram tables): indexed but not written; use the source's file")
     args = parser.parse_args(argv)
 
     index = json.loads((args.src / INDEX).read_text())
@@ -155,9 +157,17 @@ def main(argv: list[str] | None = None) -> int:
     new_map: dict[str, str] = {}
     total = 0
     for shard in sorted(set(weight_map.values())):
-        names = prune_shard(args.src / shard, args.out / shard, plan)
+        if shard in args.skip_shard:
+            with (args.src / shard).open("rb") as handle:
+                names = [n for n in read_header(handle)[0] if n != "__metadata__"]
+            touched = set(names) & (set(plan["rename"]) | set(plan["slice_rows"]) | set(plan["drop"]))
+            if touched:
+                raise ValueError(f"{shard} cannot be skipped: the plan changes {len(touched)} of its tensors")
+            total += (args.src / shard).stat().st_size
+        else:
+            names = prune_shard(args.src / shard, args.out / shard, plan)
+            total += (args.out / shard).stat().st_size
         new_map.update({name: shard for name in names})
-        total += (args.out / shard).stat().st_size
         print(f"{shard}: {len(names)} tensors", flush=True)
 
     for path in sorted(args.src.rglob("*")):

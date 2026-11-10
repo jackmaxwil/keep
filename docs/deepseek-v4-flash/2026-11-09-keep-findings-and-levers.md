@@ -4,8 +4,10 @@ Written 2026-11-09 for the paper track (*Offload the Residual, Not the Expert*).
 whole project has measured that may not be in the literature, and whether any win is a bigger lever
 than it looked. Three sources: this campaign's own results
 ([recovery log](2026-11-08-v41-reap-recovery-log.md)), a survey of the older KEEP documents, and the
-prior-art search in the [plan](2026-11-09-routed-precision-plan.md). The scheduled experiments (X1–X7)
-are in section 7 of the plan; this file holds the evidence and the reasoning.
+prior-art search in the [plan](2026-11-09-routed-precision-plan.md). The plan (revision 2) holds
+the schedule and the status of each lever; this file holds the evidence and the reasoning. Sections
+5 and 6 were added the same evening, after the first results: read them before sections 3 and 4,
+several of whose bets they overturn.
 
 Nothing here has been checked against the literature beyond the six papers in the plan. Each lever
 gets its own search before it is claimed.
@@ -120,7 +122,9 @@ case for lever X4.
 
 ## 3. What looks like it could go beyond the prior art
 
-In the order I would bet on them. X numbers refer to the plan.
+In the order I would bet on them on the morning of 2026-11-09. X numbers refer to the plan.
+Outcomes so far: item 1 half right (the ranking rule, not the second pass), item 2 demoted, item 6
+promoted to the main line. See section 6.
 
 1. **Prune twice, at the first cut (X1).** The one clearly significant win of this campaign has only
    been applied to the second halving. REAP-50's own KL (0.578) is the floor under every number
@@ -174,3 +178,123 @@ what it pays is traffic, three units per promote/demote cycle against one, and a
 accurate high tier in return (0.090 against 0.101). The comparison is therefore run both ways, and
 at equal SSD rate as well as equal memory. The title's claim may turn out to be about traffic and
 simplicity more than about memory.
+
+## 5. Results of the evening of 2026-11-09
+
+### 5.1 Selection at the first cut (X1, pod)
+
+Students of the full model, 54 eval sessions at full length, KL against the full model's logits.
+Domain mean over 11 domains; pooled over positions in brackets.
+
+| Student | Experts | KL | Top-1 |
+|---|---:|---:|---:|
+| Shipped REAP-50 (`reap192`) | 192 | 0.716 (0.950) | 0.800 |
+| Total routed mass, full-model routing, one pass (`fm192`) | 192 | 0.532 (0.650) | 0.814 |
+| 384 → 288 → 192, routing re-measured on the 288 (`pt192`) | 192 | 0.546 (0.663) | 0.809 |
+| The Mac's 96 inside REAP-50 (`pm96`) | 96 | 1.163 (1.443) | 0.722 |
+| 384 → 288 → 192 → 96 (`pt96`) | 96 | 1.154 (1.268) | 0.703 |
+
+| Difference in domain-mean KL | Point | 95%, positions | 95%, sessions | Sessions better |
+|---|---:|---|---|---:|
+| `fm192` − `reap192` | −0.184 | −0.202 to −0.160 | −0.277 to −0.128 | 36 of 54 |
+| `pt192` − `fm192` | +0.014 | +0.006 to +0.020 | +0.002 to +0.043 | 17 of 54 |
+| `pt96` − `pm96` | −0.009 | −0.036 to +0.008 | −0.074 to +0.065 | 18 of 54 |
+
+- The ranking rule carries the gain. REAP's per-route score ignores how often an expert is used;
+  total routed mass counts it. `fm192` keeps 92.5% of the full model's routed mass and overlaps
+  REAP-50 by 76.5%.
+- By domain the gain is largest where records are long and hard (agentic-python 1.339 → 0.897,
+  tool-use 1.995 → 1.294) and absent or negative where calibration data is thin: english-chat goes
+  from 0.448 to 0.572. Calibration tokens by domain run from 43K (business-email) and 52K
+  (english-chat) to 451K (tool-use). Total mass inherits that imbalance; REAP's per-route mean does
+  not. This is lever X8.
+- Re-measuring routing on the 288-expert model did not help at 192. Confound: the two-pass tables
+  were ranked from 2 of 24 calibration sessions (257K tokens), the one-pass table from all 24.
+- How this fits the Mac result (192 → 96 inside REAP-50: rule alone −0.025, pruned routing alone
+  −0.025, both −0.177): a cut that keeps 92.5% of mass barely changes routing, so the full
+  model's statistics describe the pruned model. A cut to 96 keeps about 74% and the routing it
+  leaves is different. Working rule: re-measure when the cut removes a large share of mass. The
+  96-expert follow-up (5.5) tests it.
+
+### 5.2 Routed precision, pass 1 (Mac, inside REAP-50, 1-bit base + 1-bit residual)
+
+Numbers and intervals are in the recovery log. The decomposition at 288 units per layer:
+
+| Configuration | KL | Cost over 192 experts at flat 2 bits (0.747) |
+|---|---:|---|
+| 144 experts at flat 2 bits | 0.812 | +0.065: 48 experts dropped |
+| Routed cache, 192 bases + 96 residuals, τ 0.2 | 0.832 | +0.053 nesting, +0.032 misses that fall to 1 bit |
+| Fixed hot set, same codes | 0.905 | +0.053 nesting, +0.105 misses |
+
+- Routing the cache cuts the cost of misses by two thirds against a fixed hot set (0.105 → 0.032)
+  with 10% of slots still missing. The remaining miss cost is what a 1-bit fallback costs.
+- The nesting penalty alone (0.053) is nearly the whole cost of dropping 48 experts (0.065). With
+  a 1-bit base, nested codes cannot beat pruning by much even with a perfect cache.
+- SSD traffic was not binding: 0.28 GB/s at τ 0.3 and 0.83 GB/s at τ 0.2, against a 2.5 GB/s
+  ceiling. A separate-copy cache moving three times the bytes would still be under it. The
+  residual's traffic advantage only matters for small caches (K = 48 at τ 0.2 reads 2.72 GB/s).
+- Per-token tiering with everything resident (MatMoE's setting) costs 0.022 KL for 54% fewer
+  tier-2 slots and saves no memory. Expert bytes are about 11% of decode traffic on this family, so
+  it buys little speed either.
+- Per-token tier 0 is free at 7.7% of slots (+0.001 KL).
+
+### 5.3 Sidecars
+
+Closed. Fifteen fitted layers made KL worse by 0.199 [+0.164, +0.219] while every layer's holdout
+objective improved. Details in the recovery log.
+
+### 5.4 What a unit buys
+
+From the static points inside REAP-50 (Mac eval), per unit per layer:
+
+| Step | KL change | Per unit |
+|---|---:|---:|
+| 192 experts at 1 bit → 96 experts at 2 bits (192 units either way) | 1.358 → 1.039 | bits beat breadth at equal memory |
+| 96 → 144 experts at 2 bits (+96 units) | −0.227 | −0.0024 |
+| 144 → 192 experts at 2 bits (+96 units) | −0.065 | −0.0007 |
+| 192 experts, 2 bits → native FP4/BF16 (+384 units or more) | −0.169 | at most −0.0004 |
+
+The second bit is worth far more than the first expert it displaces; the last 48 experts are worth
+little; and 0.17 KL sits above 2 bits. If a third bit recovers most of that 0.17 on the experts
+that carry most of the routed mass, 96 residual units on the hot experts are worth more than the
+96 units that buy experts 145–192. That is the case for the 2 + 1 ladder, and it is a guess until
+the residual is fitted and scored.
+
+### 5.5 96 experts, one pass against two (pod follow-up)
+
+Pending when this section was written; results are appended to the recovery log.
+
+## 6. Priors revisited
+
+What I believed this morning, what the evidence says now, and what I do differently.
+
+| Prior | Now | Evidence | Consequence |
+|---|---|---|---|
+| "Prune twice" is the lever, and it will repeat at 384 → 192 | Half wrong. The ranking rule is the lever at the first cut; re-measuring matters only when routing changes a lot | 5.1 | Re-base on `fm192`; rule stated as "rank by total mass on routing that resembles the target" |
+| REAP-50 is a sound floor for everything else | Wrong. It gives up 0.18 KL at the same size | 5.1 | WR in the plan; every later number is re-measured |
+| A 1-bit base is weak but usable as a fallback tier | Wrong. It is the dominant cost: 1.358 alone, and each missed slot falls to it | 5.2 | Main ladder becomes 2-bit base + 1-bit residual |
+| Nested codes cost "about 12%" and that is acceptable | The 12% in weight error is 0.053 KL end to end, as much as dropping a quarter of the experts | 5.2 | Nested codes must be judged end to end; a joint fit is in W7 |
+| The residual wins on memory or on traffic | Memory: only against keep-both caches. Traffic: not binding at K = 96 | 5.2 | The title's claim is at risk; decided by the separate-copy sweep and the 2 + 1 ladder |
+| Keeping all 384 experts at 1 bit could beat pruning half (X3) | Very unlikely | 5.2, 5.4 | Demoted; W4b no longer fits 384 experts |
+| Sidecars recover a useful share of the layer gap | Wrong end to end | 5.3 | Closed; no layer-local metric accepted as evidence again |
+| The eval set is 22 independent texts | 19 at 1,024 tokens; two domains share one prompt | recovery log | Eval set version 2 |
+| A network volume is a disk | It is a single-stream 120 MB/s device with 3 ms seeks | recovery log | Copy to local disk first; rule in the plan |
+| X1 needs 6.5–7.5 GPU hours | 1.6 h | pod logs | Estimates from measured throughput |
+
+Predictions registered before the runs that test them (2026-11-09, about 20:40 PST):
+
+1. Separate-copy cache, K = 96, swap accounting, against the routed nested cache at 288 units: the
+   copy wins on KL by 0.03–0.05 (about 0.78–0.80 against 0.832) and also beats 144 flat experts
+   (0.812). Its SSD rate stays under 2.5 GB/s at τ 0.3.
+2. Oracle cache at K = 96 lands within 0.015 of the routed LRU at τ 0.2: the policy is near its
+   ceiling and the remaining loss is the base.
+3. 144 experts all at nested 2 bits (288 units) scores about 0.86, worse than both the routed
+   cache (0.832) and flat 144 (0.812).
+4. 96 experts in two passes through `fm192` beat one pass on full-model routing by at least 0.05
+   domain-mean KL.
+5. On the 2 + 1 ladder, 144 experts at 2 bits plus a routed cache of 96 third-bit residuals
+   (384 units) beats 192 experts at flat 2 bits by at least 0.03 KL.
+
+If 1 holds and 5 fails, the paper is about routing a precision cache and about selection, and the
+title changes. If 5 holds, the title stands with the qualifier that the base must be a usable
+model.
