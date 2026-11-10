@@ -595,16 +595,16 @@ to 100; partial credit only for measured progress).
 
 | # | Item | Weight | Score | State (2026-11-09) |
 |---|---|---:|---:|---|
-| 1 | Nested codes, all layers, validated | 10 | 5 | fit 6/40 layers; +12% error vs flat 2-bit |
+| 1 | Nested codes, all layers, validated | 10 | 10 | fit 40/40; error 0.102 gate/up, 0.084 down; end to end +0.053 KL against flat 2-bit |
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
-| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 0 | sweep chained after the nested fit |
-| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | code exists, unrun |
+| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 0 | pass 1: R beats S by 0.068, but loses to 144 flat 2-bit experts by 0.025; D pending (pass 2b) |
+| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 0 | |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **26** | |
+| | **Total** | 100 | **31** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -693,3 +693,51 @@ to 100; partial credit only for measured progress).
   7 minutes for 476 GB. Smoke then passed: 16,384 tokens in 447 s, 48.1 GB peak GPU memory.
 - For W4b and any later pod on this volume: budget the 7-minute copy, create the pod with a
   560 GB container disk from the start, and probe readiness by substring.
+
+### 2026-11-09: routed sweep, pass 1 (192 bases, 22 sessions, first 1,024 tokens)
+
+Nested fit finished: 40 of 40 layers, total error 0.102 (gate, up) and 0.084 (down) against 0.090
+for the flat 2-bit fit. Sweep: 12,415 s forward, peak RSS 64.1 GB. Units are 1-bit experts per
+layer; SSD rate is at 30 tok/s.
+
+| Variant | Units | KL | Top-1 | Tier-2 slots | SSD GB/s |
+|---|---:|---:|---:|---:|---:|
+| all2: every residual resident, all slots tier 2 | 384 | 0.800 | 0.779 | 100% | 0 |
+| t22 (M): all resident, tier 2 at gate ≥ 0.22 | 384 | 0.822 | 0.767 | 46% | 0 |
+| d10: t22 plus tier 0 below gate 0.1 | 384 | 0.823 | 0.763 | 46% (7.7% dropped) | 0 |
+| c96t2 (R): LRU of 96 residuals, τ 0.2 | 288 | 0.832 | 0.772 | 90% | 0.83 |
+| c96t3 (R): LRU of 96, τ 0.3 | 288 | 0.837 | 0.771 | 84% | 0.28 |
+| s96 (S): static hot set of 96 | 288 | 0.905 | 0.753 | 75% | 0 |
+| c48t2 (R): LRU of 48, τ 0.2 | 240 | 0.876 | 0.758 | 76% | 2.72 |
+| all1: base only | 192 | 1.358 | 0.637 | 0% | 0 |
+
+Static references from step 2, same sessions: 192 experts at flat 2 bits 0.747 (384 units);
+144 experts at flat 2 bits 0.812 (288 units); 96 at flat 2 bits 1.039 (192 units).
+
+Paired block bootstrap (`routed_report.py --compare`):
+
+| A against B | KL(A) − KL(B) | 95% interval |
+|---|---:|---|
+| R c96t3 against S s96, both 288 units | −0.068 | −0.077 to −0.060 |
+| R c96t2 against S s96 | −0.073 | −0.084 to −0.065 |
+| R c48t2 (240 units) against S s96 (288 units) | −0.029 | −0.042 to −0.022 |
+| R c96t3 against 144 flat 2-bit experts, both 288 units | **+0.025** | +0.009 to +0.051 |
+| R c96t2 against 144 flat 2-bit experts | +0.020 | +0.003 to +0.045 |
+| all2 against 192 flat 2-bit experts (the nesting penalty) | +0.053 | +0.039 to +0.071 |
+| R c96t2 (288 units) against all2 (384 units) | +0.032 | +0.023 to +0.037 |
+| t22 against all2 | +0.022 | +0.015 to +0.031 |
+| d10 against t22 (tier 0 on 7.7% of slots) | +0.001 | −0.002 to +0.004 |
+
+What it says:
+
+- Routing the cache works. With the same codes and the same memory, an LRU with a gate threshold
+  beats a fixed hot set by 0.07 KL, and a cache of 48 beats a fixed set of 96. At τ 0.3 the cost
+  is 9.5 MB per token, 0.28 GB/s, a ninth of the 2.5 GB/s ceiling.
+- It does not yet beat plain pruning. At 288 units, 144 experts at flat 2 bits score 0.812 and the
+  routed cache 0.832–0.837. The nesting penalty (+0.053) is larger than that gap: with a flat-quality
+  high tier the routed cache would be ahead. This is the argument for a separate-copy high tier,
+  which pass 2b measures, and for the 2-bit-base ladder (X5).
+- Tier 0 is free: dropping the 7.7% of slots with gate below 0.1 changes KL by 0.001 and cuts the
+  expert bytes read per token by 5%.
+- Item 4's 10 points need R to beat D as well, so the score waits for pass 2b. Missing static
+  point: 120 experts at flat 2 bits (240 units), to compare with c48 directly.
