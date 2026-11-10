@@ -295,6 +295,8 @@ Predictions registered before the runs that test them (2026-11-09, about 20:40 P
 5. On the 2 + 1 ladder, 144 experts at 2 bits plus a routed cache of 96 third-bit residuals
    (384 units) beats 192 experts at flat 2 bits by at least 0.03 KL.
 
-If 1 holds and 5 fails, the paper is about routing a precision cache and about selection, and the
-title changes. If 5 holds, the title stands with the qualifier that the base must be a usable
+Predictions 1 and the old-ladder half of the title question will not be run: Jack cut the 1-bit
+base the same evening, and passes 2b and 3 were cancelled. Predictions 2 and 3 are in pass 2,
+which finishes. If 5 fails, the paper is about routing a precision cache and about selection, and
+the title changes. If 5 holds, the title stands with the qualifier that the base must be a usable
 model.

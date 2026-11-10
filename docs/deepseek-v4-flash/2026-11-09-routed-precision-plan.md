@@ -17,8 +17,10 @@ Evidence and reasoning for everything below:
    work runs on the new 192 (`fm-192`).
 2. **The ladder moves up one bit.** The 1-bit base is not a usable model (KL 1.358 on its own), so a
    cache miss is expensive, and nesting on top of it costs 0.053 KL. The main ladder becomes a
-   2-bit base with a 1-bit residual (a third bit). The 1-bit + 1-bit ladder stays as the
-   low-memory regime, measured by the sweeps already queued, with no new work.
+   2-bit base with a 1-bit residual (a third bit). The 1-bit base is cut altogether (Jack,
+   2026-11-09): at equal memory 96 experts at 2 bits (1.039) beat 192 at 1 bit (1.358), so it
+   loses at small budgets too. The 1-bit code survives only as the residual. The pass already
+   running (pass 2) finishes; passes 2b and 3 on the old ladder are cancelled.
 3. **Routing the cache is confirmed; "residual beats copy" is not.** A routed cache beats a fixed
    hot set by 0.068 KL at equal memory and 0.28 GB/s of reads. SSD traffic was not the binding
    constraint at that point, which removes the residual's main advantage over a separate copy
@@ -43,7 +45,7 @@ Claims the paper could stand on, with tonight's evidence against each:
 
 | Claim | Status |
 |---|---|
-| 1. The offloaded unit is the nested residual, not a second copy | Open and at risk. Needs R to beat D; with a 1-bit base the nesting penalty (0.053) exceeds the gap to plain pruning (0.025). Retested on the 2 + 1 ladder, where the base is usable. |
+| 1. The offloaded unit is the nested residual, not a second copy | Open and at risk. With a 1-bit base the nesting penalty (0.053) exceeds the gap to plain pruning (0.025), and that ladder is cut. Tested on the 2 + 1 ladder, where the base is usable. |
 | 2. Tier 0 in the same policy | Supported in part: dropping the 7.7% of slots with gate below 0.1 costs 0.001 KL. No joint policy yet. |
 | 3. The regime at 2 bits and below, 384-expert top-6 model, 128 GB laptop | Narrowed: below 2 bits the base is unusable. The regime is 2 to 3 bits. |
 | 4. (new) Select experts by total routed mass on routing that resembles the pruned model | Supported: −0.184 KL at 384 → 192 (pod), −0.177 at 192 → 96 (Mac). Not yet searched in the literature. |
@@ -69,8 +71,8 @@ third-bit residual 1 unit, a native FP4 expert 4 units. Budgets are per layer.
 7. Eval set, version 2: 4,096 tokens per record, and the four sessions that share a first 1,024
    tokens no longer counted as four texts. Sub-1-bit comparisons keep the old set for continuity.
 
-Only after step 3 passes is `~/Models/v41-reap50` removable (341 GB); the 1 + 1 sweeps must finish
-first.
+Only after step 3 passes is `~/Models/v41-reap50` removable (341 GB), and pass 2 must finish
+first. `quant/e8-1bit-podimp` and `quant/e8-nest-r1` (66 GB) go with it.
 
 ### W0. Related work, read in full (gates the claims; no rubric points)
 
@@ -110,8 +112,10 @@ Runs, on `fm-192`, eval set version 2:
    3 bits, all at 2 bits).
 2. Pass B, B = 288 and 336: F(144), F(168); R and S at N = 128, K = 32 and 80; N = 112, K = 64.
 3. Pass C: D at the K and τ of the best R in each budget; tier 0 on top of the best R.
-4. Carried over from revision 1 and already running on REAP-50 (1 + 1 ladder): pass 2 (oracle,
-   N < 192, projection rungs), pass 2b (separate copies), pass 3 (budgets 240 and 336).
+4. Carried over from revision 1 on REAP-50 (1-bit base): pass 2 only (oracle, N < 192,
+   projection rungs), because it was already an hour in and its oracle result bounds the cache
+   policy on any ladder. Passes 2b (separate copies) and 3 (budgets 240 and 336) are cancelled;
+   the separate-copy comparison is made on the new ladder in pass C.
 
 Acceptance and scoring inside the item (unchanged in form):
 
@@ -175,7 +179,7 @@ Unchanged, plus a selection section (claim 4) that can also stand alone as a sho
 
 | When (estimate) | Work | Score after |
 |---|---|---:|
-| Tonight | 1 + 1 passes 2, 2b, 3 on REAP-50; X1 follow-up; export and download of `fm-192` | 31 |
+| Tonight | pass 2 on REAP-50 (last run on the 1-bit base); X1 follow-up; export and download of `fm-192` | 31 |
 | Day 1 | WR steps 3–7 (capture, fits); W0 reading; W6 bench built on tonight's traces | 31 |
 | Day 2 | W4 passes A–C on `fm-192`; title decision | 41–46 |
 | Day 3 | W5 policy and figure; W6 numbers; W7a | 61–66 |
