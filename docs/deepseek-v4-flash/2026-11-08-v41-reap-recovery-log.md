@@ -600,11 +600,11 @@ to 100; partial credit only for measured progress).
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 12 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. The rest needs the pool of 384 and the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
-| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 5 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max at 22–26 tok/s with 156 MB of real reads per token (64 FP4 residents, pool of 192). The rest needs 2-bit experts, the pool of 384 and memory pressure |
+| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 7 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max with 144 2-bit lattice residents of the pool of 192 at 26–28 tok/s, 20 MB of real reads per token, 62 GiB (FP4, 64 residents: 22–26 tok/s). The rest needs the pool of 384 and memory pressure |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **48** | |
+| | **Total** | 100 | **50** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -911,4 +911,19 @@ What it says:
 - The lattice expert is 9.0 MB against 11.1 for affine 2-bit: about 155 residents under the cap
   against about 127. Table and limits in the build plan's K2 result.
 - Rubric unchanged at 48. Nothing is running.
+
+### 2026-11-10: 2-bit lattice experts in the no-wait cache
+
+- `scripts/v41_build/omlx_lattice.py`: 144 lattice residents per layer of the pool of 192 under
+  stock oMLX, codes read straight from the quantizer's `.npz` files, the router scoring the
+  whole pool with residency as a bias mask. Self-check against host-decoded matrices within
+  0.3%; installs byte-exact (17 checks, 2,431 installs on the real model).
+- Decode 26.0–27.9 tok/s with the cache on (2.2 installs and 20 MB read per token, 96% of
+  demanded slots resident), 28.6–30.1 with the policy off. 62 GiB steady, 68–69 peak. A
+  4,341-token prompt prefills at 111–192 tok/s.
+- With thinking off the model writes a duplicate-file script that runs correctly and summarizes
+  a 4,341-token source file accurately. With thinking on it does not reach an answer in 4,096
+  tokens, with the cache on or off, greedy or sampled; the cache is not the cause, and 2-bit
+  codes are not yet separated from pruning.
+- Rubric item 6 moves from 5 to 7. Total 50. Server stopped; nothing is running.
 

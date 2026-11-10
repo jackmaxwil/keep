@@ -58,9 +58,6 @@ class Store:
         begin, end = header[key]["data_offsets"]
         return fd, start + begin, end - begin
 
-    def read_into(self, key: str, view: np.ndarray) -> int:
-        return self.pread_into(*self.slab(key), view)
-
     @staticmethod
     def pread_into(fd: int, offset: int, nbytes: int, view: np.ndarray) -> int:
         """Fill ``view`` from the file. Positional, so reader threads may call it."""
@@ -104,38 +101,48 @@ class Layer:
 
 
 class Cache:
-    def __init__(self, model, config, spec, full, mx):
+    """The policy. A subclass sets ``layers`` and says where a slot's bytes live (``slabs``) and
+    how the router switches an expert on and off (``route``, ``unroute``)."""
+
+    def __init__(self, config, mx):
         self.mx, self.config = mx, config
         self.tau = float(os.environ.get("OMLX_ROUTED_TAU", "0.2"))
         self.spare = int(os.environ.get("OMLX_ROUTED_SPARE", "4"))
         self.lag = int(os.environ.get("OMLX_ROUTED_LAG", "2"))
         self.log_path = os.environ.get("OMLX_ROUTED_LOG")
         assert config.score_func == "sqrtsoftplus" and self.lag >= 1
-        self.store = Store(Path(spec["source"]))
         self.pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix="routed-io")
-        blocks = model.language_model.layers
-        self.layers = [Layer(i, blk.ffn, full[i, "weight"], full[i, "bias"], spec["hot"][i], spec["rank"][i], mx)
-                       for i, blk in enumerate(blocks)]
-        self.by_gate = {id(layer.gate): layer for layer in self.layers}
         self.step = 0
         self.pending: dict[int, list] = {}  # forward call -> per-layer (index, weight) demand arrays
         self.stats = dict.fromkeys(("calls", "tokens", "demand", "resident", "wanted", "admitted", "installed",
-                                    "evicted", "bytes", "no_slot"), 0)
+                                    "evicted", "bytes", "no_slot", "policy_s"), 0)
         self.started = time.time()
-        for key in {name: key for key, name in self.store.index.items() if ".ffn.experts." in key}.values():
-            self.store.slab(key)  # open every expert shard now, not during a token
-        self.check_layout()
 
-    def check_layout(self):
-        """A resident expert's rows must equal its stored bytes: installs rely on it."""
-        for layer in self.layers[:: max(1, len(self.layers) // 4)]:
-            expert = int(layer.slot_expert[0])
-            for proj in PROJECTIONS:
-                for field, view in (("weight", layer.views[proj][3]), ("scale", layer.views[proj][4])):
-                    key = f"layers.{layer.index}.ffn.experts.{expert}.{proj}.{field}"
-                    stored = np.empty(view[0].nbytes, np.uint8)
-                    self.store.read_into(key, stored)
-                    assert np.array_equal(stored, view[0].reshape(-1).view(np.uint8)), f"layout differs: {key}"
+    def ready(self, layers):
+        self.layers = layers
+        self.by_gate = {id(layer.gate): layer for layer in layers}
+        # A resident expert's rows must equal its stored bytes: installs rely on it.
+        for layer in layers[:: max(1, len(layers) // 4)]:
+            assert not self.differing(layer, 0), f"layer {layer.index}: slot 0 differs from its stored bytes"
+
+    def slabs(self, layer, expert, slot):
+        """(fd, offset, nbytes, the slot's host view) for each stored tensor of ``expert``."""
+        raise NotImplementedError
+
+    def route(self, layer, expert, slot):
+        raise NotImplementedError
+
+    def unroute(self, layer, expert, slot):
+        raise NotImplementedError
+
+    def differing(self, layer, slot) -> int:
+        """Tensors of a routed slot whose bytes differ from its expert's stored bytes."""
+        bad = 0
+        for fd, offset, nbytes, view in self.slabs(layer, int(layer.slot_expert[slot]), slot):
+            stored = np.empty(nbytes, np.uint8)
+            Store.pread_into(fd, offset, nbytes, stored)
+            bad += not np.array_equal(stored, view.reshape(-1).view(np.uint8))
+        return bad
 
     # --- demand, recorded while a forward call is built -------------------------------------
 
@@ -161,7 +168,9 @@ class Cache:
         self.step += 1
         ready = self.step - self.lag
         if self.tau != float("inf") and ready in self.pending:
+            started = time.perf_counter()
             self.harvest(ready, self.pending.pop(ready))
+            self.stats["policy_s"] += time.perf_counter() - started
         for old in [s for s in self.pending if s < ready]:
             del self.pending[old]
         if self.log_path and self.step % 64 == 0:
@@ -172,7 +181,8 @@ class Cache:
         self.stats["calls"] += 1
         # Reading this call's demand means every earlier call has left the GPU.
         for layer, (index, weight) in zip(self.layers, demand):
-            index, weight = np.asarray(index), np.asarray(weight, dtype=np.float64)
+            index = np.asarray(index).reshape(-1, c.n_activated_experts)
+            weight = np.asarray(weight, dtype=np.float64).reshape(index.shape)
             weight = weight / (weight.sum(-1, keepdims=True) + 1e-20) * c.route_scale
             if layer.index == 0:
                 self.stats["tokens"] += index.shape[0]
@@ -200,11 +210,7 @@ class Cache:
                     self.stats["no_slot"] += 1
                     continue
                 slot = layer.free.pop()
-                futures = []
-                for proj in PROJECTIONS:
-                    base = f"layers.{layer.index}.ffn.experts.{expert}.{proj}."
-                    for field, view in (("weight", layer.views[proj][3]), ("scale", layer.views[proj][4])):
-                        futures.append(self.pool.submit(Store.pread_into, *self.store.slab(base + field), view[slot]))
+                futures = [self.pool.submit(Store.pread_into, *slab) for slab in self.slabs(layer, expert, slot)]
                 layer.reading[expert] = (slot, futures)
                 self.stats["admitted"] += 1
             self.evict(layer, set(wanted))
@@ -217,8 +223,7 @@ class Cache:
         for expert in done:
             slot, futures = layer.reading.pop(expert)
             self.stats["bytes"] += sum(f.result() for f in futures)
-            layer.gate.weight[slot] = layer.typed_weight[expert]
-            layer.gate.bias[slot] = layer.typed_bias[expert]
+            self.route(layer, expert, slot)
             layer.slot_expert[slot], layer.slot_of[expert] = expert, slot
             layer.last_use[slot] = self.step
             self.stats["installed"] += 1
@@ -231,10 +236,11 @@ class Cache:
         order = np.argsort(layer.last_use, kind="stable")
         victims = [int(s) for s in order if layer.slot_expert[s] >= 0 and int(layer.slot_expert[s]) not in protected]
         for slot in victims[:short]:
-            del layer.slot_of[int(layer.slot_expert[slot])]
+            expert = int(layer.slot_expert[slot])
+            del layer.slot_of[expert]
             layer.slot_expert[slot] = -1
             layer.last_use[slot] = np.inf
-            layer.gate.bias[slot] = OFF
+            self.unroute(layer, expert, slot)
             # Calls built before this one may still route here; its bytes may change only once
             # the call being built now is known to have finished.
             layer.cooling.append((slot, self.step))
@@ -242,15 +248,8 @@ class Cache:
 
     def mismatched(self) -> int:
         """Routed slots (first and last layer) whose rows differ from their expert's stored bytes."""
-        bad = 0
-        for layer in (self.layers[0], self.layers[-1]):
-            for slot, expert in enumerate(layer.slot_expert.tolist()):
-                for proj in PROJECTIONS if expert >= 0 else ():
-                    for field, view in (("weight", layer.views[proj][3]), ("scale", layer.views[proj][4])):
-                        stored = np.empty(view[slot].nbytes, np.uint8)
-                        self.store.read_into(f"layers.{layer.index}.ffn.experts.{expert}.{proj}.{field}", stored)
-                        bad += not np.array_equal(stored, view[slot].reshape(-1).view(np.uint8))
-        return bad
+        return sum(self.differing(layer, slot) for layer in (self.layers[0], self.layers[-1])
+                   for slot, expert in enumerate(layer.slot_expert.tolist()) if expert >= 0)
 
     def write_log(self):
         row = {"t": round(time.time() - self.started, 2), "step": self.step, **self.stats,
@@ -259,6 +258,31 @@ class Cache:
             row["mismatched"] = self.mismatched()
         with open(self.log_path, "a") as f:
             f.write(json.dumps(row) + "\n")
+
+
+class FP4Cache(Cache):
+    """Slots are rows of oMLX's stacked MXFP4 arrays; the router holds one row per slot."""
+
+    def __init__(self, model, config, spec, full, mx):
+        super().__init__(config, mx)
+        self.store = Store(Path(spec["source"]))
+        for key in {name: key for key, name in self.store.index.items() if ".ffn.experts." in key}.values():
+            self.store.slab(key)  # open every expert shard now, not during a token
+        self.ready([Layer(i, blk.ffn, full[i, "weight"], full[i, "bias"], spec["hot"][i], spec["rank"][i], mx)
+                    for i, blk in enumerate(model.language_model.layers)])
+
+    def slabs(self, layer, expert, slot):
+        for proj in PROJECTIONS:
+            base = f"layers.{layer.index}.ffn.experts.{expert}.{proj}."
+            for field, view in (("weight", layer.views[proj][3]), ("scale", layer.views[proj][4])):
+                yield (*self.store.slab(base + field), view[slot])
+
+    def route(self, layer, expert, slot):
+        layer.gate.weight[slot] = layer.typed_weight[expert]
+        layer.gate.bias[slot] = layer.typed_bias[expert]
+
+    def unroute(self, layer, expert, slot):
+        layer.gate.bias[slot] = OFF
 
 
 def patch(spec: dict) -> None:
@@ -272,7 +296,7 @@ def patch(spec: dict) -> None:
 
     def load_routed(*args, **kwargs):
         model, processor = load(*args, **kwargs)
-        state["cache"] = Cache(model, model.language_model.layers[0].ffn.gate._config, spec, full, mx)
+        state["cache"] = FP4Cache(model, model.language_model.layers[0].ffn.gate._config, spec, full, mx)
         full.clear()
         return model, processor
 

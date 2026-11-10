@@ -413,3 +413,69 @@ difference between top-6 and top-1, over five.
   raw per-expert bytes (they are `.npz` today), the routed half of the fused MoE replaced by
   `e8p_m1`, and codes for the experts outside the pruned pool.
 
+### Lattice experts in the cache (2026-11-10)
+
+`scripts/v41_build/omlx_lattice.py`. oMLX (pinned clone, unmodified) loads a six-expert model
+made by `omlx_compact.py make --experts 6`; after the load each layer's routed experts are
+replaced by 144 lattice experts held as stacked code and scale arrays.
+
+- Storage needed no conversion. The quantizer's `layer-NN.npz` files are stored uncompressed, so
+  an expert's codes are a fixed byte range of the file and an install is a positional read into
+  the slot's rows.
+- The router keeps every row of the pool and scores all 192 once per token with oMLX's gate
+  kernel. One small kernel takes two top-6's of those scores: among the residents (every other
+  expert's bias is -1e30), which is what runs, and over the pool, which is the demand the policy
+  reads two calls later. An install or eviction changes one bias and one entry of an
+  expert-to-slot table. This replaced the separate demand matmul of the FP4 cache.
+- Decode step: gate kernel, top-k kernel, `e8p_m1` for w1 and w3, oMLX's SwiGLU and act-quant
+  kernel, `e8p_m1` for w2, then oMLX's shared-expert kernels, which add the routed sum. The
+  shared up kernel runs with no routed column (`TOPK` 0).
+- Prefill: oMLX's unfused MoE with the routed experts on this repo's sorted-route kernels.
+- `omlx_routed.py` is now the policy with the FP4 storage as one subclass; the lattice cache is
+  the other.
+
+Self-check (`omlx_lattice.py check`, two layers of real codes, random routers and shared
+experts): the decode step is within 0.3% of the same MoE computed from matrices decoded on the
+host, the prefill path within 0.1% of the decode path, and after 83 installs no slot differs
+from its stored bytes. The decode-step MoE takes 0.40–0.42 ms against 0.38–0.41 for oMLX's
+fused FP4 MoE in the same harness. The lattice kernel is 1.7 times slower on fp32 activation
+rows than on 16-bit ones (0.51 against 0.29 ms for the routed half), so it gets bf16.
+
+Serving, M4 Max, pool of 192, 144 residents per layer, tau 0.2, 4 spares:
+
+| | Decode, tok/s | |
+|---|---:|---|
+| Policy off (fixed 144) | 28.6–30.1 | text reproducible run to run |
+| Cache on | 26.0–27.9 | 2.2 installs and 20 MB read per token; 96% of demanded slots resident |
+| oMLX FP4, fixed 64 (K1) | 30–31 | |
+| FP4 cache, 64 residents | 22–26 | 8.3 installs and 156 MB per token; 75% resident |
+
+- Memory: 62 GiB steady, 68–69 GiB peak during the load, which takes about 25 s.
+- Prefill: a 4,341-token prompt took 22.6 s and 39.1 s (192 and 111 tok/s, two runs, no KV
+  reuse). Prompts of 38–64 tokens reach the first token in 1.4–2.3 s. A prefill is one forward
+  call, so the cache cannot adapt inside it; over the runs with the long prompt 83% of demanded
+  slots were resident.
+- Policy cost: 1.5 ms of Python per token, and about 2 ms more that is not attributed yet.
+  Reading the demand through a lazy reshape forced a GPU sync per layer and cost another 10%
+  (22.6–25.8 tok/s) until the raw kernel outputs were kept instead.
+- Installs on the real model: 17 checks over 2,431 installs, no slot differing from its bytes.
+- 5–11% of wanted admissions found no free slot at 4 spares.
+
+Text, same prompt as before (a script that finds duplicate files by SHA-256):
+
+- Thinking off, temperature 0: a complete script in 1,035–1,182 tokens, and it runs correctly
+  on a test tree. A 4,341-token prompt holding `omlx_routed.py` got an accurate five-bullet
+  summary and a plausible bug risk.
+- Thinking on: no answer within 4,096 tokens in any of three runs. Greedy with the cache on is
+  coherent for about 1,000 tokens and then repeats itself; default sampling does not repeat but
+  keeps reviewing code it drafted in its reasoning; greedy with the policy off (fixed 144)
+  also runs out. So the cache is not the cause. The exact pool of 192 at FP4 starts writing
+  after about 500 characters of reasoning on this prompt (K1's 1,024-token run); it was not
+  run to 4,096 tokens, so 2-bit codes and pruning are not separated here.
+- With the cache on, greedy output is not reproducible: install timing changes routing. Two
+  runs diverged after 18 characters; a third matched the second.
+
+Not done: the pool of 384 (codes exist only for the pruned 192), more than 144 residents (160
+would be about 67 GiB steady), memory pressure, and multi-token verify windows in serving (the
+self-check covers 8 rows).
+

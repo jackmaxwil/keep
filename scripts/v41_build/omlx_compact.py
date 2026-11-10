@@ -29,7 +29,8 @@ def make(src: Path, dst: Path, experts: int, mass_file: Path) -> None:
     import numpy as np
 
     mass = np.load(mass_file)["reap__gate_norm_sum"]  # [layer, expert] routed gate mass
-    by_mass = [np.argsort(-row, kind="stable")[:experts].tolist() for row in mass]
+    order = [np.argsort(-row, kind="stable").tolist() for row in mass]  # every expert, hottest first
+    by_mass = [row[:experts] for row in order]
     hot = [sorted(row) for row in by_mass]
     rank = [[by.index(e) for e in row] for by, row in zip(by_mass, hot)]  # 0 is the hottest
     dst.mkdir(parents=True, exist_ok=True)
@@ -53,7 +54,8 @@ def make(src: Path, dst: Path, experts: int, mass_file: Path) -> None:
     index["weight_map"] = weight_map
     (dst / "model.safetensors.index.json").write_text(json.dumps(index))
     (dst / "compact-map.json").write_text(json.dumps(
-        {"experts": experts, "source": str(src.resolve()), "hot": hot, "rank": rank, "alias": alias}))
+        {"experts": experts, "source": str(src.resolve()), "hot": hot, "rank": rank, "order": order,
+         "alias": alias}))
     print(f"{dst}: {experts} experts per layer, {len(alias)} tensors renamed")
 
 
