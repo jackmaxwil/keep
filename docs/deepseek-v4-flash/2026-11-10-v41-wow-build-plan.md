@@ -469,9 +469,13 @@ Text, same prompt as before (a script that finds duplicate files by SHA-256):
 - Thinking on: no answer within 4,096 tokens in any of three runs. Greedy with the cache on is
   coherent for about 1,000 tokens and then repeats itself; default sampling does not repeat but
   keeps reviewing code it drafted in its reasoning; greedy with the policy off (fixed 144)
-  also runs out. So the cache is not the cause. The exact pool of 192 at FP4 starts writing
-  after about 500 characters of reasoning on this prompt (K1's 1,024-token run); it was not
-  run to 4,096 tokens, so 2-bit codes and pruning are not separated here.
+  also runs out. So the cache is not the cause.
+- The exact pool of 192 at FP4 (stock oMLX offload, 7.1 tok/s, greedy) fails the same way: 4,096
+  reasoning tokens, no answer, and from about character 10,500 of 16,235 it repeats the same
+  list of options it will not add. The lattice cache starts repeating at about character 5,300;
+  the fixed lattice set and the sampled run do not repeat. So neither the 2-bit codes nor the
+  cache causes the failure with thinking on: the pruned checkpoint has it at full precision.
+  Whether the unpruned model has it too is not known; that model is not on the Mac.
 - With the cache on, greedy output is not reproducible: install timing changes routing. Two
   runs diverged after 18 characters; a third matched the second.
 

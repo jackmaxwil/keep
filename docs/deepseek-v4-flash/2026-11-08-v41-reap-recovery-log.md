@@ -927,3 +927,14 @@ What it says:
   codes are not yet separated from pruning.
 - Rubric item 6 moves from 5 to 7. Total 50. Server stopped; nothing is running.
 
+### 2026-11-10: the exact pruned model also fails with thinking on
+
+- The pool of 192 at FP4 under stock oMLX offload (exact, 7.1 tok/s), same prompt, greedy,
+  thinking on: 4,096 reasoning tokens and no answer, repeating itself from about character
+  10,500 of 16,235. The lattice cache repeats from about 5,300; the fixed lattice set and the
+  sampled run do not repeat, and none of the four answers.
+- So the failure with thinking on is not caused by 2-bit codes or by the cache. It is in the
+  pruned checkpoint at full precision, or in the model, template or greedy decoding as served
+  here; the unpruned model has not been run on this prompt.
+- Rubric unchanged at 50. Server stopped; nothing is running.
+
