@@ -216,6 +216,36 @@ Domain mean over 11 domains; pooled over positions in brackets.
   leaves is different. Working rule: re-measure when the cut removes a large share of mass. The
   96-expert follow-up (5.5) tests it.
 
+Where the gain sits (checked the same evening, from the per-position files; `fm192` − `reap192`):
+
+| Positions | Share | Domain-mean KL difference | 95%, sessions |
+|---|---:|---:|---|
+| All | 100% | −0.184 | −0.279 to −0.131 |
+| Teacher NLL below 0.5 | 64% | −0.026 | −0.047 to +0.002 |
+| Teacher NLL below 2 | 74% | −0.052 | −0.080 to −0.023 |
+| Teacher NLL 2 or more | 26% | −0.465 | −0.637 to −0.361 |
+
+- 59% of the pooled gain comes from the 15% of positions where the teacher's NLL is 5 or more, and
+  15% from the 74% where it is below 2. On teacher-confident positions top-1 agreement does not
+  move (0.947 against 0.944 pooled). On tool-use the gain on confident positions is −0.004: all of
+  it is on positions the teacher did not expect.
+- This is not the X2 artifact. On the surprised positions `fm192` agrees with the teacher's top
+  token more often (0.42 → 0.51) and its NLL moves toward the teacher's (−2.22 → −0.73 relative to
+  it): it reproduces the full model's expectations better, including its tool-call markup. It is
+  fidelity on off-format and agentic text, not a general quality gain.
+- English-chat is not established as worse: +0.124 over 4,319 positions in 20 short sessions,
+  interval −0.050 to +0.206, 8 of 20 sessions better.
+- "36 of 54 sessions better" is an artifact of the session mix: 30 sessions are english-chat or
+  english-prose. Every tool-use (7), agentic (4), code-diffs (3), bash (2) and cyber (2) session
+  improves.
+- The four agentic sessions share their first 3,893–3,917 tokens of 16,383 (a common system
+  prompt), so agentic-python and agentic-rust overlap by a quarter. With the two merged into one
+  domain the difference is −0.159 (−0.251 to −0.122).
+- The claim that survives: at 192 experts, total-mass selection is much closer to the full model
+  on agentic and tool-call text and modestly closer on ordinary text (−0.05). Whether that is
+  better for a user needs a generation check (tool-call validity, code completion), which no
+  number here provides.
+
 ### 5.2 Routed precision, pass 1 (Mac, inside REAP-50, 1-bit base + 1-bit residual)
 
 Numbers and intervals are in the recovery log. The decomposition at 288 units per layer:

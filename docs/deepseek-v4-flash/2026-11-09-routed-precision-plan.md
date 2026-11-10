@@ -48,7 +48,7 @@ Claims the paper could stand on, with tonight's evidence against each:
 | 1. The offloaded unit is the nested residual, not a second copy | Open and at risk. With a 1-bit base the nesting penalty (0.053) exceeds the gap to plain pruning (0.025), and that ladder is cut. Tested on the 2 + 1 ladder, where the base is usable. |
 | 2. Tier 0 in the same policy | Supported in part: dropping the 7.7% of slots with gate below 0.1 costs 0.001 KL. No joint policy yet. |
 | 3. The regime at 2 bits and below, 384-expert top-6 model, 128 GB laptop | Narrowed: below 2 bits the base is unusable. The regime is 2 to 3 bits. |
-| 4. (new) Select experts by total routed mass on routing that resembles the pruned model | Supported: −0.184 KL at 384 → 192 (pod), −0.177 at 192 → 96 (Mac). Not yet searched in the literature. |
+| 4. (new) Select experts by total routed mass on routing that resembles the pruned model | Supported with a qualifier: −0.184 KL at 384 → 192 (pod), but −0.052 on positions where the teacher is confident; the rest is fidelity on agentic and tool-call text (findings note, 5.1). −0.177 at 192 → 96 (Mac). No generation check yet. Not yet searched in the literature. |
 
 ## 3. Workstreams
 
@@ -62,7 +62,12 @@ third-bit residual 1 unit, a native FP4 expert 4 units. Budgets are per layer.
    shards from `~/Models/v41-reap50` (`cp -c`, no extra space) and check every file against the
    export's `SHA256SUMS` and REAP-50's.
 3. `local_eval.py` against the new checkpoint in BF16/FP4 on the Mac eval set. **Accept** when it
-   beats REAP-50 on the same sessions by at least 0.10 KL (the pod saw 0.184 on 54 full sessions).
+   beats REAP-50 on the same sessions by at least 0.10 KL (the pod saw 0.184 on 54 full sessions),
+   and report the difference on teacher-confident positions separately.
+3b. A generation check before any codes are fitted to the new set, since everything so far is
+   teacher-forced KL: design and size it first (tool-call format validity and code completion on
+   held-out prompts, new set against REAP-50). Open question: V4.1 has no local decoder on this
+   Mac, so this may have to run on a pod with the reference implementation.
 4. Capture routing and importance on the new model (the step-2c capture, four chunks).
 5. Codes: flat 2-bit E8P for all 192 (reuse the fits of the experts shared with REAP-50, 76.5%, if
    the importance source is the same; otherwise refit all, about 7 h of GPU), then the 1-bit
