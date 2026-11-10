@@ -285,3 +285,32 @@ Which of our ideas someone has already shipped:
 5. **Housekeeping.** A planner's Python call created `~/Development/_refs/omlx/.venv` (1.8 GB),
    `uv.lock` and an egg-info directory in the oMLX clone. Remove or keep.
 6. **Paper title.** Still open; this plan does not depend on it.
+
+## 9. Runbook for K1 (first generated token, stock oMLX)
+
+Checked 2026-11-09 by reading the clone and running only `omlx --help`: the environment at
+`~/Development/_refs/omlx/.venv` imports (`mlx` 0.32.4, `omlx` 0.7.4.dev1). Not yet done: the
+native kernels are not built, and no model has been loaded.
+
+Run when no other heavy job is on the Mac (E1 holds it tonight):
+
+1. `make kernels` in the clone (oMLX's fused paths need them; a plain install skips them).
+2. A model directory containing a link to `~/Models/v41-reap50`. oMLX's V4.1 loader accepts the
+   original checkpoint format; whether it accepts a 192-expert count is the first thing this run
+   tests.
+3. Model settings: `moe_expert_offload_enabled`, `moe_expert_offload_resident_fraction` 0.375
+   (72 of 192 experts at native FP4, about 54 GB), `deepseek_v41_engram_ssd_offload`; memory guard
+   below 80 GB. oMLX's own figures show peak footprint about 12 GiB above its Metal-active size, so
+   start lower (0.25) if the first load comes close to the cap.
+4. `omlx serve --model-dir …`, then two 64-token chat completions on one prompt (cold, then warm)
+   and the same prompt replayed for the no-miss floor.
+5. Record: decode tok/s, prefill tok/s, hit rate (oMLX logs it per request), peak footprint, and
+   whether every layer stayed on the fused path.
+
+Reference points from oMLX's own document: on a smaller MoE model it measures 122.5 tok/s fully
+resident, 59.4 at 50% residency and 40.1 at 25%, so waiting on misses costs it a factor of two to
+three there; on V4.1 it says decode "is bound by miss latency at one to two misses per layer per
+token".
+
+Not runnable yet: the offline checks for ideas 2 and 6 (K6) need per-token router demand, which
+the harness does not dump; the stored routes are a 2,048-token sample without token ids.
