@@ -348,3 +348,40 @@ modified).
 - Side effect on the machine: the server wrote `~/.omlx/bin/omlx-cluster-python`, a link to the
   clone's Python.
 
+### No-wait cache, first version (2026-11-10)
+
+`scripts/v41_build/omlx_routed.py`, on the fixed-set base above, clone unmodified. 64 resident
+experts per layer at native FP4, drawn from the pruned pool of 192; admission at gate weight 0.2,
+4 spare slots per layer, least recently demanded evicted.
+
+How a miss costs no time:
+
+- Every layer also scores the whole pool's router rows on its input. The demanded experts ride in
+  the token's own graph, so reading them two calls later waits for nothing.
+- The router is the switch. An evicted slot's bias is set so nothing routes to it; reader threads
+  overwrite its rows in place only after every call built before that has finished; its router
+  row becomes the new expert only after the bytes are in. A token never waits on a read and never
+  runs a half-written expert. An admitted expert serves from about three tokens after the demand.
+- Stored FP4 bytes are the array's bytes, so an install is six positional reads straight into
+  the slot, 18.8 MB, with no copy.
+
+| Run | Decode tok/s | Notes |
+|---|---:|---|
+| fixed 64, no demand tracking | 30–31 | from K1 |
+| cache code, admissions off | 26.6–28.2 | output identical to fixed 64 over 1,024 tokens; demand scoring costs 10–14% |
+| cache on | 22.0–26.1 | 8.3 installs per token (156 MB), 75% of demanded slots resident |
+| oMLX offload, exact, 48 slots | 4.5 | reference text below |
+
+- Checks: with admissions off the output equals the fixed set's, token for token. With them on,
+  every routed slot in the first and last layer matched its expert's stored bytes at 20
+  checkpoints across 12,785 installs. A torn read in flight is excluded by the ordering rule, not
+  by a measurement.
+- Quality is not there at this size. On a 1,024-token coding prompt the exact pool of 192 writes a
+  correct script; fixed 64 and cache 64 both leave the reference within a few words and end in a
+  loop. The cache's text is more fluent early on, which is not evidence. 64 experts is what FP4
+  allows under the 80 GB cap; E1 puts the useful range at 96–144 residents.
+- So the next build item is 2-bit experts in this runtime (K2, then lattice codes as slot arrays):
+  about 155 residents under the same cap. Also open: demand scoring through oMLX's own gate kernel
+  to recover the 10–14%; 23% of wanted admissions found no free slot at 4 spares; prefill runs
+  through the same code but was only exercised on short prompts.
+

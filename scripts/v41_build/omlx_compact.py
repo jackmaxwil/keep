@@ -29,7 +29,9 @@ def make(src: Path, dst: Path, experts: int, mass_file: Path) -> None:
     import numpy as np
 
     mass = np.load(mass_file)["reap__gate_norm_sum"]  # [layer, expert] routed gate mass
-    hot = [sorted(np.argsort(-row, kind="stable")[:experts].tolist()) for row in mass]
+    by_mass = [np.argsort(-row, kind="stable")[:experts].tolist() for row in mass]
+    hot = [sorted(row) for row in by_mass]
+    rank = [[by.index(e) for e in row] for by, row in zip(by_mass, hot)]  # 0 is the hottest
     dst.mkdir(parents=True, exist_ok=True)
     for item in src.iterdir():
         if item.name not in ("config.json", "model.safetensors.index.json") and not (dst / item.name).exists():
@@ -50,11 +52,12 @@ def make(src: Path, dst: Path, experts: int, mass_file: Path) -> None:
             weight_map[new], alias[new] = filename, key
     index["weight_map"] = weight_map
     (dst / "model.safetensors.index.json").write_text(json.dumps(index))
-    (dst / "compact-map.json").write_text(json.dumps({"experts": experts, "hot": hot, "alias": alias}))
+    (dst / "compact-map.json").write_text(json.dumps(
+        {"experts": experts, "source": str(src.resolve()), "hot": hot, "rank": rank, "alias": alias}))
     print(f"{dst}: {experts} experts per layer, {len(alias)} tensors renamed")
 
 
-def patch(spec: dict) -> None:
+def patch(spec: dict, full: dict | None = None) -> None:
     import mlx.core as mx
     from omlx.patches.deepseek_v41 import loading, residency, storage
 
@@ -81,6 +84,8 @@ def patch(spec: dict) -> None:
             for key in tensors:
                 m = GATE.search(key)
                 if m:
+                    if full is not None:  # the whole router, for callers that track demand
+                        full[int(m[1]), m[2]] = tensors[key]
                     tensors[key] = tensors[key][hot[int(m[1])]]
             yield tensors, specs
 
