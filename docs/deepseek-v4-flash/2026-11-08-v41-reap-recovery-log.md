@@ -764,3 +764,21 @@ What it says:
   ladder 2-bit base + 1-bit residual, W4b redefined, sidecars and prune-twice closed, X3 demoted,
   X8 (domain-balanced selection) added, operating rules for pods and evals. Five predictions are
   registered in the findings note, section 6, before the runs that test them.
+
+### 2026-11-09, late: full volume, cancelled sweeps, plan revision 3
+
+- Both pod jobs (the 96-expert follow-up and the export) died silently between 04:35 and 04:43
+  UTC. Cause: the network volume filled. I sized it in GB against `du` figures in GiB (476 GiB of
+  model is 511 GB; the 152 GiB export is 163 GB), so 680 GB was 6 GB short. A full volume here
+  writes zero-length files and returns success, so neither job logged an error, and my status
+  check (`pgrep -f prune.py` inside an ssh command that itself contains that string) kept reporting
+  the export as running. About 15 minutes of idle H100.
+- Recovery: partial export deleted, volume grown to 720 GB ($50 a month), follow-up eval resumed
+  alone at 04:51 UTC from its 8 finished sessions (files written before the volume filled were
+  checked: complete). The export moves to a CPU pod.
+- Jack cut the 1-bit base altogether. Passes 2b and 3 cancelled; pass 2 finishes.
+- Where the selection gain sits, and the checks behind it: findings note, section 5.1.
+- Plan [revision 3](2026-11-09-routed-precision-plan.md): thesis "pruning is a frozen cache",
+  target architecture, a critique of the approach, ten falsifiable conjectures, eleven ordered
+  experiments, and a proposed working title conditional on C1. The first experiment (E1) needs no
+  new fits and runs after pass 2.

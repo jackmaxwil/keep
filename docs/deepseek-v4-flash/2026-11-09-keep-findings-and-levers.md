@@ -330,3 +330,46 @@ base the same evening, and passes 2b and 3 were cancelled. Predictions 2 and 3 a
 which finishes. If 5 fails, the paper is about routing a precision cache and about selection, and
 the title changes. If 5 holds, the title stands with the qualifier that the base must be a usable
 model.
+
+### 6.1 Late revision: the lesson I drew from the 1-bit result was too narrow
+
+Two hours after demoting X3 ("keep every expert, page what is missing") I reversed part of that.
+The data refuted a 1-bit copy as the answer to a miss. It did not refute keeping a wide pool of
+experts on the SSD. Three measurements point the other way:
+
+- Pruning is the largest loss in the stack: REAP-50 in BF16 is 0.578 KL from the full model, and
+  2-bit coding adds 0.169. The residual work addressed the 0.169.
+- A cache that follows the session covers far more demand than a fixed set of the same size: 84–90%
+  of slots against 75% at 96 of 192, and a routed 48 beat a fixed 96.
+- Skipping a low-gate slot costs nothing (+0.001 KL at 7.7% of slots), and static pruning already
+  answers every miss by re-routing to the best survivor.
+
+Put together: keep residents at 2 bits, let the resident set follow the session, re-route a miss
+among residents, and admit what the router asked for. Static pruning is that system with admission
+off. This is conjecture C1 in the plan (revision 3) and it is untested. It was testable tonight
+with the existing 2-bit codes and I did not see it, because every design I considered kept a
+low-precision copy as the fallback.
+
+Registered before the run (E1, pool = REAP-50's 192, flat 2 bits, same miss rule for both):
+
+6. LRU cache of 144 against the static top 144 (0.812): better by 0.03–0.05 KL.
+7. LRU cache of 96 against the static top 96 (1.039): better by at least 0.10.
+8. Re-route beats drop on the same cache by at least 0.02.
+9. The LRU of 144 at 2 bits beats the 1-bit-base residual cache at the same 288 units (0.832).
+
+## 7. Prior art (moved here from the plan, revision 3)
+
+Found 2026-11-09. Only abstracts were read for all but MatMoE (introduction and method).
+
+| Paper | What it does | Overlap with us |
+|---|---|---|
+| MatMoE (arXiv 2611.01704, ICCAD 2026) | Nested integer codes per expert; bit-width per expert at run time from its routing score | Per-token precision with nested codes. All weights resident; no offload, no pruning. |
+| DynaExq (arXiv 2511.15015) | Hot experts resident at high precision, low-precision fallback, asynchronous promotion | A no-stall cache. Separate copies. GPU memory, not SSD. |
+| DyMoE (arXiv 2603.19172) | Run-time mixed precision by importance, depth-adaptive, look-ahead prefetch | Depth regimes, prefetch. |
+| HOBBIT (arXiv 2411.01433) | On a miss, run a low-precision copy instead of waiting | A low tier as the miss path. |
+| MC-MoE (arXiv 2410.06270) | Static mixed precision plus online per-token expert pruning | Per-token dropping with static precision. |
+| PMQ, GEMQ (ICML 2026), EdgeMoE | Static per-expert bit allocation | The step 2c allocator. |
+
+To read in full and to search for (W0): expert caches that re-route or skip on a miss; any
+comparison of an expert cache against pruning at equal memory; REAP's comparison of its criterion
+against frequency-based ones; calibration on the pruned model's routing.

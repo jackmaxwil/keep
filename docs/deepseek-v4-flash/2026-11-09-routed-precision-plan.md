@@ -1,248 +1,175 @@
-# Routed precision: implementation plan to 100% (revision 2)
+# Routed residency: plan to the paper (revision 3)
 
-First written 2026-11-09; revised the same evening after the first routed sweep, the X1 pod run
-and the sidecar result. Revision 1 is in git history (`fd3d57e`). Target headline (Jack,
-2026-11-09): *Offload the Residual, Not the Expert: Unifying Pruning, Quantization and Offloading in
-MoE Inference*. Progress is scored with the fixed rubric in the
-[recovery log](2026-11-08-v41-reap-recovery-log.md) ("Headline progress rubric"); the rubric and its
-weights do not change with this revision. Score today: **31 / 100**.
+Revised late on 2026-11-09 after a critique of revision 2 (in git at `691f97a`). Score on the fixed
+rubric in the [recovery log](2026-11-08-v41-reap-recovery-log.md): **31 / 100**; the rubric and its
+weights do not change. Evidence for every number here is in the
+[findings note](2026-11-09-keep-findings-and-levers.md); prior art is its section 7.
 
-Evidence and reasoning for everything below:
-[2026-11-09-keep-findings-and-levers.md](2026-11-09-keep-findings-and-levers.md), sections 5 and 6.
+## 1. Thesis
 
-## 1. What changed, in four lines
+Pruning is a cache that never updates. Keep every resident expert at a usable precision (2 bits),
+let the set of resident experts follow the session, and send a token whose expert is absent to the
+best resident one instead of to a worse copy. Precision above 2 bits is a second, smaller question.
 
-1. **The base model moves.** Ranking experts by total routed mass beats the shipped REAP-50 by
-   0.184 KL at 192 experts on the pod's eval. Every Mac number so far sits on REAP-50. All further
-   work runs on the new 192 (`fm-192`).
-2. **The ladder moves up one bit.** The 1-bit base is not a usable model (KL 1.358 on its own), so a
-   cache miss is expensive, and nesting on top of it costs 0.053 KL. The main ladder becomes a
-   2-bit base with a 1-bit residual (a third bit). The 1-bit base is cut altogether (Jack,
-   2026-11-09): at equal memory 96 experts at 2 bits (1.039) beat 192 at 1 bit (1.358), so it
-   loses at small budgets too. The 1-bit code survives only as the residual. The pass already
-   running (pass 2) finishes; passes 2b and 3 on the old ladder are cancelled.
-3. **Routing the cache is confirmed; "residual beats copy" is not.** A routed cache beats a fixed
-   hot set by 0.068 KL at equal memory and 0.28 GB/s of reads. SSD traffic was not the binding
-   constraint at that point, which removes the residual's main advantage over a separate copy
-   there. The separate-copy sweep (tonight) and the 2 + 1 ladder decide the title.
-4. **Three levers are closed:** sidecars (+0.199 KL end to end), pruning twice (no gain over one
-   pass at 192, none at 96), and the tool-use NLL effect (an artifact).
+This is a conjecture (C1 below), not a result. What is measured so far: a routed cache of
+residuals beats a fixed one by 0.068 KL; a 1-bit fallback is the dominant cost; dropping low-gate
+slots is free; the second bit is worth more than breadth.
 
-## 2. Prior art (unchanged from revision 1)
+## 2. Target architecture
 
-| Paper | What it does | Overlap with us |
+```mermaid
+flowchart LR
+  subgraph OFF[Offline, once]
+    CAL[Calibration: routing statistics] --> SEL[Rank experts by total routed mass]
+    SEL --> FIT[2-bit lattice code per expert]
+    FIT --> PACK[One file extent per expert]
+  end
+  subgraph SSD[SSD]
+    POOL[Expert pool at 2 bits: 192 or 384 per layer]
+    HIGH[High tier: third bit or native FP4]
+    ENG[Engram tables, 190 GB]
+  end
+  subgraph RAM[Unified memory]
+    CORE[Always resident: attention, shared experts, router rows for the whole pool]
+    RES[Resident experts: N per layer at 2 bits]
+    HOT[Hot tier: H slots, optional]
+  end
+  subgraph TOK[Per token, per layer]
+    R1[Router scores the whole pool] --> R2[Top 6 among resident experts]
+    R2 --> R3[Skip slots below the gate floor]
+    R3 --> R4[Run experts and sum]
+    R1 --> DEM[Demand: wanted but not resident]
+  end
+  PACK --> POOL
+  CORE --> R1
+  RES --> R2
+  DEM -->|gate at least tau, asynchronous| Q[Admission queue]
+  POOL --> Q
+  Q -->|pread, usable from the next token| RES
+  HIGH -.-> HOT
+```
+
+- Decode never waits on the SSD: a miss is re-routed now and admitted for later tokens.
+- Static pruning is this system with admissions switched off. Per-token dropping is the gate floor.
+  Quantization is the precision of the resident copy. One budget, in resident GB, covers all three.
+- Open in this picture: the pool size (192 or all 384), whether a hot tier pays, and the real
+  resident size of everything that is not a routed expert.
+
+## 3. Rules
+
+1. **Two numbers per comparison.** KL on teacher-confident positions (teacher NLL below 2) is
+   general quality; agreement on the rest is fidelity on agentic and tool-call text. A change that
+   moves only the second is reported as that.
+2. **Spend memory where it pays.** The second bit is worth about three times more per unit than
+   the last 48 experts, and a 1-bit base loses at every budget. One sweep asks where the next unit
+   goes: a resident expert, a third bit, or a native copy.
+3. **Use the slack.** The routed cache read 0.28–0.83 GB/s against a 2.5 GB/s ceiling, so whole
+   2-bit experts (2 units) and native copies (4 units) are affordable to move.
+4. **Fix the fallback before the policy.** No work on admission rules unless the oracle gap exceeds
+   0.015 KL.
+5. **Fail fast.** Score a partial result end to end before finishing it; write the prediction
+   before the run; estimate from measured throughput.
+
+## 4. Critique of the approach so far
+
+| Hole | Why it matters | What closes it |
 |---|---|---|
-| MatMoE (arXiv 2611.01704, ICCAD 2026) | Nested integer codes per expert; bit-width per expert at run time from its routing score | Per-token precision with nested codes. All weights resident; no offload, no pruning. |
-| DynaExq (arXiv 2511.15015) | Hot experts resident at high precision, low-precision fallback, asynchronous promotion | Our no-stall cache. Separate copies. GPU memory, not SSD. |
-| DyMoE (arXiv 2603.19172) | Run-time mixed precision by importance, depth-adaptive, look-ahead prefetch | Depth regimes, prefetch. |
-| HOBBIT (arXiv 2411.01433) | On a miss, run a low-precision copy instead of waiting | Low tier as the miss path. Separate copies. |
-| MC-MoE (arXiv 2410.06270) | Static mixed precision plus online per-token expert pruning | Per-token tier 0 with static precision. |
-| PMQ, GEMQ (ICML 2026), EdgeMoE | Static per-expert bit allocation | Our step 2c allocator. |
+| We never tested the simplest design: a 2-bit expert cache with re-routing on a miss. We were anchored on residuals. | Pruning costs 0.578 KL and 2-bit coding 0.169; the residual work chased the smaller loss with a fallback that could not work. | E1, tonight, no new fits. |
+| Every result is teacher-forced KL. No text has been generated. | A 0.03 KL threshold is not tied to anything a user sees; the selection gain sits mostly on positions the teacher did not expect. | Rule 1 now; a generation check (E6) before any public claim. |
+| The offload result is a simulation, and V4.1 has no decoder on this Mac. | "On a laptop" rests on a trace replay, an assumed 30 tok/s, and an SSD shared with 190 GB of Engram lookups. | W6 replay states exactly that; real decode only on the second model (E8). A stated limitation. |
+| The memory axis counts routed experts only. | Attention, the KV cache and the Engram page cache are resident too, and this Mac thrashed at 91 GB. The true budget may sit below 384 units. | Measure total resident size once; plot the frontier in total GB. |
+| τ and K were picked on the eval set. | Selection bias in our own favour. | Tune on the Mac set; confirm once on the pod's untouched 54 sessions (shard 1/2). |
+| The eval set is thin: domains with one session, shared prompts, sessions of 11 tokens. | Domain means swing on one text. | Eval set version 2; session-level intervals; all 108 sessions for the final table. |
+| The static baseline was REAP-50. | A better static set exists (total mass), so a win over REAP-50 flatters the method. | Static baselines use the total-mass set after the re-base. |
+| The third-bit bet has a thin margin. | Everything above 2 bits is worth at most 0.169 KL on this pool. | C3 is tested after C1 and C2, not before. |
+| The selection claim may contradict REAP's own comparisons against frequency-based criteria. | A reviewer will know that paper. | W0 reads it; C7 adds a generation test. To verify: this is from memory of the paper. |
+| Three avoidable pod failures in one evening, the last a volume filled by mixing GB and GiB. | About $8 and two hours. | Section 9. |
 
-Only abstracts were read for all but MatMoE. W0 reads them in full.
+## 5. Conjectures the paper proves or refutes
 
-Claims the paper could stand on, with tonight's evidence against each:
+Each is stated so that a single run can refute it. KL is domain-mean; "confident" means positions
+with teacher NLL below 2; intervals are session-level bootstrap.
 
-| Claim | Status |
-|---|---|
-| 1. The offloaded unit is the nested residual, not a second copy | Open and at risk. With a 1-bit base the nesting penalty (0.053) exceeds the gap to plain pruning (0.025), and that ladder is cut. Tested on the 2 + 1 ladder, where the base is usable. |
-| 2. Tier 0 in the same policy | Supported in part: dropping the 7.7% of slots with gate below 0.1 costs 0.001 KL. No joint policy yet. |
-| 3. The regime at 2 bits and below, 384-expert top-6 model, 128 GB laptop | Narrowed: below 2 bits the base is unusable. The regime is 2 to 3 bits. |
-| 4. (new) Select experts by total routed mass on routing that resembles the pruned model | Supported with a qualifier: −0.184 KL at 384 → 192 (pod), but −0.052 on positions where the teacher is confident; the rest is fidelity on agentic and tool-call text (findings note, 5.1). −0.177 at 192 → 96 (Mac). No generation check yet. Not yet searched in the literature. |
+| # | Conjecture | Test | Refuted if |
+|---|---|---|---|
+| C1 | **Residency should follow the session.** With the same codes, memory and miss rule, an LRU expert cache with demand admission beats the best static expert set. | E1: pool of 192 at flat 2 bits, N = 144 and 96, static top-N in the same run. | Gain below 0.02 confident KL at both N, or interval includes zero, or reads above 2.5 GB/s at 30 tok/s. |
+| C2 | **A wider pool beats a better static set.** At 384 units, 192 residents drawn from all 384 experts beat the best static 192. | E3–E4: 2-bit codes for all 384, cache of 192. | Gain below 0.03 confident KL. |
+| C3 | **Above 2 bits, precision should be routed too.** At equal units, a hot tier (third bit or native FP4) on the hottest residents beats spending those units on more 2-bit residents. | E5 on the winner of C1/C2. | Gain below 0.02, or negative. My prior is close to even. |
+| C4 | **Re-route beats drop beats a 1-bit copy** as the answer to a miss, at equal memory. | E1: same cache with drop and with re-route; the 1-bit-base cache from pass 1 (0.832 at 288 units). | Any other order. |
+| C5 | **The policy is near its ceiling.** A per-session oracle set beats the LRU by at most 0.015 KL. | Pass 2 (residual cache), E1 (expert cache). | Gap above 0.015: then prediction and prefetch are worth building. |
+| C6 | **Traffic does not bind.** The best configuration at each budget reads under 1 GB/s at 30 tok/s, and 99% of admissions land within one token interval on the internal SSD. | Simulation in E1/E4; W6 replay. | Either number missed: then the unit moved matters and nested residuals return. |
+| C7 | **Rank by sum, not mean.** Total routed mass beats REAP's per-route score (a) on confident KL and (b) in generated tool calls and code. | (a) measured at 192: −0.052 [−0.080, −0.023]. (b) E6. | (b) shows no gain or a loss. |
+| C8 | **Re-measure routing when the cut is deep.** 96 experts picked through the 192 beat 96 picked in one pass by at least 0.05. | E2, on the pod now. | Smaller, or reversed. |
+| C9 | **The gate floor is free.** Skipping slots with gate below 0.1 costs under 0.005 KL in any configuration. | One point so far (+0.001); added to E1 and E4. | Any configuration above 0.005. |
+| C10 | **C1 holds on a second MoE.** | E8, Qwen3-30B-A3B, with real generation. | C1's test fails there. |
 
-## 3. Workstreams
+C1, C2 and C6 carry the title. C7–C8 are a second, independent result.
 
-Units: one expert at 1 bit per weight = 1 unit = 4.6 MB per layer. A 2-bit expert is 2 units, a
-third-bit residual 1 unit, a native FP4 expert 4 units. Budgets are per layer.
+## 6. Experiments, in order
 
-### WR. Re-base on the total-mass 192 (new; gates W4 onward; no rubric points)
+| # | What | Where, cost | Gate |
+|---|---|---|---|
+| E0 | Pass 2 on the old ladder (oracle gap for C5). | Mac, finishing about 23:00. | — |
+| E1 | Expert cache at 2 bits inside REAP-50: LRU and oracle at N = 144 and 96, static controls, drop against re-route, gate floor. Needs `--miss drop\|reroute` in `local_eval.py` and stratified columns in `routed_report.py`. | Mac, about 3.5 h, starts after E0. | Decides C1, C4, C5. |
+| E2 | 96 experts, one pass against two. | Pod, running. | C8. |
+| WR | Export and download the total-mass 192: the honest static baseline and a better pool of 192. | CPU pod, overnight. | — |
+| E3 | If C1 holds: 2-bit codes for all 384 experts and the full router rows, as a codes-only pool (about 150 GB). Size the fit first; it has only run on the Mac GPU. | Pod. | Needs C1. |
+| E4 | Cache of 192 and 144 drawn from 384. | Mac. | C2, C6. |
+| E5 | Hot tier on the winner: third bit (needs one residual fit) and native FP4 (no fit). | Mac. | C3. |
+| E6 | Generation check: tool-call validity and code completion, total-mass set against REAP-50, then the best cache. Not designed yet; needs the reference decoder on a pod. | Pod. | C7b; gates any public release. |
+| W6 | Trace replay on the internal SSD, `pread` pool against `mmap` faults, with and without memory pressure. | Mac. | C6. |
+| E7 | One confirmation on the pod's untouched 54 sessions with the routed forward on GPU. | Pod, 2–3 h. | Item 4, 25 points. |
+| E8 | Second model. | Mac; download needs Jack's go. | C10. |
 
-1. Export `fm-192` on the pod (`prune.py --skip-shard` for the two Engram shards, 152 GB). Running.
-2. Download through a CPU pod on the volume, 16 parallel streams. On the Mac, clone the two Engram
-   shards from `~/Models/v41-reap50` (`cp -c`, no extra space) and check every file against the
-   export's `SHA256SUMS` and REAP-50's.
-3. `local_eval.py` against the new checkpoint in BF16/FP4 on the Mac eval set. **Accept** when it
-   beats REAP-50 on the same sessions by at least 0.10 KL (the pod saw 0.184 on 54 full sessions),
-   and report the difference on teacher-confident positions separately.
-3b. A generation check before any codes are fitted to the new set, since everything so far is
-   teacher-forced KL: design and size it first (tool-call format validity and code completion on
-   held-out prompts, new set against REAP-50). Open question: V4.1 has no local decoder on this
-   Mac, so this may have to run on a pod with the reference implementation.
-4. Capture routing and importance on the new model (the step-2c capture, four chunks).
-5. Codes: flat 2-bit E8P for all 192 (reuse the fits of the experts shared with REAP-50, 76.5%, if
-   the importance source is the same; otherwise refit all, about 7 h of GPU), then the 1-bit
-   residual of the 2-bit base (`--residual-of`, about 4.5 h).
-6. Nested expert sets inside the new 192 by total mass on its own routing: 176, 160, 144, 128, 112.
-7. Eval set, version 2: 4,096 tokens per record, and the four sessions that share a first 1,024
-   tokens no longer counted as four texts. Sub-1-bit comparisons keep the old set for continuity.
+If C1 fails: the static path stands (re-base, C3 on a static set), the title falls back, and the
+paper is the unit accounting plus the selection result.
 
-Only after step 3 passes is `~/Models/v41-reap50` removable (341 GB), and pass 2 must finish
-first. `quant/e8-1bit-podimp` and `quant/e8-nest-r1` (66 GB) go with it.
+## 7. Headline
 
-### W0. Related work, read in full (gates the claims; no rubric points)
+The current title, *Offload the Residual, Not the Expert*, is not defensible on tonight's data: the
+1-bit base it needs is cut, SSD traffic did not bind where it was measured, and the design in
+section 2 offloads experts. It survives only if C6 is refuted.
 
-Unchanged. Adds a search for claim 4 (frequency-weighted or mass-based expert pruning criteria,
-and calibration on the pruned model's routing).
+Proposed working title, conditional on C1:
 
-### W1. Nested codes validated (rubric item 1: done, 10)
+> **Pruning Is a Frozen Cache: Unifying Pruning, Quantization and Offloading in MoE Inference**
 
-Fit complete, 40 of 40 layers; base + residual error 0.102 / 0.084 against 0.090 flat; end to end
-+0.053 KL [+0.039, +0.071]. The acceptance bound (all-tier-2 KL at most 0.80) was met at 0.8001.
-The alternating refit is no longer planned for the 1 + 1 ladder; it is used on the 2 + 1 ladder
-only if its nesting penalty exceeds 0.02 KL.
+It keeps the half of the original headline that has held up, and it states the claim a reader can
+check: a static expert set is the special case of a routed one, and it is dominated at equal
+memory. Fallback if C1 fails: *Bits Before Breadth: What a Gigabyte Buys in MoE Compression*, an
+empirical paper on the unit accounting and the selection rule, which the data already supports.
 
-### W4. Core result (rubric item 4: 0 → 25)
+Novelty risk: expert caches with a miss fallback exist (HOBBIT, DynaExq, and gating that skips
+experts). What they do not appear to do is compare against pruning at equal memory, or treat the
+two as one policy. W0 must confirm that before the title is used.
 
-The claim: at equal resident memory, a routed cache of third-bit residuals over a 2-bit base gives
-lower KL than any static assignment and than a separate-copy cache, at an SSD read rate the Mac
-sustains.
+## 8. Rubric mapping
 
-Budgets B = 288, 336 and 384 units (53, 62, 71 GB of routed experts). A configuration keeps N
-experts at 2 bits and K residual slots, 2N + K = B.
+| Item | Now | Moves when |
+|---|---:|---|
+| 1 Nested codes validated | 10 | done (and the 1-bit ladder is retired) |
+| 2 Per-token tiers built | 10 | done |
+| 3 Cache simulation and cost model | 10 | done |
+| 4 Core result (25) | 0 | 10: the routed cache beats the best static set by 0.03 KL (0.02 confident) and the 1-bit-fallback cache, one budget, reads under 2.5 GB/s. 15: two budgets, eval set 2, total-mass baseline. 25: E7. |
+| 5 Unification and frontier figure (10) | 0 | one policy sets residency, gate floor and tier; figure in total resident GB |
+| 6 Real Apple Silicon streaming (10) | 0 | W6 |
+| 7 Learned policy or trained codes (10) | 0 | per-expert thresholds, or a hot tier that passes C3 |
+| 8 Second MoE and downstream (10) | 0 | E8, E6 |
+| 9 Paper draft (5) | 1 | sections as conjectures resolve |
 
-| Policy | What it is |
-|---|---|
-| F, flat | B / 2 experts at 2 bits, nothing else. The frontier to beat. |
-| S, static-nested | fixed hot set of K residuals by routed mass |
-| R, routed-nested (ours) | LRU of K residuals, asynchronous admission at gate ≥ τ |
-| D, separate-copy | the hot expert's high tier is its native FP4 copy (4 units, swapped for the 2-bit copy: 2 extra units resident, 6 units moved per promote/demote cycle against 1) |
-| O, per-session oracle | hot set = that record's own top K; the ceiling for any cache |
+## 9. Operating rules and resources
 
-Build: a base-unit field in `routed_report.py` (bases are no longer 1 unit); a native-precision
-high tier for `--dynamic BASE|HI`; `--tau-file` (W5).
+- Pods: copy the checkpoint to local disk before GPU work; size volumes in GiB with 10% headroom
+  and check `df` before a large write (a full network volume writes empty files without an error);
+  never run a second large job beside a GPU job; test launchers before the GPU clock matters.
+- Evals: session-level intervals; state domain mean or pooled; no layer-local metric as evidence;
+  settle the expert pool before fitting codes to it.
+- Spend tonight: about $20 (H100 4.5 h, CPU pod, volume). Volume `yqazs7aqe6` is 720 GB, $50 a
+  month, deleted after E7.
+- Mac: 80 GB cap; 469 GB free and rising after the cleanup.
 
-Runs, on `fm-192`, eval set version 2:
+## 10. Decisions for Jack
 
-1. Pass A, B = 384: F(192); R, S, O at N = 160, K = 64 and N = 144, K = 96; endpoints (all at
-   3 bits, all at 2 bits).
-2. Pass B, B = 288 and 336: F(144), F(168); R and S at N = 128, K = 32 and 80; N = 112, K = 64.
-3. Pass C: D at the K and τ of the best R in each budget; tier 0 on top of the best R.
-4. Carried over from revision 1 on REAP-50 (1-bit base): pass 2 only (oracle, N < 192,
-   projection rungs), because it was already an hour in and its oracle result bounds the cache
-   policy on any ladder. Passes 2b (separate copies) and 3 (budgets 240 and 336) are cancelled;
-   the separate-copy comparison is made on the new ladder in pass C.
-
-Acceptance and scoring inside the item (unchanged in form):
-
-- 10 points: R beats F and S by at least 0.03 KL and beats D at equal memory and equal SSD rate,
-  session-level bootstrap 95% interval excluding zero, at one budget, with SSD traffic at or
-  below 2.5 GB/s at 30 tok/s.
-- 15 points: the same at two of three budgets on eval set version 2.
-- 25 points: reproduced on the pod's eval (108 sessions, full length) with the routed forward on
-  GPU (W4b).
-
-W4b is redefined: it no longer fits codes for 384 experts (X3 is demoted, see section 5). It ports
-the routed forward to `collect.py`, uploads the Mac's codes, and scores the winning configurations
-on the pod. Estimate from tonight's throughput (about 11 minutes per stream over 54 sessions):
-2–3 h on one H100, under $15.
-
-If R does not beat F on the 2 + 1 ladder either:
-
-1. Admission by prediction (score layer l + 1's gate on layer l's output), measured offline first.
-2. Report the routed-cache result against S and D as the contribution, with the selection finding,
-   under a title that does not claim to beat pruning. Say so then; do not stretch the claim.
-
-### W5. Unification (rubric item 5: 0 → 10)
-
-Unchanged in design (one benefit-per-byte rule with one λ; `routed_policy.py`,
-`routed_frontier.py`). Changes: tier 0 enters with tonight's measurement as its first point; the
-sidecar tier is removed; the frontier figure plots both ladders, with F, S, R, D and O.
-
-### W6. Real Apple Silicon streaming (rubric item 6: 0 → 10)
-
-Unchanged in design. Two notes from tonight: the admission rates to replay are low (9.5 to 28 MB
-per token at K = 96), so the bar is latency per admission, not sustained throughput; and the
-network-volume episode is the same failure in miniature, a single reader faulting pages one at a
-time, so the bench measures `pread` from a thread pool against `mmap` faults (X4) on purpose.
-
-### W7. Learned policy and tier-aware codes (rubric item 7: 0 → 10)
-
-- (a) 5 points: per-(layer, expert) thresholds from W5 beat one global τ by at least 0.02 KL.
-- (b) 5 points: a jointly fitted nested code (base chosen so that base + residual is best, not the
-  base alone) or tier-aware importance, gaining at least 0.02 KL at equal units.
-
-### W8. Generality (rubric item 8: 0 → 10)
-
-Unchanged (Qwen3-30B-A3B, download needs Jack's go). Adds the selection rule as a second thing to
-replicate there, since it needs only routing statistics.
-
-### W9. Paper (rubric item 9: 1 → 5)
-
-Unchanged, plus a selection section (claim 4) that can also stand alone as a short note.
-
-### WS. Selection, to its own conclusion (new; supports W9 and a possible REAP-50 v2)
-
-- Tonight: 96 experts in one pass on full-model routing against two passes through `fm-192`
-  (`x1b_pod.sh`), to test the rule "re-measure routing when the cut removes a large share of mass".
-- X8, domain-balanced mass: calibration tokens are uneven by domain (english-chat 52K, tool-use
-  451K) and english-chat is the one domain that got worse (0.448 → 0.572). Needs per-domain
-  accumulation in `collect.py` and one calibration pass on a pod; run with W4b. Adopt only if it
-  gains at least 0.03 domain-mean KL, because adopting it means re-basing again.
-- Publishing a replacement REAP-50 on Hugging Face is Jack's decision.
-
-## 4. Order and expected score
-
-| When (estimate) | Work | Score after |
-|---|---|---:|
-| Tonight | pass 2 on REAP-50 (last run on the 1-bit base); X1 follow-up; export and download of `fm-192` | 31 |
-| Day 1 | WR steps 3–7 (capture, fits); W0 reading; W6 bench built on tonight's traces | 31 |
-| Day 2 | W4 passes A–C on `fm-192`; title decision | 41–46 |
-| Day 3 | W5 policy and figure; W6 numbers; W7a | 61–66 |
-| Day 4 | W4b and X8 on a pod; W7b | 76–81 |
-| Days 5–6 | W8 | 91–96 |
-| Day 7 | W9 full draft | 100 |
-
-The score moves only on measured results, so a failed acceptance test holds it where it is. The
-re-base costs about a day against revision 1's schedule and raises every number it touches.
-
-## 5. Levers: status after tonight
-
-| # | Lever | Status |
-|---|---|---|
-| X1 | Prune twice at 384 → 192 | Resolved. The ranking rule is the gain (−0.184 KL); the second pass is not (+0.014 at 192, −0.009 n.s. at 96). The second pass used 12× less calibration data than the one-pass table, so "slightly worse" is not separable from sample size. |
-| X2 | Pruning as specialization | Closed (artifact). |
-| X3 | Keep all 384 bases at 1 bit, offload residuals | Demoted. A 1-bit base scores 1.358 alone and misses fall to it. At 2 bits, 384 bases are 768 units, over any budget here. |
-| X4 | OS page cache as the precision cache | Open, in W6. |
-| X5 | Stronger base, finer rungs | (b) promoted: the 2 + 1 ladder is now W4's main line. (a) projection rungs are in pass 2. |
-| X6 | Budgets by sensitivity | Open, after W4. |
-| X7 | Shared base across experts | Open, low priority. |
-| X8 | Domain-balanced selection | New, in WS. |
-| — | Sidecars (old step 3) | Closed: +0.199 KL [+0.164, +0.219] with 15 layers fitted. |
-
-## 6. Operating rules learned tonight
-
-Pods:
-- Never run the model from a network volume: one stream reads 120 MB/s, a random row takes
-  2–3 ms. Create the GPU pod with a container disk that holds the checkpoint and copy first
-  (16 streams, 476 GB in 7 minutes).
-- Smoke-test every launcher on the image before the GPU clock matters; match readiness by
-  substring; `PIP_BREAK_SYSTEM_PACKAGES=1` on Ubuntu 24.04 images.
-- Estimates from measured throughput: about 390 tok/s for a calibration stream and 11 minutes per
-  eval stream over 54 sessions. The X1 estimate (6.5–7.5 h) was 4× too high.
-- CPU-only work (exports, transfers) runs on a CPU pod or alongside a GPU job that is already
-  running, never on an idle GPU.
-
-Evaluation:
-- Report session-level bootstrap intervals; position-level intervals are about half as wide.
-- Domain mean and pooled KL differ a lot (0.716 against 0.950 for REAP-50) because the agentic and
-  tool-use domains are long and hard. State which one a number is.
-- Mac numbers (22 sessions, first 1,024 tokens) and pod numbers (54 sessions, full length) are not
-  comparable in absolute terms; only differences within one set are.
-- A layer-local metric is not evidence. Twice now (GLM-4.5-Air, V4.1) a sidecar that improved its
-  layer objective failed end to end. Score a partial fit end to end before finishing it.
-- Settle the expert set before fitting codes to it.
-- Write the prediction down before the run (findings note, section 6).
-
-## 7. Resources
-
-- Memory: 80 GB cap; the 8-variant sweep peaked at 64.1 GB.
-- Disk: 373 GB freed on 2026-11-09 (REAP-75, the no-effect refit, sidecar files). The new
-  checkpoint adds 152 GB; its codes about 100 GB.
-- Pod: about $20 spent tonight (H100 about 4 h, CPU pod, volume). Volume `yqazs7aqe6` is 680 GB
-  ($48 a month) and holds the full model and the export; delete it after W4b.
-
-## 8. Decisions for Jack
-
-1. Title: decide after the separate-copy sweep and the first 2 + 1 pass. Until then it stands.
-2. A replacement REAP-50 on Hugging Face built from the total-mass table (public change).
-3. Qwen3-30B-A3B download for W8.
+1. The title in section 7, after E1.
+2. A replacement REAP-50 on Hugging Face: not before E6.
+3. Qwen3-30B-A3B download for E8.
