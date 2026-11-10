@@ -598,13 +598,13 @@ to 100; partial credit only for measured progress).
 | 1 | Nested codes, all layers, validated | 10 | 10 | fit 40/40; error 0.102 gate/up, 0.084 down; end to end +0.053 KL against flat 2-bit |
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
-| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 0 | pass 1: R beats S by 0.068, but loses to 144 flat 2-bit experts by 0.025; D pending (pass 2b) |
+| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 12 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. The rest needs the pool of 384 and the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 0 | |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **31** | |
+| | **Total** | 100 | **43** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -829,3 +829,48 @@ What it says:
   (720 GB) keeps the full model and all eval outputs (`/workspace/x1/eval`, `eval2`, `eval3`).
 - Mac: the last sweep on the 1-bit ladder was stopped at Jack's request (17 CPU-hours in, results
   not kept). E1 was cut from eight variants to four and is running.
+
+### 2026-11-10: E1, an expert cache against a fixed set (C1 holds inside the pool of 192)
+
+- Setup: REAP-50 pool (192 experts per layer), every resident expert at 2 bits, no low-bit copy.
+  A token routes among the experts resident when it arrives (`--miss reroute`); experts it asked
+  for above gate 0.2 are admitted afterwards and serve from the next token on. Warm start from the
+  static top-N. 22 sessions, first 1,024 tokens, domain-mean KL against the full model, paired
+  bootstrap over sessions.
+
+  | Variant | Residents | KL | Top-1 | Reads at 30 tok/s |
+  |---|---:|---:|---:|---:|
+  | static (`rs144`) | 144 | 0.812 | 0.770 | 0 |
+  | LRU cache (`rr144`) | 144 | 0.756 | 0.785 | 0.45 GB/s |
+  | static (`prunedmass-96`, step 2c) | 96 | 1.039 | 0.733 | 0 |
+  | LRU cache (`rr96`) | 96 | 0.809 | 0.777 | 1.72 GB/s |
+  | per-session oracle set (`ro96`) | 96 | 0.789 | 0.782 | 0 |
+
+- Path check: `rs144` reproduces the earlier pruned 144 exactly (0.8123 against 0.812), so
+  masked routing in the new path equals pruning.
+- Cache against static at equal memory: −0.056 [−0.066, −0.046] at 144; −0.231 [−0.248, −0.211]
+  at 96. A cache of 96 equals a static 144 (−0.004 [−0.020, +0.008]): the same quality for two
+  thirds of the expert memory. A cache of 144 is within 0.009 [−0.001, +0.012] of all 192
+  resident (0.747).
+- C1 passes its own test (gain above 0.02 at both sizes, intervals clear of zero, reads under
+  2.5 GB/s). Not checked: the "confident positions" form of the gain, because the Mac eval files
+  do not store the teacher's NLL.
+- C5: the oracle beats the LRU by 0.020 [0.005, 0.027], above the predicted 0.015. All of it is
+  warm-up: the gap is 0.050 in the first 256 tokens and 0.002–0.017 after. So admission policy is
+  near its ceiling, and the one thing worth building is a better starting set (idea 6, the prompt
+  as a demand profile).
+- C6 holds at 144 (0.45 GB/s; 1.6 admissions per token, 15 MB) and misses its 1 GB/s line at 96
+  (1.72 GB/s; 6.2 admissions per token, 57 MB).
+- C4 untested: the drop variant was cut from the run.
+- Where the gain is: english-chat (0.760 to 0.468 at 144; 1.195 to 0.497 at 96), business (0.971
+  to 0.763; 1.391 to 0.786). Agentic and tool-use text does not move (tool-use 3.27 to 3.33 at
+  144). The static set was chosen on the mass of the whole calibration mix, so the cache helps
+  where a session differs from the mix; tool-use loss comes from the pool of 192 itself and needs
+  the pool of 384 (C2).
+- The gain is flat along the session (−0.268, −0.233, −0.209, −0.212 by quarter at 96).
+- Limits: pool of 192 and not 384; first 1,024 tokens of 22 sessions; reads are counted, not
+  measured; a fetch is assumed to land within one token. The log's `admissions_per_token_layer`
+  is divided by the layer count twice; `routed_report.py` and the counts above are right.
+- Rubric item 4 moves from 0 to 12 of 25. Total 43.
+- Run cost: 6,757 s forward, peak RSS 62.4 GB. Nothing is running on the Mac or on Runpod.
+

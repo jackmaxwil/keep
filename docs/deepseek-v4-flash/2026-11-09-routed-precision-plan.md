@@ -11,7 +11,7 @@ Pruning is a cache that never updates. Keep every resident expert at a usable pr
 let the set of resident experts follow the session, and send a token whose expert is absent to the
 best resident one instead of to a worse copy. Precision above 2 bits is a second, smaller question.
 
-This is a conjecture (C1 below), not a result. What is measured so far: a routed cache of
+C1 held in its first test (E1, 2026-11-10, inside the pool of 192): an expert cache with re-route beats the static set by 0.056 KL at 144 residents and 0.231 at 96, and a cache of 96 equals a static 144. C2 (the pool of 384) is the open half. Measured before that: a routed cache of
 residuals beats a fixed one by 0.068 KL; a 1-bit fallback is the dominant cost; dropping low-gate
 slots is free; the second bit is worth more than breadth.
 
@@ -110,7 +110,7 @@ C1, C2 and C6 carry the title. C7–C8 are a second, independent result.
 | # | What | Where, cost | Gate |
 |---|---|---|---|
 | E0 | Pass 2 on the old ladder (oracle gap for C5). | Mac, finishing about 23:00. | — |
-| E1 | Expert cache at 2 bits inside REAP-50 (`local_eval.py --miss drop\|reroute`, built and unit-tested). Eight variants: static, LRU (τ 0.2 and 0.1), oracle and drop at N = 144; static, LRU and oracle at N = 96. The static variants use exactly the sets scored earlier, so they must reproduce 0.812 and 1.039: that is the end-to-end check of the new path. Queued (`jobs/e1.sh`) behind E0 with a 64-token smoke test. Stratified columns in `routed_report.py` are still to build. | Mac, about 3.5 h. | Decides C1, C4, C5. |
+| E1 | **Done 2026-11-10** (trimmed to four variants). Expert cache at 2 bits inside REAP-50 with re-route on a miss: 0.756 against 0.812 static at 144; 0.809 against 1.039 at 96; oracle 0.789 at 96; the static control reproduced 0.812. Details in the recovery log. | Mac, 1.9 h. | C1 holds; C5 gap 0.020, all warm-up; C6 holds at 144, misses at 96; C4 not run. |
 | E2 | 96 experts, one pass against two. | Pod, running. | C8. |
 | WR | Export and download the total-mass 192: the honest static baseline and a better pool of 192. | CPU pod, overnight. | — |
 | E3 | If C1 holds: 2-bit codes for all 384 experts and the full router rows, as a codes-only pool (about 150 GB). Size the fit first; it has only run on the Mac GPU. | Pod. | Needs C1. |
