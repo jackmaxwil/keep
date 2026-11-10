@@ -137,7 +137,7 @@ Red-team of the chosen plan:
 |---|---|---|
 | K1 | Stock oMLX on this Mac, local pruned checkpoint: tok/s, hit rate, resident memory, and a replayed prompt (hit rate near 1) for its no-miss floor. | The base, if the no-miss floor is under about 10 tok/s: switch to Rapid-MLX's decode kernels. |
 | K2 | `bench_e8p_m1` at 5120 × 2304 against oMLX's 2-bit affine kernel. | Our lattice kernel in the runtime: ship affine 2-bit instead. |
-| K3 | Static 250 and 288 of 384 against the full model, teacher-forced, on the pod (running). | Nothing; it sets how much the cache has to recover and the target C. |
+| K3 | Static 250 and 288 of 384 against the full model, teacher-forced, on the pod. **Done 2026-11-10:** KL 0.323 at 250 and 0.235 at 288 (0.532 at 192, 1.123 at 96), native precision, no cache. | Nothing; it sets how much the cache has to recover. At the 80 GB cap (about 160 experts) a fixed set costs roughly 0.6–0.7 by interpolation, so the cap matters more than the code density. |
 | K4 | E1: expert cache with re-route against static sets, teacher-forced (queued tonight). | The quality case for the cache, if it is not better than a static set. |
 | K5 | 20 lines: an MLX array over a 1 GB memory-mapped file through the E8P kernel; check footprint and `mincore`. | Idea 3 (page cache), if it copies. |
 | K6 | Offline, from stored routes: how well token ids predict experts; how well a prompt's demand predicts the rest of the session; recall of the drafter's 256-d head. | Ideas 2, 6 and 7 respectively. |

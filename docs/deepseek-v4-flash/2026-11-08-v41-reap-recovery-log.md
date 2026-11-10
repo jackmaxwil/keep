@@ -806,3 +806,26 @@ What it says:
   (31–45 tok/s on this Mac); the "91 GB thrash" was measured on an M5 Max.
 - Pod: with Jack's go, a 33-minute eval of static 250 and 288 of 384 against the full model is
   running before the pod is terminated.
+
+### 2026-11-10: what a fixed resident set costs (K3), pod terminated
+
+- Static sets by total routed mass against the full model, native precision, no cache, 54 eval
+  sessions, domain-mean KL (pooled in brackets) and top-1 agreement:
+
+  | Experts per layer | Routed mass kept | KL | Top-1 |
+  |---:|---:|---:|---:|
+  | 96 | 74.0% | 1.123 (1.223) | 0.709 |
+  | 192 | 92.5% | 0.532 (0.650) | 0.814 |
+  | 250 | 95.2% | 0.323 (0.449) | 0.860 |
+  | 288 | 97.5% | 0.235 (0.357) | 0.887 |
+
+  Tool-use and the two agentic domains carry most of what remains (tool-use 1.058 at 250 and
+  0.837 at 288; code-diffs 0.045 and 0.021). Mass kept is a poor predictor of KL: the last 2.5% of
+  mass still costs 0.235.
+- For the build plan: at the 80 GB cap about 160 experts fit, where a fixed set costs roughly
+  0.6–0.7 KL by interpolation (not measured); at 250 it costs 0.32. The cap, more than the code
+  density, sets how much the cache has to recover.
+- H100 pod `q8vcl6ob0hf0lk` terminated 06:21 UTC after about 5.3 h ($21). Volume `yqazs7aqe6`
+  (720 GB) keeps the full model and all eval outputs (`/workspace/x1/eval`, `eval2`, `eval3`).
+- Mac: the last sweep on the 1-bit ladder was stopped at Jack's request (17 CPU-hours in, results
+  not kept). E1 was cut from eight variants to four and is running.
