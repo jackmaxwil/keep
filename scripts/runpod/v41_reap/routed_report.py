@@ -45,13 +45,14 @@ def rows(eval_dir: Path, tok_s: float, bandwidth_gbs: float) -> list[dict]:
         hi_read = hi_units if tiers.get("copy_mode") else 1 + hi_units  # a separate copy is read alone
         read = (c[:, :, 0].sum() + c[:, :, 1].sum() * hi_read) * UNIT_BYTES / tokens
         ssd = c[:, :, 4].sum() * hi_units * UNIT_BYTES / tokens if k is not None else 0.0
-        if tiers.get("copy_mode") and k is not None:
+        if tiers.get("copy_mode") and k is not None and not tiers.get("miss"):
             # A separate-copy cache can instead drop a hot expert's low copy (1 extra unit, not 2) and read
             # it back on demotion: every promote/demote cycle then moves 3 units where a residual moves 1.
             row |= {"units_per_layer_swap": round(n_bases + k, 1),
                     "ssd_gbs_swap": round(c[:, :, 4].sum() * 3 * UNIT_BYTES / tokens * tok_s / 1e9, 2)}
         row |= {
             "tau": tiers["tau"], "tau_drop": tiers.get("tau_drop", 0.0), "cache_k": k, "policy": tiers.get("policy"),
+            "miss": tiers.get("miss"),
             "n_bases": n_bases, "hi_units": round(hi_units, 2),
             "hi_slots": round(tiers["hi_slot_share"], 3), "drop_slots": round(tiers.get("drop_slot_share", 0.0), 3),
             "units_per_layer": round(units, 1), "resident_gb": round(units * n_layers * UNIT_BYTES / 1e9, 1),

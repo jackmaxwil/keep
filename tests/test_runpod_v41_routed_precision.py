@@ -90,3 +90,39 @@ def test_compare_bootstrap(tmp_path):
     (tmp_path / "summary.json").write_text(json.dumps({"variants": {"a": sessions, "b": sessions}}))
     out = routed_report.compare(f"{tmp_path}:a", f"{tmp_path}:b", reps=200)
     assert abs(out["kl_diff"] - 0.1) < 1e-9 and out["ci95"][0] <= 0.1 <= out["ci95"][1]
+
+
+def test_residual_cache_reports_the_resident_set():
+    ind = np.array([[0, 1], [2, 1], [2, 0]])
+    wts = np.array([[0.9, 0.1], [0.5, 0.1], [0.5, 0.2]])
+    resident = np.zeros((3, 4), dtype=bool)
+    local_eval.residual_cache(ind, wts, k=2, tau=0.3, bounds=[3], warm=np.array([3, 1]), counts=np.zeros((4, 5)),
+                              resident=resident)
+    # token 0 sees the warm set {3, 1}; expert 0 is admitted and evicts 3; then 2 evicts 1
+    assert resident.tolist() == [[False, True, False, True], [True, True, False, False], [True, False, True, False]]
+    resident[:] = False
+    local_eval.residual_cache(ind, wts, k=2, tau=0.3, bounds=[3], warm=None, counts=np.zeros((4, 5)),
+                              policy="oracle", resident=resident)
+    assert resident.all(axis=0).tolist() == [True, False, True, False]  # the record's top two by mass: 0 and 2
+
+
+def test_gate_masked_routes_among_allowed_experts():
+    torch = pytest.importorskip("torch")
+    import types
+
+    torch.manual_seed(0)
+    gate = types.SimpleNamespace(weight=torch.randn(8, 5), bias=torch.zeros(8), gate_temp=1.0, score_func="sqrtsoftplus",
+                                 topk=3, norm_topk_prob=True, route_scale=1.5)
+    x = torch.randn(4, 5)
+    scores = torch.nn.functional.softplus(x @ gate.weight.T).sqrt()
+    w, i = local_eval.gate_masked(gate, x, torch.ones(4, 8, dtype=torch.bool), torch.nn.functional.linear)
+    assert torch.equal(i, scores.topk(3, dim=-1)[1])  # nothing masked: the reference router
+    assert torch.allclose(w.sum(-1), torch.full((4,), 1.5))
+    allowed = torch.ones(4, 8, dtype=torch.bool)
+    allowed[:, i[0, 0]] = False
+    w2, i2 = local_eval.gate_masked(gate, x, allowed, torch.nn.functional.linear)
+    assert not (i2 == i[0, 0]).any() and torch.allclose(w2.sum(-1), torch.full((4,), 1.5))  # re-routed, renormalized
+    few = torch.zeros(4, 8, dtype=torch.bool)
+    few[:, :2] = True  # fewer allowed than top-k: the surplus slot carries no weight
+    w3, i3 = local_eval.gate_masked(gate, x, few, torch.nn.functional.linear)
+    assert ((w3 > 0).sum(-1) == 2).all() and (i3[w3 > 0] < 2).all()

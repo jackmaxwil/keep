@@ -66,6 +66,30 @@ def local_masks(spec: str, ckpt_survivors: dict[str, list[int]]) -> dict[int, np
     return masks
 
 
+def gate_masked(gate, x, allowed, linear):
+    """``Gate.forward`` with a per-token candidate set: ``allowed`` [n, n_experts] bool.
+
+    The router picks its top-k among the allowed experts and normalizes over those, which is what
+    a router masked to a pruned set does, here with a set that changes from token to token. A row
+    with fewer than top-k allowed experts gives its surplus slots zero weight."""
+
+    import torch
+    import torch.nn.functional as F
+
+    scores = linear(x.float(), gate.weight.float()) / gate.gate_temp
+    if gate.score_func == "softmax":
+        scores = scores.softmax(dim=-1)
+    elif gate.score_func == "sigmoid":
+        scores = scores.sigmoid()
+    else:
+        scores = F.softplus(scores).sqrt()
+    indices = (scores + gate.bias).masked_fill(~allowed, float("-inf")).topk(gate.topk, dim=-1)[1]
+    weights = scores.gather(1, indices) * allowed.gather(1, indices)
+    if gate.norm_topk_prob and gate.topk > 1:
+        weights = weights / (weights.sum(dim=-1, keepdim=True) + 1e-20)
+    return weights * gate.route_scale, indices
+
+
 def expert_override(spec: str, n_experts: int, ckpt_survivors: dict):
     """``layer -> {(expert, proj): bf16 [out, in]}`` from FP4 (``fp4-bf16``) or E8P codes."""
 
@@ -128,7 +152,7 @@ def expert_override(spec: str, n_experts: int, ckpt_survivors: dict):
 
 def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds: list[int],
                    warm: np.ndarray | None, counts: np.ndarray, policy: str = "lru",
-                   trace: list | None = None) -> np.ndarray:
+                   trace: list | None = None, resident: np.ndarray | None = None) -> np.ndarray:
     """Which (token, slot) pairs may run base + residual, under an LRU of ``k`` resident residuals.
 
     ``ind``/``wts``: [T, top_k] routed experts and gate weights, the records of ``bounds`` back to
@@ -139,7 +163,10 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
     them as (record, token in record, expert).
 
     ``policy="oracle"`` is the upper bound for any cache of ``k``: each record's hot set is its own
-    top ``k`` experts by routed gate weight, known in advance and never changed (no admissions)."""
+    top ``k`` experts by routed gate weight, known in advance and never changed (no admissions).
+
+    ``resident`` ([T, n_experts] bool, zeroed by the caller) receives the resident set each token
+    sees, for callers that re-route a miss among resident experts."""
 
     from collections import OrderedDict
 
@@ -150,12 +177,16 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
             mass = np.bincount(ind[start:start + n].ravel(), weights=wts[start:start + n].ravel(), minlength=counts.shape[0])
             hot = np.argsort(-mass, kind="stable")[:k]
             hi[start:start + n] = np.isin(ind[start:start + n], hot[mass[hot] > 0])
+            if resident is not None:
+                resident[start:start + n, hot] = True
             start += n
             continue
         lru = OrderedDict((int(e), None) for e in (warm if warm is not None else []))
         for t in range(start, start + n):
             row = ind[t].tolist()
             hi[t] = [e in lru for e in row]
+            if resident is not None:
+                resident[t, list(lru)] = True
             for s, e in enumerate(row):
                 if wts[t, s] >= tau:
                     if e in lru:
@@ -197,6 +228,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE")
     p.add_argument("--tau-drop", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot with gate weight < VALUE is skipped (rung 0 per token)")
+    p.add_argument("--miss", action="append", default=[], metavar="NAME=drop|reroute",
+                   help="with --cache-k and BASE|HI codes: no base copy. A slot whose expert is not resident is "
+                        "skipped (drop), or the router picks its top-k among resident experts (reroute)")
     p.add_argument("--cache-k", action="append", default=[], metavar="NAME=K",
                    help="with --dynamic: hi tier only from an LRU of K resident residuals per layer, admitted at gate >= tau")
     p.add_argument("--cache-warm", type=Path, help="imatrix npz (reap__gate_norm_sum): warm-start each cache with the top-K")
@@ -259,6 +293,7 @@ def main(argv: list[str] | None = None) -> int:
         from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
 
         copy_mode = "|" in args.dynamic  # the high tier is its own copy, not base + residual
+        args_cache_k_names = {s.partition("=")[0] for s in args.cache_k}
         base_dir, _, res_dir = args.dynamic.partition("|" if copy_mode else "+")
         base_dir, res_dir = Path(base_dir).expanduser(), Path(res_dir).expanduser()
         hi_proj = {name: {"w2": ("w2",), "w1w3": ("w1", "w3")}[v] for name, _, v in (s.partition("=") for s in args.hi_proj)}
@@ -267,6 +302,9 @@ def main(argv: list[str] | None = None) -> int:
         traces: dict[str, list] = {name: [] for name in args.trace}
         taus = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau)}
         tau_drop = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau_drop)}
+        miss = {name: mode for name, _, mode in (s.partition("=") for s in args.miss)}
+        assert all(m in ("drop", "reroute") and copy_mode and v in args_cache_k_names for v, m in miss.items()), \
+            "--miss takes drop or reroute, and needs BASE|HI codes and --cache-k for the same variant"
         assert set(taus) == set(variants), "--tau needs one NAME=VALUE per --variant"
         np_grids = {16: e8p_full_grid().astype(np.float32), 8: e8_1bit_grid().astype(np.float32)}
         cache: dict = {"layer": None}
@@ -278,10 +316,10 @@ def main(argv: list[str] | None = None) -> int:
         for v in variants:  # [layer, expert, (lo slots, hi slots, lo mass, hi mass, admissions, dropped slots, dropped mass)]
             dyn_counts[v] = np.zeros((n_layers_, n_local, 7))
 
-        def simulate_cache(layer, ind, wts, k, tau, counts):
+        def simulate_cache(layer, ind, wts, k, tau, counts, resident=None):
             v, found = state["variant"], []
             hi = residual_cache(ind, wts, k, tau, state["bounds"], None if warm is None else warm[layer, :k], counts,
-                                policy=policies.get(v, "lru"), trace=found if v in traces else None)
+                                policy=policies.get(v, "lru"), trace=found if v in traces else None, resident=resident)
             if v in traces:
                 traces[v].extend((layer, *row) for row in found)
             return hi
@@ -322,13 +360,20 @@ def main(argv: list[str] | None = None) -> int:
             y = torch.zeros_like(x, dtype=torch.float32)
             limit = self.shared_experts.swiglu_limit
             k = cache_k.get(state["variant"])
+            on_miss = miss.get(state["variant"])
+            resident = np.zeros((x.size(0), self.gate.weight.size(0)), dtype=bool) if on_miss == "reroute" else None
             hi_all = None if k is None else torch.as_tensor(
-                simulate_cache(layer, indices.numpy(), weights.float().numpy(), k, tau, counts))
+                simulate_cache(layer, indices.numpy(), weights.float().numpy(), k, tau, counts, resident))
+            if resident is not None:  # demand (above) drove the cache; the tokens run on what is resident
+                weights, indices = gate_masked(self.gate, x, torch.as_tensor(resident), ref.linear)
+                hi_all = weights > 0
             for i in torch.unique(indices).tolist():
                 idx, top = torch.where(indices == i)
                 w = weights[idx, top]
                 hi_mask = w >= tau if hi_all is None else hi_all[idx, top]
                 drop = w < tau_drop.get(state["variant"], 0.0)  # rung 0 per token: the slot is skipped
+                if on_miss:
+                    drop = drop | ~hi_mask  # no base copy: a slot that is not resident is not run
                 counts[i, 5] += int(drop.sum())
                 counts[i, 6] += float(w[drop].sum())
                 hi_mask = hi_mask & ~drop
@@ -487,7 +532,8 @@ def main(argv: list[str] | None = None) -> int:
         hi_units = 2.0 if copy_mode else len(hi_proj.get(v, ("w1", "w2", "w3"))) / 3
         summary["variants"][v]["_tiers"] = {"tau": taus[v], "cache_k": cache_k.get(v),
                                             "policy": policies.get(v, "lru") if v in cache_k else None,
-                                            "copy_mode": copy_mode, "hi_units": hi_units, "n_bases": kept,
+                                            "copy_mode": copy_mode, "hi_units": hi_units,
+                                            "n_bases": 0 if v in miss else kept, "pool": kept, "miss": miss.get(v),
                                             "tau_drop": tau_drop.get(v, 0.0),
                                             "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),

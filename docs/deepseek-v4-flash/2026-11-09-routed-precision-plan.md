@@ -100,7 +100,7 @@ with teacher NLL below 2; intervals are session-level bootstrap.
 | C6 | **Traffic does not bind.** The best configuration at each budget reads under 1 GB/s at 30 tok/s, and 99% of admissions land within one token interval on the internal SSD. | Simulation in E1/E4; W6 replay. | Either number missed: then the unit moved matters and nested residuals return. |
 | C7 | **Rank by sum, not mean.** Total routed mass beats REAP's per-route score (a) on confident KL and (b) in generated tool calls and code. | (a) measured at 192: −0.052 [−0.080, −0.023]. (b) E6. | (b) shows no gain or a loss. |
 | C8 | **Re-measure routing when the cut is deep.** 96 experts picked through the 192 beat 96 picked in one pass by at least 0.05. | E2, on the pod now. | Smaller, or reversed. |
-| C9 | **The gate floor is free.** Skipping slots with gate below 0.1 costs under 0.005 KL in any configuration. | One point so far (+0.001); added to E1 and E4. | Any configuration above 0.005. |
+| C9 | **The gate floor is free.** Skipping slots with gate below 0.1 costs under 0.005 KL in any configuration. | One point so far (+0.001); added to E4. | Any configuration above 0.005. |
 | C10 | **C1 holds on a second MoE.** | E8, Qwen3-30B-A3B, with real generation. | C1's test fails there. |
 
 C1, C2 and C6 carry the title. C7–C8 are a second, independent result.
@@ -110,7 +110,7 @@ C1, C2 and C6 carry the title. C7–C8 are a second, independent result.
 | # | What | Where, cost | Gate |
 |---|---|---|---|
 | E0 | Pass 2 on the old ladder (oracle gap for C5). | Mac, finishing about 23:00. | — |
-| E1 | Expert cache at 2 bits inside REAP-50: LRU and oracle at N = 144 and 96, static controls, drop against re-route, gate floor. Needs `--miss drop\|reroute` in `local_eval.py` and stratified columns in `routed_report.py`. | Mac, about 3.5 h, starts after E0. | Decides C1, C4, C5. |
+| E1 | Expert cache at 2 bits inside REAP-50 (`local_eval.py --miss drop\|reroute`, built and unit-tested). Eight variants: static, LRU (τ 0.2 and 0.1), oracle and drop at N = 144; static, LRU and oracle at N = 96. The static variants use exactly the sets scored earlier, so they must reproduce 0.812 and 1.039: that is the end-to-end check of the new path. Queued (`jobs/e1.sh`) behind E0 with a 64-token smoke test. Stratified columns in `routed_report.py` are still to build. | Mac, about 3.5 h. | Decides C1, C4, C5. |
 | E2 | 96 experts, one pass against two. | Pod, running. | C8. |
 | WR | Export and download the total-mass 192: the honest static baseline and a better pool of 192. | CPU pod, overnight. | — |
 | E3 | If C1 holds: 2-bit codes for all 384 experts and the full router rows, as a codes-only pool (about 150 GB). Size the fit first; it has only run on the Mac GPU. | Pod. | Needs C1. |
