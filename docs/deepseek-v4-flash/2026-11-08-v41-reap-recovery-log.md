@@ -673,3 +673,23 @@ to 100; partial credit only for measured progress).
   domains measure the same one. Paired differences between variants are unaffected; domain means
   at 1,024 tokens overweight that prompt. The 4,096-token confirmation pass (W4 pass 4) is where
   those sessions diverge.
+
+### 2026-11-09: X1 running on an H100, after 70 lost minutes
+
+- GPU pod `q8vcl6ob0hf0lk` (H100 SXM, US-NE-1, $3.99/h) created 01:01 UTC once the fetch verified;
+  the CPU pod was terminated. Calibration on the 288-expert masked model started 02:31 UTC. The 90
+  minutes between cost about $6 and did no GPU work:
+  - 15 minutes: my readiness probe compared the proxy's reply to a prefix, and the reply starts
+    with a terminal escape sequence, so it waited out all its tries on a pod that was already up.
+  - One failed launch: the Ubuntu 24.04 image marks the system Python as externally managed
+    (`PIP_BREAK_SYSTEM_PACKAGES=1` in `x1_pod.sh`).
+  - 50 minutes: the smoke test sat at 0% GPU. The network volume reads one stream at about
+    120 MB/s and a random 256-byte row in 2–3 ms; the loader reads shards through one mmap and
+    the Engram lookup faults in rows one page at a time. Sixteen parallel streams read 3.2 GB/s
+    across files and 1.1 GB/s inside one file.
+- Fix: container disk raised from 50 to 560 GB (restarts the container), and `x1_pod.sh` copies
+  the checkpoint to the container's own disk with 16 parallel `cp` and checks the byte total
+  (`LOCAL_HF=/root/v41-hf`; `pod.sh` and `x1_pod.sh` take `HF` from the environment). The copy took
+  7 minutes for 476 GB. Smoke then passed: 16,384 tokens in 447 s, 48.1 GB peak GPU memory.
+- For W4b and any later pod on this volume: budget the 7-minute copy, create the pod with a
+  560 GB container disk from the start, and probe readiness by substring.

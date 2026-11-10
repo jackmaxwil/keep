@@ -11,14 +11,28 @@
 set -euo pipefail
 W=/workspace
 KIT=$W/keep/scripts/runpod/v41_reap
-HF=$W/v41-hf
+HF=${HF:-$W/v41-hf}
 X=$W/x1
 CAL_SHARD=${CAL_SHARD:-0/12}        # 2 of 24 calibration sessions, about 256K tokens, every domain
 EVAL_SHARD=${EVAL_SHARD:-0/2}       # 54 of 108 eval sessions
 CHUNK=${CHUNK_TOKENS:-262144}
 export PYTHONPATH=$W/keep/src MAX_GPU_HOURS=${MAX_GPU_HOURS:-9}
+export PIP_BREAK_SYSTEM_PACKAGES=1  # Ubuntu 24.04 images mark the system Python as externally managed
 log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$X/x1.log"; }
 trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "$X/FAILED"; }' EXIT
+
+# The network volume reads one stream at about 120 MB/s and a random Engram row in about 3 ms, so the
+# smoke test sat at 0% GPU for 50 minutes. Sixteen parallel streams read 3 GB/s: copy the checkpoint
+# to the container's own disk first (LOCAL_HF, needs ~480 GB there) and run from that.
+if [[ -n "${LOCAL_HF:-}" ]]; then
+  log "copy checkpoint to $LOCAL_HF"
+  mkdir -p "$LOCAL_HF"
+  (cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL_HF/")
+  [[ $(cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}') == $(cd "$LOCAL_HF" && find . -type f -printf '%s\n' | awk '{s+=$1} END {print s}') ]]
+  HF=$LOCAL_HF
+  log "copy done"
+fi
+export HF
 
 pip install -q --no-index --find-links "$W/wheels" -r "$KIT/requirements-ref.txt" \
   || pip install -q -r "$KIT/requirements-ref.txt"
