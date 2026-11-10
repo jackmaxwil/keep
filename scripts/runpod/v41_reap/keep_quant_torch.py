@@ -165,7 +165,7 @@ def check(args) -> None:
             w = weights[proj][: args.rows]
             d = torch.from_numpy(full[space][layer][original].astype(np.float32)).to(device)
             started = time.time()
-            codes, scales, wrel = search.fit(w, d, 512 if w.shape[1] % 512 == 0 else 256)
+            codes, _, wrel = search.fit(w, d, 512 if w.shape[1] % 512 == 0 else 256)
             seconds = time.time() - started
             ref_codes, ref_scales = z[f"{proj}_codes"][expert, : args.rows], z[f"{proj}_scales"][expert, : args.rows]
             group = w.shape[1] // ref_scales.shape[1]
