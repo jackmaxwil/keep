@@ -600,11 +600,11 @@ to 100; partial credit only for measured progress).
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 12 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. The rest needs the pool of 384 and the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
-| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 7 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max with 144 2-bit lattice residents of the pool of 192 at 26–28 tok/s, 20 MB of real reads per token, 62 GiB (FP4, 64 residents: 22–26 tok/s). The rest needs the pool of 384 and memory pressure |
+| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 8 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. The rest needs memory pressure |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **50** | |
+| | **Total** | 100 | **51** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -960,3 +960,19 @@ What it says:
   capacity. Nothing was created and nothing is billing beyond the volume.
 - Rubric unchanged at 50.
 
+### 2026-11-10: pool of 384 on the Mac
+
+- No GPU was needed. A CPU pod (4 vCPU, $0.12/h, 76 minutes) streamed the 192 removed experts
+  per layer and all router rows to the Mac (144 GB); the Metal fit made their 2-bit codes in
+  2.5 h (weighted error 0.091 on w1 and w3, 0.079 on w2). Pod terminated.
+- The lattice cache now takes a pool wider than the loaded checkpoint (`0098ea8`). Over all 384
+  experts with 144 residents: 26.6, 23.7 and 22.6 tok/s with thinking off, 19.1 and 17.3 with
+  thinking on, 63 GiB, 88–91% of demanded slots resident, 6–9 installs per token (1.0–2.1 GB/s
+  of reads).
+- Text: one thinking-off script correct, one with a wrong token that crashes it; thinking on
+  finishes under sampling (2,704 reasoning tokens, correct script) and repeats under greedy
+  decoding like the pruned models. Table in the build plan, section "Pool of 384".
+- Rubric item 6 moves from 7 to 8. Item 4 still needs the quality comparison over the pool of
+  384, which needs the full FP4 model as reference (pod). Total 51.
+- Disk: `pool384/fp4-removed` (144 GB of FP4 experts) is no longer needed by the cache and
+  waits for Jack's word before deletion. Nothing is running on the Mac or on Runpod.

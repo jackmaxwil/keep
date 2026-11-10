@@ -485,7 +485,49 @@ Text, same prompt as before (a script that finds duplicate files by SHA-256):
 - With the cache on, greedy output is not reproducible: install timing changes routing. Two
   runs diverged after 18 characters; a third matched the second.
 
-Not done: the pool of 384 (codes exist only for the pruned 192), more than 144 residents (160
-would be about 67 GiB steady), memory pressure, and multi-token verify windows in serving (the
-self-check covers 8 rows).
+Not done: more than 144 residents (160 would be about 67 GiB steady), memory pressure, and
+multi-token verify windows in serving (the self-check covers 8 rows).
+
+### Pool of 384 (2026-11-10)
+
+Every expert of the full checkpoint is now reachable on the Mac at 2 bits.
+
+- Codes. The 192 experts per layer that REAP-50 removed were copied from the Runpod volume
+  through a CPU pod (`extract_tensors.py`, 144 GB, 76 minutes, about $0.16) and fitted on the Mac
+  with the unchanged Metal search: 2.5 h for 40 layers, weighted error 0.091 on w1 and w3 and
+  0.079 on w2 (the first 192: 0.090 and 0.074). The torch port refits 64 rows of nine
+  projections to the same codes. All 384 router rows per layer came with them; the rows of the
+  192 survivors equal the REAP-50 checkpoint's.
+- Cache. `OMLX_LATTICE` may name a pool file: code directories with the pool number of each
+  expert, a router file and routed-mass statistics for the starting residents. oMLX still loads
+  the REAP-50 checkpoint (everything outside the routed experts is shared), and the cache
+  replaces router and experts. Self-check over 384: same gaps as over 192; the decode-step MoE
+  takes 0.444 ms (0.40–0.42 over 192).
+- Starting residents are the 144 experts with the most routed mass in calibration: 83% of the
+  mass on average, 66% in the worst layer. On average 118 of them are REAP-50 survivors.
+
+Serving, 144 residents, tau 0.2, 4 spares, 63 GiB (the pool of 192: 62 GiB):
+
+| Request | Tokens | tok/s | Demanded slots resident | Installs per token | Read |
+|---|---:|---:|---:|---:|---:|
+| Script, thinking off, greedy (first request) | 1,124 | 26.6 | 88% | 8.9 | 80 MB per token |
+| Same again | 748 | 23.7 | 88% | 9.1 | 82 MB per token |
+| 4,341-token prompt, summary | 282 | 22.6 | | | prefill 23.6 s (184 tok/s) |
+| Script, thinking on, greedy, 4,096 budget | 4,096 | 19.1 | 91% | 6.3 | 1.05 GB/s |
+| Script, thinking on, sampled, 12,000 budget | 3,256 | 17.3 | | 8.7 | 1.34 GB/s |
+
+- Against the pool of 192 at the same 144 residents: four times the installs (2.2 per token
+  there), 88–91% of demanded slots resident against 96%, and 0–15% lower speed with thinking
+  off (26.0–27.9 there).
+- Text. The first thinking-off script runs correctly on the test tree. The second, from a
+  different cache state, has one wrong token (`sha.hexdigdigest()`) and crashes. One sample;
+  the pool of 192 produced no such error in its runs.
+- Thinking on, greedy: no answer in 4,096 tokens, repeating from about character 12,800 of
+  16,235, as the pruned models do. Thinking on, sampled: 2,704 reasoning tokens, then a
+  552-token answer whose script runs correctly, 192 s in all (the pool of 192 needed 7,567
+  reasoning tokens; one sample each).
+- 7% of wanted admissions found no free slot in the first request, 5% over the thinking runs.
+
+Not measured: quality against the full FP4 model (it does not fit the Mac; pod work), other
+values of tau, memory pressure.
 
