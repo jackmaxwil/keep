@@ -136,7 +136,7 @@ Red-team of the chosen plan:
 | # | Test | Kills |
 |---|---|---|
 | K1 | Stock oMLX on this Mac, local pruned checkpoint: tok/s, hit rate, resident memory, and its no-miss floor. **Passed 2026-11-10:** the loader takes the 192-expert checkpoint; with oMLX's own offload at 48 of 192 experts it decodes at 3.3–4.5 tok/s (hit rate 78%, about 0.9 GB read per token) and is not on the fused path; with a fixed 48 or 64 experts and a sliced router it decodes at 30–32 tok/s in the same memory. | The base, if the no-miss floor is under about 10 tok/s: switch to Rapid-MLX's decode kernels. |
-| K2 | `bench_e8p_m1` at 5120 × 2304 against oMLX's 2-bit affine kernel. | Our lattice kernel in the runtime: ship affine 2-bit instead. |
+| K2 | `bench_e8p_m1` at 5120 × 2304 against oMLX's 2-bit affine kernel. **Passed 2026-11-10:** per routed expert the lattice kernel takes 0.037 ms, oMLX's affine 2-bit 0.047 and its FP4 0.042; the lattice expert is 9.0 MB against 11.1. | Our lattice kernel in the runtime: ship affine 2-bit instead. |
 | K3 | Static 250 and 288 of 384 against the full model, teacher-forced, on the pod. **Done 2026-11-10:** KL 0.323 at 250 and 0.235 at 288 (0.532 at 192, 1.123 at 96), native precision, no cache. | Nothing; it sets how much the cache has to recover. At the 80 GB cap (about 160 experts) a fixed set costs roughly 0.6–0.7 by interpolation, so the cap matters more than the code density. |
 | K4 | E1: expert cache with re-route against static sets, teacher-forced. **Passed 2026-11-10:** the cache beats the static set by 0.056 KL at 144 residents and 0.231 at 96 (pool of 192, 2 bits); a cache of 96 equals a static 144; the oracle gap (0.020) is all in the first 256 tokens. | The quality case for the cache, if it is not better than a static set. |
 | K5 | 20 lines: an MLX array over a 1 GB memory-mapped file through the E8P kernel; check footprint and `mincore`. | Idea 3 (page cache), if it copies. |
@@ -384,4 +384,32 @@ How a miss costs no time:
   about 155 residents under the same cap. Also open: demand scoring through oMLX's own gate kernel
   to recover the 10–14%; 23% of wanted admissions found no free slot at 4 spares; prefill runs
   through the same code but was only exercised on short prompts.
+
+### K2 result (2026-11-10)
+
+`scripts/v41_build/bench_expert_formats.py`, M4 Max, one process, MLX 0.32.4, 64 experts, 40
+chained MoEs per eval, three runs (medians agree within 5%). oMLX rows time its fused decode MoE
+(router, routed experts, shared expert) on random weights; the lattice row times this repo's
+`e8p_m1` kernel on layer 20's real 2-bit codes, routed experts only. Cost per expert is the
+difference between top-6 and top-1, over five.
+
+| Routed-expert format | Bits per weight | Expert, MB | MoE at top-6, ms | Per expert, ms | Fixed, ms |
+|---|---:|---:|---:|---:|---:|
+| oMLX MXFP4 (checkpoint format) | 4.25 | 18.8 | 0.39–0.41 | 0.042–0.045 | 0.145 |
+| oMLX affine 2-bit, group 64 | 2.5 | 11.1 | 0.41 | 0.046–0.048 | 0.124–0.134 |
+| oMLX affine 3-bit, group 64 | 3.5 | 15.5 | 0.35–0.36 | 0.035–0.036 | 0.140–0.145 |
+| E8P lattice 2-bit (routed only) | 2.04 | 9.0 | 0.29 | 0.036–0.038 | 0.065–0.069 |
+
+- The lattice kernel is not slower per expert than any oMLX format, so K2 does not kill it. It
+  is 3.3 times this repo's generic kernel at this shape (0.95 ms).
+- What it buys is residents, not speed: under the 80 GB cap about 155 lattice experts fit
+  against about 127 at affine 2-bit. E1 puts a cache of 144 within 0.009 KL of the whole pool of
+  192, so the lattice format clears that line and affine 2-bit does not.
+- Not measured: the lattice kernel inside oMLX's decode step. The router and shared expert then
+  run as their own dispatches; from the fixed costs above the MoE would take about 0.43 ms
+  against 0.39–0.41, roughly 3–5% of a token.
+- Side note: oMLX's 3-bit affine MoE is its fastest, ahead of FP4.
+- Next build item: lattice experts as slot arrays in the cache. That needs the codes stored as
+  raw per-expert bytes (they are `.npz` today), the routed half of the fused MoE replaced by
+  `e8p_m1`, and codes for the experts outside the pruned pool.
 

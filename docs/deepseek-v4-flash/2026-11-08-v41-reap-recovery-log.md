@@ -904,3 +904,11 @@ What it says:
   runtime are next (about 155 residents).
 - Rubric item 6 moves from 0 to 5. Total 48. Server stopped; nothing is running.
 
+### 2026-11-10: K2, the lattice kernel against oMLX's formats
+
+- At V4.1 shape on the M4 Max, per routed expert: E8P lattice 2-bit 0.037 ms, oMLX affine 2-bit
+  0.047, oMLX MXFP4 0.042, oMLX affine 3-bit 0.036 (three runs, within 5%). K2 passes.
+- The lattice expert is 9.0 MB against 11.1 for affine 2-bit: about 155 residents under the cap
+  against about 127. Table and limits in the build plan's K2 result.
+- Rubric unchanged at 48. Nothing is running.
+
