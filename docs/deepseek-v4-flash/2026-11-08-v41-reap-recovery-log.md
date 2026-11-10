@@ -948,3 +948,15 @@ What it says:
   below the 1,000-token figure; unattributed.
 - Rubric unchanged at 50. Server stopped; nothing is running.
 
+### 2026-11-10: pool of 384, fit prepared, no GPU in the volume's data center
+
+- The lattice fit had no CUDA path (it ran on the Mac's Metal search). `keep_quant_torch.py` is
+  the same fit in torch; on 64 rows of nine projections it reproduces the stored codes
+  (99.99–100% equal, same weighted error). `pool384_pod.sh` runs it on a pod for the 192
+  experts per layer that REAP-50 removed and extracts all 384 router rows.
+- Importance for the removed experts is built (`imp-pruned.npz`, 228 MB): 17 experts that
+  calibration never routed get their layer's mean importance.
+- No GPU type had stock in US-NE-1, where the volume is; one create of 1×H100 failed on
+  capacity. Nothing was created and nothing is billing beyond the volume.
+- Rubric unchanged at 50.
+
