@@ -782,3 +782,27 @@ What it says:
   target architecture, a critique of the approach, ten falsifiable conjectures, eleven ordered
   experiments, and a proposed working title conditional on C1. The first experiment (E1) needs no
   new fits and runs after pass 2.
+
+### 2026-11-09/10: C8 refuted, prior art that changes the plan, build plan written
+
+- 96-expert follow-up (pod, 54 sessions, domain-mean KL): one pass on full-model routing 1.123;
+  two passes through the total-mass 192 1.150; three passes 1.154; the Mac's pick inside REAP-50
+  1.163. Re-measuring routing made it worse by 0.027 where conjecture C8 predicted at least 0.05
+  better. Same confound as before (the multi-pass tables used 12 times less calibration data); no
+  interval computed yet. C8 is refuted as stated.
+- Prior-art search (2026-11-09): oMLX already runs the full V4.1 on a 128 GB Mac with experts on
+  SSD (waits on every miss, 4.2–5.6 tok/s, drafter with offload allowed since 2026-09-23);
+  re-routing a miss is published (Cache-prior, SMoE, MoE-CORE, SwapMoE); a nested bit-slice cache
+  is published (SliceMoE); 2-bit V4.1 builds exist three times. The "frozen cache" framing is not
+  stated anywhere found, but is too close to SwapMoE to carry a paper alone.
+- Jack: a running model is the bar ("we need the decoder and the rest"); oMLX may be run and the
+  rule against running Rapid-MLX no longer applies.
+- [Build plan](2026-11-10-v41-wow-build-plan.md): answers to the three sizing questions with
+  sources and dates, three rival plans and why two lost, the chosen route (a pinned oMLX fork with
+  a compact router that re-routes a miss at no time cost), six kill tests for days 0–1, all 40
+  inventory items placed, Jack's seven ideas placed, prior art, decisions.
+- Sizing facts worth keeping in view: non-expert weights are 9.85 GB as stored; a 2.03-bit expert
+  is 8.99 MB, so 192 per layer is 69 GB and 384 is 138 GB; the per-token read floor is 10.7–13.0 GB
+  (31–45 tok/s on this Mac); the "91 GB thrash" was measured on an M5 Max.
+- Pod: with Jack's go, a 33-minute eval of static 250 and 288 of 384 against the full model is
+  running before the pod is terminated.
