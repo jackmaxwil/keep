@@ -271,8 +271,10 @@ Which of our ideas someone has already shipped:
 
 ## 8. Decisions for Jack
 
-1. **Memory cap.** 80 GB holds about 160 experts per layer. About 250 needs roughly 105–110 GB,
-   which is above where the M5 Max thrashed.
+1. **Memory cap. Decided 2026-11-09: stay at 80 GB for now** (the Mac is under load from other
+   sessions; it can be raised later, and pods are the route for anything that needs more). The
+   build therefore targets C = 160 experts per layer on the Mac. Anything that needs about 250
+   resident (roughly 108 GB) is measured teacher-forced on a pod until the cap changes.
 2. **Source of the other 192 experts.** (a) Fetch their FP4 weights from the pod volume (about
    144 GiB) and fit our codes on the Mac overnight; (b) fit on a pod (spend; the fit has only run
    on the Mac GPU); (c) download oMLX's 3-bit build (about 331 GiB), which gives a 384-expert
