@@ -135,7 +135,7 @@ Red-team of the chosen plan:
 
 | # | Test | Kills |
 |---|---|---|
-| K1 | Stock oMLX on this Mac, local pruned checkpoint: tok/s, hit rate, resident memory, and a replayed prompt (hit rate near 1) for its no-miss floor. | The base, if the no-miss floor is under about 10 tok/s: switch to Rapid-MLX's decode kernels. |
+| K1 | Stock oMLX on this Mac, local pruned checkpoint: tok/s, hit rate, resident memory, and its no-miss floor. **Passed 2026-11-10:** the loader takes the 192-expert checkpoint; with oMLX's own offload at 48 of 192 experts it decodes at 3.3–4.5 tok/s (hit rate 78%, about 0.9 GB read per token) and is not on the fused path; with a fixed 48 or 64 experts and a sliced router it decodes at 30–32 tok/s in the same memory. | The base, if the no-miss floor is under about 10 tok/s: switch to Rapid-MLX's decode kernels. |
 | K2 | `bench_e8p_m1` at 5120 × 2304 against oMLX's 2-bit affine kernel. | Our lattice kernel in the runtime: ship affine 2-bit instead. |
 | K3 | Static 250 and 288 of 384 against the full model, teacher-forced, on the pod. **Done 2026-11-10:** KL 0.323 at 250 and 0.235 at 288 (0.532 at 192, 1.123 at 96), native precision, no cache. | Nothing; it sets how much the cache has to recover. At the 80 GB cap (about 160 experts) a fixed set costs roughly 0.6–0.7 by interpolation, so the cap matters more than the code density. |
 | K4 | E1: expert cache with re-route against static sets, teacher-forced. **Passed 2026-11-10:** the cache beats the static set by 0.056 KL at 144 residents and 0.231 at 96 (pool of 192, 2 bits); a cache of 96 equals a static 144; the oracle gap (0.020) is all in the first 256 tokens. | The quality case for the cache, if it is not better than a static set. |
@@ -314,3 +314,37 @@ token".
 
 Not runnable yet: the offline checks for ideas 2 and 6 (K6) need per-token router demand, which
 the harness does not dump; the stored routes are a 2,048-token sample without token ids.
+
+### K1 result (2026-11-10)
+
+Run on the M4 Max from the pinned clone, native FP4 experts, Engram on SSD, greedy decoding, one
+request at a time. Scripts: `scripts/v41_build/omlx_counters.py` (reads oMLX's expert-slot
+counters, which its server does not log for V4.1) and `scripts/v41_build/omlx_compact.py` (a
+fixed resident set through a linked model directory and three read-side patches; the clone is not
+modified).
+
+| Configuration | Resident experts | Decode tok/s | Prefill tok/s | Memory after load (peak) |
+|---|---:|---:|---:|---:|
+| oMLX expert offload, waits on a miss | 48 of 192 | 3.3–4.5 | 6 | 45.4 GiB (54) |
+| fixed set, sliced router | 48 | 30–32 | 150 | 45.4 GiB (55) |
+| fixed set, sliced router | 64 | 30–31 | 145 | 56.6 GiB (67) |
+
+- oMLX's offload path: 78% hit rate on a 256-token completion, about 47 misses per token at
+  18.8 MB each, so roughly 0.9 GB read per token; an exact replay of a 45-token exchange still
+  misses 39% of lookups at 48 slots. Its offloaded experts are slot wrappers that the fused decode
+  kernels do not accept (`decode_moe.supported`), so this path is slow even on a hit.
+- The fixed set runs on the fused kernels because the experts are plain stacked arrays and
+  `n_routed_experts` is the resident count. This is the compact router's static case, and it is
+  seven times the speed of waiting on a miss at equal memory. The estimate of 15–20 tok/s was low.
+- Consequence for the cache: keep the experts as one stacked array of C rows per projection and
+  overwrite a row in place on admission, with the router row rewritten in the same step. Do not
+  build on oMLX's slot wrapper.
+- Memory: about 11.8 GiB for everything but routed experts, 0.70 GiB per expert at FP4, and about
+  10 GiB of extra peak during load. Under the 80 GB cap that is about 72 experts at FP4 and about
+  155 at 2 bits.
+- Quality at these sizes is poor, as the teacher-forced numbers predict: 48 experts give clipped
+  but on-topic text, and 64 fall into a loop within a 1,024-token greedy completion. Speed is
+  settled; quality needs the cache and 2-bit experts.
+- Side effect on the machine: the server wrote `~/.omlx/bin/omlx-cluster-python`, a link to the
+  clone's Python.
+

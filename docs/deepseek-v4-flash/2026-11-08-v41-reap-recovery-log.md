@@ -874,3 +874,19 @@ What it says:
 - Rubric item 4 moves from 0 to 12 of 25. Total 43.
 - Run cost: 6,757 s forward, peak RSS 62.4 GB. Nothing is running on the Mac or on Runpod.
 
+### 2026-11-10: K1, first generated tokens on the Mac
+
+- Stock oMLX (pinned clone, kernels built) loads the 192-expert REAP-50 checkpoint as is. With
+  its expert offload at 48 of 192 experts it decodes at 3.3–4.5 tok/s, 78% hit rate, about 0.9 GB
+  read per token, 45.4 GiB after load.
+- A fixed 48 experts per layer (top routed mass) with the router cut to those rows decodes at
+  30–32 tok/s and prefills at 150 tok/s in the same memory; 64 experts run at the same speed in
+  56.6 GiB. No checkpoint copy: a linked model directory plus read-side patches
+  (`scripts/v41_build/omlx_compact.py`).
+- oMLX's offload does not use its fused decode kernels; a fixed set does. The cache will swap
+  rows of a stacked array in place.
+- Text at 48 and 64 experts is degraded (64 loops in a long greedy completion), in line with the
+  static KL numbers.
+- Full table and notes: the build plan's K1 result. The server is stopped; nothing is running.
+- Rubric unchanged at 43: item 6 needs our own cache streaming on the Mac, not oMLX's.
+
