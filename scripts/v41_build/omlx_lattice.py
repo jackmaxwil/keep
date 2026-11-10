@@ -19,6 +19,14 @@ The routed experts are this repo's E8P codes (2.04 bits per weight, 9.0 MB an ex
     OMLX_COMPACT=DIR/compact-map.json OMLX_LATTICE=CODES_DIR python omlx_lattice.py serve ...
     python omlx_lattice.py check --config CONFIG.json --codes CODES_DIR
 
+The pool can be wider than the loaded checkpoint. ``OMLX_LATTICE`` is then a JSON file::
+
+    {"codes": [[CODES_DIR, IDS.json], ...], "router": "router.safetensors", "mass": "reap-stats.npz"}
+
+``IDS.json`` (``{"survivors": {layer: [...]}}``) gives the pool number of each expert of its
+directory, in file order; the first directory holds the loaded checkpoint's experts. ``router`` has
+every router row of the pool and ``mass`` (``reap__gate_norm_sum``) orders the starting residents.
+
 Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer, default 144) and the policy
 settings of ``omlx_routed.py``. ``check`` compares one layer's decode step with dense matrices
 decoded on the host, the prefill path with the decode path, and slots after installs with their
@@ -96,11 +104,12 @@ def _unused(dtype):
 
 
 class Codes:
-    """Where each expert's codes and scales sit inside the ``layer-NN.npz`` files."""
+    """Where each expert's codes and scales sit inside the ``layer-NN.npz`` files of ``roots``.
+    ``where[layer][expert]`` is (directory, position in its file); without it, (0, expert)."""
 
-    def __init__(self, root: Path, layers: int):
-        self.files = []
-        for i in range(layers):
+    def __init__(self, roots: list[Path], layers: int, where=None):
+        self.files, self.where = [[] for _ in range(layers)], where  # [layer][directory]
+        for i, root in ((i, root) for i in range(layers) for root in roots):
             path = root / f"layer-{i:02d}.npz"
             fd, members = os.open(path, os.O_RDONLY), {}
             with zipfile.ZipFile(path) as z:
@@ -114,16 +123,17 @@ class Codes:
                         assert not fortran, info.filename
                         start = info.header_offset + 30 + name + extra + f.tell()
                     members[info.filename.removesuffix(".npy")] = (start, shape, dtype)
-            self.files.append((fd, members))
+            self.files[i].append((fd, members))
 
     def slab(self, layer: int, name: str, expert: int) -> tuple[int, int, int]:
-        fd, members = self.files[layer]
+        d, expert = self.where[layer][expert] if self.where else (0, expert)
+        fd, members = self.files[layer][d]
         start, shape, dtype = members[name]
         size = int(np.prod(shape[1:])) * dtype.itemsize
         return fd, start + expert * size, size
 
     def read(self, layer: int, name: str, experts, pool=None) -> np.ndarray:
-        _, shape, dtype = self.files[layer][1][name]
+        _, shape, dtype = self.files[layer][0][1][name]
         host = np.empty((len(experts), *shape[1:]), dtype)
         jobs = [(*self.slab(layer, name, e), host[s]) for s, e in enumerate(experts)]
         for done in [pool.submit(Store.pread_into, *job) for job in jobs] if pool else jobs:
@@ -181,10 +191,10 @@ class Layer:
 
 
 class LatticeCache(Cache):
-    def __init__(self, model, config, root: Path, order, full, slots: int):
+    def __init__(self, model, config, roots: list[Path], order, full, slots: int, where=None):
         super().__init__(config, mx)
         blocks = model.language_model.layers
-        self.codes = Codes(root, len(blocks))
+        self.codes = Codes(roots, len(blocks), where)
         self.codebook = mx.array(e8p_packed_abs_grid())
         layers = []
         for i, blk in enumerate(blocks):
@@ -292,6 +302,23 @@ def hook(state: dict) -> None:
     language.Gate.__call__ = gate_plain
 
 
+def wide_pool(path: Path, loaded: dict):
+    """(directories, order, router rows, where) of the pool file ``path``. ``loaded`` is the
+    router of the loaded checkpoint, whose rows must be the first directory's."""
+    spec = json.loads(path.read_text())
+    ids = [json.loads(Path(f).expanduser().read_text())["survivors"] for _, f in spec["codes"]]
+    where = [{e: (d, j) for d, per in enumerate(ids) for j, e in enumerate(per[str(i)])} for i in range(len(ids[0]))]
+    mass = np.load(Path(spec["mass"]).expanduser())["reap__gate_norm_sum"]
+    assert all(sorted(w) == list(range(mass.shape[1])) for w in where), "the directories do not cover the pool once"
+    router = mx.load(str(Path(spec["router"]).expanduser()))
+    full = {(i, f): router[f"layers.{i}.ffn.gate.{f}"] for i in range(len(where)) for f in ("weight", "bias")}
+    for (i, f), rows in loaded.items():
+        if f in ("weight", "bias"):
+            assert mx.array_equal(full[i, f][mx.array(ids[0][str(i)])], rows), f"layer {i}: router {f} differs"
+    order = [np.argsort(-row, kind="stable").tolist() for row in mass]
+    return [Path(d).expanduser() for d, _ in spec["codes"]], order, full, where
+
+
 def patch(spec: dict, root: Path, slots: int) -> None:
     full, state = {}, {}
     compact_patch(spec, full)
@@ -300,7 +327,11 @@ def patch(spec: dict, root: Path, slots: int) -> None:
     def load_lattice(*args, **kwargs):
         model, processor = load(*args, **kwargs)
         config = model.language_model.layers[0].ffn.gate._config
-        state["cache"] = LatticeCache(model, config, root, spec["order"], full, slots)
+        if root.is_file():
+            roots, order, wide, where = wide_pool(root, full)
+            state["cache"] = LatticeCache(model, config, roots, order, wide, slots, where)
+        else:
+            state["cache"] = LatticeCache(model, config, [root], spec["order"], full, slots)
         full.clear()
         return model, processor
 
@@ -327,7 +358,14 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
         full[i, "bias"] = mx.array(rng.normal(size=(pool,)).astype(np.float32) * 0.1)
     os.environ.setdefault("OMLX_ROUTED_TAU", "inf")
     model = SimpleNamespace(language_model=SimpleNamespace(layers=[SimpleNamespace(ffn=m) for m in moes]))
-    state = {"cache": LatticeCache(model, c, root, [rng.permutation(pool).tolist() for _ in moes], full, slots)}
+    roots, where = [root], None
+    if root.is_file():  # a pool file: both directories, the first two layers
+        roots, _, _, where = wide_pool(root, {})
+        pool = len(where[0])
+        for i in range(2):
+            full[i, "weight"] = mx.array(rng.normal(size=(pool, c.dim)).astype(np.float32)).astype(mx.bfloat16)
+            full[i, "bias"] = mx.array(rng.normal(size=(pool,)).astype(np.float32) * 0.1)
+    state = {"cache": LatticeCache(model, c, roots, [rng.permutation(pool).tolist() for _ in moes], full, slots, where)}
     cache = state["cache"]
     hook(state)
 
