@@ -24,6 +24,7 @@ import numpy as np
 DIM, INTER = 5120, 2304
 # 1-bit E8 code + fp16 group scales: gate/up group 512 (1.031 bpw), down group 256 (1.0625 bpw)
 UNIT_BYTES = (2 * DIM * INTER * (1 + 16 / 512) + DIM * INTER * (1 + 16 / 256)) / 8  # ~4.6 MB
+FP4_BYTES = 3 * DIM * INTER * (4 + 8 / 32) / 8  # an FP4 expert with one scale byte per 32 weights, 18.8 MB
 
 
 def rows(eval_dir: Path, tok_s: float, bandwidth_gbs: float) -> list[dict]:
@@ -59,6 +60,10 @@ def rows(eval_dir: Path, tok_s: float, bandwidth_gbs: float) -> list[dict]:
             "ssd_mb_per_tok": round(ssd / 1e6, 1), "ssd_gbs": round(ssd * tok_s / 1e9, 2),
             "read_gb_per_tok": round(read / 1e9, 2), "tok_s_bound": round(bandwidth_gbs * 1e9 / read, 1),
         }
+        if tiers.get("hot"):  # a cache whose hottest experts are FP4 copies
+            mixed = (k - tiers["hot"]) * hi_units * UNIT_BYTES + tiers["hot"] * FP4_BYTES
+            row |= {"hot": tiers["hot"], "hot_slots": round(tiers["hot_slot_share"], 3),
+                    "resident_gb": round(mixed * n_layers / 1e9, 1)}
         out.append(row)
     return out
 

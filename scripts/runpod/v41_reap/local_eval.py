@@ -90,21 +90,30 @@ def gate_masked(gate, x, allowed, linear):
     return weights * gate.route_scale, indices
 
 
+def decode_fp4(weight, scale):
+    """bf16 [out, in] of one FP4 projection (E2M1 codes, one scale per 32 inputs)."""
+    import torch_kernel
+
+    return (torch_kernel.decode_e2m1(weight).unflatten(-1, (-1, 32)) * scale.float()[..., None]).flatten(-2).bfloat16()
+
+
+def hot_set(order, n: int, have) -> set[int]:
+    """The first ``n`` experts of ``order`` (hottest first) that are among ``have``."""
+    have = set(have)
+    return set([int(e) for e in order if int(e) in have][:n])
+
+
 def expert_override(spec: str, n_experts: int, ckpt_survivors: dict):
     """``layer -> {(expert, proj): bf16 [out, in]}`` from FP4 (``fp4-bf16``) or E8P codes."""
 
     import torch
-
-    import torch_kernel
 
     if spec == "fp4-bf16":
         def from_state(layer: int, sd: dict) -> dict:
             out = {}
             for e in range(n_experts):
                 for proj in ("w1", "w2", "w3"):
-                    w = torch_kernel.decode_e2m1(sd[f"ffn.experts.{e}.{proj}.weight"])
-                    s = sd[f"ffn.experts.{e}.{proj}.scale"].float()
-                    out[(e, proj)] = (w.unflatten(-1, (-1, 32)) * s[..., None]).flatten(-2).bfloat16()
+                    out[(e, proj)] = decode_fp4(sd[f"ffn.experts.{e}.{proj}.weight"], sd[f"ffn.experts.{e}.{proj}.scale"])
             return out
         return from_state
 
@@ -261,6 +270,9 @@ def main(argv: list[str] | None = None) -> int:
                         "skipped (drop), or the router picks its top-k among resident experts (reroute)")
     p.add_argument("--cache-k", action="append", default=[], metavar="NAME=K",
                    help="with --dynamic: hi tier only from an LRU of K resident residuals per layer, admitted at gate >= tau")
+    p.add_argument("--hot", action="append", default=[], metavar="NAME=H",
+                   help="with --miss: the H hottest experts (--cache-warm order) that the checkpoint holds run from "
+                   "its FP4 weights while resident, the other residents from the codes")
     p.add_argument("--cache-warm", type=Path, help="imatrix npz (reap__gate_norm_sum): warm-start each cache with the top-K")
     p.add_argument("--sidecar", type=Path, help="a sidecar_fit.py output directory, added to every variant's MoE output")
     p.add_argument("--sidecar-rank", type=int, help="use only the top-k sidecar components (stored largest first)")
@@ -373,6 +385,10 @@ def main(argv: list[str] | None = None) -> int:
         warm = None
         if args.cache_warm:  # warm start: each layer's top-K experts by routed mass (the static hot set)
             warm = np.argsort(-np.load(args.cache_warm)["reap__gate_norm_sum"], axis=1, kind="stable")
+        hot_n = {name: int(h) for name, _, h in (s.partition("=") for s in args.hot)}
+        assert set(hot_n) <= set(miss) and (warm is not None or not hot_n), "--hot needs --miss and --cache-warm"
+        own = loaded if wide else ckpt_survivors  # pool numbers of the checkpoint's own experts, in its order
+        hot_slots = dict.fromkeys(variants, 0)
         for v in variants:  # [layer, expert, (lo slots, hi slots, lo mass, hi mass, admissions, dropped slots, dropped mass)]
             dyn_counts[v] = np.zeros((n_layers_, n_local, 7))
 
@@ -439,6 +455,15 @@ def main(argv: list[str] | None = None) -> int:
                 counts[i, 6] += float(w[drop].sum())
                 hi_mask = hi_mask & ~drop
                 lo_w, hi_w = tier_weights(layer, i)
+                if hot_n.get(state["variant"]):  # residents of the hot set run the checkpoint's FP4 expert
+                    if "hot" not in cache:
+                        cache["hot"] = {n: hot_set(warm[layer], n, own[str(layer)]) for n in set(hot_n.values())}
+                    if i in cache["hot"][hot_n[state["variant"]]]:
+                        if ("fp4", i) not in cache:
+                            mine = self.experts[own[str(layer)].index(i)]
+                            cache["fp4", i] = {p: decode_fp4(getattr(mine, p).weight, getattr(mine, p).scale) for p in lo_w}
+                        hi_w = cache["fp4", i]
+                        hot_slots[state["variant"]] += int(hi_mask.sum())
                 only = hi_proj.get(state["variant"])
                 if only is not None:  # a finer rung: the residual of some projections only
                     hi_w = {p: hi_w[p] if p in only else lo_w[p] for p in lo_w}
@@ -596,6 +621,7 @@ def main(argv: list[str] | None = None) -> int:
                                             "policy": policies.get(v, "lru") if v in cache_k else None,
                                             "copy_mode": copy_mode, "hi_units": hi_units,
                                             "n_bases": 0 if v in miss else kept, "pool": kept, "miss": miss.get(v),
+                                            "hot": hot_n.get(v, 0), "hot_slot_share": hot_slots[v] / max(tot[:2].sum() + tot[5], 1),
                                             "tau_drop": tau_drop.get(v, 0.0),
                                             "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),

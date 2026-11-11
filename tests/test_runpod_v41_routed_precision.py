@@ -126,3 +126,10 @@ def test_gate_masked_routes_among_allowed_experts():
     few[:, :2] = True  # fewer allowed than top-k: the surplus slot carries no weight
     w3, i3 = local_eval.gate_masked(gate, x, few, torch.nn.functional.linear)
     assert ((w3 > 0).sum(-1) == 2).all() and (i3[w3 > 0] < 2).all()
+
+
+
+def test_hot_set_takes_the_hottest_experts_the_checkpoint_holds():
+    assert local_eval.hot_set(np.array([7, 2, 9, 4, 1]), 2, [1, 2, 4]) == {2, 4}
+    assert local_eval.hot_set(np.array([7, 2]), 3, [2, 7, 8]) == {2, 7}
+    assert routed_report.FP4_BYTES == 18_800_640
