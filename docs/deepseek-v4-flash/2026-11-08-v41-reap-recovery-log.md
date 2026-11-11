@@ -994,3 +994,25 @@ What it says:
   Total 59.
 - Run: 11,991 s, peak RSS 63.8 GB. The pod job `tau384_pod.sh` was not needed. Nothing is
   running on the Mac or on Runpod.
+
+### 2026-11-11: plan for four ideas; page cache dead, drafter works, sampling check
+
+- Jack picked four ideas (drafter on the no-wait cache, higher precision on the hottest experts,
+  one download for any Mac, the OS page cache as the cache) and approved the plan. He also
+  pointed at the upstream model card: generation tests now use its settings (temperature 1.0,
+  top_p 1.0, large budgets) and say so when they depart.
+- Page cache (K5, `scripts/v41_build/k5_pagecache.py`, `d6cf35d`): MLX 0.32.4 aliases a file
+  mapping, but a kernel reading 1 MiB of a 2 GiB aliased buffer brings every page into memory.
+  Dead in the one-buffer form.
+- Drafter: on through `mtp_enabled` with no code change; +26–28% on scripts, +43% with thinking
+  on, +9% on a long prompt, +7 GiB, at 120 residents with installs byte-checked. Above the 1.25
+  gate on three of four requests. A multi-row kernel would add at most about 12% and is parked.
+- Sampling at the card's settings: 4 to 7 of 8 sampled scripts run correctly across the cache
+  (120 and 144 residents, drafter on and off, temperature 1.0 and 0.6) and the exact REAP-50
+  checkpoint (5 of 8). Single-token slips; no row separable at 8 samples; greedy scripts all
+  correct. More samples queued.
+- `local_eval.py --hot` (`76384aa`) runs the hottest residents from the checkpoint's FP4
+  weights. Smoke (1 session, 96 tokens): cache of 144 1.52, with 32 hot 1.14; all 384 resident
+  with 32 hot 0.68. The resident-count curve (C1) and the hot-tier comparison (B1) are running.
+- Rubric unchanged at 59: no item's own test was met.
+

@@ -557,8 +557,10 @@ REAP-50 at 2 bits 0.747, the cache of 144 inside the pool of 192 0.756.
   much. Tau 0.1 is worse than 0.2 (0.024, standard error 0.013): admitting weak slots evicts
   useful experts. Tau 0.45 loses 0.12 in every session.
 - At tau 0.3 the cache is 0.030 from the oracle and 0.064 from having every expert resident.
-- Tool-use text stays at 1.8–2.0 in every variant, all 384 resident included (1.94), so that
-  loss is the 2-bit coding and not the cache.
+- Tool-use text stays at 1.8–2.0 in every variant, all 384 resident included (1.94). That is
+  the off-format teacher found on 2026-11-09 (the eval text carries foreign tool markup), not a
+  loss from the cache or the coding. Without that domain: 0.23 with all 384 resident, 0.32 for
+  the cache of 144 at tau 0.3, 0.66 for the static 144.
 - Run: 11,991 s, peak RSS 63.8 GB (`~/Models/v41-reap-run/jobs/tau384_mac.sh`).
 
 Serving at tau 0.3 (144 residents, 4 spares, 63 GiB), against the tau 0.2 table above:
@@ -575,3 +577,51 @@ Tau 0.3 is the serving default from here.
 Limits: the cache is simulated with a fetch that lands within one token; 22 sessions, first
 1,024 tokens; two generated scripts at tau 0.3; no pod confirmation on longer sessions (E7).
 
+### Drafter on the no-wait cache (2026-11-11)
+
+The checkpoint's drafter (DSpark: 3 stages, 128 experts each, 7.4 GiB) is switched on by
+`mtp_enabled` in `<base-path>/model_settings.json`; no code change was needed. A cycle drafts 3
+tokens and verifies them in one backbone forward of about 4 rows through the same hook the
+single-token path uses. 120 residents (so the footprint stays under the 80 GB cap), tau 0.3,
+pool of 384, installed slots byte-checked (0 mismatches):
+
+| Request | Drafter off | Drafter on | Gain |
+|---|---:|---:|---:|
+| Script, thinking off, greedy | 24.3 tok/s | 31.2 | +28% |
+| Same, temperature 1.0, top_p 1.0 | 24.2 | 30.5 | +26% |
+| 4,341-token prompt, summary | 21.8 | 23.9 | +9% |
+| Script, thinking on, temperature 1.0 | 17.45 (3,872 tokens) | 25.0 (8,492 tokens) | +43% |
+| Footprint, steady / peak | 55 / 61 GiB | 62 / 68 GiB | +7 GiB |
+
+- About 2.9 tokens are kept per cycle; a cycle takes 93 ms against 41 ms for a single token.
+- Installs per forward row are unchanged; per emitted token they are 1.38 times the no-drafter
+  figure (0.67 GB/s read against 0.41 with thinking on).
+- oMLX's own offload gains 29% from the drafter (6.6 to 8.5 tok/s) because verification waits
+  on experts; here nothing waits.
+- A multi-row lattice kernel (one decode per distinct expert in the block) is not worth
+  building yet: over the full model's routes, distinct experts per route are 0.84 at 2 rows,
+  0.70 at 4 and 0.63 at 6, so it saves at most about 12% of a cycle.
+- Job: `~/Models/v41-reap-run/jobs/k1_mtp.sh`.
+
+### Sampling at the card's settings (2026-11-11)
+
+The same script request, 8 samples per row, 4,096-token budget, thinking off. "Correct" means
+the script runs and lists the three duplicate files of the test tree.
+
+| Model | Residents | Temperature | Drafter | Correct of 8 |
+|---|---:|---:|---|---:|
+| Cache over the pool of 384, 2-bit | 120 | 1.0 | off | 4 |
+| Same | 120 | 1.0 | on | 4 |
+| Same | 144 | 1.0 | off | 6 |
+| Same | 120 | 0.6 | off | 7 |
+| Exact REAP-50 checkpoint (192 FP4 experts, stock oMLX offload, 4–5 tok/s) | 192 | 1.0 | off | 5 |
+
+- Failures are single-token slips (`hexdigist`, `mun` for `min`, a constant misspelled at its
+  use, a missing colon) and two samples with wrong output. Every greedy script was correct.
+- With 8 samples no row is separable from another (4 of 8 against 7 of 8 is p = 0.28, Fisher).
+  The exact pruned checkpoint at its original precision fails 3 of 8, so the slips are not
+  evidence against the 2-bit coding, the cache or the drafter.
+- Not known: how often the full model slips at temperature 1.0 (it does not fit on the Mac),
+  and whether more samples separate the rows. 16 more per row for the cache of 144 and the
+  exact checkpoint are queued behind the simulator run.
+- Jobs: `~/Models/v41-reap-run/jobs/k1_mtp_samples.sh`; scorer in the session scratchpad.
