@@ -230,6 +230,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--checkpoint-survivors", type=Path,
                    help="the survivors JSON the checkpoint was exported from; omit for an unpruned checkpoint")
     p.add_argument("--device", default="cpu", help="cpu, or cuda on a pod")
+    p.add_argument("--router", type=Path, help="safetensors with every router row of the unpruned model: the pool is "
+                   "all its experts, taken from --dynamic codes alone (HOT_DIR@SET.json+REST_DIR), on a pruned checkpoint")
     p.add_argument("--pack", required=True, type=Path)
     p.add_argument("--stats", required=True, type=Path)
     p.add_argument("--sessions-file", required=True, type=Path)
@@ -280,6 +282,14 @@ def main(argv: list[str] | None = None) -> int:
     else:  # an unpruned checkpoint: every expert, under its own number
         shape = json.loads((args.hf_path / "inference" / "config.json").read_text())
         ckpt_survivors = {str(l): list(range(shape["n_routed_experts"])) for l in range(shape["n_layers"])}
+    wide = None
+    if args.router:  # the checkpoint's own experts are never run: every variant re-routes over the codes
+        from safetensors.torch import load_file
+
+        assert args.dynamic and {v.partition("=")[0] for v in args.miss} == {v.partition("=")[0] for v in args.variant}, \
+            "--router needs --dynamic codes and --miss for every variant"
+        wide, loaded = load_file(args.router), ckpt_survivors
+        ckpt_survivors = {l: list(range(wide[f"layers.{l}.ffn.gate.bias"].numel())) for l in loaded}
     variants = {}
     for spec in args.variant:
         name, _, path = spec.partition("=")
@@ -319,6 +329,20 @@ def main(argv: list[str] | None = None) -> int:
         hash_state = ref.NgramHashState(model_args, layout, AutoTokenizer.from_pretrained(args.hf_path))
     engram_rows = {l: stream.EngramRows.from_checkpoint(ckpt, l, ref.fp8_block_size) for l in model_args.engram_layer_ids}
     streamer = stream.LayerStreamer(ref, model_args, ckpt.load, engram_rows, hash_state, dev)
+    if wide:
+        build_narrow = streamer.build_block
+
+        def build_wide(layer, sd):
+            block = build_narrow(layer, sd)
+            gate, ids = block.ffn.gate, loaded[str(layer)]
+            for f in ("weight", "bias", "bias_vl"):
+                if getattr(gate, f, None) is not None:
+                    rows = wide[f"layers.{layer}.ffn.gate.{f}"].to(getattr(gate, f))
+                    assert torch.equal(rows[ids], getattr(gate, f).data), f"layer {layer}: router {f} is not this checkpoint's"
+                    setattr(gate, f, torch.nn.Parameter(rows, requires_grad=False))
+            return block
+
+        streamer.build_block = build_wide
     state = collect.install_hooks(streamer, top_k=2048, rows_per_slice=256)
     n_local = len(next(iter(ckpt_survivors.values())))
 
