@@ -129,10 +129,11 @@ def load_expert(ckpt, layer: int, expert: int, device) -> dict[str, torch.Tensor
 def importance(args) -> None:
     from keep_quant import pod_importance
 
-    survivors = json.loads(args.survivors.read_text())["survivors"]
+    # Without --survivors: every expert, in order.
+    survivors = json.loads(args.survivors.read_text())["survivors"] if args.survivors else {}
     full = pod_importance(args.stats)  # {space: [L, 384, in]}
     n_layers, n_experts = full["hidden"].shape[:2]
-    removed = np.array([sorted(set(range(n_experts)) - set(survivors[str(layer)])) for layer in range(n_layers)])
+    removed = np.array([sorted(set(range(n_experts)) - set(survivors.get(str(layer), ()))) for layer in range(n_layers)])
     out, replaced = {"experts": removed}, 0
     for space, total in full.items():
         picked = np.stack([total[layer][removed[layer]] for layer in range(n_layers)])
@@ -144,7 +145,7 @@ def importance(args) -> None:
         assert (picked.reshape(*picked.shape[:2], -1, 8) > 0).any(-1).all() and np.isfinite(picked).all(), space
         out[space] = picked.astype(np.float32)
     np.savez(args.out, **out)
-    print(f"{args.out}: {removed.shape[1]} removed experts in each of {n_layers} layers; "
+    print(f"{args.out}: {removed.shape[1]} experts in each of {n_layers} layers; "
           f"{replaced} (expert, space) importances replaced by the layer mean")
 
 

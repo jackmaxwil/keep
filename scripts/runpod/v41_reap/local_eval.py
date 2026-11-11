@@ -150,6 +150,28 @@ def expert_override(spec: str, n_experts: int, ckpt_survivors: dict):
     return from_dir(Path(spec).expanduser())
 
 
+def layer_codes(spec: str, layer: int, have: list[int]) -> dict:
+    """One layer's code arrays, a row per expert of ``have`` (the checkpoint's experts, ascending).
+
+    ``spec`` is a ``keep_quant.py`` directory holding exactly those experts, or
+    ``HOT_DIR@SET.json+REST_DIR``: the set's experts in one directory and the rest in the other,
+    each in ascending expert order."""
+    if "@" not in spec:
+        return dict(np.load(Path(spec).expanduser() / f"layer-{layer:02d}.npz"))
+    hot_dir, _, rest = spec.partition("@")
+    set_path, _, rest_dir = rest.partition("+")
+    hot = set(json.loads(Path(set_path).expanduser().read_text())["survivors"][str(layer)])
+    stored = [e for e in have if e in hot] + [e for e in have if e not in hot]  # the two files back to back
+    row = {e: j for j, e in enumerate(stored)}
+    parts = [np.load(Path(d).expanduser() / f"layer-{layer:02d}.npz") for d in (hot_dir, rest_dir)]
+    assert sum(z["w1_codes"].shape[0] for z in parts) == len(have) and parts[0]["w1_codes"].shape[0] == len(hot & set(have))
+    out = {k: np.concatenate([z[k] for z in parts])[[row[e] for e in have]]
+           for k in parts[0].files if k.endswith(("_codes", "_scales"))}
+    bits = {int(z["code_bits"]) if "code_bits" in z.files else 16 for z in parts}
+    assert len(bits) == 1, bits
+    return {**out, "code_bits": bits.pop()}
+
+
 def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds: list[int],
                    warm: np.ndarray | None, counts: np.ndarray, policy: str = "lru",
                    trace: list | None = None, resident: np.ndarray | None = None) -> np.ndarray:
@@ -205,7 +227,9 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--hf-path", required=True, type=Path)
-    p.add_argument("--checkpoint-survivors", required=True, type=Path, help="the survivors JSON the checkpoint was exported from")
+    p.add_argument("--checkpoint-survivors", type=Path,
+                   help="the survivors JSON the checkpoint was exported from; omit for an unpruned checkpoint")
+    p.add_argument("--device", default="cpu", help="cpu, or cuda on a pod")
     p.add_argument("--pack", required=True, type=Path)
     p.add_argument("--stats", required=True, type=Path)
     p.add_argument("--sessions-file", required=True, type=Path)
@@ -217,7 +241,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--expert-override", help="'fp4-bf16' or a keep_quant.py output directory")
     p.add_argument("--capture-imatrix", type=Path, help="measure the importance diagonal instead of scoring")
     p.add_argument("--dynamic", help="per-token tiers. BASE_DIR+RESIDUAL_DIR: base alone or base + nested residual. "
-                   "BASE_DIR|HI_DIR: base alone or a separate high-precision copy (a hot expert then holds both)")
+                   "BASE_DIR|HI_DIR: base alone or a separate high-precision copy (a hot expert then holds both). "
+                   "With '|', a side may be HOT_DIR@SET.json+REST_DIR (the set's experts from one directory, the rest "
+                   "from the other), and BASE may be empty when every variant has --miss")
     p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
                    help="nested only, per variant: the high tier adds the residual for these projections only")
     p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle",
@@ -246,10 +272,14 @@ def main(argv: list[str] | None = None) -> int:
     import stream
     import torch_kernel
 
-    prune = json.loads((args.hf_path / "keep-prune.json").read_text())
-    sha = hashlib.sha256(args.checkpoint_survivors.read_bytes()).hexdigest()
-    assert sha == prune["survivors_sha256"], "--checkpoint-survivors is not what this checkpoint was exported from"
-    ckpt_survivors = json.loads(args.checkpoint_survivors.read_text())["survivors"]
+    if args.checkpoint_survivors:
+        prune = json.loads((args.hf_path / "keep-prune.json").read_text())
+        sha = hashlib.sha256(args.checkpoint_survivors.read_bytes()).hexdigest()
+        assert sha == prune["survivors_sha256"], "--checkpoint-survivors is not what this checkpoint was exported from"
+        ckpt_survivors = json.loads(args.checkpoint_survivors.read_text())["survivors"]
+    else:  # an unpruned checkpoint: every expert, under its own number
+        shape = json.loads((args.hf_path / "inference" / "config.json").read_text())
+        ckpt_survivors = {str(l): list(range(shape["n_routed_experts"])) for l in range(shape["n_layers"])}
     variants = {}
     for spec in args.variant:
         name, _, path = spec.partition("=")
@@ -259,8 +289,13 @@ def main(argv: list[str] | None = None) -> int:
     torch_kernel.exact_quant = True
     torch.set_num_threads(args.threads)
     ref_dir = args.hf_path / "inference"
-    ref = stream.import_reference(ref_dir, kernel=torch_kernel)
+    dev = args.device
+    # On a GPU the reference's own kernels run, as in collect.py; elsewhere the torch stand-ins.
+    ref = stream.import_reference(ref_dir, kernel=torch_kernel if dev == "cpu" else None)
     torch.set_default_dtype(torch.bfloat16)
+    if dev != "cpu":
+        torch.cuda.memory._set_allocator_settings("expandable_segments:True")
+        torch.set_default_device(dev)
     torch.manual_seed(33377335)
     model_args = ref.ModelArgs(**json.loads((ref_dir / "config.json").read_text()))
     model_args.max_batch_size = 1
@@ -280,9 +315,10 @@ def main(argv: list[str] | None = None) -> int:
 
     ckpt = stream.HFCheckpoint(args.hf_path)
     layout = ref.EngramLayout.from_args(model_args)
-    hash_state = ref.NgramHashState(model_args, layout, AutoTokenizer.from_pretrained(args.hf_path))
+    with torch.device(dev):
+        hash_state = ref.NgramHashState(model_args, layout, AutoTokenizer.from_pretrained(args.hf_path))
     engram_rows = {l: stream.EngramRows.from_checkpoint(ckpt, l, ref.fp8_block_size) for l in model_args.engram_layer_ids}
-    streamer = stream.LayerStreamer(ref, model_args, ckpt.load, engram_rows, hash_state, "cpu")
+    streamer = stream.LayerStreamer(ref, model_args, ckpt.load, engram_rows, hash_state, dev)
     state = collect.install_hooks(streamer, top_k=2048, rows_per_slice=256)
     n_local = len(next(iter(ckpt_survivors.values())))
 
@@ -294,8 +330,7 @@ def main(argv: list[str] | None = None) -> int:
 
         copy_mode = "|" in args.dynamic  # the high tier is its own copy, not base + residual
         args_cache_k_names = {s.partition("=")[0] for s in args.cache_k}
-        base_dir, _, res_dir = args.dynamic.partition("|" if copy_mode else "+")
-        base_dir, res_dir = Path(base_dir).expanduser(), Path(res_dir).expanduser()
+        tier_specs = [s for s in args.dynamic.split("|" if copy_mode else "+", 1) if s]  # base, then high
         hi_proj = {name: {"w2": ("w2",), "w1w3": ("w1", "w3")}[v] for name, _, v in (s.partition("=") for s in args.hi_proj)}
         assert not (copy_mode and hi_proj), "--hi-proj needs nested codes"
         policies = {name: v for name, _, v in (s.partition("=") for s in args.cache_policy)}
@@ -306,7 +341,8 @@ def main(argv: list[str] | None = None) -> int:
         assert all(m in ("drop", "reroute") and copy_mode and v in args_cache_k_names for v, m in miss.items()), \
             "--miss takes drop or reroute, and needs BASE|HI codes and --cache-k for the same variant"
         assert set(taus) == set(variants), "--tau needs one NAME=VALUE per --variant"
-        np_grids = {16: e8p_full_grid().astype(np.float32), 8: e8_1bit_grid().astype(np.float32)}
+        assert len(tier_specs) == 2 or set(miss) == set(variants), "codes without a base need --miss for every variant"
+        grids = {bits: torch.as_tensor(grid().astype(np.float32), device=dev) for bits, grid in ((16, e8p_full_grid), (8, e8_1bit_grid))}
         cache: dict = {"layer": None}
         n_layers_ = int(model_args.n_layers)
         cache_k = {name: int(k) for name, _, k in (s.partition("=") for s in args.cache_k)}
@@ -329,20 +365,20 @@ def main(argv: list[str] | None = None) -> int:
             if cache["layer"] != layer:
                 cache.clear()
                 cache["layer"] = layer
-                cache["z"] = [dict(np.load(d / f"layer-{layer:02d}.npz")) for d in (base_dir, res_dir)]
+                cache["z"] = [layer_codes(s, layer, sorted(ckpt_survivors[str(layer)])) for s in tier_specs]
             if e not in cache:
                 tiers = []
                 for z in cache["z"]:
-                    grid = np_grids[int(z.get("code_bits", 16))]  # the first E8P runs wrote no code_bits
+                    grid = grids[int(z.get("code_bits", 16))]  # the first E8P runs wrote no code_bits
                     tier = {}
                     for proj in ("w1", "w2", "w3"):
-                        vec = grid[z[f"{proj}_codes"][e].astype(np.int64)]
-                        s = z[f"{proj}_scales"][e].astype(np.float32)
-                        vec = vec * np.repeat(s, vec.shape[1] // s.shape[-1], axis=-1)[..., None]
-                        tier[proj] = vec.reshape(vec.shape[0], -1)
+                        vec = grid[torch.as_tensor(z[f"{proj}_codes"][e].astype(np.int64), device=dev)]  # [out, in/8, 8]
+                        s = torch.as_tensor(z[f"{proj}_scales"][e].astype(np.float32), device=dev)
+                        tier[proj] = (vec * s.repeat_interleave(vec.shape[1] // s.shape[-1], dim=-1)[..., None]).flatten(-2)
                     tiers.append(tier)
-                lo = {p: torch.as_tensor(w).bfloat16() for p, w in tiers[0].items()}
-                hi = {p: torch.as_tensor(tiers[1][p] if copy_mode else tiers[0][p] + tiers[1][p]).bfloat16() for p in tiers[0]}
+                lo = {p: w.bfloat16() for p, w in tiers[0].items()}
+                hi = lo if len(tiers) == 1 else {p: (tiers[1][p] if copy_mode else lo_w + tiers[1][p]).bfloat16()
+                                                 for p, lo_w in tiers[0].items()}
                 cache[e] = (lo, hi)
             return cache[e]
 
@@ -363,9 +399,10 @@ def main(argv: list[str] | None = None) -> int:
             on_miss = miss.get(state["variant"])
             resident = np.zeros((x.size(0), self.gate.weight.size(0)), dtype=bool) if on_miss == "reroute" else None
             hi_all = None if k is None else torch.as_tensor(
-                simulate_cache(layer, indices.numpy(), weights.float().numpy(), k, tau, counts, resident))
+                simulate_cache(layer, indices.cpu().numpy(), weights.float().cpu().numpy(), k, tau, counts, resident),
+                device=x.device)
             if resident is not None:  # demand (above) drove the cache; the tokens run on what is resident
-                weights, indices = gate_masked(self.gate, x, torch.as_tensor(resident), ref.linear)
+                weights, indices = gate_masked(self.gate, x, torch.as_tensor(resident, device=x.device), ref.linear)
                 hi_all = weights > 0
             for i in torch.unique(indices).tolist():
                 idx, top = torch.where(indices == i)
@@ -439,11 +476,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.capture_imatrix:
         assert len(variants) == 1, "--capture-imatrix takes one variant"
         capture = collect.SessionStats(torch=torch, n_layers=int(model_args.n_layers), n_experts=n_local,
-                                       dims={"hidden": int(model_args.dim), "down": int(model_args.moe_inter_dim)}, device="cpu")
+                                       dims={"hidden": int(model_args.dim), "down": int(model_args.moe_inter_dim)}, device=dev)
 
     state["bounds"] = [len(r["token_ids"]) for r in records.values()]  # one MoE call holds a variant's records in order
     items = {
-        (v, n): stream.Item(tokens=torch.as_tensor([r["token_ids"]], dtype=torch.long), group=(v, None))
+        (v, n): stream.Item(tokens=torch.as_tensor([r["token_ids"]], dtype=torch.long, device=dev), group=(v, None))
         for v in variants
         for n, r in records.items()
     }
@@ -455,7 +492,7 @@ def main(argv: list[str] | None = None) -> int:
         bias.data.copy_(block.full_bias)
         masks = variants[key[0]]
         if masks is not None:
-            bias.data[masks[layer]] = float("-inf")
+            bias.data[masks[layer].to(bias.device)] = float("-inf")
         state["stats"] = capture
         state["variant"] = key[0]
 
@@ -486,11 +523,12 @@ def main(argv: list[str] | None = None) -> int:
         assert np.array_equal(positions, teacher["positions"][rows]), name
         targets = np.asarray(record["token_ids"], dtype=np.int64)[positions + 1]
         teacher_nll = (teacher["logsumexp"][rows] - teacher["target_logit"][rows]).astype(np.float64)
-        state["positions"] = torch.as_tensor(positions)
-        state["targets"] = torch.as_tensor(targets)
+        state["positions"] = torch.as_tensor(positions, device=dev)
+        state["targets"] = torch.as_tensor(targets, device=dev)
         state["teacher"] = {
-            "ids": torch.as_tensor(teacher["topk_logit_ids"][rows].astype(np.int64)),
-            "logprob": torch.as_tensor(teacher["topk_logit_values"][rows].astype(np.float32) - teacher["logsumexp"][rows, None]),
+            "ids": torch.as_tensor(teacher["topk_logit_ids"][rows].astype(np.int64), device=dev),
+            "logprob": torch.as_tensor(teacher["topk_logit_values"][rows].astype(np.float32) - teacher["logsumexp"][rows, None],
+                                       device=dev),
             "targets": state["targets"],
         }
         for v in variants:
