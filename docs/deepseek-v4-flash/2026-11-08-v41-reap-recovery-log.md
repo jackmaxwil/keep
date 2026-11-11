@@ -598,13 +598,13 @@ to 100; partial credit only for measured progress).
 | 1 | Nested codes, all layers, validated | 10 | 10 | fit 40/40; error 0.102 gate/up, 0.084 down; end to end +0.053 KL against flat 2-bit |
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
-| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 12 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. The rest needs the pool of 384 and the pod confirmation (E7) |
+| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 8 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. The rest needs memory pressure |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **51** | |
+| | **Total** | 100 | **59** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -976,3 +976,21 @@ What it says:
   384, which needs the full FP4 model as reference (pod). Total 51.
 - Disk: `pool384/fp4-removed` (144 GB of FP4 experts) is no longer needed by the cache and
   waits for Jack's word before deletion. Nothing is running on the Mac or on Runpod.
+
+### 2026-11-10: tau sweep over the pool of 384, on the Mac
+
+- Jack asked for the sweep on a pod; US-NE-1 (the volume's data center) had no GPU, and he
+  chose the Mac. `local_eval.py --router` (`46fff81`) scores the full pool on the REAP-50
+  checkpoint from the 2-bit codes alone, against the full model's stored logits.
+- KL over 22 sessions, 1,024 tokens: all 384 resident 0.390; cache of 144 at tau 0.1, 0.2, 0.3,
+  0.45: 0.483, 0.460, 0.454, 0.573; oracle 144 0.424; static 144 0.763. The exact REAP-50
+  checkpoint scores 0.578 on the same tokens.
+- The cache beats the static set by 0.309 (standard error 0.052, 21 of 22 sessions). Tau 0.3
+  equals 0.2 at a third of the reads (2.6 installs per token, 0.7 GB/s at 30 tok/s).
+- Serving at tau 0.3: 27.2, 26.7 and 23.0 tok/s, 1.4–2.5 installs per token, both scripts
+  correct. Tau 0.3 is the serving default. Tables in the build plan, section "Tau sweep over
+  the pool of 384".
+- Rubric item 4 moves from 12 to 20 of 25; the remaining 5 wait for the pod confirmation (E7).
+  Total 59.
+- Run: 11,991 s, peak RSS 63.8 GB. The pod job `tau384_pod.sh` was not needed. Nothing is
+  running on the Mac or on Runpod.

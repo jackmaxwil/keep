@@ -528,6 +528,50 @@ Serving, 144 residents, tau 0.2, 4 spares, 63 GiB (the pool of 192: 62 GiB):
   reasoning tokens; one sample each).
 - 7% of wanted admissions found no free slot in the first request, 5% over the thinking runs.
 
-Not measured: quality against the full FP4 model (it does not fit the Mac; pod work), other
-values of tau, memory pressure.
+Not measured: memory pressure.
+
+### Tau sweep over the pool of 384 (2026-11-10)
+
+Quality against the full FP4 model needs only its stored logits, not the model: the pod wrote
+them for the Mac's 22 eval sessions. `local_eval.py --router` puts the 384-row router on the
+REAP-50 checkpoint and takes every routed expert from the 2-bit codes the Mac serves, so the
+simulated cache (144 residents, re-route on a miss, one-token lag, starting residents by routed
+mass) runs on the Mac. First 1,024 tokens of each session, KL against the full model:
+
+| Variant | KL | Top-1 | Installs per token | Read at 30 tok/s |
+|---|---:|---:|---:|---:|
+| All 384 resident (2-bit coding alone) | 0.390 | 84.4% | 0 | 0 |
+| Cache of 144, best set per record (oracle) | 0.424 | 84.0% | | |
+| Cache of 144, tau 0.1 | 0.483 | 82.5% | 17.1 | 4.6 GB/s |
+| Cache of 144, tau 0.2 | 0.460 | 82.7% | 7.6 | 2.1 GB/s |
+| Cache of 144, tau 0.3 | 0.454 | 82.5% | 2.6 | 0.7 GB/s |
+| Cache of 144, tau 0.45 | 0.573 | 80.6% | 1.1 | 0.3 GB/s |
+| Static 144 (hottest by routed mass) | 0.763 | 76.2% | 0 | 0 |
+
+For reference, same sessions and tokens: the exact REAP-50 checkpoint (192 FP4 experts) 0.578,
+REAP-50 at 2 bits 0.747, the cache of 144 inside the pool of 192 0.756.
+
+- The cache of 144 over the full pool beats the static 144 by 0.309 (standard error 0.052, 21
+  of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 53 GB of resident experts.
+- Tau 0.2 and 0.3 are equal (difference 0.005, standard error 0.017) and 0.3 reads a third as
+  much. Tau 0.1 is worse than 0.2 (0.024, standard error 0.013): admitting weak slots evicts
+  useful experts. Tau 0.45 loses 0.12 in every session.
+- At tau 0.3 the cache is 0.030 from the oracle and 0.064 from having every expert resident.
+- Tool-use text stays at 1.8–2.0 in every variant, all 384 resident included (1.94), so that
+  loss is the 2-bit coding and not the cache.
+- Run: 11,991 s, peak RSS 63.8 GB (`~/Models/v41-reap-run/jobs/tau384_mac.sh`).
+
+Serving at tau 0.3 (144 residents, 4 spares, 63 GiB), against the tau 0.2 table above:
+
+| Request | Tokens | tok/s | Demanded slots resident | Installs per token | Read |
+|---|---:|---:|---:|---:|---:|
+| Script, thinking off, greedy (first request) | 1,030 | 27.2 | 80% | 2.5 | 22 MB per token |
+| Same again | 1,085 | 26.7 | 83% | 1.4 | 13 MB per token |
+| 4,341-token prompt, summary | 310 | 23.0 | 71% | | prefill 24.8 s (175 tok/s) |
+
+Both scripts run correctly on the test tree. Installs match the simulation (2.6 per token).
+Tau 0.3 is the serving default from here.
+
+Limits: the cache is simulated with a fetch that lands within one token; 22 sessions, first
+1,024 tokens; two generated scripts at tau 0.3; no pod confirmation on longer sessions (E7).
 
