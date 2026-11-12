@@ -1071,3 +1071,15 @@ What it says:
 - Sampled scripts at the card's settings: 19 of 24 correct (144 residents 17, exact REAP-50
   18). No failure is a misspelled name or syntax error; at 144 residents most were.
 - Speed not measured cleanly (the residual fit shared the GPU); queued. Rubric unchanged at 59.
+
+### 2026-11-12: third bit on the hottest experts (B2)
+
+- 1-bit residual fitted on the 2-bit base for the 192 survivors: weight error 0.084 to 0.030
+  (gate, up), 0.047 to 0.024 (down). `local_eval.py --hot-tier DIR` runs hot experts as base +
+  residual.
+- At 92 GB: 218 residents with the hottest 64 at 3 bits score 0.311 (0.215 without tool-use),
+  against 0.325 (0.219) for 217 with 32 at FP4 and 0.398 (0.254) for 250 at 2 bits. Paired
+  against FP4: −0.015 ± 0.008, −0.004 ± 0.003 without tool-use. The residual matches the FP4
+  copy at equal memory and needs no second copy of the expert.
+- 32 hot at 3 bits equals 32 at FP4; 96 hot adds nothing over 64.
+- Rubric unchanged at 59: no item's own test was met.

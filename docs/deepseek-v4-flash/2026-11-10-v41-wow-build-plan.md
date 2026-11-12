@@ -799,3 +799,39 @@ sampling, 24 samples, drafter off, tau 0.3, 200 residents at 2 bits over the poo
   the 11.8 + 0.336 per resident estimate, so the estimate needs that margin at this size.
 - Speed was 11–18 tok/s, but the residual fit shared the GPU during these runs; a clean
   speed run is queued (`jobs/after_b2.sh`).
+
+### Third bit on the hottest experts (B2, 2026-11-12)
+
+A 1-bit E8 residual was fitted on the 2-bit base for the 192 survivors
+(`keep_quant.py --residual-of quant/e8p-podimp --code-bits 8`, 310 s per layer, 33 GB).
+Weighted weight error falls from 0.084 to 0.030 (gate and up) and from 0.047 to 0.024 (down).
+A hot expert then runs base + residual, 13.8 MB instead of 18.8 MB for FP4
+(`local_eval.py --hot-tier DIR`). Same 92 GB budget and settings as B1b.
+
+| Variant | Residents | KL | KL, no tool-use | Top-1 |
+|---|---:|---:|---:|---:|
+| 250 at 2 bits (C1) | 250 | 0.398 | 0.254 | 84.4% |
+| Hottest 32 at FP4 (B1b) | 217 | 0.325 | 0.219 | 85.6% |
+| Hottest 32 at 3 bits | 234 | 0.327 | 0.223 | 85.3% |
+| Hottest 64 at 3 bits | 218 | 0.311 | 0.215 | 85.9% |
+| Hottest 96 at 3 bits | 202 | 0.308 | 0.222 | 85.8% |
+
+Paired differences, mean ± standard error (sessions better):
+
+| Pair | All 22 | Without tool-use (20) |
+|---|---|---|
+| 64 at 3 bits against 32 at FP4 | −0.015 ± 0.008 (16) | −0.004 ± 0.003 (14) |
+| 32 at 3 bits against 32 at FP4 | +0.002 ± 0.004 (10) | +0.004 ± 0.004 (9) |
+| 96 at 3 bits against 64 at 3 bits | −0.002 ± 0.011 (8) | +0.007 ± 0.004 (7) |
+| 64 at 3 bits against 250 at 2 bits | −0.087 ± 0.034 (19) | −0.039 ± 0.009 (17) |
+| 64 at 3 bits against all 384 at 2 bits (139 GB) | −0.079 ± 0.042 (14) | −0.020 ± 0.008 (12) |
+
+- The residual does the work of the FP4 copy at equal memory: level with it on the reading
+  without tool-use, slightly ahead with it. One more bit on a hot expert recovers what FP4 on
+  it recovers, because the memory saved goes to more hot experts or more residents.
+- 64 hot experts per layer is the best of the three; 96 gives nothing more.
+- Unlike an FP4 copy, the residual adds to the base the cache already holds. A hot expert
+  needs no second format in the slot array, and losing the residual leaves the expert running
+  at 2 bits.
+- Run: 5,854 s, peak RSS 63 GB. Smoke (one session, 96 tokens, 144 residents): 1.521 at 2
+  bits, 1.309 with 32 hot experts at 3 bits.

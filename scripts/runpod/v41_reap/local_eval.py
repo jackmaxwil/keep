@@ -273,6 +273,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hot", action="append", default=[], metavar="NAME=H",
                    help="with --miss: the H hottest experts (--cache-warm order) that the checkpoint holds run from "
                    "its FP4 weights while resident, the other residents from the codes")
+    p.add_argument("--hot-tier", default="fp4", metavar="fp4|DIR",
+                   help="with --hot: what a hot expert runs. fp4, or its codes plus the residual in DIR, a keep_quant.py "
+                   "--residual-of fit over the checkpoint's experts")
     p.add_argument("--cache-warm", type=Path, help="imatrix npz (reap__gate_norm_sum): warm-start each cache with the top-K")
     p.add_argument("--sidecar", type=Path, help="a sidecar_fit.py output directory, added to every variant's MoE output")
     p.add_argument("--sidecar-rank", type=int, help="use only the top-k sidecar components (stored largest first)")
@@ -400,6 +403,12 @@ def main(argv: list[str] | None = None) -> int:
                 traces[v].extend((layer, *row) for row in found)
             return hi
 
+        def decode(z, proj: str, e: int):
+            """float32 weights of expert ``e`` of one keep_quant layer file."""
+            vec = grids[int(z.get("code_bits", 16))][torch.as_tensor(z[f"{proj}_codes"][e].astype(np.int64), device=dev)]
+            s = torch.as_tensor(z[f"{proj}_scales"][e].astype(np.float32), device=dev)  # vec: [out, in/8, 8]
+            return (vec * s.repeat_interleave(vec.shape[1] // s.shape[-1], dim=-1)[..., None]).flatten(-2)
+
         def tier_weights(layer: int, e: int) -> tuple[dict, dict]:
             """(base, base + residual) bf16 weights of local expert ``e``, decoded once per layer."""
             if cache["layer"] != layer:
@@ -407,15 +416,7 @@ def main(argv: list[str] | None = None) -> int:
                 cache["layer"] = layer
                 cache["z"] = [layer_codes(s, layer, sorted(ckpt_survivors[str(layer)])) for s in tier_specs]
             if e not in cache:
-                tiers = []
-                for z in cache["z"]:
-                    grid = grids[int(z.get("code_bits", 16))]  # the first E8P runs wrote no code_bits
-                    tier = {}
-                    for proj in ("w1", "w2", "w3"):
-                        vec = grid[torch.as_tensor(z[f"{proj}_codes"][e].astype(np.int64), device=dev)]  # [out, in/8, 8]
-                        s = torch.as_tensor(z[f"{proj}_scales"][e].astype(np.float32), device=dev)
-                        tier[proj] = (vec * s.repeat_interleave(vec.shape[1] // s.shape[-1], dim=-1)[..., None]).flatten(-2)
-                    tiers.append(tier)
+                tiers = [{proj: decode(z, proj, e) for proj in ("w1", "w2", "w3")} for z in cache["z"]]
                 lo = {p: w.bfloat16() for p, w in tiers[0].items()}
                 hi = lo if len(tiers) == 1 else {p: (tiers[1][p] if copy_mode else lo_w + tiers[1][p]).bfloat16()
                                                  for p, lo_w in tiers[0].items()}
@@ -455,14 +456,22 @@ def main(argv: list[str] | None = None) -> int:
                 counts[i, 6] += float(w[drop].sum())
                 hi_mask = hi_mask & ~drop
                 lo_w, hi_w = tier_weights(layer, i)
-                if hot_n.get(state["variant"]):  # residents of the hot set run the checkpoint's FP4 expert
+                if hot_n.get(state["variant"]):  # residents of the hot set run at --hot-tier precision
                     if "hot" not in cache:
                         cache["hot"] = {n: hot_set(warm[layer], n, own[str(layer)]) for n in set(hot_n.values())}
                     if i in cache["hot"][hot_n[state["variant"]]]:
-                        if ("fp4", i) not in cache:
-                            mine = self.experts[own[str(layer)].index(i)]
-                            cache["fp4", i] = {p: decode_fp4(getattr(mine, p).weight, getattr(mine, p).scale) for p in lo_w}
-                        hi_w = cache["fp4", i]
+                        if ("hot", i) not in cache:
+                            j = own[str(layer)].index(i)  # its place in the checkpoint, and in a fit over it
+                            if args.hot_tier == "fp4":
+                                mine = self.experts[j]
+                                cache["hot", i] = {p: decode_fp4(getattr(mine, p).weight, getattr(mine, p).scale) for p in lo_w}
+                            else:
+                                if "residual" not in cache:
+                                    cache["residual"] = np.load(Path(args.hot_tier).expanduser() / f"layer-{layer:02d}.npz")
+                                    assert cache["residual"]["w1_codes"].shape[0] == len(own[str(layer)])
+                                cache["hot", i] = {p: (decode(cache["z"][0], p, i) + decode(cache["residual"], p, j)).bfloat16()
+                                                   for p in lo_w}
+                        hi_w = cache["hot", i]
                         hot_slots[state["variant"]] += int(hi_mask.sum())
                 only = hi_proj.get(state["variant"])
                 if only is not None:  # a finer rung: the residual of some projections only
@@ -621,7 +630,8 @@ def main(argv: list[str] | None = None) -> int:
                                             "policy": policies.get(v, "lru") if v in cache_k else None,
                                             "copy_mode": copy_mode, "hi_units": hi_units,
                                             "n_bases": 0 if v in miss else kept, "pool": kept, "miss": miss.get(v),
-                                            "hot": hot_n.get(v, 0), "hot_slot_share": hot_slots[v] / max(tot[:2].sum() + tot[5], 1),
+                                            "hot": hot_n.get(v, 0), "hot_tier": "fp4" if args.hot_tier == "fp4" else "nested",
+                                            "hot_slot_share": hot_slots[v] / max(tot[:2].sum() + tot[5], 1),
                                             "tau_drop": tau_drop.get(v, 0.0),
                                             "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),

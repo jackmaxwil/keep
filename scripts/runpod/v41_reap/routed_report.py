@@ -60,8 +60,9 @@ def rows(eval_dir: Path, tok_s: float, bandwidth_gbs: float) -> list[dict]:
             "ssd_mb_per_tok": round(ssd / 1e6, 1), "ssd_gbs": round(ssd * tok_s / 1e9, 2),
             "read_gb_per_tok": round(read / 1e9, 2), "tok_s_bound": round(bandwidth_gbs * 1e9 / read, 1),
         }
-        if tiers.get("hot"):  # a cache whose hottest experts are FP4 copies
-            mixed = (k - tiers["hot"]) * hi_units * UNIT_BYTES + tiers["hot"] * FP4_BYTES
+        if tiers.get("hot"):  # a cache whose hottest experts are FP4 copies, or carry one more bit as a residual
+            hot_bytes = FP4_BYTES if tiers.get("hot_tier", "fp4") == "fp4" else (hi_units + 1) * UNIT_BYTES
+            mixed = (k - tiers["hot"]) * hi_units * UNIT_BYTES + tiers["hot"] * hot_bytes
             row |= {"hot": tiers["hot"], "hot_slots": round(tiers["hot_slot_share"], 3),
                     "resident_gb": round(mixed * n_layers / 1e9, 1)}
         out.append(row)
