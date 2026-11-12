@@ -894,3 +894,19 @@ per resident. The constants are this M4 Max's measured peaks; other chips are un
 - `pool384/fp4-removed` (134 GB) was deleted with Jack's confirmation; the hot tier uses
   survivors only. Not done: publishing (needs Jack's OK; the Mac's uplink is 3 MB/s, so an
   upload would run from a pod) and a model card for the bundle.
+
+### Residual kernel for the hot tier (B3, first part, 2026-11-12)
+
+- `src/ramp/kernels/e8_1bit_m1.metal` and `e8_1bit_m1.py`: the token and per-route layouts of
+  `e8p_m1` over 8-bit E8 codes, for a residual added to the 2-bit output. A route whose index
+  is `NO_RESIDUAL` writes zeros, so one call serves a token whose routes are partly hot.
+- `tests/test_e8_1bit_m1.py` (19 cases): both layouts against a float64 decode of the same
+  codes, fp32 within 1e-5 and bf16 within 2e-2 of the largest output, with routes that have
+  no residual, a ragged last tile and the model's group size; also passes under
+  `MTL_SHADER_VALIDATION=1`.
+- Timed alone at the model's sizes (one token, six routes, 200 interleaved runs, M4 Max): gate
+  0.217 ms against 0.227 ms for the 2-bit kernel, down 0.248 against 0.252; with two of six
+  routes hot 0.185 and 0.194. Single calls are launch-bound, so the cost inside the decode step
+  is still to be measured.
+- Not done: the hot residual arrays, the per-slot hot index and the memory accounting in
+  `omlx_lattice.py`.
