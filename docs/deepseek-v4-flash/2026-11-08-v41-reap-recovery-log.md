@@ -1063,3 +1063,11 @@ What it says:
 - Serving the 92 GB configuration needs about 96 GiB of footprint, above the 80 GB rule.
 - Tables in the build plan, sections B1b and "More samples". Rubric unchanged at 59: no item's
   own test was met.
+
+### 2026-11-11: 200 residents served
+
+- Per-process limit raised to 100 GB for serving (Jack). The cache runs at 200 residents: 81
+  GiB at start, 87 GiB peak, 90% of demanded slots resident, 0.40 installs per token.
+- Sampled scripts at the card's settings: 19 of 24 correct (144 residents 17, exact REAP-50
+  18). No failure is a misspelled name or syntax error; at 144 residents most were.
+- Speed not measured cleanly (the residual fit shared the GPU); queued. Rubric unchanged at 59.

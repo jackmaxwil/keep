@@ -779,3 +779,23 @@ Same sampled script request, 8 samples per run, 4,096-token budget, drafter off.
 - Between 96 and 120 residents at temperature 0.6 the count goes from 1 to 7 of 8. The usable
   floor on this request is about 120 residents (55 GiB), which is a 96 GB Mac, not a 64 GB one.
 - Still unknown: how many of 24 the full model gets (it does not fit on this Mac).
+
+### Serving 200 residents (2026-11-11)
+
+Jack raised the per-process limit to 100 GB for serving. Same sampled script request, card
+sampling, 24 samples, drafter off, tau 0.3, 200 residents at 2 bits over the pool of 384.
+
+| Residents | Footprint, peak | Demanded slots resident | Installs per token | Read per token | Correct of 24 |
+|---:|---:|---:|---:|---:|---:|
+| 144 (above) | 63 GiB | | | | 17 |
+| 200 | 87 GiB | 90% | 0.40 | 3.6 MB | 19 |
+| Exact REAP-50 (above) | | | | | 18 |
+
+- 19 of 24, and none of the 5 failures is a misspelled name or a syntax error: 4 scripts run
+  and print the wrong list, 1 answer has no code block. At 144 residents 5 of 7 failures were
+  misspelled names or syntax errors. Fewer re-routed slots (10% of demand against 25% at 96)
+  remove the spelling damage.
+- Footprint starts at 81 GiB and peaks at 87 GiB over three server runs, 6 to 8 GiB above
+  the 11.8 + 0.336 per resident estimate, so the estimate needs that margin at this size.
+- Speed was 11–18 tok/s, but the residual fit shared the GPU during these runs; a clean
+  speed run is queued (`jobs/after_b2.sh`).
