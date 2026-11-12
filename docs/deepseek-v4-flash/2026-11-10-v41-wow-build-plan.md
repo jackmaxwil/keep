@@ -625,3 +625,71 @@ the script runs and lists the three duplicate files of the test tree.
   and whether more samples separate the rows. 16 more per row for the cache of 144 and the
   exact checkpoint are queued behind the simulator run.
 - Jobs: `~/Models/v41-reap-run/jobs/k1_mtp_samples.sh`; scorer in the session scratchpad.
+
+### Quality against resident count (C1, 2026-11-11)
+
+Same simulator, sessions and tokens as the tau sweep: pool of 384, tau 0.3, re-route on a miss,
+22 sessions, first 1,024 tokens, KL against the full FP4 model. Footprint is the measured
+serving model (11.8 GiB outside routed experts plus 0.336 GiB per resident slot).
+
+| Residents per layer | Resident experts | Footprint | KL | KL without tool-use | Top-1 | Read per token |
+|---:|---:|---:|---:|---:|---:|---:|
+| 32 | 11.8 GB | 23 GiB | 0.942 | 0.732 | 73.5% | 118 MB |
+| 48 | 17.7 GB | 28 GiB | 0.790 | 0.582 | 77.1% | 82 MB |
+| 64 | 23.6 GB | 33 GiB | 0.705 | 0.496 | 78.7% | 61 MB |
+| 96 | 35.4 GB | 44 GiB | 0.605 | 0.390 | 81.1% | 39 MB |
+| 144 | 53.1 GB | 60 GiB | 0.454 | 0.320 | 82.5% | 24 MB |
+| 200 | 73.7 GB | 79 GiB | 0.401 | 0.279 | 83.8% | 13 MB |
+| 250 | 92.2 GB | 96 GiB | 0.398 | 0.254 | 84.4% | 5.5 MB |
+| 384 (all) | 141.6 GB | | 0.390 | 0.235 | 84.4% | 0 |
+| Static 144, for reference | 53.1 GB | 60 GiB | 0.763 | 0.654 | 76.2% | 0 |
+
+- 144 reproduces the tau sweep (0.4542, every session equal).
+- A cache of 48 at 28 GiB is level with the static 144 at 60 GiB (0.790 against 0.763; 0.582
+  against 0.654 without tool-use), and a cache of 96 at 44 GiB is level with the exact REAP-50
+  checkpoint (0.605 against 0.578), which needs 341 GB of FP4 experts on disk.
+- 144 to 200 gains 0.053 (standard error 0.009, 22 of 22 sessions). 200 to 250 gains 0.003
+  over all sessions and 0.024 without tool-use: breadth is spent near 200 residents.
+- Reads grow as the cache shrinks: 2.5 GB/s at 30 tok/s for 48 residents, 3.5 GB/s for 32.
+- Run: 12,400 s (`~/Models/v41-reap-run/jobs/c1b1_mac.sh`).
+
+### FP4 on the hottest experts (B1, 2026-11-11)
+
+`local_eval.py --hot NAME=H`: the H hottest experts per layer by routed mass, among those the
+REAP-50 checkpoint holds, run from its FP4 weights whenever they are resident (18.8 MB against
+9.2 MB at 2 bits). This is the ceiling for any extra bits on those experts.
+
+| Variant | Resident experts | KL | Without tool-use | Top-1 |
+|---|---:|---:|---:|---:|
+| 144 at 2 bits | 53.1 GB | 0.454 | 0.320 | 82.5% |
+| 127 residents, 16 of them FP4 | 53.0 GB | 0.413 | 0.310 | 83.3% |
+| 110 residents, 32 of them FP4 | 52.8 GB | 0.476 | 0.331 | 82.9% |
+| 177 at 2 bits | 65.2 GB | 0.421 | 0.294 | 83.2% |
+| 144 residents, 32 of them FP4 | 65.4 GB | 0.392 | 0.280 | 83.9% |
+| 200 at 2 bits | 73.7 GB | 0.401 | 0.279 | 83.8% |
+| All 384 at 2 bits | 141.6 GB | 0.390 | 0.235 | 84.4% |
+| All 384, 32 of them FP4 | 153.8 GB | 0.268 | 0.167 | 86.9% |
+
+Paired by session (difference, standard error, sessions better):
+
+| Comparison | All 22 sessions | 20 without tool-use |
+|---|---|---|
+| 16 FP4 against 144 at 2 bits, 53 GB | −0.041 ± 0.023 (12) | −0.010 ± 0.006 (10) |
+| 32 FP4 against 144 at 2 bits, 53 GB | +0.022 ± 0.010 (5) | +0.011 ± 0.006 (5) |
+| 144 with 32 FP4 against 177 at 2 bits, 65 GB | −0.029 ± 0.013 (14) | −0.015 ± 0.009 (12) |
+| 144 with 32 FP4 against 144 at 2 bits (12 GB more) | −0.062 ± 0.016 (19) | −0.041 ± 0.008 (17) |
+| All 384 with 32 FP4 against all 384 at 2 bits | −0.122 ± 0.039 (22) | −0.067 ± 0.013 (20) |
+
+- Gate (0.02 over the equal-memory 2-bit rival): met with tool-use counted (0.041 and 0.029),
+  not met without it (0.010 and 0.015). The tool-use sessions carry the off-format teacher, so
+  the reading without them is the one to trust. At 53 and 65 GB, FP4 on the hot set is a
+  small gain at best, and trading 34 residents for 32 FP4 experts is a loss.
+- Precision alone is large: with every expert resident, FP4 on 32 experts per layer (8% of
+  them) removes 0.067 of the 0.235 left, in all 20 sessions. Those experts take 22% of routed
+  slots.
+- 144 residents with 32 at FP4 (65 GB) equals 200 residents at 2 bits (74 GB).
+- So extra bits pay where breadth is spent, above about 200 residents, which is the budget of
+  a 128 GB Mac. That budget was not tested here; 217 residents with 32 FP4 and 183 with 64
+  FP4 against 250 at 2 bits (all 92 GB) is the deciding run.
+- Run: 8,549 s, peak RSS 61 GB.
+

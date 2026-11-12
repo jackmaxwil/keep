@@ -1016,3 +1016,21 @@ What it says:
   with 32 hot 0.68. The resident-count curve (C1) and the hot-tier comparison (B1) are running.
 - Rubric unchanged at 59: no item's own test was met.
 
+### 2026-11-11: quality against resident count (C1) and FP4 on the hottest experts (B1)
+
+- C1, pool of 384, tau 0.3, 22 sessions, KL (without tool-use in brackets): 32 residents 0.942
+  (0.732), 48 0.790 (0.582), 64 0.705 (0.496), 96 0.605 (0.390), 144 0.454 (0.320), 200 0.401
+  (0.279), 250 0.398 (0.254), all 384 0.390 (0.235). A cache of 48 (28 GiB footprint) is level
+  with the static 144 (60 GiB); a cache of 96 (44 GiB) is level with the exact REAP-50
+  checkpoint. Breadth is spent near 200 residents.
+- B1, gate of 0.02 over the equal-memory 2-bit rival: 16 FP4 experts at 53 GB −0.041 (−0.010
+  without tool-use); 144 with 32 FP4 against 177 at 65 GB −0.029 (−0.015). Met only with the
+  tool-use sessions counted, which carry the off-format teacher, so not met on the reading to
+  trust. Trading 34 residents for 32 FP4 experts loses 0.022.
+- Precision alone: all 384 resident with 32 FP4 per layer 0.268 against 0.390 (0.167 against
+  0.235 without tool-use, all 20 sessions). 144 with 32 FP4 at 65 GB equals 200 at 74 GB.
+- Reading: below about 200 residents breadth buys more than bits; above it only bits are left.
+  The 128 GB budget (92 GB of experts) is the untested case; `c1b1_mac.sh b1b` (217 with 32
+  FP4, 183 with 64 FP4, against 250 at 2 bits) is queued behind the serving runs.
+- Tables in the build plan, sections C1 and B1. Rubric unchanged at 59.
+
