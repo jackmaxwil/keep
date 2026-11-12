@@ -1045,3 +1045,21 @@ What it says:
 - Queued: temperature 0.6 at 96 and 48 residents, top_p 0.95 at 144 and 96; before those, 16
   more samples for the cache of 144 and the exact checkpoint, and the 92 GB hot-tier run.
 
+
+### 2026-11-11: hot tier at 92 GB (B1b), more samples, rescue checks
+
+- B1b, the expert budget of a 128 GB Mac: 217 residents with the hottest 32 at FP4 score 0.325
+  (0.219 without tool-use) against 0.398 (0.254) for 250 at 2 bits, both 92 GB. Paired: −0.072
+  ± 0.027 (17 of 22), −0.036 ± 0.010 without tool-use (15 of 20). The 0.02 gate is met on both
+  readings, so B continues. 183 with 64 FP4 scores the same (0.328, 0.221).
+- 217 with 32 FP4 at 92 GB is at least level with all 384 resident at 2 bits at 139 GB (−0.064
+  ± 0.035; −0.016 ± 0.009 without tool-use). Bits lose to breadth at 53 GB, draw at 65 GB and
+  win at 92 GB.
+- Sampled scripts at the card's settings, 24 each: cache of 144 at 2 bits 17 correct, exact
+  REAP-50 18 correct; the cache runs at 22–27 tok/s against 5.6–6.3.
+- Rescue checks, 8 each: 96 residents at temperature 0.6 1 correct, 48 residents 0; top_p 0.95
+  gives 5 at 144 and 2 at 96. Neither setting rescues a small cache; the errors are misspelled
+  identifiers from re-routed slots. The usable floor on this request is about 120 residents.
+- Serving the 92 GB configuration needs about 96 GiB of footprint, above the 80 GB rule.
+- Tables in the build plan, sections B1b and "More samples". Rubric unchanged at 59: no item's
+  own test was met.

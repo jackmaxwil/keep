@@ -715,3 +715,67 @@ memory pressure.
 - Open: whether a lower temperature or a trimmed tail (top_p 0.95) makes 96 residents usable,
   and how many of 8 the full model gets. The first is queued (`jobs/after_b1b.sh`).
 
+
+### FP4 on the hottest experts at 92 GB (B1b, 2026-11-11)
+
+The deciding run named above: the expert budget of a 128 GB Mac (92 GB), pool of 384, tau 0.3,
+re-route, 22 sessions, 1,024 tokens. KL against the full model; "no tool-use" drops the two
+off-format sessions.
+
+| Variant | Residents | Expert memory | KL | KL, no tool-use | Top-1 |
+|---|---|---:|---:|---:|---:|
+| 250 at 2 bits (C1) | 250 | 92 GB | 0.398 | 0.254 | 84.4% |
+| 217, hottest 32 at FP4 | 217 | 92.3 GB | 0.325 | 0.219 | 85.6% |
+| 183, hottest 64 at FP4 | 183 | 92.0 GB | 0.328 | 0.221 | 86.1% |
+| All 384 at 2 bits (C1) | 384 | 139 GB | 0.390 | 0.235 | |
+| All 384, hottest 32 at FP4 (B1) | 384 | 154 GB | 0.268 | 0.167 | 86.9% |
+
+Paired differences, mean ± standard error (sessions better):
+
+| Pair | All 22 | Without tool-use (20) |
+|---|---|---|
+| 217 with 32 FP4 against 250 at 2 bits | −0.072 ± 0.027 (17) | −0.036 ± 0.010 (15) |
+| 183 with 64 FP4 against 250 at 2 bits | −0.070 ± 0.030 (16) | −0.034 ± 0.011 (14) |
+| 217 with 32 FP4 against 200 at 2 bits (74 GB) | −0.075 ± 0.016 (21) | −0.060 ± 0.009 (19) |
+| 217 with 32 FP4 against all 384 at 2 bits (139 GB) | −0.064 ± 0.035 (15) | −0.016 ± 0.009 (13) |
+| 183 with 64 FP4 against 217 with 32 FP4 | +0.002 ± 0.015 | +0.002 ± 0.003 |
+
+- Gate (0.02 over the equal-memory 2-bit rival): met on both readings, 0.072 with tool-use and
+  0.036 without. B continues.
+- At 92 GB, 217 residents with 32 at FP4 are at least level with every expert resident at 2
+  bits, which takes 139 GB. The gain is in the agentic, networking and cyber sessions (0.32 to
+  0.25, 0.25 to 0.16, 0.48 to 0.38); prose and business sessions do not move.
+- 32 and 64 FP4 experts per layer score the same, so the hot set is small: 32 is enough, and
+  the choice between them can be made on serving cost.
+- With B1: bits lose to breadth at 53 GB, draw at 65 GB, win at 92 GB. The crossover is near
+  200 residents.
+- Serving this needs about 96 GiB of footprint (185 slots at 2 bits, 32 at FP4, 11.8 GiB
+  outside the routed experts), above the 80 GB per-process rule on this Mac. Under the rule
+  the hot tier can be served at about 130 residents with 32 at FP4.
+- Run: 3,339 s, peak RSS 60 GB.
+
+### More samples and two rescue checks (2026-11-11)
+
+Same sampled script request, 8 samples per run, 4,096-token budget, drafter off.
+
+| Model | Residents | Temperature | top_p | Correct | tok/s |
+|---|---:|---:|---:|---|---:|
+| Cache, pool of 384 at 2 bits | 144 | 1.0 | 1.0 | 17 of 24 (6, 5, 6) | 22–27 |
+| Exact REAP-50, FP4, stock offload | 192 | 1.0 | 1.0 | 18 of 24 (5, 6, 7) | 5.6–6.3 |
+| Cache | 144 | 1.0 | 0.95 | 5 of 8 | 24–27 |
+| Cache | 120 | 0.6 | 1.0 | 7 of 8 (earlier) | |
+| Cache | 96 | 1.0 | 1.0 | 2 of 8 (C2) | 22–25 |
+| Cache | 96 | 1.0 | 0.95 | 2 of 8 | 24–26 |
+| Cache | 96 | 0.6 | 1.0 | 1 of 8 | 20–28 |
+| Cache | 48 | 0.6 | 1.0 | 0 of 8 | 23–25 |
+
+- With 24 samples each, the cache of 144 at 2 bits and the exact REAP-50 checkpoint are level
+  (71% and 75%) at the card's sampling, and the cache is about four times as fast. Their
+  failures are of the same kind: one misspelled name or a wrong output.
+- Neither a lower temperature nor top_p 0.95 rescues 96 or 48 residents. The failures at 96
+  with temperature 0.6 are still misspelled identifiers (`hexdigdigest`, `diggest`,
+  `filnames`), so the damage comes from the re-routed slots (25% of demand at 96 residents,
+  35% at 48), not from the sampling tail. top_p 0.95 does nothing at 144 either.
+- Between 96 and 120 residents at temperature 0.6 the count goes from 1 to 7 of 8. The usable
+  floor on this request is about 120 residents (55 GiB), which is a 96 GB Mac, not a 64 GB one.
+- Still unknown: how many of 24 the full model gets (it does not fit on this Mac).
