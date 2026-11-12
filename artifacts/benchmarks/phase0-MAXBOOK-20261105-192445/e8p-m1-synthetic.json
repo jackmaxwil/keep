@@ -1,0 +1,62 @@
+{
+  "best": {
+    "effective_gb_per_s": 52.75492459836312,
+    "max_relative_diff_vs_production": 0.000643500650767237,
+    "median_ms_per_ffn": 0.7267295004567131,
+    "rows_per_threadgroup": 32,
+    "speedup_over_production": 2.3768878351187355,
+    "threadgroup_codebook": true
+  },
+  "configs": [
+    {
+      "effective_gb_per_s": 26.706688923324624,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 1.4355414896272123,
+      "rows_per_threadgroup": 8,
+      "speedup_over_production": 1.2032773148939389,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 37.284508678850266,
+      "max_relative_diff_vs_production": 0.000638977624475956,
+      "median_ms_per_ffn": 1.0282704897690564,
+      "rows_per_threadgroup": 16,
+      "speedup_over_production": 1.6798639329282228,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 52.75492459836312,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.7267295004567131,
+      "rows_per_threadgroup": 32,
+      "speedup_over_production": 2.3768878351187355,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 44.31135339640817,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.8652085089124739,
+      "rows_per_threadgroup": 64,
+      "speedup_over_production": 1.9964603806644017,
+      "threadgroup_codebook": true
+    },
+    {
+      "effective_gb_per_s": 45.07216109711928,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.8506039885105565,
+      "rows_per_threadgroup": 32,
+      "speedup_over_production": 2.0307387837225495,
+      "threadgroup_codebook": false
+    }
+  ],
+  "device": "Device(gpu, 0)",
+  "ffn_bytes": 38338560,
+  "mlx_version": "0.31.2",
+  "outputs_agree": true,
+  "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "production_effective_gb_per_s": 22.194957548650077,
+  "production_median_ms_per_ffn": 1.7273545090574771,
+  "record_type": "ramp_e8p_m1_kill_test_v1",
+  "source": "synthetic",
+  "verdict": "KILL"
+}

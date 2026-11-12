@@ -237,6 +237,67 @@ def _cmd_finalize(opts: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_finalize_reap(opts: argparse.Namespace) -> int:
+    from keep.quality.dsv4_teacher_runner import finalize_dsv4_reap_stats
+
+    report = finalize_dsv4_reap_stats(
+        Path(opts.out_dir).expanduser(),
+        output=Path(opts.output).expanduser() if opts.output else None,
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0
+
+
+def _cmd_reap_select(opts: argparse.Namespace) -> int:
+    """Pick survivors and run the REAP-vs-baseline kill test on the same stats."""
+
+    import numpy as np
+
+    from keep.quality.reap import (
+        ReapStats,
+        expert_saliency,
+        pruned_set_jaccard,
+        select_survivors,
+        super_expert_candidates,
+        write_survivors,
+    )
+
+    stats = ReapStats.load(Path(opts.stats).expanduser())
+    chosen = select_survivors(
+        expert_saliency(stats, opts.criterion, prior_slots=opts.prior_slots), opts.keep
+    )
+    baseline = select_survivors(expert_saliency(stats, opts.compare), opts.keep)
+    jaccard = pruned_set_jaccard(chosen, baseline, num_experts=stats.num_experts)
+    report = {
+        "record_type": "dsv4_reap_select",
+        "criterion": opts.criterion,
+        "prior_slots": opts.prior_slots,
+        "keep": opts.keep,
+        "num_experts": stats.num_experts,
+        "sessions": len(stats.sessions),
+        "compare": opts.compare,
+        "pruned_set_jaccard_vs_compare": {
+            str(int(layer)): round(float(value), 4)
+            for layer, value in zip(stats.layers, jaccard)
+        },
+        "median_jaccard": float(np.median(jaccard)),
+        # Kill test from the plan: if REAP's pruned set matches frequency's
+        # at Jaccard >= 0.9, REAP adds nothing over the counts KEEP already has.
+        "reap_adds_little": bool(np.median(jaccard) >= 0.9),
+        "never_routed_experts": int((stats.route_count == 0).sum()),
+        "super_expert_candidates": super_expert_candidates(stats),
+    }
+    if opts.output:
+        write_survivors(
+            Path(opts.output).expanduser(),
+            chosen,
+            layers=stats.layers.tolist(),
+            meta={k: v for k, v in report.items() if k != "record_type"},
+        )
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0
+
+
 def _cmd_plan(opts: argparse.Namespace) -> int:
     from keep.quality.dsv4_teacher_runner import (
         build_dsv4_expert_span_index,
@@ -346,6 +407,32 @@ def build_parser() -> argparse.ArgumentParser:
     finalize.add_argument("--sidecar-dir")
     finalize.add_argument("--prompt-set", default="dsv4_teich_calibration_v1")
     finalize.set_defaults(func=_cmd_finalize)
+
+    finalize_reap = verbs.add_parser(
+        "finalize-reap", help="sum calibration sessions' REAP expert statistics"
+    )
+    finalize_reap.add_argument("--out-dir", required=True)
+    finalize_reap.add_argument("--output", help="default: <out-dir>/reap-stats.npz")
+    finalize_reap.set_defaults(func=_cmd_finalize_reap)
+
+    select = verbs.add_parser(
+        "reap-select", help="choose surviving experts and compare criteria"
+    )
+    select.add_argument("--stats", required=True, help="reap-stats.npz from finalize-reap")
+    select.add_argument("--keep", type=int, required=True, help="experts kept per layer")
+    select.add_argument(
+        "--criterion",
+        default="reap",
+        choices=("reap", "frequency", "weighted_frequency", "ean_mean"),
+    )
+    select.add_argument(
+        "--compare",
+        default="frequency",
+        choices=("reap", "frequency", "weighted_frequency", "ean_mean"),
+    )
+    select.add_argument("--prior-slots", type=float, default=0.0)
+    select.add_argument("--output", help="write the survivor table as JSON")
+    select.set_defaults(func=_cmd_reap_select)
 
     plan = verbs.add_parser("plan", help="print the streaming plan and byte budget")
     plan.add_argument("--checkpoint", default=str(DEFAULT_CHECKPOINT))

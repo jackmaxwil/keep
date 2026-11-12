@@ -1,0 +1,64 @@
+........F.............................................................   [100%]
+=================================== FAILURES ===================================
+__________________ test_hyper_connection_output_with_the_flag __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x119e616e0>
+
+    @pytest.mark.skipif(not _metal_available(), reason="needs a Metal GPU")
+    def test_hyper_connection_output_with_the_flag(monkeypatch):
+        from ramp.models.deepseek_v4_flash_adapter import (
+            DeepseekV4FlashVQModelArgs,
+            HyperConnection,
+        )
+    
+>       args = DeepseekV4FlashVQModelArgs(hidden_size=64, hc_mult=HC, num_hidden_layers=1, compress_ratios=[0])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_hc_sinkhorn.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+<string>:48: in __init__
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = DeepseekV4FlashVQModelArgs(model_type='deepseek_v4', vocab_size=129280, hidden_size=64, intermediate_size=18432, moe_i... dspark_target_layer_ids=[], dspark_markov_rank=256, n_mtp_layers=0, tie_word_embeddings=False, topk_method='noaux_tc')
+
+    def __post_init__(self) -> None:
+        if not self.compress_ratios:
+            n = self.num_hidden_layers
+            self.compress_ratios = (
+                [0]
+                + [4 if i % 2 else 128 for i in range(max(n - 2, 0))]
+                + ([0] if n >= 2 else [])
+            )
+        # The drafter ratios live past ``num_hidden_layers``; keep them so the
+        # MTP blocks can be built from the same list, then truncate the
+        # backbone view exactly as upstream does.
+        self.mtp_compress_ratios = list(self.compress_ratios[self.num_hidden_layers :])
+        self.compress_ratios = list(self.compress_ratios[: self.num_hidden_layers])
+        if len(self.compress_ratios) != self.num_hidden_layers:
+            raise ValueError(
+                "`compress_ratios` must have one entry per hidden layer, "
+                f"got {len(self.compress_ratios)} for {self.num_hidden_layers} layers."
+            )
+        bad = [r for r in self.compress_ratios if r not in (0, 4, 128)]
+        if bad:
+            raise ValueError(f"Unsupported DeepSeek-V4 compress ratios: {bad}")
+        if self.num_hash_layers > self.num_hidden_layers:
+>           raise ValueError(
+                "`num_hash_layers` cannot exceed `num_hidden_layers`: "
+                f"{self.num_hash_layers} > {self.num_hidden_layers}"
+            )
+E           ValueError: `num_hash_layers` cannot exceed `num_hidden_layers`: 3 > 1
+
+src/ramp/models/deepseek_v4_flash_adapter.py:300: ValueError
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_hc_sinkhorn.py::test_hyper_connection_output_with_the_flag
+1 failed, 69 passed, 80 deselected, 2 warnings in 11.74s

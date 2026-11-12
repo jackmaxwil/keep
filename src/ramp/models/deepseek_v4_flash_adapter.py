@@ -139,12 +139,17 @@ from mlx_lm.models.base import (
     scaled_dot_product_attention,
 )
 from mlx_lm.models.cache import CacheList, RotatingKVCache, _BaseCache
-from mlx_lm.models.mla import MultiLinear
+from mlx_lm.models.mla import MultiLinear, QuantizedMultiLinear
 from mlx_lm.models.switch_layers import SwitchGLU
 
 from keep.convert.fp4_expert import dequantize_fp4_expert
-from keep.convert.fp8_block import dequantize_fp8_block
+from keep.convert.fp8_block import (
+    MXFP8_GROUP_SIZE,
+    dequantize_fp8_block,
+    repack_fp8_block_as_mxfp8,
+)
 from keep.io.load import load_quantized_vq_switch_linear
+from ramp.kernels.hc_sinkhorn import fused_hc_sinkhorn, fused_hc_sinkhorn_enabled
 from keep.io.source_safetensors import read_safetensors_file_header
 from ramp.models.glm4_moe_adapter import QuantizedVQSwitchGLU
 
@@ -803,6 +808,34 @@ def _hc_split_sinkhorn_ops(
     return pre, post, comb
 
 
+@mx.compile
+def _hc_split_logits_ops(
+    mixes: mx.array,
+    scale: mx.array,
+    base: mx.array,
+    hc_mult: int,
+    eps: float,
+) -> tuple[mx.array, mx.array, mx.array]:
+    """``_hc_split_sinkhorn_ops`` up to the comb logits, for the fused sinkhorn.
+
+    ``pre`` and ``post`` are computed exactly as there; only the sinkhorn on
+    the returned logits moves to :func:`ramp.kernels.hc_sinkhorn.fused_hc_sinkhorn`.
+    """
+
+    mixes = mixes.astype(mx.float32)
+    scale = scale.astype(mx.float32)
+    base = base.astype(mx.float32)
+    pre_scale, post_scale, comb_scale = scale[0], scale[1], scale[2]
+    pre = mx.sigmoid(mixes[..., :hc_mult] * pre_scale + base[:hc_mult]) + eps
+    post = 2 * mx.sigmoid(
+        mixes[..., hc_mult : 2 * hc_mult] * post_scale + base[hc_mult : 2 * hc_mult]
+    )
+    logits = mixes[..., 2 * hc_mult :].reshape(
+        *mixes.shape[:-1], hc_mult, hc_mult
+    ) * comb_scale + base[2 * hc_mult :].reshape(hc_mult, hc_mult)
+    return pre, post, logits
+
+
 class HyperConnection(nn.Module):
     def __init__(self, config: DeepseekV4FlashVQModelArgs):
         super().__init__()
@@ -820,14 +853,24 @@ class HyperConnection(nn.Module):
         y = x.astype(mx.float32)
         z = mx.fast.rms_norm(y.flatten(-2), None, self.norm_eps)
         mixes = z @ self.fn.T
-        pre, post, comb = _hc_split_sinkhorn_ops(
-            mixes,
-            self.scale,
-            self.base,
-            self.hc_mult,
-            self.sinkhorn_iters,
-            self.hc_eps,
-        )
+        if fused_hc_sinkhorn_enabled():
+            # Opt-in (RAMP_HC_SINKHORN=metal): one dispatch for the whole
+            # sinkhorn instead of a few per iteration. Not bit-identical.
+            pre, post, logits = _hc_split_logits_ops(
+                mixes, self.scale, self.base, self.hc_mult, self.hc_eps
+            )
+            comb = fused_hc_sinkhorn(
+                logits, iters=self.sinkhorn_iters, eps=self.hc_eps
+            )
+        else:
+            pre, post, comb = _hc_split_sinkhorn_ops(
+                mixes,
+                self.scale,
+                self.base,
+                self.hc_mult,
+                self.sinkhorn_iters,
+                self.hc_eps,
+            )
         return (pre[..., None] * y).sum(axis=2).astype(x.dtype), post, comb
 
 
@@ -2107,7 +2150,7 @@ class DeepseekV4FlashMTPDrafter(nn.Module):
                 f"DSpark context cache count {len(cache)} != {len(self.blocks)} stages"
             )
         entry = self.blocks[0]
-        expected = entry.main_proj.weight.shape[1]
+        expected = _linear_input_dims(entry.main_proj)
         if main_hidden.shape[-1] != expected:
             raise ValueError(
                 "DSpark context width must be hidden_size * "
@@ -2790,6 +2833,13 @@ class DeepseekV4FlashNonVQBindReport:
     skipped_out_of_scope_tensors: tuple[str, ...] = ()
     skipped_unmatched_tensors: tuple[str, ...] = ()
     missing_model_parameters: tuple[str, ...] = ()
+    #: ``"bf16"`` (decode FP8 to ``compute_dtype``) or ``"mxfp8"`` (byte copy).
+    resident_format: str = "bf16"
+    #: Source FP8 tensors bound as weights-only mxfp8 instead of being decoded.
+    mxfp8_repacked_tensors: tuple[str, ...] = ()
+    #: The ``.scales`` parameters those bindings created. They are bookkeeping
+    #: for the byte copy, not logical tensors, so ``bound_count`` excludes them.
+    mxfp8_scale_parameters: tuple[str, ...] = ()
 
     @property
     def bound_count(self) -> int:
@@ -2822,6 +2872,9 @@ class DeepseekV4FlashNonVQBindReport:
             "skipped_out_of_scope_tensors": list(self.skipped_out_of_scope_tensors),
             "skipped_unmatched_tensors": list(self.skipped_unmatched_tensors),
             "missing_model_parameters": list(self.missing_model_parameters),
+            "resident_format": self.resident_format,
+            "mxfp8_repacked_tensors": list(self.mxfp8_repacked_tensors),
+            "mxfp8_scale_parameters": list(self.mxfp8_scale_parameters),
         }
 
 
@@ -2985,6 +3038,113 @@ def _decode_source_tensor(
     return mx.array(values), "direct"
 
 
+RESIDENT_FORMATS = ("bf16", "mxfp8")
+
+
+def _repack_source_tensor_mxfp8(
+    dtype: str,
+    raw: bytes,
+    shape: tuple[int, ...],
+    scale: tuple[str, bytes, tuple[int, ...]] | None,
+) -> tuple[mx.array, mx.array]:
+    """Byte-copy an FP8 resident into MLX mxfp8 ``(weight, scales)`` arrays.
+
+    Same dtype guards as the decode path. The values this binds dequantize to
+    exactly what :func:`_decode_source_tensor` would have bound in bf16.
+    """
+
+    if scale is None or dtype != _FP8_CODE_DTYPE:
+        raise ValueError(
+            f"mxfp8 repack needs {_FP8_CODE_DTYPE} codes with a .scale companion, "
+            f"got {dtype} {'with' if scale is not None else 'without'} a scale"
+        )
+    scale_dtype, scale_raw, scale_shape = scale
+    if scale_dtype != _FP8_SCALE_DTYPE:
+        raise ValueError(f"block scales must be {_FP8_SCALE_DTYPE}, got {scale_dtype}")
+    codes = np.frombuffer(raw, dtype=np.uint8).reshape(shape)
+    scales = np.frombuffer(scale_raw, dtype=np.uint8).reshape(scale_shape)
+    packed, group_scales = repack_fp8_block_as_mxfp8(codes, scales, block_size=_FP8_BLOCK)
+    return mx.array(packed), mx.array(group_scales)
+
+
+def _mxfp8_eligible_module_paths(
+    model: nn.Module,
+    plan: Sequence[tuple[str, str, str | None]],
+) -> dict[str, str]:
+    """Map ``target .weight`` -> module path for residents that can stay mxfp8.
+
+    Eligible means: an FP8 source (it has a ``.scale``), a plain ``nn.Linear``
+    target or the ``wo_a`` ``MultiLinear`` (whose flat source rows regroup by
+    a pure reshape), and an input width divisible by the mxfp8 group. Anything
+    else stays on the bf16 decode path.
+    """
+
+    modules = dict(model.named_modules())
+    eligible: dict[str, str] = {}
+    if _FP8_BLOCK[1] % MXFP8_GROUP_SIZE != 0:
+        return eligible
+    for source, target, scale_name in plan:
+        if scale_name is None or not target.endswith(".weight"):
+            continue
+        module_path = target[: -len(".weight")]
+        module = modules.get(module_path)
+        if type(module) is nn.Linear:
+            if module.weight.ndim != 2:
+                continue
+        elif type(module) is MultiLinear and _RESHAPE_ALLOWED_RE.search(source):
+            if module.weight.ndim != 3:
+                continue
+        else:
+            continue
+        if module.weight.shape[-1] % MXFP8_GROUP_SIZE != 0:
+            continue
+        eligible[target] = module_path
+    return eligible
+
+
+def _swap_linears_for_mxfp8(model: nn.Module, module_paths: Iterable[str]) -> None:
+    """Replace the named linear modules with weights-only mxfp8 ones.
+
+    ``nn.Linear`` becomes ``nn.QuantizedLinear`` and ``MultiLinear`` becomes
+    mlx-lm's ``QuantizedMultiLinear``. ``quantize_input=False`` is explicit:
+    activations stay in floating point, so the bound weights reproduce the
+    bf16 teacher's weights exactly. The placeholder quantization of the
+    skeleton weights is lazy and is overwritten by the bind before anything
+    evaluates it.
+    """
+
+    wanted = set(module_paths)
+    if not wanted:
+        return
+    nn.quantize(
+        model,
+        group_size=MXFP8_GROUP_SIZE,
+        bits=8,
+        mode="mxfp8",
+        quantize_input=False,
+        class_predicate=lambda path, module: path in wanted,
+    )
+    modules = dict(model.named_modules())
+    not_swapped = sorted(
+        path
+        for path in wanted
+        if type(modules.get(path)) not in (nn.QuantizedLinear, QuantizedMultiLinear)
+        or getattr(modules.get(path), "mode", None) != "mxfp8"
+    )
+    if not_swapped:
+        raise RuntimeError(
+            "mxfp8 module swap left plain modules behind: " + ", ".join(not_swapped[:10])
+        )
+
+
+def _linear_input_dims(module: nn.Module) -> int:
+    """Input width of a plain or quantized linear layer."""
+
+    if isinstance(module, nn.QuantizedLinear):
+        return int(module.weight.shape[1]) * 32 // int(module.bits)
+    return int(module.weight.shape[1])
+
+
 def bind_deepseek_v4_flash_non_vq_weights(
     model: DeepseekV4FlashVQModel,
     checkpoint_dir: str | Path,
@@ -2993,6 +3153,7 @@ def bind_deepseek_v4_flash_non_vq_weights(
     include_mtp: bool = True,
     strict: bool = True,
     compute_dtype: mx.Dtype = mx.bfloat16,
+    resident_format: str = "bf16",
 ) -> DeepseekV4FlashNonVQBindReport:
     """Bind every non-routed tensor, shard by shard, off the safetensors index.
 
@@ -3001,12 +3162,25 @@ def bind_deepseek_v4_flash_non_vq_weights(
     and ``F32`` tensors load directly; ``I64`` routing tables keep their native
     dtype. Routed experts are skipped -- they are the VQ path.
 
+    ``resident_format="mxfp8"`` (opt-in) keeps every FP8 resident that lands on
+    a plain ``nn.Linear`` or on ``wo_a``'s ``MultiLinear`` as its source bytes
+    instead: the module becomes a weights-only ``nn.QuantizedLinear`` (or
+    mlx-lm ``QuantizedMultiLinear``) in ``mode="mxfp8"``, holding the unchanged
+    e4m3 codes and their ue8m0 exponents (8.25 bits per weight instead of 16),
+    and dequantizes bit-identically to the bf16 decode. Non-FP8 tensors and
+    inputs not divisible by 32 keep the default path. The default, ``"bf16"``,
+    is unchanged.
+
     ``layers`` restricts the backbone layers touched (a layer-0 smoke test does
     not need 163 GB of I/O). ``strict`` is only meaningful for a full bind:
     it is forced off when ``layers`` or ``include_mtp=False`` deliberately leaves
     parameters unbound.
     """
 
+    if resident_format not in RESIDENT_FORMATS:
+        raise ValueError(
+            f"resident_format must be one of {RESIDENT_FORMATS}, got {resident_format!r}"
+        )
     checkpoint_path = Path(checkpoint_dir)
     weight_map = _load_weight_map(checkpoint_path)
     partial_scope = layers is not None or not include_mtp
@@ -3078,6 +3252,14 @@ def bind_deepseek_v4_flash_non_vq_weights(
             + ", ".join(unmatched[:20])
         )
 
+    mxfp8_targets: dict[str, str] = {}
+    if resident_format == "mxfp8":
+        mxfp8_targets = _mxfp8_eligible_module_paths(model, plan)
+        _swap_linears_for_mxfp8(model, mxfp8_targets.values())
+        target_params = {key: value for key, value in tree_flatten(model.parameters())}
+    mxfp8_repacked: list[str] = []
+    mxfp8_scales: list[str] = []
+
     # Group by shard so each file is opened (and its header parsed) once.
     by_shard: dict[str, list[tuple[str, str, str | None]]] = {}
     for source, target, scale_name in plan:
@@ -3115,6 +3297,43 @@ def bind_deepseek_v4_flash_non_vq_weights(
                         scale_raw,
                         scale_tensor.shape,
                     )
+
+                if target in mxfp8_targets:
+                    packed, group_scales = _repack_source_tensor_mxfp8(
+                        tensor.dtype, raw, tensor.shape, scale_payload
+                    )
+                    scales_target = f"{mxfp8_targets[target]}.scales"
+                    regrouped = False
+                    for name, value in ((target, packed), (scales_target, group_scales)):
+                        expected = target_params.get(name)
+                        if (
+                            expected is not None
+                            and tuple(value.shape) != tuple(expected.shape)
+                            and _RESHAPE_ALLOWED_RE.search(source)
+                            and value.size == expected.size
+                        ):
+                            # ``wo_a``: flat source rows regroup into
+                            # MultiLinear's (groups, rows, cols) layout. Rows
+                            # carry their own expanded scales, so this is a
+                            # pure relabel of whole rows.
+                            value = value.reshape(expected.shape)
+                            regrouped = True
+                        if expected is None or tuple(value.shape) != tuple(expected.shape):
+                            raise ValueError(
+                                f"{source} repacks to {name} shape {tuple(value.shape)} "
+                                f"but the mxfp8 module expects "
+                                f"{None if expected is None else tuple(expected.shape)}"
+                            )
+                        batch.append((name, value))
+                    if regrouped:
+                        reshaped.append(source)
+                    mxfp8_repacked.append(source)
+                    mxfp8_scales.append(scales_target)
+                    if target.startswith("mtp_drafter."):
+                        bound_mtp.append(target)
+                    else:
+                        bound_backbone.append(target)
+                    continue
 
                 value, kind = _decode_source_tensor(
                     tensor.dtype,
@@ -3167,7 +3386,7 @@ def bind_deepseek_v4_flash_non_vq_weights(
             # config -- for a bind that touched one layer.
             mx.eval([value for _, value in batch])
 
-    bound_all = set(bound_backbone) | set(bound_mtp)
+    bound_all = set(bound_backbone) | set(bound_mtp) | set(mxfp8_scales)
     missing = tuple(sorted(set(target_params) - bound_all))
     report = DeepseekV4FlashNonVQBindReport(
         bound_backbone_parameters=tuple(sorted(bound_backbone)),
@@ -3182,6 +3401,9 @@ def bind_deepseek_v4_flash_non_vq_weights(
         skipped_out_of_scope_tensors=tuple(sorted(skipped_scope)),
         skipped_unmatched_tensors=tuple(sorted(unmatched)),
         missing_model_parameters=missing,
+        resident_format=resident_format,
+        mxfp8_repacked_tensors=tuple(sorted(mxfp8_repacked)),
+        mxfp8_scale_parameters=tuple(sorted(mxfp8_scales)),
     )
     if strict and missing:
         raise ValueError(

@@ -2796,3 +2796,142 @@ def test_greedy_speculative_runtime_matches_ar_and_counts_real_verify_calls(tmp_
         speculative.stats.accepted_tokens / speculative.stats.verify_passes
     )
     assert speculative.stats.emitted_per_verify_pass > 0
+
+
+# ---------------------------------------------------------------------------
+# Opt-in mxfp8 residents: the FP8 bytes stay as they shipped
+# ---------------------------------------------------------------------------
+
+
+def _named(model) -> dict:
+    return dict(model.named_modules())
+
+
+def test_mxfp8_resident_bind_keeps_the_source_bytes_bit_identically(tmp_path):
+    from ramp.models.deepseek_v4_flash_adapter import _linear_input_dims
+
+    args = _mtp_args()
+    _write_synthetic_checkpoint(tmp_path, args, with_mtp=True)
+    reference = DeepseekV4FlashVQModel(args)
+    ref_report = bind_deepseek_v4_flash_non_vq_weights(reference, tmp_path, strict=True)
+    model = DeepseekV4FlashVQModel(args)
+    report = bind_deepseek_v4_flash_non_vq_weights(
+        model, tmp_path, strict=True, resident_format="mxfp8"
+    )
+
+    assert ref_report.resident_format == "bf16" and ref_report.mxfp8_repacked_tensors == ()
+    assert report.resident_format == "mxfp8"
+    assert report.missing_model_parameters == ()
+    # Logical accounting is unchanged: the .scales are bookkeeping, not tensors.
+    assert report.bound_count == ref_report.bound_count
+    assert set(report.bound_backbone_parameters) == set(ref_report.bound_backbone_parameters)
+    assert len(report.mxfp8_scale_parameters) == len(report.mxfp8_repacked_tensors)
+
+    repacked = set(report.mxfp8_repacked_tensors)
+    # Plain linears with a 32-divisible input width stay FP8 ...
+    for name in (
+        "layers.0.attn.wq_a.weight",
+        "layers.0.attn.wkv.weight",
+        "layers.0.ffn.shared_experts.w1.weight",
+        "layers.0.ffn.shared_experts.w2.weight",
+        "layers.0.ffn.shared_experts.w3.weight",
+        "mtp.0.main_proj.weight",
+    ):
+        assert name in repacked, name
+    # ... while inputs too narrow for a 32-wide group keep the bf16 decode
+    # (wo_a's per-group input is 8 wide in this fixture; see the next test).
+    assert "layers.0.attn.wo_a.weight" not in repacked
+    assert "layers.0.attn.wo_a.weight" in report.fp8_block_decoded_tensors
+    assert "layers.0.attn.wq_b.weight" not in repacked  # input width 8
+    assert set(report.fp8_block_decoded_tensors).isdisjoint(repacked)
+
+    ref_modules, modules = _named(reference), _named(model)
+    for scales_name in report.mxfp8_scale_parameters:
+        path = scales_name[: -len(".scales")]
+        quantized, plain = modules[path], ref_modules[path]
+        assert type(quantized) is nn.QuantizedLinear, path
+        assert (quantized.mode, quantized.group_size, quantized.bits) == ("mxfp8", 32, 8)
+        assert quantized.weight.dtype == mx.uint32 and quantized.scales.dtype == mx.uint8
+        restored = mx.dequantize(
+            quantized.weight,
+            quantized.scales,
+            group_size=32,
+            bits=8,
+            mode="mxfp8",
+            dtype=mx.bfloat16,
+        )
+        assert restored.shape == plain.weight.shape
+        assert np.array_equal(
+            np.array(restored.view(mx.uint16)), np.array(plain.weight.view(mx.uint16))
+        ), path
+        assert _linear_input_dims(quantized) == _linear_input_dims(plain)
+
+        x = mx.array(np.random.default_rng(5).normal(size=(2, plain.weight.shape[1])), dtype=mx.float32)
+        got, want = np.array(quantized(x)), np.array(x @ plain.weight.astype(mx.float32).T)
+        bound = 1e-5 * (np.abs(np.array(x)) @ np.abs(np.array(plain.weight.astype(mx.float32))).T)
+        assert np.all(np.abs(got - want) <= bound + 1e-6), path
+
+    # Everything not repacked is bound exactly as the default path binds it.
+    ref_params = dict(tree_flatten(reference.parameters()))
+    params = dict(tree_flatten(model.parameters()))
+    repacked_modules = {name[: -len(".scales")] for name in report.mxfp8_scale_parameters}
+    def as_numpy(array):
+        # numpy has no bfloat16; widening to float32 is exact.
+        if mx.issubdtype(array.dtype, mx.floating):
+            array = array.astype(mx.float32)
+        return np.array(array)
+
+    for name, value in ref_params.items():
+        if name.rsplit(".", 1)[0] in repacked_modules:
+            continue
+        assert np.array_equal(as_numpy(params[name]), as_numpy(value), equal_nan=True), name
+
+
+def test_mxfp8_is_opt_in_and_the_format_is_validated(tmp_path):
+    args = _tiny_args(num_hidden_layers=1, num_hash_layers=0, compress_ratios=[0])
+    _write_synthetic_checkpoint(tmp_path, args)
+    model = DeepseekV4FlashVQModel(args, with_mtp=False)
+    with pytest.raises(ValueError, match="resident_format"):
+        bind_deepseek_v4_flash_non_vq_weights(
+            model, tmp_path, include_mtp=False, resident_format="fp8"
+        )
+    report = bind_deepseek_v4_flash_non_vq_weights(model, tmp_path, include_mtp=False)
+    assert report.resident_format == "bf16"
+    assert not any(
+        isinstance(module, nn.QuantizedLinear) for _, module in model.named_modules()
+    )
+
+
+def test_mxfp8_bind_regroups_wo_a_into_a_quantized_multilinear(tmp_path):
+    from mlx_lm.models.mla import QuantizedMultiLinear
+
+    # 8 heads x 8 dims over 2 groups gives wo_a a 32-wide per-group input.
+    args = _tiny_args(
+        num_hidden_layers=1, num_hash_layers=0, compress_ratios=[0], num_attention_heads=8
+    )
+    _write_synthetic_checkpoint(tmp_path, args)
+    reference = DeepseekV4FlashVQModel(args, with_mtp=False)
+    bind_deepseek_v4_flash_non_vq_weights(reference, tmp_path, include_mtp=False)
+    model = DeepseekV4FlashVQModel(args, with_mtp=False)
+    report = bind_deepseek_v4_flash_non_vq_weights(
+        model, tmp_path, include_mtp=False, strict=True, resident_format="mxfp8"
+    )
+
+    assert "layers.0.attn.wo_a.weight" in report.mxfp8_repacked_tensors
+    assert "layers.0.attn.wo_a.weight" in report.reshaped_tensors
+    assert report.missing_model_parameters == ()
+    wo_a, plain = model.model.layers[0].attn.wo_a, reference.model.layers[0].attn.wo_a
+    assert type(wo_a) is QuantizedMultiLinear and wo_a.mode == "mxfp8"
+    restored = mx.dequantize(
+        wo_a.weight, wo_a.scales, group_size=32, bits=8, mode="mxfp8", dtype=mx.bfloat16
+    )
+    assert restored.shape == plain.weight.shape
+    assert np.array_equal(
+        np.array(restored.view(mx.uint16)), np.array(plain.weight.view(mx.uint16))
+    )
+    groups, _, width = plain.weight.shape
+    x = mx.array(np.random.default_rng(6).normal(size=(1, groups, 3, width)), dtype=mx.float32)
+    dense = plain.weight.astype(mx.float32)
+    got, want = np.array(wo_a(x)), np.array(x @ dense.swapaxes(-1, -2))
+    bound = 1e-5 * (np.abs(np.array(x)) @ np.abs(np.array(dense)).swapaxes(-1, -2))
+    assert np.all(np.abs(got - want) <= bound + 1e-6)

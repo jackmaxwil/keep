@@ -9,6 +9,7 @@ import mlx.core as mx
 import mlx.nn as nn
 
 from ramp.kernels import nax
+from ramp.kernels.e8p_m1 import should_use_e8p_m1
 from ramp.nn.switch_linear import HighPrecisionSwitchLinear, QuantizedVQSwitchLinear
 from ramp.ops.vq_switch import (
     _expert_block_tile_descriptors,
@@ -157,6 +158,13 @@ class QuantizedVQSwitchGLU(nn.Module):
         return self.gate_proj.num_experts
 
     def _can_use_shared_sorted_route_prefill(self, x: mx.array, indices: mx.array) -> bool:
+        if indices.ndim >= 2 and should_use_e8p_m1(
+            code_bits=self.gate_proj.code_bits,
+            tokens=indices.size // indices.shape[-1],
+            sorted_indices=False,
+            route_strategy=self.gate_proj.route_strategy,
+        ):
+            return False  # few-token 16-bit E8P: the per-projection kernel is faster
         return (
             indices.size >= 64
             and x.ndim >= 2

@@ -14,6 +14,7 @@ from ramp.kernels.gather_vqmm import (
     m1_use_decoded_codebook,
     m1_use_threadgroup_codebook,
 )
+from ramp.kernels.e8p_m1 import e8p_m1_per_route, e8p_m1_token_layout, should_use_e8p_m1
 from ramp.ops.vq_switch import RouteStrategy
 from ramp.ops.vq_switch import gather_vqmm, vq_switch_qmv
 from keep.quant.rotation import apply_rotation_mx, apply_rotation_np, validate_rotation_matrix_mx
@@ -332,7 +333,23 @@ class QuantizedVQSwitchLinear(nn.Module):
             top_k = indices.shape[-1]
             flat_x = x.reshape((-1, self.input_dims))
             flat_indices = indices.reshape((-1, top_k))
-            if (
+            if should_use_e8p_m1(
+                code_bits=self.code_bits,
+                tokens=flat_x.shape[0],
+                sorted_indices=sorted_indices,
+                route_strategy=self.route_strategy,
+            ):
+                # 16-bit codes at M=1 on GPUs without the NAX tensor-unit
+                # kernels (default there; RAMP_E8P_M1=0/1 overrides).
+                y = e8p_m1_token_layout(
+                    flat_x,
+                    self.codes,
+                    scales,
+                    self.codebook,
+                    flat_indices,
+                    output_dims=self.output_dims,
+                )
+            elif (
                 flat_x.shape[0] == 1
                 and self.code_bits == 8
                 and not sorted_indices
@@ -374,7 +391,21 @@ class QuantizedVQSwitchLinear(nn.Module):
             route_shape = indices.shape
             flat_x = x.reshape((-1, self.input_dims))
             flat_indices = indices.reshape((-1,))
-            if (
+            if indices.ndim >= 2 and should_use_e8p_m1(
+                code_bits=self.code_bits,
+                tokens=flat_indices.shape[0] // route_shape[-1],
+                sorted_indices=sorted_indices,
+                route_strategy=self.route_strategy,
+            ):
+                y = e8p_m1_per_route(
+                    flat_x,
+                    self.codes,
+                    scales,
+                    self.codebook,
+                    flat_indices,
+                    output_dims=self.output_dims,
+                ).reshape((*route_shape, self.output_dims))
+            elif (
                 route_shape[0] == 1
                 and flat_x.shape[0] <= 8
                 and self.code_bits == 8

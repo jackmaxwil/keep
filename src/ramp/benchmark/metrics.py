@@ -13,6 +13,12 @@ import mlx.core as mx
 MetricSnapshot = dict[str, int | None]
 VMStatCounts = dict[str, int]
 
+#: ``vm_stat`` counters for memory coming *back*: file/anonymous page-ins,
+#: swap-ins, and pages pulled out of the memory compressor. A row can stay at
+#: zero pageouts/swapouts while faulting gigabytes of its own working set back
+#: in through these, so a quiet gate that ignores them is one-sided.
+INBOUND_VM_COUNTERS = ("pageins", "swapins", "decompressions")
+
 _VM_STAT_RE = re.compile(r"^\s*(?P<name>[^:]+):\s+(?P<value>[0-9]+)\.?\s*$")
 
 
@@ -189,4 +195,12 @@ def collect_metric_snapshot(
         "swapouts_total": None if vm_counts is None else vm_counts.get("swapouts"),
         "pageouts_delta": _delta(vm_counts, previous_vm_stat_counts, "pageouts"),
         "swapouts_delta": _delta(vm_counts, previous_vm_stat_counts, "swapouts"),
+        **{
+            f"{counter}_total": None if vm_counts is None else vm_counts.get(counter)
+            for counter in INBOUND_VM_COUNTERS
+        },
+        **{
+            f"{counter}_delta": _delta(vm_counts, previous_vm_stat_counts, counter)
+            for counter in INBOUND_VM_COUNTERS
+        },
     }

@@ -1,0 +1,63 @@
+{
+  "best": {
+    "effective_gb_per_s": 201.9003166348455,
+    "max_relative_diff_vs_production": 0.000643500650767237,
+    "median_ms_per_ffn": 0.18988855807164812,
+    "rows_per_simdgroup": 4,
+    "simdgroups": 1,
+    "speedup_over_production": 3.9789912891068244
+  },
+  "configs": [
+    {
+      "effective_gb_per_s": 196.16447165307085,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.1954408954736928,
+      "rows_per_simdgroup": 8,
+      "simdgroups": 1,
+      "speedup_over_production": 3.865950965057083
+    },
+    {
+      "effective_gb_per_s": 201.9003166348455,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.18988855807164812,
+      "rows_per_simdgroup": 4,
+      "simdgroups": 1,
+      "speedup_over_production": 3.9789912891068244
+    },
+    {
+      "effective_gb_per_s": 198.43019765127468,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.19320930208101175,
+      "rows_per_simdgroup": 4,
+      "simdgroups": 4,
+      "speedup_over_production": 3.9106032180134807
+    },
+    {
+      "effective_gb_per_s": 198.12068741620567,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.1935111395987617,
+      "rows_per_simdgroup": 2,
+      "simdgroups": 4,
+      "speedup_over_production": 3.904503482511547
+    },
+    {
+      "effective_gb_per_s": 189.32440694713122,
+      "max_relative_diff_vs_production": 0.000643500650767237,
+      "median_ms_per_ffn": 0.20250194160495127,
+      "rows_per_simdgroup": 16,
+      "simdgroups": 1,
+      "speedup_over_production": 3.7311490076580545
+    }
+  ],
+  "device": "Device(gpu, 0)",
+  "ffn_bytes": 38338560,
+  "ffns_per_sync": 43,
+  "mlx_version": "0.31.2",
+  "outputs_agree": true,
+  "platform": "macOS-26.7.1-arm64-arm-64bit-Mach-O",
+  "production_effective_gb_per_s": 50.74158297043335,
+  "production_median_ms_per_ffn": 0.7555649184681432,
+  "record_type": "ramp_e8p_m1_kill_test_v2",
+  "source": "synthetic",
+  "verdict": "PASS"
+}
