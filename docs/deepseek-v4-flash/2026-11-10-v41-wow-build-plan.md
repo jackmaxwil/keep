@@ -873,3 +873,24 @@ per resident. The constants are this M4 Max's measured peaks; other chips are un
   (C2), so a 64 GB Mac starts with a warning and a 96 GB Mac should leave the drafter off.
 - Checked on this Mac with the drafter on: 183 residents chosen, 83 GiB peak over two
   requests, 39–41 tok/s, both scripts correct.
+
+### One directory, one command (C4, 2026-11-12)
+
+- `scripts/v41_build/slim_checkpoint.py SRC DST` writes a compact model directory as real
+  files without the routed experts its loader never reads: 365.8 GB to 225.9 GB for the
+  lattice model (the two 101.5 GB Engram shards and three others lose nothing and are cloned,
+  43 shards are rewritten and read back against the source by CRC). The six stub experts per
+  layer, the drafter and its experts stay.
+- Bundle layout, 340 GiB (`~/Models/v41-reap-run/bundle`): `models/v41-lattice` (slim
+  checkpoint), `codes/kept` and `codes/removed` (the 2-bit codes of all 384 experts, unchanged),
+  `ids-kept.json`, `ids-removed.json`, `router.safetensors`, `mass.npz`, and `pool.json`, whose
+  paths are now relative to it.
+- `scripts/v41_build/run_v41.sh BUNDLE [PORT]` checks the machine, clones oMLX at the pinned
+  commit and builds its venv with uv on the first run, writes `base/model_settings.json`
+  (drafter on from 128 GB of RAM) and starts the server; the resident count comes from RAM.
+- Checked on this Mac: with the existing oMLX install, and again from an empty oMLX directory
+  (fresh clone at `4213c328`, `uv sync`): 183 residents, 83 GiB, 38–40 tok/s, 2 of 3 sampled
+  scripts correct in each run.
+- `pool384/fp4-removed` (134 GB) was deleted with Jack's confirmation; the hot tier uses
+  survivors only. Not done: publishing (needs Jack's OK; the Mac's uplink is 3 MB/s, so an
+  upload would run from a pod) and a model card for the bundle.

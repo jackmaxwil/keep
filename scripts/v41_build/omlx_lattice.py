@@ -26,6 +26,7 @@ The pool can be wider than the loaded checkpoint. ``OMLX_LATTICE`` is then a JSO
 ``IDS.json`` (``{"survivors": {layer: [...]}}``) gives the pool number of each expert of its
 directory, in file order; the first directory holds the loaded checkpoint's experts. ``router`` has
 every router row of the pool and ``mass`` (``reap__gate_norm_sum``) orders the starting residents.
+Paths in the file may be relative to it.
 
 Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto``, from this
 machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
@@ -307,17 +308,21 @@ def wide_pool(path: Path, loaded: dict):
     """(directories, order, router rows, where) of the pool file ``path``. ``loaded`` is the
     router of the loaded checkpoint, whose rows must be the first directory's."""
     spec = json.loads(path.read_text())
-    ids = [json.loads(Path(f).expanduser().read_text())["survivors"] for _, f in spec["codes"]]
+
+    def at(p: str) -> Path:  # paths in the pool file are relative to it
+        return path.parent / Path(p).expanduser()
+
+    ids = [json.loads(at(f).read_text())["survivors"] for _, f in spec["codes"]]
     where = [{e: (d, j) for d, per in enumerate(ids) for j, e in enumerate(per[str(i)])} for i in range(len(ids[0]))]
-    mass = np.load(Path(spec["mass"]).expanduser())["reap__gate_norm_sum"]
+    mass = np.load(at(spec["mass"]))["reap__gate_norm_sum"]
     assert all(sorted(w) == list(range(mass.shape[1])) for w in where), "the directories do not cover the pool once"
-    router = mx.load(str(Path(spec["router"]).expanduser()))
+    router = mx.load(str(at(spec["router"])))
     full = {(i, f): router[f"layers.{i}.ffn.gate.{f}"] for i in range(len(where)) for f in ("weight", "bias")}
     for (i, f), rows in loaded.items():
         if f in ("weight", "bias"):
             assert mx.array_equal(full[i, f][mx.array(ids[0][str(i)])], rows), f"layer {i}: router {f} differs"
     order = [np.argsort(-row, kind="stable").tolist() for row in mass]
-    return [Path(d).expanduser() for d, _ in spec["codes"]], order, full, where
+    return [at(d) for d, _ in spec["codes"]], order, full, where
 
 
 FLOOR = 120  # residents per layer below which sampled code came out misspelled (build plan, C2)

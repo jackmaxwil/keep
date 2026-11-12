@@ -1091,3 +1091,13 @@ What it says:
   scripts correct at the card's settings. Exact REAP-50 on stock oMLX: 18 of 24 at about 6
   tok/s. Candidate default for a 128 GB Mac.
 - Rubric unchanged at 59: item 6 still needs the memory-pressure run.
+
+### 2026-11-12: slots from RAM, slim checkpoint, one command (C3, C4)
+
+- `OMLX_LATTICE_SLOTS=auto` is the default: 70% of RAM less 20 GiB and 8 GiB for the drafter,
+  at 0.336 GiB per resident (183 with the drafter on this Mac); a warning below 120 residents.
+- `slim_checkpoint.py`: 365.8 GB to 225.9 GB, bytes checked. Bundle of 340 GiB with relative
+  paths; `run_v41.sh BUNDLE` serves it, installing oMLX at the pinned commit on the first run.
+  Verified from an empty oMLX directory: 183 residents, 83 GiB, 38–40 tok/s.
+- `pool384/fp4-removed` deleted (Jack confirmed), 134 GB freed.
+- Rubric unchanged at 59: none of this is a rubric item's test.
