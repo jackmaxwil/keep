@@ -1083,3 +1083,11 @@ What it says:
   copy at equal memory and needs no second copy of the expert.
 - 32 hot at 3 bits equals 32 at FP4; 96 hot adds nothing over 64.
 - Rubric unchanged at 59: no item's own test was met.
+
+### 2026-11-12: 180 residents with the drafter
+
+- Clean speed at 200 residents, drafter off: 21–28 tok/s, the same as at 144.
+- 180 residents with the drafter on: 88 GiB peak, 22–41 tok/s (median 32), 21 of 24 sampled
+  scripts correct at the card's settings. Exact REAP-50 on stock oMLX: 18 of 24 at about 6
+  tok/s. Candidate default for a 128 GB Mac.
+- Rubric unchanged at 59: item 6 still needs the memory-pressure run.

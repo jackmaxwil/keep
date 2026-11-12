@@ -835,3 +835,41 @@ Paired differences, mean ± standard error (sessions better):
   at 2 bits.
 - Run: 5,854 s, peak RSS 63 GB. Smoke (one session, 96 tokens, 144 residents): 1.521 at 2
   bits, 1.309 with 32 hot experts at 3 bits.
+
+### Clean speed at 200 residents, and 180 residents with the drafter (2026-11-12)
+
+Same sampled script request, card sampling, tau 0.3, nothing else on the GPU.
+
+| Configuration | Footprint, peak | tok/s | Correct |
+|---|---:|---:|---|
+| 200 residents, drafter off | 87 GiB | 21–28 (3 samples) | 19 of 24 (above), 3 of 3 here |
+| 180 residents, drafter on | 88 GiB | 22–41, median 32 (24 samples) | 21 of 24 (7, 8, 6) |
+| 144 residents, drafter off (above) | 63 GiB | 22–27 | 17 of 24 |
+| Exact REAP-50, stock offload (above) | | 5.6–6.3 | 18 of 24 |
+
+- More residents cost no speed: 200 residents decode as fast as 144.
+- 180 residents with the drafter is the candidate default for a 128 GB Mac: every expert of
+  the full model reachable, 88 GiB, a median of 32 tok/s, and 21 of 24 sampled scripts
+  correct, against 18 of 24 at about 6 tok/s for the exact REAP-50 checkpoint on stock oMLX.
+  The three failures are a wrong listing, a wrong output format and one wrong keyword
+  argument; none is a misspelling.
+- 21 against 18 of 24 is not a separable difference (Fisher p about 0.5); the claim is "no
+  worse, five times faster", not "better".
+
+### Slots from RAM (C3, 2026-11-12)
+
+`OMLX_LATTICE_SLOTS` now defaults to `auto` (`auto_slots` in `scripts/v41_build/omlx_lattice.py`):
+a footprint budget of 70% of RAM (`OMLX_LATTICE_BUDGET_GIB` overrides it), less 20 GiB outside
+the routed experts and 8 GiB when `model_settings.json` switches the drafter on, at 0.336 GiB
+per resident. The constants are this M4 Max's measured peaks; other chips are unmeasured.
+
+| RAM | Residents, drafter off | Residents, drafter on |
+|---:|---:|---:|
+| 64 GB | 73 | 50 |
+| 96 GB | 140 | 116 |
+| 128 GB | 207 | 183 |
+
+- Below 120 residents the server prints that generated code was unreliable in our tests
+  (C2), so a 64 GB Mac starts with a warning and a 96 GB Mac should leave the drafter off.
+- Checked on this Mac with the drafter on: 183 residents chosen, 83 GiB peak over two
+  requests, 39–41 tok/s, both scripts correct.

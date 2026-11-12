@@ -27,8 +27,9 @@ The pool can be wider than the loaded checkpoint. ``OMLX_LATTICE`` is then a JSO
 directory, in file order; the first directory holds the loaded checkpoint's experts. ``router`` has
 every router row of the pool and ``mass`` (``reap__gate_norm_sum``) orders the starting residents.
 
-Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer, default 144) and the policy
-settings of ``omlx_routed.py``. ``check`` compares one layer's decode step with dense matrices
+Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto``, from this
+machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
+default 70% of RAM) and the policy settings of ``omlx_routed.py``. ``check`` compares one layer's decode step with dense matrices
 decoded on the host, the prefill path with the decode path, and slots after installs with their
 stored bytes, then times the decode-step MoE.
 """
@@ -319,6 +320,27 @@ def wide_pool(path: Path, loaded: dict):
     return [Path(d).expanduser() for d, _ in spec["codes"]], order, full, where
 
 
+FLOOR = 120  # residents per layer below which sampled code came out misspelled (build plan, C2)
+
+
+def auto_slots(ram_bytes: int, drafter: bool, budget_gib: float | None = None) -> int:
+    """Resident experts per layer for a footprint of ``budget_gib`` (default: 70% of RAM).
+
+    Measured on an M4 Max, 128 GB (2026-11-12): the server's footprint peaks near 20 GiB plus
+    0.336 GiB per resident, and 8 GiB more with the drafter (87 GiB at 200 residents, 88 GiB at
+    180 with the drafter). Other chips are unmeasured; the budget is the knob."""
+    budget = 0.7 * ram_bytes / 2**30 if budget_gib is None else budget_gib
+    return int((budget - 20 - 8 * drafter) / 0.336)
+
+
+def drafter_on(argv: list[str]) -> bool:
+    """Does ``--base-path``'s model_settings.json switch the drafter on for any model?"""
+    if "--base-path" not in argv:
+        return False
+    settings = Path(argv[argv.index("--base-path") + 1]).expanduser() / "model_settings.json"
+    return settings.exists() and any(m.get("mtp_enabled") for m in json.loads(settings.read_text())["models"].values())
+
+
 def patch(spec: dict, root: Path, slots: int) -> None:
     full, state = {}, {}
     compact_patch(spec, full)
@@ -329,9 +351,9 @@ def patch(spec: dict, root: Path, slots: int) -> None:
         config = model.language_model.layers[0].ffn.gate._config
         if root.is_file():
             roots, order, wide, where = wide_pool(root, full)
-            state["cache"] = LatticeCache(model, config, roots, order, wide, slots, where)
+            state["cache"] = LatticeCache(model, config, roots, order, wide, min(slots, len(order[0])), where)
         else:
-            state["cache"] = LatticeCache(model, config, [root], spec["order"], full, slots)
+            state["cache"] = LatticeCache(model, config, [root], spec["order"], full, min(slots, len(spec["order"][0])))
         full.clear()
         return model, processor
 
@@ -451,8 +473,17 @@ if __name__ == "__main__":
         a = p.parse_args(sys.argv[2:])
         check(a.config.expanduser(), a.codes.expanduser())
     else:
-        patch(json.loads(Path(os.environ["OMLX_COMPACT"]).read_text()), Path(os.environ["OMLX_LATTICE"]).expanduser(),
-              int(os.environ.get("OMLX_LATTICE_SLOTS", "144")))
+        assert auto_slots(128 << 30, True) == 183 and auto_slots(128 << 30, False, 87) == 199
+        slots = os.environ.get("OMLX_LATTICE_SLOTS", "auto")
+        if slots == "auto":
+            budget = os.environ.get("OMLX_LATTICE_BUDGET_GIB")
+            slots = auto_slots(os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE"), drafter_on(sys.argv),
+                               float(budget) if budget else None)
+        slots = int(slots)
+        print(f"lattice cache: {slots} resident experts per layer" + (
+            f"; below {FLOOR}, generated code was unreliable in our tests" if slots < FLOOR else ""), file=sys.stderr)
+        assert slots >= 6, "not enough memory for the router's top-6"
+        patch(json.loads(Path(os.environ["OMLX_COMPACT"]).read_text()), Path(os.environ["OMLX_LATTICE"]).expanduser(), slots)
         from omlx.cli import main
 
         sys.exit(main())
