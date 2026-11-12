@@ -30,6 +30,7 @@ if [ ! -x "$OMLX/.venv/bin/python" ]; then
 fi
 echo "endpoint http://127.0.0.1:$PORT/v1, model v41-lattice" >&2
 cd "$OMLX"
-OMLX_COMPACT=$B/models/v41-lattice/compact-map.json OMLX_LATTICE=$B/pool.json \
+# tau 0.3 is the admission threshold every measurement in the build plan used (the code's default is 0.2)
+OMLX_COMPACT=$B/models/v41-lattice/compact-map.json OMLX_LATTICE=$B/pool.json OMLX_ROUTED_TAU=${OMLX_ROUTED_TAU:-0.3} \
   exec .venv/bin/python "$REPO/scripts/v41_build/omlx_lattice.py" serve --model-dir "$B/models" --base-path "$B/base" \
   --port "$PORT" --memory-guard-gb $((RAM * 3 / 4)) --max-concurrent-requests 1 --no-cache --headless

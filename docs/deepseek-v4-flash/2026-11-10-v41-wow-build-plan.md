@@ -910,3 +910,32 @@ per resident. The constants are this M4 Max's measured peaks; other chips are un
   is still to be measured.
 - Not done: the hot residual arrays, the per-slot hot index and the memory accounting in
   `omlx_lattice.py`.
+
+### Memory pressure (D3, 2026-11-12)
+
+`scripts/v41_build/d3_pressure.py` sends the sampled script request (500 tokens, card sampling)
+back to back while a second process fills incompressible memory in 4 GB steps every 45 s up to
+40 GB, holds it for 2 minutes, releases it and measures 2 minutes more. Server: the bundle
+through `run_v41.sh`, 183 residents, drafter on.
+
+| Phase | tok/s, median (range), tau 0.3 | tok/s, median (range), tau 0.2 |
+|---|---|---|
+| Before | 36.7 (30.2–42.6) | 39.8 (37.1–42.4) |
+| Taking 1–20 GB | 29.5 (25.9–32.2) | 31.4 (27.4–35.8) |
+| Taking 21–40 GB | 32.8 (29.0–34.9) | 32.7 (20.7–35.4) |
+| Holding 40 GB | 33.5 (30.5–34.5) | 32.2 (20.5–34.8) |
+| After release | 35.9 (34.0–37.2) | 31.8 (23.5–34.6) |
+
+- The server keeps its 83 GiB in both runs and answers every request (61 and 62). macOS
+  compresses up to 24 GB and swaps 20 GB out (5 to 25 GB of swap); the pressure level reaches
+  "warning", never "critical". With 40 GB held, decoding is 9% slower at tau 0.3; the slowest
+  phase is the first allocation steps (20%), when the other process is filling memory.
+- At tau 0.3 the cache installs 0.17 experts per token (1.5 MB read per token) and 90% of
+  demanded slots are resident; at tau 0.2, 3.7 installs and 33.6 MB per token. The heavier
+  reads make single requests drop to 20 tok/s under pressure and slow the recovery.
+- The tau 0.2 run was a launcher bug: `run_v41.sh` did not set the admission threshold and
+  the code's default is 0.2, while every measurement here used 0.3. The launcher now sets 0.3.
+  The bundle checks under C4 above (38–40 tok/s) ran at 0.2.
+- What this does not show: the server's own pages being taken. Its footprint counts
+  compressed and swapped pages too, so whether any of its 83 GiB left RAM is not measured;
+  the speed says little of it did.

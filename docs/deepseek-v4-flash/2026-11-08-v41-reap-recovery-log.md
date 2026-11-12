@@ -600,11 +600,11 @@ to 100; partial credit only for measured progress).
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
-| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 8 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. The rest needs memory pressure |
+| 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **59** | |
+| | **Total** | 100 | **61** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1101,3 +1101,16 @@ What it says:
   Verified from an empty oMLX directory: 183 residents, 83 GiB, 38–40 tok/s.
 - `pool384/fp4-removed` deleted (Jack confirmed), 134 GB freed.
 - Rubric unchanged at 59: none of this is a rubric item's test.
+
+### 2026-11-12: memory pressure (D3)
+
+- `scripts/v41_build/d3_pressure.py`: requests back to back while a second process takes
+  incompressible memory in 4 GB steps to 40 GB, holds it and lets it go. Server: the bundle
+  through `run_v41.sh`, 183 residents, drafter on, 83 GiB.
+- At tau 0.3 (the shipped setting): 36.7 tok/s before, 29.5 and 32.8 during the steps, 33.5
+  while 40 GB are held, 35.9 after. 61 requests, no error. The server's footprint stays at 83
+  GiB, swap goes from 5 to 25 GB, the pressure level reaches "warning", never "critical".
+- The first run used tau 0.2 by mistake: `run_v41.sh` did not set the threshold and the code's
+  default is 0.2, six times the SSD reads (33.6 MB per token against 1.5 to 5.5). Fixed in the
+  launcher. That run: 39.8 before, 32.2 held, 31.8 after.
+- Rubric item 6 moves from 8 to 10. Total 61.
