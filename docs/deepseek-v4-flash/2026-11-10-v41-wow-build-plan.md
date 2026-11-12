@@ -865,7 +865,7 @@ per resident. The constants are this M4 Max's measured peaks; other chips are un
 
 | RAM | Residents, drafter off | Residents, drafter on |
 |---:|---:|---:|
-| 64 GB | 73 | 50 |
+| 64 GB | 73 | 49 |
 | 96 GB | 140 | 116 |
 | 128 GB | 207 | 183 |
 
