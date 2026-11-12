@@ -693,3 +693,25 @@ Paired by session (difference, standard error, sessions better):
   FP4 against 250 at 2 bits (all 92 GB) is the deciding run.
 - Run: 8,549 s, peak RSS 61 GB.
 
+### Serving at 48 and 96 residents (C2, 2026-11-11)
+
+Same sampled script request as above, card sampling (temperature 1.0, top_p 1.0), 8 samples,
+drafter off, tau 0.3. Fewer slots stand in for a smaller Mac's expert memory, not for its
+memory pressure.
+
+| Residents | Footprint | tok/s | Demanded slots resident | Installs per token | Read per token | Correct of 8 |
+|---:|---:|---:|---:|---:|---:|---:|
+| 48 | 30 GiB | 20–27 | 65% | 5.8 | 53 MB | 0 |
+| 96 | 46 GiB | 22–25 | 75% | 3.2 | 28 MB | 2 |
+| 120 (above) | 55 GiB | 24 | | | | 4 |
+| 144 (above) | 63 GiB | 17–27 | | | | 6 |
+
+- Speed holds at small sizes; the text does not. At 48 residents the output is misspelled
+  throughout (`hashllib`, `OSEError`, `o a file`) and 6 of 8 samples run to the 4,096-token
+  limit. At 96, 3 of 8 run to the limit.
+- Correct scripts rise with residents: 0, 2, 4, 6 of 8 at 48, 96, 120, 144. A KL near 0.8 is
+  unusable under the card's sampling and 0.45 is marginal, so the KL curve above overstates
+  what a small Mac gets. The exact REAP-50 checkpoint (KL 0.578) gives 5 of 8.
+- Open: whether a lower temperature or a trimmed tail (top_p 0.95) makes 96 residents usable,
+  and how many of 8 the full model gets. The first is queued (`jobs/after_b1b.sh`).
+

@@ -1034,3 +1034,14 @@ What it says:
   FP4, 183 with 64 FP4, against 250 at 2 bits) is queued behind the serving runs.
 - Tables in the build plan, sections C1 and B1. Rubric unchanged at 59.
 
+### 2026-11-11: serving at 48 and 96 residents (C2)
+
+- Card sampling, 8 sampled scripts each: 48 residents (30 GiB, 20–27 tok/s) 0 correct, 96
+  residents (46 GiB, 22–25 tok/s) 2 correct. With 120 and 144 from earlier today: 0, 2, 4, 6 of
+  8. Text at 48 residents is misspelled throughout and most samples never finish.
+- KL understates this: the simulator put a cache of 48 level with the static 144 (0.79 against
+  0.76), and that level is unusable at temperature 1.0. "One download, any Mac" does not hold
+  at the card's sampling below about 144 residents on this evidence.
+- Queued: temperature 0.6 at 96 and 48 residents, top_p 0.95 at 144 and 96; before those, 16
+  more samples for the cache of 144 and the exact checkpoint, and the 92 GB hot-tier run.
+
