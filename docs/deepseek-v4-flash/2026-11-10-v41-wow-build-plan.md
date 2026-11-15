@@ -1090,4 +1090,5 @@ Serving, same job as B3 (drafter on, tau 0.3, sampled script request, 6 requests
   without. Not separable.
 - The hot tier stays off by default. What remains is not kernel overhead: a hot route costs its
   bytes, and the residuals cost 33 residents. The multi-row layout of A2 (one decode of a slot
-  for all rows of a verify block) is the remaining lever, for both tiers.
+  for all rows of a verify block) is the only lever left in the kernels, for both tiers, and
+  was priced at 12% of a cycle at most (2026-11-11).
