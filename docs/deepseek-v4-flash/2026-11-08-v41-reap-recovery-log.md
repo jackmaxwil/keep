@@ -601,7 +601,7 @@ to 100; partial credit only for measured progress).
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
-| 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
+| 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies; what is left is a cost per expert measured through the model, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
 | | **Total** | 100 | **71** | |
@@ -1163,3 +1163,21 @@ What it says:
   a slow job; 12 of 12 scripts correct with the hot tier, 8 of 12 without. The 10% budget is
   still missed and the samples do not resolve the kernel change. Hot tier stays off by default.
   Details in the build plan. Rubric unchanged at 71.
+
+### 2026-11-15: learned admission thresholds (rubric item 7)
+
+- `fit_tau.py`: one admission threshold per expert, fitted on the stored teacher routes of the 24
+  calibration sessions to minimize missed strong mass (`max(gate - 0.25, 0)`) plus a price per
+  install. On held-out calibration routes it misses 9% less at equal installs, or the same at
+  18–25% fewer installs. A refresh threshold, eviction by decayed mass and a rising threshold
+  moved nothing on the same measure.
+- KL, 22 sessions, 1,024 tokens, against the stored tau 0.3 runs: 0.480 and 0.476 against 0.454
+  at 144 residents (+0.026 and +0.022, intervals clear of zero), 0.609 against 0.605 at 96
+  (+0.004, interval spans zero, 12% fewer reads). Without tool-use 0.328 and 0.334 against 0.320.
+- On the eval sessions' own routes the fit still misses less strong mass than tau 0.3, so the
+  measure failed, not the transfer: it ranks single thresholds and not policies that change
+  which experts are missed. A learned policy needs a cost per missed expert taken through the
+  model.
+- The four agentic eval sessions share their first 1,024 tokens: one record in two domains, in
+  every stored run. Paired differences are unaffected.
+- Serving keeps tau 0.3. Item 7 stays at 0; rubric total 71. Details in the build plan.

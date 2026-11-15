@@ -1092,3 +1092,73 @@ Serving, same job as B3 (drafter on, tau 0.3, sampled script request, 6 requests
   bytes, and the residuals cost 33 residents. The multi-row layout of A2 (one decode of a slot
   for all rows of a verify block) is the only lever left in the kernels, for both tiers, and
   was priced at 12% of a cycle at most (2026-11-11).
+
+### Per-expert admission thresholds (rubric item 7, 2026-11-15)
+
+Question: can the cache policy be learned from stored routes, without a model run? The cache
+admits an expert when a slot's gate reaches tau, one value for all 384 experts of all 40 layers.
+`scripts/runpod/v41_reap/fit_tau.py` fits one threshold per expert on the teacher's routes of the
+24 calibration sessions (49,152 tokens); `residual_cache` and `local_eval.py --tau NAME=FILE.npz`
+take the result. The eval sessions were never fitted on.
+
+**Proxy.** Replaying the cache on stored routes costs seconds, a KL run 25 minutes per variant,
+so the fit needs a proxy. Missed gate mass does not order tau 0.2 against 0.3 as their KL does;
+the share of strong mass missed, `max(gate - 0.25, 0)`, orders the four measured scalar variants
+at 144 residents. The open-loop replay reproduces the simulator's installs (2.62 per token at
+tau 0.3).
+
+**Where the misses are** (144 residents, tau 0.3): 56% of missed strong mass is an expert's first
+admission in a record, 28% a readmission after eviction, 16% slots below tau. Misses sit at the
+start of a record: 15.7% of strong mass in the first 16 tokens, 2.2% after 1,024.
+
+**Fit.** For an expert outside the starting set, the threshold from a grid of nine (0.1 to 0.5,
+and never) that minimizes missed strong mass + lambda installs over the records, assuming an
+admitted expert stays to the end of its record, shrunk towards the layer's pooled cost curve.
+Held out over 3 folds of the calibration sessions (in-sample figures are the same to two digits,
+so the limit is the policy class, not the data):
+
+| Policy, 144 residents | Strong mass missed | Installs per token |
+|---|---:|---:|
+| tau 0.25 | 0.0295 | 3.51 |
+| tau 0.3 | 0.0349 | 2.07 |
+| tau 0.35 | 0.0467 | 1.47 |
+| per expert, lambda 0.1 | 0.0310 | 3.12 |
+| per expert, lambda 0.2 | 0.0316 | 2.13 |
+| per expert, lambda 0.4 | 0.0378 | 1.56 |
+
+On the proxy the fit is 9% less missed mass at equal installs, or equal mass at 18–25% fewer
+installs; at 96 residents 0.0593 at 4.45 installs against 0.0621 at 3.71 for tau 0.3. Three
+other policies moved nothing on the proxy and were dropped before any KL run: a separate
+threshold for refreshing a resident, eviction by decayed routed mass (with and without a prior),
+and a threshold that starts low in a record and rises.
+
+**KL** (pool of 384, re-route, 22 sessions, 1,024 tokens; controls are the stored tau 0.3 runs;
+paired block bootstrap, 95% interval):
+
+| Variant | KL | Without tool-use | Tool-use | Reads, MB per token | Against tau 0.3 |
+|---|---:|---:|---:|---:|---|
+| 144, tau 0.3 | 0.454 | 0.320 | 1.79 | 23.8 | |
+| 144, per expert, lambda 0.2 | 0.480 | 0.328 | 2.00 | 25.5 | +0.026 (0.015 to 0.037) |
+| 144, per expert, lambda 0.4 | 0.476 | 0.334 | 1.90 | 19.3 | +0.022 (0.015 to 0.032) |
+| 96, tau 0.3 | 0.605 | 0.390 | 2.75 | 38.9 | |
+| 96, per expert, lambda 0.4 | 0.609 | 0.401 | 2.69 | 34.1 | +0.004 (-0.006 to 0.012) |
+
+- The fitted thresholds lose. At 144 residents both are worse than one threshold, intervals
+  clear of zero, and lambda 0.2 reads more as well. At 96 the fit ties in KL with 12% fewer
+  reads, which tau 0.35 would also buy.
+- The proxy is what failed, not the transfer from calibration to eval. On the stored routes of
+  the eval sessions (27 sessions, 2,048 tokens, replay only) lambda 0.2 still misses less strong
+  mass than tau 0.3 in both tool-use sessions (0.0352 against 0.0361) and over the rest (0.0462
+  against 0.0483), at 8% more installs; its KL is 0.21 worse on tool-use and 0.038 worse on the
+  agentic sessions, and 0.005–0.02 better in six of the other eight domains. Missed strong mass
+  ranks single thresholds; it does not rank policies that change which experts are missed.
+- So a policy for this cache cannot be fitted on gate mass alone. A fit would need a cost per
+  missed expert measured through the model (how well the re-route replaces it), which is a
+  model-in-the-loop job, not a replay.
+- `fit_tau.py` and the per-expert path of `residual_cache` stay as the record of this result.
+  Serving keeps tau 0.3.
+
+Found on the way: the four agentic eval sessions (`eval-00000`, `-00001`, `-00004`, `-00005`)
+share their first 1,024 tokens, so at this window they are one record counted in two domains.
+It is the same in every stored run, so paired differences stand; domain means weight that record
+twice.

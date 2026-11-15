@@ -181,7 +181,7 @@ def layer_codes(spec: str, layer: int, have: list[int]) -> dict:
     return {**out, "code_bits": bits.pop()}
 
 
-def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds: list[int],
+def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.ndarray, bounds: list[int],
                    warm: np.ndarray | None, counts: np.ndarray, policy: str = "lru",
                    trace: list | None = None, resident: np.ndarray | None = None) -> np.ndarray:
     """Which (token, slot) pairs may run base + residual, under an LRU of ``k`` resident residuals.
@@ -189,7 +189,8 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
     ``ind``/``wts``: [T, top_k] routed experts and gate weights, the records of ``bounds`` back to
     back. A slot runs high precision only if its expert's residual is already resident. After each
     token, every slot with gate >= ``tau`` admits (or refreshes) its residual: an async SSD fetch
-    that serves the next token on, so decode never stalls. Each record starts from ``warm`` (or
+    that serves the next token on, so decode never stalls. ``tau`` is one value or one per expert
+    (``fit_tau.py``). Each record starts from ``warm`` (or
     empty). ``counts[e, 4]`` accumulates admissions, i.e. residual fetches; ``trace`` collects
     them as (record, token in record, expert).
 
@@ -202,6 +203,7 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
     from collections import OrderedDict
 
     hi = np.zeros(ind.shape, dtype=bool)
+    thr = np.broadcast_to(np.asarray(tau, dtype=np.float64), (counts.shape[0],)).tolist()
     start = 0
     for rec, n in enumerate(bounds):
         if policy == "oracle":
@@ -219,7 +221,7 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float, bounds:
             if resident is not None:
                 resident[t, list(lru)] = True
             for s, e in enumerate(row):
-                if wts[t, s] >= tau:
+                if wts[t, s] >= thr[e]:
                     if e in lru:
                         lru.move_to_end(e)
                     else:
@@ -262,7 +264,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--trace", action="append", default=[], metavar="NAME",
                    help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")
     p.add_argument("--tau", action="append", default=[], metavar="NAME=VALUE",
-                   help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE")
+                   help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE. "
+                        "With --cache-k, VALUE may be a fit_tau.py file: one admission threshold per layer and expert")
     p.add_argument("--tau-drop", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot with gate weight < VALUE is skipped (rung 0 per token)")
     p.add_argument("--miss", action="append", default=[], metavar="NAME=drop|reroute",
@@ -376,7 +379,12 @@ def main(argv: list[str] | None = None) -> int:
         assert not (copy_mode and hi_proj), "--hi-proj needs nested codes"
         policies = {name: v for name, _, v in (s.partition("=") for s in args.cache_policy)}
         traces: dict[str, list] = {name: [] for name in args.trace}
-        taus = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau)}
+        taus = {name: np.load(Path(t).expanduser())["tau"] if t.endswith(".npz") else float(t)
+                for name, _, t in (s.partition("=") for s in args.tau)}
+        tau_files = {name: t for name, _, t in (s.partition("=") for s in args.tau) if t.endswith(".npz")}
+        assert all(v in args_cache_k_names for v, t in taus.items() if isinstance(t, np.ndarray)), \
+            "per-expert thresholds need --cache-k"
+        assert all(t.shape == (int(model_args.n_layers), n_local) for t in taus.values() if isinstance(t, np.ndarray))
         tau_drop = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau_drop)}
         miss = {name: mode for name, _, mode in (s.partition("=") for s in args.miss)}
         assert all(m in ("drop", "reroute") and copy_mode and v in args_cache_k_names for v, m in miss.items()), \
@@ -436,6 +444,8 @@ def main(argv: list[str] | None = None) -> int:
             x = x.view(-1, self.dim)
             weights, indices = self.gate(x, None)
             tau, counts = taus[state["variant"]], dyn_counts[state["variant"]][layer]
+            if isinstance(tau, np.ndarray):  # per expert, cache variants only: every later use is the resident mask
+                tau = tau[layer]
             y = torch.zeros_like(x, dtype=torch.float32)
             limit = self.shared_experts.swiglu_limit
             k = cache_k.get(state["variant"])
@@ -628,7 +638,7 @@ def main(argv: list[str] | None = None) -> int:
         kept = n_local if variants[v] is None else float(np.mean([int((~m).sum()) for m in variants[v].values()]))
         # hi_units: memory (and bytes fetched) the high tier adds per expert, in units of one 1-bit expert
         hi_units = 2.0 if copy_mode else len(hi_proj.get(v, ("w1", "w2", "w3"))) / 3
-        summary["variants"][v]["_tiers"] = {"tau": taus[v], "cache_k": cache_k.get(v),
+        summary["variants"][v]["_tiers"] = {"tau": tau_files.get(v, taus[v]), "cache_k": cache_k.get(v),
                                             "policy": policies.get(v, "lru") if v in cache_k else None,
                                             "copy_mode": copy_mode, "hi_units": hi_units,
                                             "n_bases": 0 if v in miss else kept, "pool": kept, "miss": miss.get(v),

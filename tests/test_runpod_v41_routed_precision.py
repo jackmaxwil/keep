@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO / "src"))
 import local_eval  # noqa: E402
 import routed_report  # noqa: E402
 import precision_alloc  # noqa: E402
+import fit_tau
 
 
 def test_residual_cache_hits_only_after_async_admission():
@@ -133,3 +134,33 @@ def test_hot_set_takes_the_hottest_experts_the_checkpoint_holds():
     assert local_eval.hot_set(np.array([7, 2, 9, 4, 1]), 2, [1, 2, 4]) == {2, 4}
     assert local_eval.hot_set(np.array([7, 2]), 3, [2, 7, 8]) == {2, 7}
     assert routed_report.FP4_BYTES == 18_800_640
+
+
+def test_residual_cache_takes_one_threshold_per_expert():
+    ind = np.array([[0, 1], [0, 1], [0, 1]])
+    wts = np.array([[0.4, 0.2], [0.4, 0.2], [0.4, 0.2]], dtype=np.float32)
+    same = [local_eval.residual_cache(ind, wts, k=2, tau=tau, bounds=[3], warm=None, counts=np.zeros((2, 5)))
+            for tau in (0.3, np.array([0.3, 0.3]))]
+    np.testing.assert_array_equal(*same)
+    assert same[0].tolist() == [[False, False], [True, False], [True, False]]
+    counts = np.zeros((2, 5))
+    hi = local_eval.residual_cache(ind, wts, k=2, tau=np.array([0.5, 0.2]), bounds=[3], warm=None, counts=counts)
+    assert hi.tolist() == [[False, False], [False, True], [False, True]] and counts[:, 4].tolist() == [0, 1]
+
+
+def test_fit_tau_admits_early_what_turns_strong_and_never_what_stays_weak():
+    # 6 experts, 3 residents (0, 1, 2). Expert 4: a weak slot, then strong ones. Expert 5: one weak slot per record.
+    ids = np.array([[0, 4], [0, 5], [0, 4], [0, 4], [0, 4]])[:, None, :]
+    gates = np.array([[0.6, 0.2], [0.6, 0.2], [0.3, 0.6], [0.3, 0.6], [0.3, 0.6]], dtype=np.float32)[:, None, :]
+    ids, gates, bounds = np.concatenate([ids, ids]), np.concatenate([gates, gates]), [5, 5]
+    warm = np.arange(6)[None]
+    miss, inst = fit_tau.cost_tables(ids, gates, bounds, warm, 3, 6)
+    grid = fit_tau.GRID.tolist()
+    assert miss[0, 4, grid.index(0.2)] == 0 and inst[0, 4, grid.index(0.2)] == 2  # admitted before its strong slots
+    np.testing.assert_allclose(miss[0, 4, grid.index(0.3)], 2 * 0.35, rtol=1e-6)  # the first strong slot is missed
+    np.testing.assert_allclose(miss[0, 4, -1], 2 * 3 * 0.35, rtol=1e-6)  # never admitted: all three
+    tau = fit_tau.fit(miss, inst, warm, 3, lam=0.1, prior=0.0, default=0.3)
+    assert tau[0, 4] <= 0.2 < tau[0, 5] and tau[0, 0] == tau[0, 1] == 0.3
+    learned = fit_tau.replay(ids, gates, bounds, warm, 3, tau, 6)
+    single = fit_tau.replay(ids, gates, bounds, warm, 3, 0.3, 6)
+    assert learned[0] == 0 < single[0] and learned[1] == single[1]  # no strong slot missed, as many installs
