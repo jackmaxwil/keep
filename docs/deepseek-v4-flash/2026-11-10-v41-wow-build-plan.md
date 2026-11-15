@@ -975,3 +975,56 @@ the tau = 1e9 corner: the warm top-K never changes. Simulator, 22 sessions, 1,02
   i.e. it saves bandwidth at the quality of a third fewer residents. At 0.05 it is near free
   but saves under 1% of reads. Default stays off; 0.05 is safe on the 92 GB setup.
 - Reads per token are simulated bytes for routed experts only; they bound speed, not predict it.
+
+### Hot tier in serving (B3, 2026-11-15)
+
+`scripts/v41_build/omlx_lattice.py` now serves the B2 hot tier: the hottest H survivors per
+layer run base + residual (3 bits) while resident.
+
+- Configuration. A pool file with `"residual": DIR` (a `keep_quant.py --residual-of` fit over
+  the first directory's experts) and `"hot": H`; `OMLX_LATTICE_HOT` overrides H. Without
+  `residual` nothing changes. `run_v41.sh` takes `OMLX_LATTICE` to pick the pool file.
+- The hot set is static, the first H survivors by routed mass, the rule `local_eval.py --hot`
+  uses. The residuals stay in memory (4.6 MB per expert per layer, 11 GiB for 64 hot over 40
+  layers); installs move bases only. A per-slot hot index (`NO_RESIDUAL` for every other
+  expert) changes in `route()`, together with the router bias.
+- Decode: one `e8_1bit_m1` call per projection after the 2-bit call, added in fp32 before
+  SwiGLU (gate, up) and before the routed sum (down). Prefill: the residual runs on every route,
+  regrouped by hot index for the sorted kernels and zeroed where the slot is not hot.
+- `auto_slots` charges each hot expert its size: 183 residents become 150 at 64 hot with the
+  drafter. Measured peak: 83 GiB for 150 + 64 hot, the same as 183 without, so the charge is right.
+
+Check (`omlx_lattice.py check`, two layers of real codes, 16 hot): decode against host-decoded
+base + residual 0.0078; against the bases alone 0.107, so the check sees a missing residual;
+prefill against decode 0.0027; after 84 installs 0.0032, no slot differs from its bytes. The
+decode-step MoE goes from 0.444 to 0.508 ms (+14%, one token, router over 384).
+
+Serving, the bundle, drafter on, tau 0.3, sampled script request at the card's settings:
+
+| Run | Configuration | tok/s, median (range) | Correct | Installs per token | Demand resident | Peak |
+|---|---|---|---|---:|---:|---:|
+| 1 | 150 + 64 hot (first server) | 25.3 (24.2–28.3) | 2 of 4 | 1.63 | 81.9% | 83 GiB |
+| 1 | 150, no hot | 36.1 (34.1–37.7) | 4 of 4 | 1.64 | 83.2% | 72 GiB |
+| 1 | 183, no hot (today's default) | 39.6 (37.8–40.4) | 4 of 4 | 0.75 | 87.8% | 83 GiB |
+| 1 | 150 + 64 hot | 32.4 (26.9–33.8) | 4 of 4 | 1.53 | 83.6% | 83 GiB |
+| 2 | 150 + 64 hot | 18.9 (13.2–31.4) | 10 of 12 | 1.36 | 83.6% | 83 GiB |
+| 2 | 183, no hot | 31.9 (23.3–35.2) | 12 of 12 | 0.50 | 88.8% | 85 GiB |
+| 2 | 150 + 64 hot | 23.7 (21.4–29.5) | 11 of 12 | 1.57 | 83.2% | 85 GiB |
+
+- The speed budget (within 10% of today's) is missed. Against today's default the hot tier is
+  18–41% slower. At equal residents (run 1, the later pair) the residual kernels cost 10%;
+  the other half of the loss is the 33 residents given up for the residuals, which triples
+  installs (0.5–0.75 to 1.4–1.6 per token).
+- Run 2 was slower in every configuration than run 1 (31.9 against 39.6 for the default), with
+  nothing else using the CPU; the cause is not found, so compare within a run only.
+- Correctness: 27 of 32 hot samples, against 20 of 20 here and 21 of 24 for the default on
+  2026-11-12. Not separable. The hot failures: two syntax errors in two long answers (2,978 and
+  2,091 tokens) in run 1, then none in 24 samples of run 2 (a missing code block, `.hex` for
+  `.hexdigest`, one wrong output).
+- Quality in KL is the simulator's (218 + 64 hot beats 250 at 2 bits by 0.087 at 92 GB);
+  serving does not measure it.
+- Default stays off: `bundle/pool.json` has no residual; `pool-hot.json` opts in.
+- Next, if the hot tier is to ship: one kernel per projection that decodes base and residual in
+  one pass from a per-slot format flag, so the residual costs no launches and its codes are read
+  in the same tile, ideally with the multi-row verify layout of A2. That kernel is the 10% of
+  the loss the code controls; the residents given up are the price of the memory.

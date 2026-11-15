@@ -604,7 +604,7 @@ to 100; partial credit only for measured progress).
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **61** | |
+| | **Total** | 100 | **71** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1135,3 +1135,15 @@ What it says:
 - Figure and table: `docs/deepseek-v4-flash/figures/frontier.svg`, `frontier.md`, written by
   `scripts/runpod/v41_reap/frontier_figure.py`.
 - Rubric item 5 moves from 0 to 10. Total 71.
+
+### 2026-11-15: hot tier in serving (B3)
+
+- `omlx_lattice.py` serves the 3-bit hot tier: 64 hot survivors per layer, residuals resident
+  (11 GiB), per-slot hot index switched with the router bias, one residual kernel call per
+  projection. Checked against host-decoded base + residual (0.0078; 0.107 without the residual).
+- 150 + 64 hot at 83 GiB, the footprint of 183 residents without. Decodes 18–41% slower than
+  today's default (10% from the residual kernels at equal residents, the rest from fewer
+  residents); 27 of 32 sampled scripts correct, not separable from the default. Off by default;
+  a fused base + residual kernel is the next step if it is to ship. Details in the build plan.
+- The rubric table's total row said 61 after item 5 moved; corrected to 71. Rubric unchanged
+  at 71: no item's test depends on the hot tier in serving.
