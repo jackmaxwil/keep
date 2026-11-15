@@ -60,9 +60,10 @@ from omlx.patches.deepseek_v41.quantization import quantize_activation
 from omlx_compact import patch as compact_patch
 from omlx_routed import OFF, Cache, Store
 
-from keep.vq.e8 import decode_weight_matrix, e8_1bit_packed, e8p_packed_abs_grid
-from ramp.kernels.e8_1bit_m1 import NO_RESIDUAL, e8_1bit_m1_per_route, e8_1bit_m1_token_layout, pair_packed
+from keep.vq.e8 import decode_weight_matrix, e8_1bit_grid, e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels.e8_1bit_m1 import NO_RESIDUAL
 from ramp.kernels.e8p_m1 import e8p_m1_per_route, e8p_m1_token_layout
+from ramp.kernels.e8p_nested_m1 import e8p_nested_m1_per_route, e8p_nested_m1_token_layout, half2_pairs
 from ramp.nn.switch_linear import QuantizedVQSwitchLinear
 
 TENSORS = [(proj, field) for proj in ("w1", "w3", "w2") for field in ("codes", "scales")]
@@ -232,7 +233,7 @@ class LatticeCache(Cache):
         self.codes = Codes(roots, len(blocks), where)
         self.codebook = mx.array(e8p_packed_abs_grid())
         self.res_codes = Codes([residual], len(blocks)) if hot else None
-        self.res_book, self.res_book_m1 = mx.array(e8_1bit_packed()), mx.array(pair_packed(e8_1bit_packed()))
+        self.res_book, self.res_table = mx.array(e8_1bit_packed()), mx.array(half2_pairs(e8_1bit_grid()))
         layers = []
         for i, blk in enumerate(blocks):
             experts = Experts(config.swiglu_limit)
@@ -283,17 +284,19 @@ def decode(cache, layer, moe, x, config, mma, stock_gate):
     e, s = layer.experts, moe.shared_experts
     # 16-bit activations: the lattice kernel is 1.7x slower on fp32 rows, and act_quant values are exact in bf16.
     rows, slots = xq.reshape(nb, dim).astype(mx.bfloat16), slot.reshape(nb, k)
-    gate = e8p_m1_token_layout(rows, e.w1.codes, e.w1.scales, cache.codebook, slots, output_dims=inter)
-    up = e8p_m1_token_layout(rows, e.w3.codes, e.w3.scales, cache.codebook, slots, output_dims=inter)
-    if layer.hot:  # hot residents add their residual; a route of any other expert adds zeros
-        r, hot = layer.res, layer.hot_of_slot[slot]
-        gate, up = ((g.astype(mx.float32) + e8_1bit_m1_token_layout(
-            rows, r[p].codes, r[p].scales, cache.res_book_m1, hot.reshape(nb, k), output_dims=inter)).astype(mx.bfloat16)
-            for g, p in ((gate, "w1"), (up, "w3")))
+    if layer.hot:  # one pass over base and residual; a slot whose expert is not hot skips the residual
+        def nested(kernel, x, proj, index, out):
+            lin, res = getattr(e, proj), layer.res[proj]
+            return kernel(x, (lin.codes, lin.scales, cache.codebook), index,
+                          (res.codes, res.scales, cache.res_table), layer.hot_of_slot, output_dims=out)
+
+        gate, up = (nested(e8p_nested_m1_token_layout, rows, proj, slots, inter) for proj in ("w1", "w3"))
+    else:
+        gate = e8p_m1_token_layout(rows, e.w1.codes, e.w1.scales, cache.codebook, slots, output_dims=inter)
+        up = e8p_m1_token_layout(rows, e.w3.codes, e.w3.scales, cache.codebook, slots, output_dims=inter)
     h = quantize_swiglu_activation(gate, up, weight, mx.bfloat16, config.swiglu_limit).reshape(nb * k, inter)
-    down = e8p_m1_per_route(h, e.w2.codes, e.w2.scales, cache.codebook, slot, output_dims=dim).astype(mx.float32)
-    if layer.hot:
-        down = down + e8_1bit_m1_per_route(h, r["w2"].codes, r["w2"].scales, cache.res_book_m1, hot, output_dims=dim)
+    down = (nested(e8p_nested_m1_per_route, h, "w2", slot, dim) if layer.hot else
+            e8p_m1_per_route(h, e.w2.codes, e.w2.scales, cache.codebook, slot, output_dims=dim)).astype(mx.float32)
     routed = down.reshape(nb, k, dim).sum(1).reshape(-1)  # bf16 per expert, fp32 sum
     # The shared expert on oMLX's kernels: its up kernel with no routed column (TOPK 0), then its
     # shared down kernel, which adds the routed sum and rounds to bf16.

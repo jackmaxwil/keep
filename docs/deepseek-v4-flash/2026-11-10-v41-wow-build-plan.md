@@ -1028,3 +1028,66 @@ Serving, the bundle, drafter on, tau 0.3, sampled script request at the card's s
   one pass from a per-slot format flag, so the residual costs no launches and its codes are read
   in the same tile, ideally with the multi-row verify layout of A2. That kernel is the 10% of
   the loss the code controls; the residents given up are the price of the memory.
+
+### Fused base + residual kernel (2026-11-15)
+
+`src/ramp/kernels/e8p_nested_m1.{metal,py}` replaces the two calls per projection in the decode
+step (`e8p_m1`, then `e8_1bit_m1`, then the add) when the hot tier is on. Without a hot tier the
+decode step still calls `e8p_m1`. Prefill is unchanged.
+
+- One pass: the lane loop of `e8p_m1` loads the activations once and, for a slot that holds a hot
+  expert, reads the residual codes of the same rows beside the base codes. The kernel looks the
+  slot up in `hot_of_slot` itself, so the hot tier adds no op to the graph, and a slot at the
+  base tier runs the base loop only.
+- The output is rounded once, after base and residual are summed in fp32. The two-call path
+  rounded each to bf16 first.
+- The residual's table is decoded on the host (`half2_pairs`, 256 entries of four half2 pairs)
+  and read from device memory. The first version decoded it into a second 4 KB threadgroup
+  array, as `e8p_m1` does for the base's abs grid, and was slower than the two calls: every
+  route ran 1.5 times slower, the base-tier routes included (gate shape, none hot: 0.118 ms
+  against 0.077 for `e8p_m1`). Guarding the decode did not help; removing the array did. Reading
+  the base's table from device memory as well costs 30% on a base-tier route, so that one stays
+  in threadgroup memory. Rows per simdgroup 4 and one simdgroup stay the best of eight shapes.
+
+Tests (`tests/test_e8p_nested_m1.py`, 18 cases): a float32 output equals the float32 sum of the
+two separate kernels bit for bit; float32 and bf16 outputs match a float64 decode; residual scale
+groups that differ from the base's; hot and base-tier slots in one token. `omlx_lattice.py check`
+passes, also under `MTL_SHADER_VALIDATION=1`: decode against host-decoded base + residual 0.0028
+(0.0078 with two calls), against the bases alone 0.107.
+
+Kernel time, M4 Max, 6 routes, bf16 rows, 40 independent calls per eval, interleaved medians:
+
+| Call | `e8p_m1` | Two calls, none hot | Two calls, all hot | Fused, none hot | Fused, half hot | Fused, all hot |
+|---|---:|---:|---:|---:|---:|---:|
+| gate or up (2304 x 5120) | 0.073 ms | 0.099 | 0.148 | 0.075 | 0.103 | 0.123 |
+| down (5120 x 2304) | 0.106 ms | 0.133 | 0.207 | 0.111 | 0.140 | 0.166 |
+
+A hot route reads 1.5 times the bytes of a base-tier route and takes 1.6–1.7 times as long (215
+against 242 GB/s of codes), so what is left of the hot tier's kernel cost is its bytes.
+Decode-step MoE in `check` (one token, about half of the routes hot): 0.43 ms without a hot
+tier, 0.48 with the fused kernel, 0.51 with two calls.
+
+Serving, same job as B3 (drafter on, tau 0.3, sampled script request, 6 requests each):
+
+| Configuration | tok/s, median (range) | Correct | Installs per token | Demand resident | Peak |
+|---|---|---|---:|---:|---:|
+| 150 + 64 hot (first server) | 23.4 (16.9–32.4) | 6 of 6 | 1.56 | 82.9% | 88 GiB |
+| 150, no hot | 31.3 (29.6–34.4) | 3 of 6 | 1.49 | 83.8% | 72 GiB |
+| 183, no hot (today's default) | 30.4 (29.6–34.4) | 5 of 6 | 0.60 | 88.4% | 86 GiB |
+| 150 + 64 hot | 27.0 (24.1–29.4) | 6 of 6 | 1.67 | 82.8% | 85 GiB |
+
+- The speed budget is still missed: the later hot server is 11% slower than today's default and
+  14% slower than 150 residents without a hot tier. In B3's first run the same pair was 18% and
+  10%. Six requests per configuration do not resolve the difference between the two kernels:
+  the ranges are 5 tok/s wide and the kernel change is worth about 0.03 ms of a 0.5 ms MoE step.
+- The first server of a job has been the slowest in all three jobs (25.3, 18.9, 23.4 tok/s for
+  the hot tier), whatever it serves next. A cold page cache for the code files is the likely
+  cause; it is not tested. Compare the later servers.
+- This job was as slow as B3's second run (30.4 for the default against 39.6 in the first), and
+  183 residents were no faster than 150.
+- Correct scripts: 12 of 12 with the hot tier, 8 of 12 without (a syntax error, an undefined
+  name, an invalid escape, one wrong output). Over the three jobs: 39 of 44 hot, 28 of 32
+  without. Not separable.
+- The hot tier stays off by default. What remains is not kernel overhead: a hot route costs its
+  bytes, and the residuals cost 33 residents. The multi-row layout of A2 (one decode of a slot
+  for all rows of a verify block) is the remaining lever, for both tiers.

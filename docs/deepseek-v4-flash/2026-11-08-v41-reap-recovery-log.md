@@ -1147,3 +1147,19 @@ What it says:
   a fused base + residual kernel is the next step if it is to ship. Details in the build plan.
 - The rubric table's total row said 61 after item 5 moved; corrected to 71. Rubric unchanged
   at 71: no item's test depends on the hot tier in serving.
+
+### 2026-11-15: fused base + residual kernel
+
+- `e8p_nested_m1`: one kernel per projection for the decode step of the hot tier, base and
+  residual in one pass, the per-slot hot index read inside the kernel. Float32 output bit-equal
+  to the two kernels it replaces; `check` 0.0028 against host-decoded matrices (0.0078 before),
+  clean under shader validation.
+- A second 4 KB threadgroup table made the first version 1.5 times slower on every route; the
+  residual's table is now decoded on the host and read from device memory.
+- Kernel time: a base-tier route costs what `e8p_m1` costs; an all-hot call 0.123 ms against
+  0.148 for two calls (gate), 0.166 against 0.207 (down). A hot route now runs at the base
+  route's bytes per second, so its remaining cost is the 50% more bytes it reads.
+- Serving: 27.0 tok/s for 150 + 64 hot against 30.4 for the default and 31.3 for 150 without, in
+  a slow job; 12 of 12 scripts correct with the hot tier, 8 of 12 without. The 10% budget is
+  still missed and the samples do not resolve the kernel change. Hot tier stays off by default.
+  Details in the build plan. Rubric unchanged at 71.
