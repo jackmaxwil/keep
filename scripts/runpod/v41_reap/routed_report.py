@@ -63,8 +63,10 @@ def rows(eval_dir: Path, tok_s: float, bandwidth_gbs: float) -> list[dict]:
         if tiers.get("hot"):  # a cache whose hottest experts are FP4 copies, or carry one more bit as a residual
             hot_bytes = FP4_BYTES if tiers.get("hot_tier", "fp4") == "fp4" else (hi_units + 1) * UNIT_BYTES
             mixed = (k - tiers["hot"]) * hi_units * UNIT_BYTES + tiers["hot"] * hot_bytes
+            read += tiers["hot_slot_share"] * used * (hot_bytes - hi_read * UNIT_BYTES) / tokens  # hot slots read more
             row |= {"hot": tiers["hot"], "hot_slots": round(tiers["hot_slot_share"], 3),
-                    "resident_gb": round(mixed * n_layers / 1e9, 1)}
+                    "resident_gb": round(mixed * n_layers / 1e9, 1),
+                    "read_gb_per_tok": round(read / 1e9, 2), "tok_s_bound": round(bandwidth_gbs * 1e9 / read, 1)}
         out.append(row)
     return out
 

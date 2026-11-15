@@ -599,7 +599,7 @@ to 100; partial credit only for measured progress).
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
-| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
+| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
@@ -1114,3 +1114,24 @@ What it says:
   default is 0.2, six times the SSD reads (33.6 MB per token against 1.5 to 5.5). Fixed in the
   launcher. That run: 39.8 before, 32.2 held, 31.8 after.
 - Rubric item 6 moves from 8 to 10. Total 61.
+
+### 2026-11-15: unification, one policy and the frontier figure (rubric item 5)
+
+- One simulator policy over the pool of 384 with four settings: residents K, admission tau,
+  hot set H (2-bit base + 1-bit residual), tier-0 threshold. Static pruning is the tau = 1e9
+  corner of the same policy, on the same codes. 22 sessions, 1,024 tokens; KL from paired block
+  bootstraps, 95% intervals.
+- `local_eval.py` loads the slim checkpoint (`bundle/models/v41-lattice`) and skips expert
+  tensors when every expert comes from codes; peak RSS 65 GB for 9 variants (61 GB before for 7).
+- Routed against static at equal resident memory: -0.955 at 48 (17.7 GB), -0.524 at 96, -0.309
+  at 144, -0.142 at 200, -0.054 at 250 (92.2 GB). Every interval is clear of zero. Routed with
+  64 hot at 92.2 GB beats the static 250 by 0.141.
+- Tier 0 is not free in this regime, unlike the pool of 192 (2026-11-09: free at 7.7% of
+  slots). At 144 residents: 0.05 skips 0.9% of slots for +0.008 [0.000, 0.015]; 0.1 skips 6.0%
+  for +0.024 [0.016, 0.032]; 0.2 skips 44% for +0.161, cutting routed reads from 2.21 to 1.25
+  GB per token, and lands level with 96 residents (+0.010 [-0.002, 0.031]). At 218 + 64 hot: 0.05
+  costs +0.002 [-0.005, 0.006], 0.1 costs +0.006 [-0.001, 0.012]. Without the tool-use domain,
+  0.05 and 0.1 at 144 cost 0.011 and 0.012: half of the 0.1 cost is tool-use.
+- Figure and table: `docs/deepseek-v4-flash/figures/frontier.svg`, `frontier.md`, written by
+  `scripts/runpod/v41_reap/frontier_figure.py`.
+- Rubric item 5 moves from 0 to 10. Total 71.

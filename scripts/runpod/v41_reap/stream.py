@@ -229,6 +229,7 @@ class LayerStreamer:
         for prefix, module in (("embed.", self.embed), ("norm.", self.norm), ("head.", self.head)):
             module.load_state_dict(load_layer(prefix), strict=True)
         self._pool = ThreadPoolExecutor(max_workers=1)
+        self.absent: tuple[str, ...] = ()  # tensor name parts not read; those parameters stay uninitialized
 
     def build_block(self, layer: int, state: dict[str, torch.Tensor]) -> Any:
         ref = self.ref
@@ -239,7 +240,8 @@ class LayerStreamer:
                 block = ref.Block(layer, self.args, self.layout)
         finally:
             ref.ParallelEngramEmbedding = real
-        block.load_state_dict(state, strict=True)
+        missing, unexpected = block.load_state_dict(state, strict=not self.absent)
+        assert not unexpected and all(any(s in k for s in self.absent) for k in missing), (missing[:4], unexpected[:4])
         if block.engram is not None:
             block.engram.embed.rows = self.engram_rows[layer]
         return block
@@ -313,7 +315,7 @@ class LayerStreamer:
         """Run ``items`` through every backbone layer; leaves each ``item.h`` / ``item.pre_mix``."""
 
         n_layers = int(self.args.n_layers)
-        skip = (".engram.embed.",)
+        skip = (".engram.embed.", *self.absent)
         pending = self._pool.submit(self.load_layer, "layers.0.", skip)
         self.start(items)
         for layer in range(n_layers):

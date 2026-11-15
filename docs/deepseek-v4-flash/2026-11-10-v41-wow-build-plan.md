@@ -939,3 +939,39 @@ through `run_v41.sh`, 183 residents, drafter on.
 - What this does not show: the server's own pages being taken. Its footprint counts
   compressed and swapped pages too, so whether any of its 83 GiB left RAM is not measured;
   the speed says little of it did.
+
+### Unification: one policy, one frontier (2026-11-15)
+
+One policy over the pool of 384 has four settings: residents K (pruning and offload breadth),
+admission tau, hot set H (the hottest residents at 2-bit base + 1-bit residual) and the tier-0
+threshold (a slot whose gate is below it is skipped, with no renormalization). Static pruning is
+the tau = 1e9 corner: the warm top-K never changes. Simulator, 22 sessions, 1,024 tokens, same
+2-bit lattice codes for every point. Figure: `figures/frontier.svg`; full table:
+`figures/frontier.md`.
+
+| Resident expert GB | Static KL | Routed KL | Routed - static, 95% interval |
+|---:|---:|---:|---|
+| 17.7 (48) | 1.746 | 0.790 | -0.955 [-1.014, -0.918] |
+| 35.4 (96) | 1.129 | 0.605 | -0.524 [-0.559, -0.482] |
+| 53.1 (144) | 0.763 | 0.454 | -0.309 [-0.332, -0.283] |
+| 73.7 (200) | 0.543 | 0.401 | -0.142 [-0.157, -0.129] |
+| 92.2 (250) | 0.452 | 0.398 | -0.054 [-0.062, -0.046] |
+| 92.2 (218 + 64 hot) | 0.452 | 0.311 | -0.141 [-0.164, -0.117] |
+
+| Base | Tier-0 threshold | Slots skipped | Routed GB read per token | KL | Change, 95% interval |
+|---|---:|---:|---:|---:|---|
+| 144 residents | none | 0 | 2.21 | 0.454 | |
+| 144 residents | 0.05 | 0.9% | 2.19 | 0.462 | +0.008 [0.000, 0.015] |
+| 144 residents | 0.1 | 6.0% | 2.08 | 0.478 | +0.024 [0.016, 0.032] |
+| 144 residents | 0.2 | 43.7% | 1.25 | 0.615 | +0.161 [0.129, 0.199] |
+| 218 + 64 hot | none | 0 | 2.60 | 0.311 | |
+| 218 + 64 hot | 0.05 | 0.7% | 2.58 | 0.313 | +0.002 [-0.005, 0.006] |
+| 218 + 64 hot | 0.1 | 5.2% | 2.47 | 0.317 | +0.006 [-0.001, 0.012] |
+
+- The routed cache dominates static pruning at every memory size, most where memory is small.
+  Extra bits on hot experts buy more than extra breadth at 92 GB.
+- Tier 0 costs KL here, where on the pool of 192 it was free. It trades reads, not memory: at
+  0.2 it cuts routed reads by 43% and lands level with 96 residents (+0.010 [-0.002, 0.031]),
+  i.e. it saves bandwidth at the quality of a third fewer residents. At 0.05 it is near free
+  but saves under 1% of reads. Default stays off; 0.05 is safe on the 92 GB setup.
+- Reads per token are simulated bytes for routed experts only; they bound speed, not predict it.

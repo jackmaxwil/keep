@@ -358,6 +358,8 @@ def main(argv: list[str] | None = None) -> int:
             return block
 
         streamer.build_block = build_wide
+        if not (args.hot and args.hot_tier == "fp4"):  # every expert comes from codes: a slim checkpoint is enough
+            streamer.absent = ("ffn.experts.",)
     state = collect.install_hooks(streamer, top_k=2048, rows_per_slice=256)
     n_local = len(next(iter(ckpt_survivors.values())))
 
