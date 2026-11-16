@@ -599,12 +599,12 @@ to 100; partial credit only for measured progress).
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
-| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 0 | tier 0 measured free at 7.7% of slots; no joint policy or figure yet |
+| 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
-| 7 | Learned tier policy or trained nested codes | 10 | 0 | pod work, after 4 |
+| 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
-| 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **61** | |
+| 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
+| | **Total** | 100 | **75** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1114,3 +1114,175 @@ What it says:
   default is 0.2, six times the SSD reads (33.6 MB per token against 1.5 to 5.5). Fixed in the
   launcher. That run: 39.8 before, 32.2 held, 31.8 after.
 - Rubric item 6 moves from 8 to 10. Total 61.
+
+### 2026-11-15: unification, one policy and the frontier figure (rubric item 5)
+
+- One simulator policy over the pool of 384 with four settings: residents K, admission tau,
+  hot set H (2-bit base + 1-bit residual), tier-0 threshold. Static pruning is the tau = 1e9
+  corner of the same policy, on the same codes. 22 sessions, 1,024 tokens; KL from paired block
+  bootstraps, 95% intervals.
+- `local_eval.py` loads the slim checkpoint (`bundle/models/v41-lattice`) and skips expert
+  tensors when every expert comes from codes; peak RSS 65 GB for 9 variants (61 GB before for 7).
+- Routed against static at equal resident memory: -0.955 at 48 (17.7 GB), -0.524 at 96, -0.309
+  at 144, -0.142 at 200, -0.054 at 250 (92.2 GB). Every interval is clear of zero. Routed with
+  64 hot at 92.2 GB beats the static 250 by 0.141.
+- Tier 0 is not free in this regime, unlike the pool of 192 (2026-11-09: free at 7.7% of
+  slots). At 144 residents: 0.05 skips 0.9% of slots for +0.008 [0.000, 0.015]; 0.1 skips 6.0%
+  for +0.024 [0.016, 0.032]; 0.2 skips 44% for +0.161, cutting routed reads from 2.21 to 1.25
+  GB per token, and lands level with 96 residents (+0.010 [-0.002, 0.031]). At 218 + 64 hot: 0.05
+  costs +0.002 [-0.005, 0.006], 0.1 costs +0.006 [-0.001, 0.012]. Without the tool-use domain,
+  0.05 and 0.1 at 144 cost 0.011 and 0.012: half of the 0.1 cost is tool-use.
+- Figure and table: `docs/deepseek-v4-flash/figures/frontier.svg`, `frontier.md`, written by
+  `scripts/runpod/v41_reap/frontier_figure.py`.
+- Rubric item 5 moves from 0 to 10. Total 71.
+
+### 2026-11-15: hot tier in serving (B3)
+
+- `omlx_lattice.py` serves the 3-bit hot tier: 64 hot survivors per layer, residuals resident
+  (11 GiB), per-slot hot index switched with the router bias, one residual kernel call per
+  projection. Checked against host-decoded base + residual (0.0078; 0.107 without the residual).
+- 150 + 64 hot at 83 GiB, the footprint of 183 residents without. Decodes 18–41% slower than
+  today's default (10% from the residual kernels at equal residents, the rest from fewer
+  residents); 27 of 32 sampled scripts correct, not separable from the default. Off by default;
+  a fused base + residual kernel is the next step if it is to ship. Details in the build plan.
+- The rubric table's total row said 61 after item 5 moved; corrected to 71. Rubric unchanged
+  at 71: no item's test depends on the hot tier in serving.
+
+### 2026-11-15: fused base + residual kernel
+
+- `e8p_nested_m1`: one kernel per projection for the decode step of the hot tier, base and
+  residual in one pass, the per-slot hot index read inside the kernel. Float32 output bit-equal
+  to the two kernels it replaces; `check` 0.0028 against host-decoded matrices (0.0078 before),
+  clean under shader validation.
+- A second 4 KB threadgroup table made the first version 1.5 times slower on every route; the
+  residual's table is now decoded on the host and read from device memory.
+- Kernel time: a base-tier route costs what `e8p_m1` costs; an all-hot call 0.123 ms against
+  0.148 for two calls (gate), 0.166 against 0.207 (down). A hot route now runs at the base
+  route's bytes per second, so its remaining cost is the 50% more bytes it reads.
+- Serving: 27.0 tok/s for 150 + 64 hot against 30.4 for the default and 31.3 for 150 without, in
+  a slow job; 12 of 12 scripts correct with the hot tier, 8 of 12 without. The 10% budget is
+  still missed and the samples do not resolve the kernel change. Hot tier stays off by default.
+  Details in the build plan. Rubric unchanged at 71.
+
+### 2026-11-15: learned admission thresholds (rubric item 7)
+
+- `fit_tau.py`: one admission threshold per expert, fitted on the stored teacher routes of the 24
+  calibration sessions to minimize missed strong mass (`max(gate - 0.25, 0)`) plus a price per
+  install. On held-out calibration routes it misses 9% less at equal installs, or the same at
+  18–25% fewer installs. A refresh threshold, eviction by decayed mass and a rising threshold
+  moved nothing on the same measure.
+- KL, 22 sessions, 1,024 tokens, against the stored tau 0.3 runs: 0.480 and 0.476 against 0.454
+  at 144 residents (+0.026 and +0.022, intervals clear of zero), 0.609 against 0.605 at 96
+  (+0.004, interval spans zero, 12% fewer reads). Without tool-use 0.328 and 0.334 against 0.320.
+- On the eval sessions' own routes the fit still misses less strong mass than tau 0.3, so the
+  measure failed, not the transfer: it ranks single thresholds and not policies that change
+  which experts are missed. A learned policy needs a cost per missed expert taken through the
+  model.
+- The four agentic eval sessions share their first 1,024 tokens: one record in two domains, in
+  every stored run. Paired differences are unaffected.
+- Serving keeps tau 0.3. Item 7 stays at 0; rubric total 71. Details in the build plan.
+
+### 2026-11-15: miss cost through the model (rubric item 7, second try)
+
+- `local_eval.py --demand --reference` and `miss_cost.py`: two random per-expert threshold
+  policies on 52 calibration records (26,572 tokens each, 103 minutes, 59.8 GB), scored against
+  the same codes with all 384 resident. One cost per layer and expert, fitted by ridge, predicts
+  held-out KL at r 0.85 over records and 0.63 for the difference between the two policies; gate
+  mass above 0.25 gets 0.44 and 0.41. Gate bin and layer added nothing and were dropped.
+- `fit_tau.py --miss-cost`: thresholds fitted on that cost miss 0.095 of the priced mass against
+  0.249 for tau 0.3 at equal installs, on held-out calibration routes.
+- KL, 22 sessions, 1,024 tokens, 144 residents: 0.477 against 0.454 (+0.023, 0.015 to 0.033) at
+  equal reads, 0.541 (+0.087) at 41% fewer reads. Without tool-use 0.341 against 0.320. A tie
+  with the first try's thresholds.
+- The cost is not noise (thresholds fitted on one half of the records still win under the other
+  half's cost, 0.134 against 0.253) and it transfers to the eval routes (0.094 against 0.228).
+  It is additive over independent random misses and wrong for a policy chosen by it, which
+  withholds the cheap experts together and misses 72% more strong gate mass.
+- Two open-loop prices, two losses of the same size. An admission policy can gain at most 0.064
+  at 144 residents (0.390 with all 384 resident). Item 7 stays at 0; what is left is a
+  closed-loop search or trained codes on a pod. Rubric total 71. Details in the build plan.
+
+### 2026-11-16: paper draft (rubric item 9)
+
+- First draft (Markdown, since replaced by `paper/`): abstract, method, setup, results (routed against static,
+  ceiling, breadth against bits, tier 0, serving, generation), what did not work, limitations,
+  and a list of what is open before submission. A separate fact-check of about 150 claims against
+  this log, the build plan, the findings note and the plan found 30 problems (wrong pairings,
+  overstated wording, unsourced details); all are corrected.
+- The working title's first half is contradicted by the data: offloading the residual lost to
+  plain pruning (+0.020 and +0.025), and offloading whole experts won. Three candidate titles
+  are in the draft for Jack.
+- Also added to the limitations: tau, K, H and tier 0 were chosen on the eval sessions, so E7 is
+  the untouched confirmation.
+- Item 9 moves from 1 to 4 of 5; the last point waits on the title and on the sections that need
+  items 4 and 8. Rubric total 74.
+
+### 2026-11-16: the paper rewritten twice, one metric, a 3-bit hot set at small budgets
+
+- Jack rejected the Markdown draft ("not arXiv postable") and chose the title *Breadth Before
+  Bits*; then asked for a paper about the architecture and the technique, not about one model.
+  `paper/paper.tex` now gives a general formulation (reach, residency, precision and a miss
+  rule), routed residency for any top-k MoE, an allocation principle with its conditions, and
+  the 384-expert model as one case-study section. It builds with `tectonic paper.tex`; figures
+  from `figures.py`, numbers from `stats.py`; what is open before posting is in `paper/OPEN.md`.
+- Two reviews of the first LaTeX version found its headline claims did not survive its own
+  tables. Every quality number is recomputed in one metric (10 domains without tool use,
+  intervals over 17 distinct texts). Routed against static holds at every budget; "breadth
+  saturates at 200" and "the fitted thresholds lose" do not hold as stated; the headroom is in
+  the starting set (hindsight set 0.255 against 0.320 for tau 0.3). Details in the build plan.
+- New simulator run: a 3-bit hot set loses to residents at 35 GB (+0.014), ties at 53 GB and
+  wins at 74 GB (-0.023) and 92 GB (-0.039). The static 192 by total mass at 2 bits is level
+  with REAP-50's 192 at 2 bits on this metric (-0.030, interval spans zero).
+- Jack accepted the framing the same day: item 9 moves from 4 to 5 of 5; rubric total 75.
+
+### 2026-11-16: paper retitled *Pruning Is a Frozen Cache*
+
+- Jack asked for a pressure test of *Breadth Before Bits*. It names the least supported step of
+  the paper: residents beat bits at one budget only (35 GB, 96 residents), which is below the
+  generation floor, and the 128 GB configuration sits where bits win. The first title, *Offload
+  the Residual, Not the Expert*, states the opposite of what the system does.
+- New title, with Jack's go: *Pruning Is a Frozen Cache: Unifying Pruning, Quantization and
+  Offloading in Mixture-of-Experts Inference*. It states the two best supported claims: the
+  three techniques are one policy, and static pruning is the special case that never admits.
+  Section 5 is now "an order of spending"; its content is unchanged.
+
+### 2026-11-16: paper gets more figures and code listings
+
+- At Jack's request the paper now has 13 figures (was 5) and 3 listings of real code. New
+  schematics: the four miss rules, the life of one admission, the order of spending. New data
+  charts: sparsity across four models, per-domain KL at 144 residents, the admission threshold
+  with its reference lines, decode speed (replacing a table), and concentration and locality.
+- The locality chart is a new measurement (`paper/routing.py`, stored routes of the full model,
+  17 texts, first 1,024 tokens): the static 144 chosen on calibration text would serve 65% of a
+  text's demanded gate weight (41 to 79% by text); the text's own best 144 would serve 96% (93
+  to 98%); a text touches about 263 of 384 experts per layer at least once.
+- Listings: the simulator's admission loop, the router switch with install and evict, and the
+  Metal kernel that takes the served set and the demand from one set of scores.
+- The paper's definition of routed mass now matches the code (gate weight times output norm).
+
+### 2026-11-16: current models, repository links, and a fact-check of the additions
+
+- At Jack's request the paper names current models only (GLM-5.3, GLM-5.3-Flash,
+  DeepSeek-V4.1-Flash-1017, Kimi K3.1 Pro; expert counts from their published configurations),
+  and links the public repository: a title footnote, a Code availability section, and a link
+  beside each listing. The links point at `main`.
+- A separate agent checked what was added after the last full check (about 230 items: figure
+  values, the locality measurement, the three listings against their sources, the four
+  configurations, new sentences, cross-references). Corrected:
+  - `routing.py` counted the experts a text touches one short; it is about 264 of 384, not 263.
+  - The admission figure's storage bars used the build plan's 17.1 and 7.6 experts per token; the
+    stored counts give 16.7 and 7.5 (2.6 and 1.1 were right).
+  - "Pools as wide as or wider than the one we studied" was false for GLM-5.3 (256) and
+    GLM-5.3-Flash (288); the text now gives the three sizes.
+  - The per-domain sentence named the wrong ranking and the wrong link to calibration size; it
+    now says where the static set loses most to routed residency. The two agentic domains are
+    the same text and are drawn once.
+  - Listing 2 is from two files (`install`, `evict` in `omlx_routed.py`; `route`, `unroute` in
+    `omlx_lattice.py`), and Listings 1 and 2 are marked as abridged.
+  - The timeline figure and caption now show the demand read out two calls later, and the bias
+    restored when the bytes are in place.
+- Stated more carefully: the one budget where residents beat bits is also below the residency
+  floor; the locality gap is an upper bound on what a dynamic set can recover; the other three
+  models have the wide, sparse pools of condition (i), nothing more.
+- New limitation: among starting residents not yet demanded, the simulator evicts the highest
+  ranked first and the running system the lowest. The effect is not measured.

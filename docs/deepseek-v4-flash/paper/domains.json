@@ -1,0 +1,52 @@
+{
+ "agentic-python": {
+  "tau384:s144": 0.4964,
+  "c1-residents:k144": 0.3696,
+  "tau384:q384": 0.3073
+ },
+ "agentic-rust": {
+  "tau384:s144": 0.4964,
+  "c1-residents:k144": 0.3696,
+  "tau384:q384": 0.3073
+ },
+ "bash": {
+  "tau384:s144": 0.3594,
+  "c1-residents:k144": 0.2511,
+  "tau384:q384": 0.158
+ },
+ "business": {
+  "tau384:s144": 0.9076,
+  "c1-residents:k144": 0.3164,
+  "tau384:q384": 0.2112
+ },
+ "business-email": {
+  "tau384:s144": 0.616,
+  "c1-residents:k144": 0.291,
+  "tau384:q384": 0.1942
+ },
+ "code-diffs": {
+  "tau384:s144": 0.4055,
+  "c1-residents:k144": 0.2351,
+  "tau384:q384": 0.145
+ },
+ "cyber": {
+  "tau384:s144": 0.898,
+  "c1-residents:k144": 0.5354,
+  "tau384:q384": 0.4239
+ },
+ "english-chat": {
+  "tau384:s144": 1.1211,
+  "c1-residents:k144": 0.2922,
+  "tau384:q384": 0.2107
+ },
+ "english-prose": {
+  "tau384:s144": 0.7054,
+  "c1-residents:k144": 0.2307,
+  "tau384:q384": 0.1548
+ },
+ "networking": {
+  "tau384:s144": 0.5298,
+  "c1-residents:k144": 0.3115,
+  "tau384:q384": 0.2347
+ }
+}

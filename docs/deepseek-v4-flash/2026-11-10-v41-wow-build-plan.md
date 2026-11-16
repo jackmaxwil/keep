@@ -939,3 +939,349 @@ through `run_v41.sh`, 183 residents, drafter on.
 - What this does not show: the server's own pages being taken. Its footprint counts
   compressed and swapped pages too, so whether any of its 83 GiB left RAM is not measured;
   the speed says little of it did.
+
+### Unification: one policy, one frontier (2026-11-15)
+
+One policy over the pool of 384 has four settings: residents K (pruning and offload breadth),
+admission tau, hot set H (the hottest residents at 2-bit base + 1-bit residual) and the tier-0
+threshold (a slot whose gate is below it is skipped, with no renormalization). Static pruning is
+the tau = 1e9 corner: the warm top-K never changes. Simulator, 22 sessions, 1,024 tokens, same
+2-bit lattice codes for every point. Figure: `figures/frontier.svg`; full table:
+`figures/frontier.md`.
+
+| Resident expert GB | Static KL | Routed KL | Routed - static, 95% interval |
+|---:|---:|---:|---|
+| 17.7 (48) | 1.746 | 0.790 | -0.955 [-1.014, -0.918] |
+| 35.4 (96) | 1.129 | 0.605 | -0.524 [-0.559, -0.482] |
+| 53.1 (144) | 0.763 | 0.454 | -0.309 [-0.332, -0.283] |
+| 73.7 (200) | 0.543 | 0.401 | -0.142 [-0.157, -0.129] |
+| 92.2 (250) | 0.452 | 0.398 | -0.054 [-0.062, -0.046] |
+| 92.2 (218 + 64 hot) | 0.452 | 0.311 | -0.141 [-0.164, -0.117] |
+
+| Base | Tier-0 threshold | Slots skipped | Routed GB read per token | KL | Change, 95% interval |
+|---|---:|---:|---:|---:|---|
+| 144 residents | none | 0 | 2.21 | 0.454 | |
+| 144 residents | 0.05 | 0.9% | 2.19 | 0.462 | +0.008 [0.000, 0.015] |
+| 144 residents | 0.1 | 6.0% | 2.08 | 0.478 | +0.024 [0.016, 0.032] |
+| 144 residents | 0.2 | 43.7% | 1.25 | 0.615 | +0.161 [0.129, 0.199] |
+| 218 + 64 hot | none | 0 | 2.60 | 0.311 | |
+| 218 + 64 hot | 0.05 | 0.7% | 2.58 | 0.313 | +0.002 [-0.005, 0.006] |
+| 218 + 64 hot | 0.1 | 5.2% | 2.47 | 0.317 | +0.006 [-0.001, 0.012] |
+
+- The routed cache dominates static pruning at every memory size, most where memory is small.
+  Extra bits on hot experts buy more than extra breadth at 92 GB.
+- Tier 0 costs KL here, where on the pool of 192 it was free. It trades reads, not memory: at
+  0.2 it cuts routed reads by 43% and lands level with 96 residents (+0.010 [-0.002, 0.031]),
+  i.e. it saves bandwidth at the quality of a third fewer residents. At 0.05 it is near free
+  but saves under 1% of reads. Default stays off; 0.05 is safe on the 92 GB setup.
+- Reads per token are simulated bytes for routed experts only; they bound speed, not predict it.
+
+### Hot tier in serving (B3, 2026-11-15)
+
+`scripts/v41_build/omlx_lattice.py` now serves the B2 hot tier: the hottest H survivors per
+layer run base + residual (3 bits) while resident.
+
+- Configuration. A pool file with `"residual": DIR` (a `keep_quant.py --residual-of` fit over
+  the first directory's experts) and `"hot": H`; `OMLX_LATTICE_HOT` overrides H. Without
+  `residual` nothing changes. `run_v41.sh` takes `OMLX_LATTICE` to pick the pool file.
+- The hot set is static, the first H survivors by routed mass, the rule `local_eval.py --hot`
+  uses. The residuals stay in memory (4.6 MB per expert per layer, 11 GiB for 64 hot over 40
+  layers); installs move bases only. A per-slot hot index (`NO_RESIDUAL` for every other
+  expert) changes in `route()`, together with the router bias.
+- Decode: one `e8_1bit_m1` call per projection after the 2-bit call, added in fp32 before
+  SwiGLU (gate, up) and before the routed sum (down). Prefill: the residual runs on every route,
+  regrouped by hot index for the sorted kernels and zeroed where the slot is not hot.
+- `auto_slots` charges each hot expert its size: 183 residents become 150 at 64 hot with the
+  drafter. Measured peak: 83 GiB for 150 + 64 hot, the same as 183 without, so the charge is right.
+
+Check (`omlx_lattice.py check`, two layers of real codes, 16 hot): decode against host-decoded
+base + residual 0.0078; against the bases alone 0.107, so the check sees a missing residual;
+prefill against decode 0.0027; after 84 installs 0.0032, no slot differs from its bytes. The
+decode-step MoE goes from 0.444 to 0.508 ms (+14%, one token, router over 384).
+
+Serving, the bundle, drafter on, tau 0.3, sampled script request at the card's settings:
+
+| Run | Configuration | tok/s, median (range) | Correct | Installs per token | Demand resident | Peak |
+|---|---|---|---|---:|---:|---:|
+| 1 | 150 + 64 hot (first server) | 25.3 (24.2–28.3) | 2 of 4 | 1.63 | 81.9% | 83 GiB |
+| 1 | 150, no hot | 36.1 (34.1–37.7) | 4 of 4 | 1.64 | 83.2% | 72 GiB |
+| 1 | 183, no hot (today's default) | 39.6 (37.8–40.4) | 4 of 4 | 0.75 | 87.8% | 83 GiB |
+| 1 | 150 + 64 hot | 32.4 (26.9–33.8) | 4 of 4 | 1.53 | 83.6% | 83 GiB |
+| 2 | 150 + 64 hot | 18.9 (13.2–31.4) | 10 of 12 | 1.36 | 83.6% | 83 GiB |
+| 2 | 183, no hot | 31.9 (23.3–35.2) | 12 of 12 | 0.50 | 88.8% | 85 GiB |
+| 2 | 150 + 64 hot | 23.7 (21.4–29.5) | 11 of 12 | 1.57 | 83.2% | 85 GiB |
+
+- The speed budget (within 10% of today's) is missed. Against today's default the hot tier is
+  18–41% slower. At equal residents (run 1, the later pair) the residual kernels cost 10%;
+  the other half of the loss is the 33 residents given up for the residuals, which triples
+  installs (0.5–0.75 to 1.4–1.6 per token).
+- Run 2 was slower in every configuration than run 1 (31.9 against 39.6 for the default), with
+  nothing else using the CPU; the cause is not found, so compare within a run only.
+- Correctness: 27 of 32 hot samples, against 20 of 20 here and 21 of 24 for the default on
+  2026-11-12. Not separable. The hot failures: two syntax errors in two long answers (2,978 and
+  2,091 tokens) in run 1, then none in 24 samples of run 2 (a missing code block, `.hex` for
+  `.hexdigest`, one wrong output).
+- Quality in KL is the simulator's (218 + 64 hot beats 250 at 2 bits by 0.087 at 92 GB);
+  serving does not measure it.
+- Default stays off: `bundle/pool.json` has no residual; `pool-hot.json` opts in.
+- Next, if the hot tier is to ship: one kernel per projection that decodes base and residual in
+  one pass from a per-slot format flag, so the residual costs no launches and its codes are read
+  in the same tile, ideally with the multi-row verify layout of A2. That kernel is the 10% of
+  the loss the code controls; the residents given up are the price of the memory.
+
+### Fused base + residual kernel (2026-11-15)
+
+`src/ramp/kernels/e8p_nested_m1.{metal,py}` replaces the two calls per projection in the decode
+step (`e8p_m1`, then `e8_1bit_m1`, then the add) when the hot tier is on. Without a hot tier the
+decode step still calls `e8p_m1`. Prefill is unchanged.
+
+- One pass: the lane loop of `e8p_m1` loads the activations once and, for a slot that holds a hot
+  expert, reads the residual codes of the same rows beside the base codes. The kernel looks the
+  slot up in `hot_of_slot` itself, so the hot tier adds no op to the graph, and a slot at the
+  base tier runs the base loop only.
+- The output is rounded once, after base and residual are summed in fp32. The two-call path
+  rounded each to bf16 first.
+- The residual's table is decoded on the host (`half2_pairs`, 256 entries of four half2 pairs)
+  and read from device memory. The first version decoded it into a second 4 KB threadgroup
+  array, as `e8p_m1` does for the base's abs grid, and was slower than the two calls: every
+  route ran 1.5 times slower, the base-tier routes included (gate shape, none hot: 0.118 ms
+  against 0.077 for `e8p_m1`). Guarding the decode did not help; removing the array did. Reading
+  the base's table from device memory as well costs 30% on a base-tier route, so that one stays
+  in threadgroup memory. Rows per simdgroup 4 and one simdgroup stay the best of eight shapes.
+
+Tests (`tests/test_e8p_nested_m1.py`, 18 cases): a float32 output equals the float32 sum of the
+two separate kernels bit for bit; float32 and bf16 outputs match a float64 decode; residual scale
+groups that differ from the base's; hot and base-tier slots in one token. `omlx_lattice.py check`
+passes, also under `MTL_SHADER_VALIDATION=1`: decode against host-decoded base + residual 0.0028
+(0.0078 with two calls), against the bases alone 0.107.
+
+Kernel time, M4 Max, 6 routes, bf16 rows, 40 independent calls per eval, interleaved medians:
+
+| Call | `e8p_m1` | Two calls, none hot | Two calls, all hot | Fused, none hot | Fused, half hot | Fused, all hot |
+|---|---:|---:|---:|---:|---:|---:|
+| gate or up (2304 x 5120) | 0.073 ms | 0.099 | 0.148 | 0.075 | 0.103 | 0.123 |
+| down (5120 x 2304) | 0.106 ms | 0.133 | 0.207 | 0.111 | 0.140 | 0.166 |
+
+A hot route reads 1.5 times the bytes of a base-tier route and takes 1.6–1.7 times as long (215
+against 242 GB/s of codes), so what is left of the hot tier's kernel cost is its bytes.
+Decode-step MoE in `check` (one token, about half of the routes hot): 0.43 ms without a hot
+tier, 0.48 with the fused kernel, 0.51 with two calls.
+
+Serving, same job as B3 (drafter on, tau 0.3, sampled script request, 6 requests each):
+
+| Configuration | tok/s, median (range) | Correct | Installs per token | Demand resident | Peak |
+|---|---|---|---:|---:|---:|
+| 150 + 64 hot (first server) | 23.4 (16.9–32.4) | 6 of 6 | 1.56 | 82.9% | 88 GiB |
+| 150, no hot | 31.3 (29.6–34.4) | 3 of 6 | 1.49 | 83.8% | 72 GiB |
+| 183, no hot (today's default) | 30.4 (29.6–34.4) | 5 of 6 | 0.60 | 88.4% | 86 GiB |
+| 150 + 64 hot | 27.0 (24.1–29.4) | 6 of 6 | 1.67 | 82.8% | 85 GiB |
+
+- The speed budget is still missed: the later hot server is 11% slower than today's default and
+  14% slower than 150 residents without a hot tier. In B3's first run the same pair was 18% and
+  10%. Six requests per configuration do not resolve the difference between the two kernels:
+  the ranges are 5 tok/s wide and the kernel change is worth about 0.03 ms of a 0.5 ms MoE step.
+- The first server of a job has been the slowest in all three jobs (25.3, 18.9, 23.4 tok/s for
+  the hot tier), whatever it serves next. A cold page cache for the code files is the likely
+  cause; it is not tested. Compare the later servers.
+- This job was as slow as B3's second run (30.4 for the default against 39.6 in the first), and
+  183 residents were no faster than 150.
+- Correct scripts: 12 of 12 with the hot tier, 8 of 12 without (a syntax error, an undefined
+  name, an invalid escape, one wrong output). Over the three jobs: 39 of 44 hot, 28 of 32
+  without. Not separable.
+- The hot tier stays off by default. What remains is not kernel overhead: a hot route costs its
+  bytes, and the residuals cost 33 residents. The multi-row layout of A2 (one decode of a slot
+  for all rows of a verify block) is the only lever left in the kernels, for both tiers, and
+  was priced at 12% of a cycle at most (2026-11-11).
+
+### Per-expert admission thresholds (rubric item 7, 2026-11-15)
+
+Question: can the cache policy be learned from stored routes, without a model run? The cache
+admits an expert when a slot's gate reaches tau, one value for all 384 experts of all 40 layers.
+`scripts/runpod/v41_reap/fit_tau.py` fits one threshold per expert on the teacher's routes of the
+24 calibration sessions (49,152 tokens); `residual_cache` and `local_eval.py --tau NAME=FILE.npz`
+take the result. The eval sessions were never fitted on.
+
+**Proxy.** Replaying the cache on stored routes costs seconds, a KL run 25 minutes per variant,
+so the fit needs a proxy. Missed gate mass does not order tau 0.2 against 0.3 as their KL does;
+the share of strong mass missed, `max(gate - 0.25, 0)`, orders the four measured scalar variants
+at 144 residents. The open-loop replay reproduces the simulator's installs (2.62 per token at
+tau 0.3).
+
+**Where the misses are** (144 residents, tau 0.3): 56% of missed strong mass is an expert's first
+admission in a record, 28% a readmission after eviction, 16% slots below tau. Misses sit at the
+start of a record: 15.7% of strong mass in the first 16 tokens, 2.2% after 1,024.
+
+**Fit.** For an expert outside the starting set, the threshold from a grid of nine (0.1 to 0.5,
+and never) that minimizes missed strong mass + lambda installs over the records, assuming an
+admitted expert stays to the end of its record, shrunk towards the layer's pooled cost curve.
+Held out over 3 folds of the calibration sessions (in-sample figures are the same to two digits,
+so the limit is the policy class, not the data):
+
+| Policy, 144 residents | Strong mass missed | Installs per token |
+|---|---:|---:|
+| tau 0.25 | 0.0295 | 3.51 |
+| tau 0.3 | 0.0349 | 2.07 |
+| tau 0.35 | 0.0467 | 1.47 |
+| per expert, lambda 0.1 | 0.0310 | 3.12 |
+| per expert, lambda 0.2 | 0.0316 | 2.13 |
+| per expert, lambda 0.4 | 0.0378 | 1.56 |
+
+On the proxy the fit is 9% less missed mass at equal installs, or equal mass at 18–25% fewer
+installs; at 96 residents 0.0593 at 4.45 installs against 0.0621 at 3.71 for tau 0.3. Three
+other policies moved nothing on the proxy and were dropped before any KL run: a separate
+threshold for refreshing a resident, eviction by decayed routed mass (with and without a prior),
+and a threshold that starts low in a record and rises.
+
+**KL** (pool of 384, re-route, 22 sessions, 1,024 tokens; controls are the stored tau 0.3 runs;
+paired block bootstrap, 95% interval):
+
+| Variant | KL | Without tool-use | Tool-use | Reads, MB per token | Against tau 0.3 |
+|---|---:|---:|---:|---:|---|
+| 144, tau 0.3 | 0.454 | 0.320 | 1.79 | 23.8 | |
+| 144, per expert, lambda 0.2 | 0.480 | 0.328 | 2.00 | 25.5 | +0.026 (0.015 to 0.037) |
+| 144, per expert, lambda 0.4 | 0.476 | 0.334 | 1.90 | 19.3 | +0.022 (0.015 to 0.032) |
+| 96, tau 0.3 | 0.605 | 0.390 | 2.75 | 38.9 | |
+| 96, per expert, lambda 0.4 | 0.609 | 0.401 | 2.69 | 34.1 | +0.004 (-0.006 to 0.012) |
+
+- The fitted thresholds lose. At 144 residents both are worse than one threshold, intervals
+  clear of zero, and lambda 0.2 reads more as well. At 96 the fit ties in KL with 12% fewer
+  reads, which tau 0.35 would also buy.
+- The proxy is what failed, not the transfer from calibration to eval. On the stored routes of
+  the eval sessions (27 sessions, 2,048 tokens, replay only) lambda 0.2 still misses less strong
+  mass than tau 0.3 in both tool-use sessions (0.0352 against 0.0361) and over the rest (0.0462
+  against 0.0483), at 8% more installs; its KL is 0.21 worse on tool-use and 0.038 worse on the
+  agentic sessions, and 0.005–0.02 better in six of the other eight domains. Missed strong mass
+  ranks single thresholds; it does not rank policies that change which experts are missed.
+- So a policy for this cache cannot be fitted on gate mass alone. A fit would need a cost per
+  missed expert measured through the model (how well the re-route replaces it), which is a
+  model-in-the-loop job, not a replay.
+- `fit_tau.py` and the per-expert path of `residual_cache` stay as the record of this result.
+  Serving keeps tau 0.3.
+
+Found on the way: the four agentic eval sessions (`eval-00000`, `-00001`, `-00004`, `-00005`)
+share their first 1,024 tokens, so at this window they are one record counted in two domains.
+It is the same in every stored run, so paired differences stand; domain means weight that record
+twice.
+
+### Miss cost measured through the model (rubric item 7, second try, 2026-11-15)
+
+Question: does a price per missed expert taken through the model, in place of gate mass, give
+thresholds that beat tau 0.3? It does not. The price predicts KL far better than gate mass on
+held-out records, the thresholds fitted on it cut the priced mass by 62%, and in KL they lose by
+the same margin as the first try.
+
+**Collection.** `local_eval.py --demand NAME --reference NAME` stores, per token and layer, the
+routed experts, their gates and which were resident, and scores every variant against a variant
+of the same run (here: all 384 resident, same 2-bit codes), so the KL at a token is the cost of
+that token's misses alone. `miss_cost.py draw` gives every expert one threshold at random from
+0.1, 0.2, 0.3, 0.5 and never. Two such policies at 144 residents with re-route, on 52 calibration
+records of 512 tokens: 26,572 scored tokens per policy, mean KL 0.378, 29.8% of slots missed,
+103 minutes, peak 59.8 GB. The eval sessions were not touched.
+
+**Cost model.** `miss_cost.py fit`: KL at a token = the sum over its missed slots of
+`cost[layer, expert]`, a ridge fit towards the one cost that fits every miss alike, clipped at
+zero. A first form with a factor per layer and per gate bin was dropped: on held-out records
+those two explained 2 to 7% of the KL per token, and the count of misses in the middle gate bins
+came out with weight zero. The number of misses at a token correlates with its KL at 0.09.
+Held out over 4 folds of records:
+
+| Price of a miss | R2 per token | r over records | r of the two policies' difference per record |
+|---|---:|---:|---:|
+| gate mass | 0.008 | 0.159 | 0.370 |
+| gate mass above 0.25 | 0.038 | 0.440 | 0.413 |
+| one cost for every miss | 0.007 | 0.137 | 0.225 |
+| cost per expert, prior 1 | 0.247 | 0.820 | 0.556 |
+| cost per expert, prior 3 (used) | 0.225 | 0.850 | 0.625 |
+| cost per expert, prior 10 | 0.182 | 0.840 | 0.631 |
+
+The costs are concentrated: the median is 0, the 90th percentile 0.017 KL, the 99th 0.084, and
+the costliest 1% of experts hold 18% of the total.
+
+**Thresholds.** `fit_tau.py --miss-cost` prices a miss by that cost at any gate. On held-out
+calibration routes (3 folds), 144 residents:
+
+| Policy | Priced mass missed | Installs per token |
+|---|---:|---:|
+| tau 0.25 | 0.193 | 3.51 |
+| tau 0.3 | 0.249 | 2.07 |
+| tau 0.4 | 0.329 | 1.09 |
+| per expert, lambda 0.14 | 0.095 | 2.00 |
+| per expert, lambda 0.2 | 0.110 | 1.11 |
+
+**KL** (pool of 384, re-route, 22 sessions, 1,024 tokens; control is the stored tau 0.3 run;
+paired block bootstrap, 95% interval):
+
+| Variant, 144 residents | KL | Without tool-use | Tool-use | Reads, MB per token | Against tau 0.3 |
+|---|---:|---:|---:|---:|---|
+| tau 0.3 | 0.454 | 0.320 | 1.79 | 23.8 | |
+| per expert on cost, lambda 0.14 | 0.477 | 0.341 | 1.83 | 24.3 | +0.023 (0.015 to 0.033) |
+| per expert on cost, lambda 0.2 | 0.541 | 0.398 | 1.97 | 14.0 | +0.087 (0.075 to 0.100) |
+
+Against the first try's lambda 0.2 thresholds, lambda 0.14 on cost is a tie (-0.003, -0.013 to
+0.009).
+
+**Why it failed.** Three checks on stored routes, no model run:
+
+- Not noise in the cost. Fitted on one half of the collection records and priced by the cost
+  from the other half, the thresholds still miss 0.134 to 0.140 against 0.245 to 0.253 for
+  tau 0.3 at equal installs (the two halves' costs correlate at 0.71; 54% of the costs in a half
+  are zero, 43% in both).
+- Not the transfer to the eval sessions. On their routes the lambda 0.14 thresholds miss 0.094
+  of the priced mass against 0.228 for tau 0.3, at 2.05 against 2.04 installs.
+- On those same routes they miss 72% more strong gate mass (0.058 against 0.034), the measure
+  that ranks single thresholds.
+
+So the additive cost holds for the policies it was measured on, where each expert's threshold is
+drawn independently, and not for a policy chosen by it. The fit withholds the experts priced near
+zero together and at high gates, a pattern the random policies never produce, and the price says
+nothing about it. Gate mass failed the same way from the other side. Both are open-loop prices;
+a fit will move the misses to wherever its price is blind.
+
+- Item 7 is not met by an admission policy. Two prices, two losses of +0.022 to +0.026; one
+  threshold at 0.3 is at or near the best of the per-expert class, and the whole gap an admission
+  policy could close at 144 residents is 0.064 (0.454 against 0.390 with all 384 resident).
+- What is left for item 7 is a closed-loop search (a model run of about 30 minutes per
+  candidate, for at most that 0.064) or trained nested codes on a pod.
+- `miss_cost.py`, `fit_tau.py --miss-cost` and `local_eval.py --demand/--reference` stay as the
+  record of this result. Serving keeps tau 0.3.
+
+### One metric for the paper, and a 3-bit hot set at smaller budgets (2026-11-16)
+
+Two reviews of the paper draft showed that its headline numbers mixed readings. Every quality
+number is now recomputed by `docs/deepseek-v4-flash/paper/stats.py` from the stored evals in one
+metric: KL over the 10 domains without tool use, with a 95% bootstrap interval over the 17
+distinct texts (the four agentic sessions count as one text with their weight). Full tables:
+`paper/stats.md`. What changes against the 11-domain reading used above:
+
+- Routed against static at equal residents holds at every size: -1.058, -0.619, -0.333, -0.148,
+  -0.048 at 48, 96, 144, 200, 250 residents, all intervals clear of zero. A routed set matches a
+  static set about twice its size (96 against 200: -0.037 [-0.136, +0.034]; 144 against 250:
+  +0.017 [-0.026, +0.051]).
+- Breadth does not saturate at 200: 144 to 200 gains 0.041, 200 to 250 gains 0.024, 250 to 384
+  gains 0.020, all clear of zero. The flat reading came from tool-use KL, which does not fall
+  with residents (1.62 at 200, 1.94 at 384).
+- The admission threshold is flat from 0.1 to 0.3 (0.313, 0.307, 0.320). The best fixed set per
+  text with hindsight scores 0.255 against 0.235 for the whole pool and 0.320 for tau 0.3, so the
+  headroom is 0.065 and it is in the starting set, not in the admission rule.
+- Fitted thresholds: the gate-mass fit at equal reads is a tie (+0.007 [-0.004, +0.019]), the
+  measured-cost fit a loss (+0.021 [+0.014, +0.029]).
+- The nested 1-bit design is level with a static 144 at flat 2 bits (-0.020 [-0.067, +0.018]),
+  not a loss; 192 experts at 1 bit against 96 at 2 bits is -0.370 for the 2-bit set.
+
+New run (`jobs/bits_mac.sh`, `evals/bits-budget`, 8,526 s, peak 58.3 GB): a 3-bit hot set at
+equal expert memory below 92 GB, and the static 192 by total mass at 2 bits.
+
+| Expert memory | Hot variant | KL, 10 domains | 2 bits only | Difference |
+|---|---|---:|---:|---|
+| 35 GB | 80 residents, 32 hot | 0.404 | 0.390 (96) | +0.014 [+0.004, +0.024] |
+| 53 GB | 128 residents, 32 hot | 0.316 | 0.320 (144) | -0.004 [-0.014, +0.005] |
+| 74 GB | 168 residents, 64 hot | 0.255 | 0.279 (200) | -0.023 [-0.042, -0.002] |
+| 92 GB (B2) | 218 residents, 64 hot | 0.215 | 0.254 (250) | -0.039 [-0.058, -0.017] |
+
+- A third bit loses to residents at 35 GB, ties at 53 GB and wins from 74 GB: the crossover is
+  near 144 residents, not 200. 168 residents with 64 hot (74 GB) score the same as 250 residents
+  at 2 bits (92 GB).
+- Static 192 by total mass at 2 bits: 0.456, against 0.486 for REAP-50's 192 at 2 bits (-0.030
+  [-0.095, +0.051]). On this metric the choice of experts explains little of the gap between the
+  REAP-50 checkpoint at FP4 (0.389) and all 384 at 2 bits (0.235); the 0.184 selection gain on
+  the pod's 54 sessions includes tool use.

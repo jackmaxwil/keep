@@ -26,7 +26,8 @@ The pool can be wider than the loaded checkpoint. ``OMLX_LATTICE`` is then a JSO
 ``IDS.json`` (``{"survivors": {layer: [...]}}``) gives the pool number of each expert of its
 directory, in file order; the first directory holds the loaded checkpoint's experts. ``router`` has
 every router row of the pool and ``mass`` (``reap__gate_norm_sum``) orders the starting residents.
-Paths in the file may be relative to it.
+Optional ``"residual": DIR`` and ``"hot": H`` add the 3-bit hot tier (``LatticeCache``;
+``OMLX_LATTICE_HOT`` overrides H). Paths in the file may be relative to it.
 
 Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto``, from this
 machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
@@ -59,8 +60,10 @@ from omlx.patches.deepseek_v41.quantization import quantize_activation
 from omlx_compact import patch as compact_patch
 from omlx_routed import OFF, Cache, Store
 
-from keep.vq.e8 import decode_weight_matrix, e8p_packed_abs_grid
+from keep.vq.e8 import decode_weight_matrix, e8_1bit_grid, e8_1bit_packed, e8p_packed_abs_grid
+from ramp.kernels.e8_1bit_m1 import NO_RESIDUAL
 from ramp.kernels.e8p_m1 import e8p_m1_per_route, e8p_m1_token_layout
+from ramp.kernels.e8p_nested_m1 import e8p_nested_m1_per_route, e8p_nested_m1_token_layout, half2_pairs
 from ramp.nn.switch_linear import QuantizedVQSwitchLinear
 
 TENSORS = [(proj, field) for proj in ("w1", "w3", "w2") for field in ("codes", "scales")]
@@ -150,16 +153,33 @@ class Experts(nn.Module):
 
     def __init__(self, limit):
         super().__init__()
-        self._limit = limit
+        self._limit, self._hot = limit, None  # _hot: (residual layers by projection, slot -> hot index)
 
     def __call__(self, x, indices, weights, sorted_indices=False, *, input_quantized=False):
         # sorted: x [routes, 1, dim], indices [routes]; otherwise x [..., 1, 1, dim], indices [..., k]
         lead = indices.shape if sorted_indices else indices.shape[:-1]
         rows = x.reshape(*lead, x.shape[-1])
-        gate = self.w1(rows, indices, sorted_indices=sorted_indices)
-        up = self.w3(rows, indices, sorted_indices=sorted_indices)
+        gate = self.plus(rows, "w1", self.w1(rows, indices, sorted_indices=sorted_indices), indices, sorted_indices)
+        up = self.plus(rows, "w3", self.w3(rows, indices, sorted_indices=sorted_indices), indices, sorted_indices)
         h = quantize_swiglu_activation(gate, up, weights, x.dtype, self._limit)
-        return self.w2(h, indices, sorted_indices=sorted_indices)[..., None, :].astype(x.dtype)
+        down = self.plus(h, "w2", self.w2(h, indices, sorted_indices=sorted_indices), indices, sorted_indices)
+        return down[..., None, :].astype(x.dtype)
+
+    def plus(self, rows, proj, base, indices, sorted_indices):
+        """``base`` plus the residual of the routes whose slot holds a hot expert. Every route runs
+        the residual kernel (routes without one on hot index 0, then zeroed): simple, and prefill only."""
+        if self._hot is None:
+            return base
+        lins, hot_of_slot = self._hot
+        h = hot_of_slot[indices]
+        on = h != NO_RESIDUAL
+        h = mx.where(on, h, 0)
+        if sorted_indices:  # the sorted kernels want routes grouped by hot index
+            perm = mx.argsort(h)
+            res = lins[proj](rows[perm], h[perm], sorted_indices=True)[mx.argsort(perm)]
+        else:
+            res = lins[proj](rows, h)
+        return (base.astype(mx.float32) + res.astype(mx.float32) * on[..., None]).astype(base.dtype)
 
 
 class Layer:
@@ -180,6 +200,8 @@ class Layer:
         masked[resident], slot_map[resident] = self.pool_bias[resident], np.arange(slots)
         self.slot_map = mx.array(slot_map)  # expert -> slot, read only for experts whose bias is on
         moe.gate.weight, moe.gate.bias, moe.experts = weight, mx.array(masked), experts
+        self.hot: dict[int, int] = {}  # pool number -> row of the residual arrays
+        self.hot_of_slot = mx.array(np.full(slots, NO_RESIDUAL, np.uint32))
         self.views = {}
         for proj, field in TENSORS:
             lin = getattr(experts, proj)
@@ -192,24 +214,44 @@ class Layer:
                    for (_, field), (lin, owner, view) in self.views.items())
 
 
+def switch(codes, scales, codebook, code_bits):
+    mx.eval(codes, scales)
+    return QuantizedVQSwitchLinear(
+        input_dims=codes.shape[2] * 8, output_dims=codes.shape[1], num_experts=codes.shape[0], codes=codes,
+        scales=scales, codebook=codebook, group_size=codes.shape[2] * 8 // scales.shape[2], code_bits=code_bits)
+
+
 class LatticeCache(Cache):
-    def __init__(self, model, config, roots: list[Path], order, full, slots: int, where=None):
+    """``residual`` (a ``keep_quant.py --residual-of`` directory over the first directory's experts)
+    and ``hot``: the ``hot`` hottest experts per layer among those run base + residual (3 bits) while
+    resident, as ``local_eval.py --hot`` does. The residuals stay in memory; installs move bases only."""
+
+    def __init__(self, model, config, roots: list[Path], order, full, slots: int, where=None,
+                 residual: Path | None = None, hot: int = 0):
         super().__init__(config, mx)
         blocks = model.language_model.layers
         self.codes = Codes(roots, len(blocks), where)
         self.codebook = mx.array(e8p_packed_abs_grid())
+        self.res_codes = Codes([residual], len(blocks)) if hot else None
+        self.res_book, self.res_table = mx.array(e8_1bit_packed()), mx.array(half2_pairs(e8_1bit_grid()))
         layers = []
         for i, blk in enumerate(blocks):
             experts = Experts(config.swiglu_limit)
             for proj in ("w1", "w3", "w2"):
-                codes, scales = (mx.array(self.codes.read(i, f"{proj}_{field}", order[i][:slots], self.pool))
-                                 for field in ("codes", "scales"))
-                mx.eval(codes, scales)
-                setattr(experts, proj, QuantizedVQSwitchLinear(
-                    input_dims=codes.shape[2] * 8, output_dims=codes.shape[1], num_experts=slots, codes=codes,
-                    scales=scales, codebook=self.codebook, group_size=codes.shape[2] * 8 // scales.shape[2],
-                    code_bits=16))
-            layers.append(Layer(i, blk.ffn, experts, full[i, "weight"], full[i, "bias"], order[i], slots))
+                setattr(experts, proj, switch(*(mx.array(self.codes.read(i, f"{proj}_{field}", order[i][:slots], self.pool))
+                                                for field in ("codes", "scales")), self.codebook, 16))
+            layer = Layer(i, blk.ffn, experts, full[i, "weight"], full[i, "bias"], order[i], slots)
+            if hot:
+                first = [e for e in order[i] if not where or where[i][e][0] == 0][:hot]  # hottest first
+                layer.hot = {e: h for h, e in enumerate(first)}
+                at = [where[i][e][1] if where else e for e in first]  # positions in the first directory
+                layer.res = {proj: switch(*(mx.array(self.res_codes.read(i, f"{proj}_{field}", at, self.pool))
+                                            for field in ("codes", "scales")), self.res_book, 8)
+                             for proj in ("w1", "w3", "w2")}
+                layer.hot_of_slot = mx.array(np.array([layer.hot.get(int(e), NO_RESIDUAL) for e in layer.slot_expert],
+                                                      np.uint32))
+                experts._hot = (layer.res, layer.hot_of_slot)
+            layers.append(layer)
         self.pool_config = replace(config, n_routed_experts=layers[0].pool_bias.size)
         self.ready(layers)
 
@@ -219,6 +261,8 @@ class LatticeCache(Cache):
 
     def route(self, layer, expert, slot):
         layer.slot_map[expert] = slot
+        if layer.hot:  # in place, so Experts._hot sees it too
+            layer.hot_of_slot[slot] = layer.hot.get(expert, NO_RESIDUAL)
         layer.gate.bias[expert] = float(layer.pool_bias[expert])
 
     def unroute(self, layer, expert, slot):
@@ -240,11 +284,20 @@ def decode(cache, layer, moe, x, config, mma, stock_gate):
     e, s = layer.experts, moe.shared_experts
     # 16-bit activations: the lattice kernel is 1.7x slower on fp32 rows, and act_quant values are exact in bf16.
     rows, slots = xq.reshape(nb, dim).astype(mx.bfloat16), slot.reshape(nb, k)
-    gate = e8p_m1_token_layout(rows, e.w1.codes, e.w1.scales, cache.codebook, slots, output_dims=inter)
-    up = e8p_m1_token_layout(rows, e.w3.codes, e.w3.scales, cache.codebook, slots, output_dims=inter)
-    h = quantize_swiglu_activation(gate, up, weight, mx.bfloat16, config.swiglu_limit)
-    down = e8p_m1_per_route(h.reshape(nb * k, inter), e.w2.codes, e.w2.scales, cache.codebook, slot, output_dims=dim)
-    routed = down.astype(mx.float32).reshape(nb, k, dim).sum(1).reshape(-1)  # bf16 per expert, fp32 sum
+    if layer.hot:  # one pass over base and residual; a slot whose expert is not hot skips the residual
+        def nested(kernel, x, proj, index, out):
+            lin, res = getattr(e, proj), layer.res[proj]
+            return kernel(x, (lin.codes, lin.scales, cache.codebook), index,
+                          (res.codes, res.scales, cache.res_table), layer.hot_of_slot, output_dims=out)
+
+        gate, up = (nested(e8p_nested_m1_token_layout, rows, proj, slots, inter) for proj in ("w1", "w3"))
+    else:
+        gate = e8p_m1_token_layout(rows, e.w1.codes, e.w1.scales, cache.codebook, slots, output_dims=inter)
+        up = e8p_m1_token_layout(rows, e.w3.codes, e.w3.scales, cache.codebook, slots, output_dims=inter)
+    h = quantize_swiglu_activation(gate, up, weight, mx.bfloat16, config.swiglu_limit).reshape(nb * k, inter)
+    down = (nested(e8p_nested_m1_per_route, h, "w2", slot, dim) if layer.hot else
+            e8p_m1_per_route(h, e.w2.codes, e.w2.scales, cache.codebook, slot, output_dims=dim)).astype(mx.float32)
+    routed = down.reshape(nb, k, dim).sum(1).reshape(-1)  # bf16 per expert, fp32 sum
     # The shared expert on oMLX's kernels: its up kernel with no routed column (TOPK 0), then its
     # shared down kernel, which adds the routed sum and rounds to bf16.
     shared = tuple(DM.weight_format(getattr(s, n)) for n in ("w1", "w3", "w2"))
@@ -304,6 +357,11 @@ def hook(state: dict) -> None:
     language.Gate.__call__ = gate_plain
 
 
+def hot_count(spec: dict) -> int:
+    """Hot experts per layer: ``OMLX_LATTICE_HOT``, else the pool file's ``hot``; 0 without ``residual``."""
+    return int(os.environ.get("OMLX_LATTICE_HOT", spec.get("hot", 0))) if "residual" in spec else 0
+
+
 def wide_pool(path: Path, loaded: dict):
     """(directories, order, router rows, where) of the pool file ``path``. ``loaded`` is the
     router of the loaded checkpoint, whose rows must be the first directory's."""
@@ -322,20 +380,25 @@ def wide_pool(path: Path, loaded: dict):
         if f in ("weight", "bias"):
             assert mx.array_equal(full[i, f][mx.array(ids[0][str(i)])], rows), f"layer {i}: router {f} differs"
     order = [np.argsort(-row, kind="stable").tolist() for row in mass]
-    return [at(d) for d, _ in spec["codes"]], order, full, where
+    hot = hot_count(spec)
+    return [at(d) for d, _ in spec["codes"]], order, full, where, (at(spec["residual"]) if hot else None, hot)
 
 
 FLOOR = 120  # residents per layer below which sampled code came out misspelled (build plan, C2)
 
 
-def auto_slots(ram_bytes: int, drafter: bool, budget_gib: float | None = None) -> int:
+HOT_GIB = 40 * (2 * 2304 * (640 + 2 * 10) + 5120 * (288 + 2 * 9)) / 2**30  # one hot residual, 40 layers
+
+
+def auto_slots(ram_bytes: int, drafter: bool, budget_gib: float | None = None, hot: int = 0) -> int:
     """Resident experts per layer for a footprint of ``budget_gib`` (default: 70% of RAM).
 
     Measured on an M4 Max, 128 GB (2026-11-12): the server's footprint peaks near 20 GiB plus
     0.336 GiB per resident, and 8 GiB more with the drafter (87 GiB at 200 residents, 88 GiB at
-    180 with the drafter). Other chips are unmeasured; the budget is the knob."""
+    180 with the drafter). Hot residuals are counted at their size, ``HOT_GIB`` each. Other chips
+    are unmeasured; the budget is the knob."""
     budget = 0.7 * ram_bytes / 2**30 if budget_gib is None else budget_gib
-    return int((budget - 20 - 8 * drafter) / 0.336)
+    return int((budget - 20 - 8 * drafter - HOT_GIB * hot) / 0.336)
 
 
 def drafter_on(argv: list[str]) -> bool:
@@ -355,8 +418,8 @@ def patch(spec: dict, root: Path, slots: int) -> None:
         model, processor = load(*args, **kwargs)
         config = model.language_model.layers[0].ffn.gate._config
         if root.is_file():
-            roots, order, wide, where = wide_pool(root, full)
-            state["cache"] = LatticeCache(model, config, roots, order, wide, min(slots, len(order[0])), where)
+            roots, order, wide, where, (residual, hot) = wide_pool(root, full)
+            state["cache"] = LatticeCache(model, config, roots, order, wide, min(slots, len(order[0])), where, residual, hot)
         else:
             state["cache"] = LatticeCache(model, config, [root], spec["order"], full, min(slots, len(spec["order"][0])))
         full.clear()
@@ -385,38 +448,45 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
         full[i, "bias"] = mx.array(rng.normal(size=(pool,)).astype(np.float32) * 0.1)
     os.environ.setdefault("OMLX_ROUTED_TAU", "inf")
     model = SimpleNamespace(language_model=SimpleNamespace(layers=[SimpleNamespace(ffn=m) for m in moes]))
-    roots, where = [root], None
-    if root.is_file():  # a pool file: both directories, the first two layers
-        roots, _, _, where = wide_pool(root, {})
+    roots, where, residual, hot = [root], None, None, 0
+    if root.is_file():  # a pool file: both directories, the first two layers, and its hot tier
+        roots, _, _, where, (residual, hot) = wide_pool(root, {})
         pool = len(where[0])
         for i in range(2):
             full[i, "weight"] = mx.array(rng.normal(size=(pool, c.dim)).astype(np.float32)).astype(mx.bfloat16)
             full[i, "bias"] = mx.array(rng.normal(size=(pool,)).astype(np.float32) * 0.1)
-    state = {"cache": LatticeCache(model, c, roots, [rng.permutation(pool).tolist() for _ in moes], full, slots, where)}
+    order = [rng.permutation(pool).tolist() for _ in moes]
+    state = {"cache": LatticeCache(model, c, roots, order, full, slots, where, residual, hot)}
     cache = state["cache"]
     hook(state)
 
     def token():
         return mx.array(rng.normal(size=(c.dim,)).astype(np.float32)).astype(mx.bfloat16)
 
-    def dense(layer, proj, expert):
-        return decode_weight_matrix(*(cache.codes.read(layer, f"{proj}_{f}", [expert])[0] for f in ("codes", "scales")),
-                                    code_bits=16)
+    def dense(layer, proj, expert, hot=True):
+        """The expert's matrix as it runs: base, plus its residual when it is hot."""
+        w = decode_weight_matrix(*(cache.codes.read(layer, f"{proj}_{f}", [expert])[0] for f in ("codes", "scales")),
+                                 code_bits=16)
+        if hot and expert in cache.layers[layer].hot:  # read from its file, not from the arrays the kernels use
+            at = where[layer][expert][1] if where else expert
+            w = w + decode_weight_matrix(*(cache.res_codes.read(layer, f"{proj}_{f}", [at])[0] for f in ("codes", "scales")),
+                                         code_bits=8)
+        return w
 
     def host(a):
         return np.array(a.astype(mx.float32))
 
-    def reference(i, x, slots_, weights):
+    def reference(i, x, slots_, weights, hot=True):
         """The same MoE from matrices decoded on the host (and oMLX's shared expert, unfused),
         rounded to bf16 where oMLX's kernels round."""
         xq, limit, total = host(quantize_activation(x.reshape(1, -1)))[0], c.swiglu_limit, 0.0
         for slot, weight in zip(slots_, weights):
             expert = int(cache.layers[i].slot_expert[slot])
-            g, u = bf16(dense(i, "w1", expert) @ xq), bf16(dense(i, "w3", expert) @ xq)
+            g, u = bf16(dense(i, "w1", expert, hot) @ xq), bf16(dense(i, "w3", expert, hot) @ xq)
             if limit:
                 g, u = np.minimum(g, limit), np.clip(u, -limit, limit)
             h = bf16(g / (1 + np.exp(-g)) * u * weight)
-            total = total + bf16(dense(i, "w2", expert) @ host(quantize_activation(mx.array(h[None])))[0])
+            total = total + bf16(dense(i, "w2", expert, hot) @ host(quantize_activation(mx.array(h[None])))[0])
         shared = moes[i].shared_experts(quantize_activation(x.reshape(1, 1, -1)), input_quantized=True)
         return total + host(shared).reshape(-1)
 
@@ -426,14 +496,19 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
     def gap(a, b):
         return float(np.max(np.abs(a - b)) / np.max(np.abs(b)))
 
-    def against_reference(i):
+    def against_reference(i, hot=True):
         x = token()
         out, slots_, weights = DM.fused_decode_moe(moes[i], x.reshape(1, 1, -1), c)
-        return gap(host(out).reshape(-1), reference(i, x, np.array(slots_).reshape(-1), np.array(weights).reshape(-1)))
+        return gap(host(out).reshape(-1), reference(i, x, np.array(slots_).reshape(-1), np.array(weights).reshape(-1), hot))
 
     worst = max(against_reference(i) for i in (0, 1) for _ in range(2))
-    print(f"decode step against host-decoded matrices: worst relative gap {worst:.4f}")
+    resident_hot = sum(int(e) in layer.hot for layer in cache.layers for e in layer.slot_expert)
+    print(f"decode step against host-decoded matrices ({hot} hot, {resident_hot} resident): worst relative gap {worst:.4f}")
     assert worst < 2e-2
+    if resident_hot:  # the check must see a missing residual
+        base_only = min(against_reference(i, hot=False) for i in (0, 1) for _ in range(2))
+        print(f"against the bases alone (must fail): smallest relative gap {base_only:.4f}")
+        assert base_only > 2e-2
 
     x = mx.stack([token() for _ in range(40)])[None]  # [1, 40, dim]: the sorted-route prefill path
     decoded = host(DM.fused_decode_moe_nb(moes[0], x[0, :8], c)[0])
@@ -479,13 +554,17 @@ if __name__ == "__main__":
         check(a.config.expanduser(), a.codes.expanduser())
     else:
         assert auto_slots(128 << 30, True) == 183 and auto_slots(128 << 30, False, 87) == 199
+        assert auto_slots(128 << 30, True, hot=64) == 150
+        pool_file = Path(os.environ["OMLX_LATTICE"]).expanduser()
+        spec = json.loads(pool_file.read_text()) if pool_file.is_file() else {}
+        hot = hot_count(spec)
         slots = os.environ.get("OMLX_LATTICE_SLOTS", "auto")
         if slots == "auto":
             budget = os.environ.get("OMLX_LATTICE_BUDGET_GIB")
             slots = auto_slots(os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE"), drafter_on(sys.argv),
-                               float(budget) if budget else None)
+                               float(budget) if budget else None, hot)
         slots = int(slots)
-        print(f"lattice cache: {slots} resident experts per layer" + (
+        print(f"lattice cache: {slots} resident experts per layer, the hottest {hot} at 3 bits" + (
             f"; below {FLOOR}, generated code was unreliable in our tests" if slots < FLOOR else ""), file=sys.stderr)
         assert slots >= 6, "not enough memory for the router's top-6"
         patch(json.loads(Path(os.environ["OMLX_COMPACT"]).read_text()), Path(os.environ["OMLX_LATTICE"]).expanduser(), slots)
