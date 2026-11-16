@@ -5,6 +5,7 @@ distinct texts: four agentic sessions share their first 1,024 tokens and count a
 their weight). Differences are paired over texts with a 95% bootstrap interval over the 17 texts.
 
     python stats.py [--evals ~/Models/v41-reap-run/evals] > stats.md
+    python stats.py --domains > domains.json
 """
 
 from __future__ import annotations
@@ -81,7 +82,21 @@ DIFFS = [*((f"{C}k{k}", f"{F}s{k}") for k in (48, 96, 200, 250)), (C + "k144", T
          (B + "k168n64", C + "k250"), (C + "k96", "step2-fp4-bf16:reap50"), (T + "o144", T + "q384"),
          (B + "s192", "step2-fp4-bf16:reap50")]
 
+def domains(names: list[str]) -> dict:
+    """KL per domain (tool use excluded) of each variant, for the per-domain figure."""
+    out: dict = {}
+    for name in names:
+        x = load(name)
+        for dom, v in x["_domains"].items():
+            if dom != "tool-use":
+                out.setdefault(dom, {})[name] = round(v["kl"], 4)
+    return out
+
+
 if __name__ == "__main__":
+    if "--domains" in sys.argv:
+        print(json.dumps(domains([T + "s144", C + "k144", T + "q384"]), indent=1))
+        raise SystemExit
     print("| Variant | KL, 10 domains | KL, 11 domains | Tool-use KL | Top-1, 10 domains |\n|---|---:|---:|---:|---:|")
     for name in VALUES:
         try:

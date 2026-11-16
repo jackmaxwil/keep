@@ -2,7 +2,11 @@
 
 Build: `tectonic paper.tex` (or `pdflatex`, `bibtex`, `pdflatex` twice) in this directory. arXiv
 does not run BibTeX, so upload `paper.bbl` with the source. Figures: `uv run --with matplotlib
-python figures.py`. Numbers: `python stats.py > stats.md` (needs the stored evals).
+--with numpy python figures.py`. Numbers: `python stats.py > stats.md`, `python stats.py --domains >
+domains.json` and `python routing.py > routing.json` (they need the stored evals and routes).
+The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py`,
+`scripts/v41_build/omlx_routed.py` and `scripts/v41_build/omlx_lattice.py`; keep them in step
+with the code.
 
 | Item | Why | Needs |
 |---|---|---|
@@ -16,3 +20,4 @@ python figures.py`. Numbers: `python stats.py > stats.md` (needs the stored eval
 | Table 1 values | expert counts for Mixtral, Qwen3 and DeepSeek-V3 need checking against the papers | a read |
 | The wait rule in our own code path at 2 bits | the speed baseline is another runtime on another checkpoint | implementation |
 | Prior-art pass on the three novelty statements | related work was checked against 15 papers only | a search |
+| Code availability statement | the paper shows excerpts but says nothing about a release | Jack |

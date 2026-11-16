@@ -8,6 +8,9 @@
 \usepackage{placeins}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily\scriptsize, columns=fullflexible, keepspaces=true, frame=tb,
+  captionpos=b, showstringspaces=false, breaklines=true, breakatwhitespace=true, aboveskip=8pt, belowskip=4pt}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage[hidelinks]{hyperref}
 
@@ -131,25 +134,17 @@ experts of a set $\mathcal{S}$ under scores $s$. The layer computes
 \end{equation}
 where $g$ are gate weights normalized over the selected experts and $h$ collects whatever is
 always active, such as shared experts \citep{dai2024deepseekmoe}. We call the selected experts
-the router's \emph{choices}. Table~\ref{tab:archs} lists $N$ and $k$ for several models. $N$ has grown far faster than $k$, and the fraction of expert weights a token uses has fallen by more than
+the router's \emph{choices}. Figure~\ref{fig:archs} shows $N$ and $k$ for several models. $N$ has grown far faster than $k$, and the fraction of expert weights a token uses has fallen by more than
 an order of magnitude.
 
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-Model & Experts per layer $N$ & Active $k$ & Fraction used per token \\
-\midrule
-Mixtral 8x7B \citep{jiang2024mixtral} & 8 & 2 & 25\% \\
-Qwen3-30B-A3B \citep{yang2025qwen3} & 128 & 8 & 6.3\% \\
-DeepSeek-V3 \citep{deepseek2024v3} & 256 & 8 & 3.1\% \\
-DeepSeek-V4.1-Flash \citep{deepseek2026v41flash} & 384 & 6 & 1.6\% \\
-\bottomrule
-\end{tabular}
-\caption{Routed experts per layer and experts active per token in several MoE language models.}
-\label{tab:archs}
-\end{table}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig-sparsity.pdf}
+  \caption{How little of a layer one token uses. Routed experts per layer and experts active per
+  token in Mixtral 8x7B \citep{jiang2024mixtral}, Qwen3-30B-A3B \citep{yang2025qwen3}, DeepSeek-V3
+  \citep{deepseek2024v3} and DeepSeek-V4.1-Flash \citep{deepseek2026v41flash}.}
+  \label{fig:archs}
+\end{figure}
 
 \paragraph{The memory problem.} Experts dominate the parameter count, so they decide whether a
 model fits. On a machine with unified or GPU memory $M$ smaller than the experts, something
@@ -174,7 +169,7 @@ Fix a layer. At token $t$ a deployment is described by:
 \end{itemize}
 The router's choices under full reach are the \emph{demand},
 $D_t=\topk(s,\reach)$. When $D_t\not\subseteq\res_t$ some demanded expert is absent, which we
-call a \emph{miss}, and the deployment needs a \emph{miss rule}. There are four in use:
+call a \emph{miss}, and the deployment needs a \emph{miss rule}. There are four in use (Figure~\ref{fig:missrules}):
 \begin{description}
   \item[Wait.] Block the token until the expert has been read. Exact, with latency that depends
   on storage and on the miss rate.
@@ -185,6 +180,14 @@ call a \emph{miss}, and the deployment needs a \emph{miss rule}. There are four 
   of running an expert the router ranked lower.
   \item[Skip.] Drop the missed choice and renormalize or not. No latency and no memory; the missed choice's contribution is lost.
 \end{description}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig-missrules.pdf}
+  \caption{The four miss rules. The router demands experts $a$, $b$ and $c$, and $b$ is not in
+  memory. Each rule serves the token differently and pays in a different resource.}
+  \label{fig:missrules}
+\end{figure}
 
 \subsection{Existing techniques as points}
 
@@ -222,7 +225,7 @@ rule. Entries summarize each method's main configuration.}
 \label{tab:corners}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.8\linewidth]{fig-space.pdf}
   \caption{The design space. Each point is a deployment: the fraction of the expert pool in
@@ -261,6 +264,7 @@ precision. Pruning has only routing error, on every token whose demand left the 
 Quantization has only coding error. A deployment that is both low-precision and partly resident
 has both, and the question of how to divide memory is the question of which term to shrink.
 
+\FloatBarrier
 \section{Routed residency}
 \label{sec:method}
 
@@ -283,8 +287,7 @@ is read from storage and replaces the resident demanded least recently. It serve
 tokens. The threshold $\tau$ trades storage traffic against how closely the resident set tracks
 demand; $\tau=\infty$ never admits, which is static pruning.
 
-\paragraph{Initial set.} $\res_0$ is the $K$ experts with the most \emph{routed mass}, the sum
-of their gate weights over calibration text. This is also how we choose a static set, so that
+\paragraph{Initial set.} $\res_0$ is the $K$ experts with the most \emph{routed mass}, the sum over calibration text of an expert's gate weight times the norm of its output. This is also how we choose a static set, so that
 routed residency and pruning start from the same experts and differ only in admission.
 
 \paragraph{Precision.} Every expert has a code at a base precision. A \emph{hot set} $\hot$ of
@@ -313,7 +316,25 @@ weights evaluated per token and saves no memory.
 \end{algorithm}
 
 Algorithm~\ref{alg:policy} states one step. The policy has four settings, and its memory is
-Equation~\ref{eq:memory} with $K$ residents at the base size and $H$ residuals.
+Equation~\ref{eq:memory} with $K$ residents at the base size and $H$ residuals. It is also
+short in code: Listing~\ref{lst:policy} is the admission loop of the simulator used in
+Section~\ref{sec:case}, for one layer of one text.
+
+\begin{lstlisting}[float=t, language=Python, caption={The admission loop of our simulator for one layer of one text (comments added). \texttt{ind} and \texttt{wts} hold each token's demanded experts and gate weights; \texttt{resident} is what the forward pass then serves from.}, label={lst:policy}]
+lru = OrderedDict((int(e), None) for e in warm)   # the initial resident set
+for t in range(start, start + n):                 # tokens of one text
+    row = ind[t].tolist()                         # the experts this token demands
+    resident[t, list(lru)] = True                 # what this token may be served from
+    for s, e in enumerate(row):
+        if wts[t, s] >= thr[e]:                   # demanded strongly
+            if e in lru:
+                lru.move_to_end(e)                # refresh
+            else:
+                counts[e, 4] += 1                 # one read from storage
+                lru[e] = None                     # admitted: serves from the next token on
+                if len(lru) > k:
+                    lru.popitem(last=False)       # evict the least recently demanded
+\end{lstlisting}
 
 \subsection{Why re-routing is a reasonable miss rule}
 \label{sec:why}
@@ -328,12 +349,31 @@ The second is \emph{session locality}: the experts a particular text needs form 
 needs; a dynamic set needs to cover one text's at a time. This is where routed residency can gain over pruning, and it also explains why admission can be lazy: an expert that
 arrives a few tokens late is still needed.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\linewidth]{fig-locality.pdf}
+  \caption{Concentration and session locality in the model of Section~\ref{sec:case}. Left: the
+  share of a text's demanded gate weight that $K$ experts per layer would serve, for the static
+  set chosen on calibration text and for the text's own best $K$; lines are means over 17 texts
+  and 40 layers, bands the range over texts. Right: the same at $K=144$, by layer.}
+  \label{fig:locality}
+\end{figure}
+
+Figure~\ref{fig:locality} measures both properties in the model of Section~\ref{sec:case}. The
+144 experts per layer that calibration text ranks highest would serve 65\% of a text's
+demanded gate weight on average, and between 41 and 79\% depending on the text. The text's own
+best 144 would serve 96\% (93 to 98\%). The gap between the two curves is what a static set
+gives up and a dynamic one can recover, and it is present in every layer. Locality does not
+mean a small footprint: a text touches about 263 of the 384 experts of a layer at least once,
+so the tail of demand is long and thin, which is the case for admitting only on strong demand.
+
 Re-routing also has a failure mode of its own. Substituting a coarse copy keeps the function the router chose and adds noise to it. Re-routing changes \emph{which function} is applied, and when the missed expert was the only one that knew something, the substitute may be confidently wrong. Section~\ref{sec:generation} reports failures consistent with this.
 
+\FloatBarrier
 \subsection{The router as the switch}
 \label{sec:switch}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.82\linewidth]{fig-system.pdf}
   \caption{One layer under routed residency. The blue path produces the token and depends only
@@ -359,12 +399,69 @@ are in place. A token therefore never waits for a read and never runs a partly w
 The demand is an output of the token's own computation and can be read lazily, after the
 fact, so observing it does not force a synchronization either.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.86\linewidth]{fig-timeline.pdf}
+  \caption{The life of one admission. Expert $e$ is demanded at token $t$ and is absent. Tokens
+  are served by re-routing while its bytes are read into a spare row; once the bytes are in
+  place and every earlier decode call has finished, the router's bias for $e$ is restored and
+  $e$ serves.}
+  \label{fig:timeline}
+\end{figure}
+
+Listing~\ref{lst:switch} shows these rules in our implementation, and
+Figure~\ref{fig:timeline} lays the same sequence out in time. The switch itself is two
+assignments. An eviction only clears the bias and puts the row on a cooling list; the row is
+reused for a read once the call being built at that moment is known to have finished, and
+\texttt{install} restores the bias only when every read of the expert has completed.
+Appendix~\ref{app:code} gives the kernel that takes both selections from one set of scores.
+
+\begin{lstlisting}[float=t, language=Python, caption={The router switch and the install and evict steps of our implementation (statistics counters removed). \texttt{OFF} is a bias of $-10^{30}$.}, label={lst:switch}]
+def route(self, layer, expert, slot):
+    layer.slot_map[expert] = slot
+    if layer.hot:  # in place, so Experts._hot sees it too
+        layer.hot_of_slot[slot] = layer.hot.get(expert, NO_RESIDUAL)
+    layer.gate.bias[expert] = float(layer.pool_bias[expert])
+
+def unroute(self, layer, expert, slot):
+    layer.gate.bias[expert] = OFF
+
+def install(self, layer) -> None:
+    """Route the experts whose bytes have landed. The router arrays are replaced, never
+    written in place and never evaluated here: calls already built keep the old ones, and
+    the next call's own eval computes the new ones without a wait."""
+    done = [e for e, (_, futures) in layer.reading.items() if all(f.done() for f in futures)]
+    for expert in done:
+        slot, futures = layer.reading.pop(expert)
+        self.route(layer, expert, slot)
+        layer.slot_expert[slot], layer.slot_of[expert] = expert, slot
+        layer.last_use[slot] = self.step
+
+def evict(self, layer, protected) -> None:
+    """Unroute the least recently demanded residents until ``spare`` slots are free or coming."""
+    short = self.spare - len(layer.free) - len(layer.cooling)
+    if short <= 0:
+        return
+    order = np.argsort(layer.last_use, kind="stable")
+    victims = [int(s) for s in order if layer.slot_expert[s] >= 0 and int(layer.slot_expert[s]) not in protected]
+    for slot in victims[:short]:
+        expert = int(layer.slot_expert[slot])
+        del layer.slot_of[expert]
+        layer.slot_expert[slot] = -1
+        layer.last_use[slot] = np.inf
+        self.unroute(layer, expert, slot)
+        # Calls built before this one may still route here; its bytes may change only once
+        # the call being built now is known to have finished.
+        layer.cooling.append((slot, self.step))
+\end{lstlisting}
+
 Two properties follow from this construction and bound what the policy can do. An admitted
 expert serves a few tokens after it was demanded, not the next token. And the resident set is
 fixed within a single forward pass, so it cannot adapt inside the processing of a prompt or
 inside a multi-token verification step of speculative decoding. Both argue for a good initial
 set, a point Section~\ref{sec:admission} returns to.
 
+\FloatBarrier
 \section{Allocating memory: an order of spending}
 \label{sec:principle}
 
@@ -401,7 +498,19 @@ two terms. It is nevertheless enough to predict an order, because the gain from 
   implies is small, since the gain per residual falls with $\rho_H$ as well.
 \end{enumerate}
 
-The middle of this order runs against the habit of keeping fewer experts at higher precision:
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig-order.pdf}
+  \caption{The order of spending, as a schematic of the two gains. Below the knee of the code,
+  precision comes first. Past it, the gain from the next resident starts high and falls as the
+  resident set grows, while the gain from precision on the most used experts stays roughly
+  level; where they cross, spending switches. Reach costs no memory at any budget. The curves
+  are illustrative, not measured.}
+  \label{fig:order}
+\end{figure}
+
+Figure~\ref{fig:order} draws this order. The middle of it runs against the habit of keeping
+fewer experts at higher precision:
 between the knee of the code and the point where most demand is served from memory, the model
 predicts that more experts beat better experts.
 
@@ -410,7 +519,7 @@ wide and activation sparse, $k\ll N$, so that a resident set much smaller than t
 offers good substitutes. (ii) Demand is concentrated and local to a session, so that
 $\rho_K$ falls quickly and the resident set can follow it. (iii) A base code exists past the
 knee at a size that leaves room for breadth. (iv) Storage is fast enough to carry the admission
-traffic at the decoding speed. The trend in Table~\ref{tab:archs} is toward models that satisfy
+traffic at the decoding speed. The trend in Figure~\ref{fig:archs} is toward models that satisfy
 (i). We expect the order to fail for narrow pools: with eight experts and two active, removing
 residents removes a quarter of the layer at a time, substitutes are poor, and precision should
 come first throughout.
@@ -454,7 +563,7 @@ eleventh domain that we exclude and why.
 \subsection{Reach: routed residency against static sets}
 \label{sec:frontier}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.84\linewidth]{fig-frontier.pdf}
   \caption{Case study: distance to the full model against the memory held by routed experts.
@@ -496,13 +605,28 @@ Two comparisons isolate reach from residency. Holding residency at 144 and widen
 pool, from the pool of 192 to all 384 experts, lowers KL from 0.499 to 0.307 at an admission threshold of 0.2 ($-0.192$ \ci{-0.272}{-0.128}), although the added experts occupy no memory until they are asked for. And 144 residents drawn from the whole pool at the default threshold, in 53\,GB, are closer to the full model than the entire pool of 192 held in memory at once in 71\,GB (0.320 against 0.486, $-0.166$ \ci{-0.232}{-0.115}). Reaching a wide pool is worth more than holding a
 narrow one.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.92\linewidth]{fig-domains.pdf}
+  \caption{Case study: KL to the full model by domain with 144 experts per layer in memory, for
+  a static set and for routed residency, and with the whole pool in memory. Domains are ordered
+  by the gap between the first two.}
+  \label{fig:domains}
+\end{figure}
+
+Figure~\ref{fig:domains} breaks the comparison down by domain. The static set is weakest on
+chat, business text and prose, which are among the domains with the least calibration text, and
+routed residency recovers most of that loss; on agentic coding and shell sessions the two are
+closest. In every domain routed residency lies between the static set and the whole pool.
+
 The traffic this costs is small in the middle of the range, 2.6 admissions per token at 144
 residents, and grows as memory shrinks.
 
+\FloatBarrier
 \subsection{Residents against bits}
 \label{sec:bits}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.9\linewidth]{fig-bits.pdf}
   \caption{Case study: more bits against more residents at equal expert memory. Each row
@@ -533,10 +657,21 @@ half the pool at 4 bits, in 144\,GB. It scores 0.389, against 0.235 for the whol
 bits in 142\,GB, and against 0.303 for a static set of 250 at 2 bits in 92\,GB.
 The pruned checkpoint also differs from our static sets in which experts it keeps. At 2 bits its 192 experts and the 192 with the most routed mass are not distinguishable on this metric (0.486 against 0.456, $-0.030$ \ci{-0.095}{+0.051}), an interval wide enough that the choice of experts could account for part of the gap; with tool use included the choice is worth about 0.17 nats (Appendix~\ref{app:setup}).
 
+\FloatBarrier
 \subsection{Admission and the initial set}
 \label{sec:admission}
 
-Quality is flat in the admission threshold over a wide range. At 144 residents, thresholds of
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.8\linewidth]{fig-admission.pdf}
+  \caption{Case study: the admission threshold at 144 residents. The line is KL to the full
+  model; bars are experts read from storage per token. Dashed lines mark a static set, the best
+  fixed set for each text chosen with hindsight, and the whole pool in memory.}
+  \label{fig:admission}
+\end{figure}
+
+Quality is flat in the admission threshold over a wide range (Figure~\ref{fig:admission}). At
+144 residents, thresholds of
 0.1, 0.2 and 0.3 on the gate weight give 0.313, 0.307 and 0.320, while storage traffic falls
 by a factor of six; 0.45 starves the resident set (0.415).
 
@@ -552,45 +687,33 @@ independent random misses does not describe a policy chosen to exploit it. We co
 effort is better spent on predicting a text's experts from its prompt than on the admission
 rule.
 
+\FloatBarrier
 \subsection{A running system}
 \label{sec:serving}
 
 We implemented the construction of Section~\ref{sec:switch} inside an existing MLX
 \citep{mlx} runtime for this model \citep{omlx}, without modifying the runtime, on an Apple M4
-Max with 128\,GB. Table~\ref{tab:speed} separates what waiting costs from what routed residency
-costs.
+Max with 128\,GB. Figure~\ref{fig:speed} separates what waiting costs from what routed residency costs.
 
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{@{}llc@{}}
-\toprule
- & Configuration & Tokens/s \\
-\midrule
-(a) & Pruned checkpoint, 48 experts in memory at 4 bits, offload that waits & 3.3--4.5 \\
-(b) & 48 experts at 4 bits as a static set & 30--32 \\
-\midrule
-(c) & Pool of 192 at 2 bits, 144 experts as a static set & 28.6--30.1 \\
-(d) & Pool of 192 at 2 bits, routed residency, 144 residents, $\tau=0.2$ & 26.0--27.9 \\
-\midrule
-(e) & Pool of 384 at 2 bits, routed residency, 144 residents, $\tau=0.3$ & 26.7--27.2 \\
-(f) & Pool of 384 at 2 bits, routed residency, 183 residents, speculative decoding & 30--40 \\
-\bottomrule
-\end{tabular}
-\caption{Case study: decode speed. Rows (a) to (e) are ranges over greedy requests of 250 to 1{,}200 tokens; row (f) is the range of median speeds over four runs of sampled requests.}
-\label{tab:speed}
-\end{table}
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.9\linewidth]{fig-speed.pdf}
+  \caption{Case study: decode speed. Bars (a) to (e) are ranges over greedy requests of 250 to
+  1{,}200 tokens; (f) is the range of median speeds over four runs of sampled requests. Pools
+  of 192 and 384 are at 2 bits.}
+  \label{fig:speed}
+\end{figure}
 
-Rows (a) and (b) hold the same number of experts in the same memory: the runtime's waiting offload, which as implemented also leaves its fused decode path, is seven times slower than a static set. Rows
-(c) and (d) isolate the cost of routed residency against a static set drawn from the same pool: 7 to 9\%, for scoring the demand and installing about two experts per token. Reaching the whole pool costs no more at $\tau=0.3$ (e); at $\tau=0.2$ it admits four times as many experts and was up to 15\% slower. With the model's speculative decoder the whole pool is served at 30
+Configurations (a) and (b) hold the same number of experts in the same memory: the runtime's waiting offload, which as implemented also leaves its fused decode path, is seven times slower than a static set. Configurations (c) and (d) isolate the cost of routed residency against a static set drawn from the same pool: 7 to 9\%, for scoring the demand and installing about two experts per token. Reaching the whole pool costs no more at $\tau=0.3$ (e); at $\tau=0.2$ it admits four times as many experts and was up to 15\% slower. With the model's speculative decoder the whole pool is served at 30
 to 40 tokens per second (f), five to seven times the speed at which the same runtime serves the pruned checkpoint with its waiting offload. That last comparison is across checkpoints and decoding settings and is indicative only; crediting the baseline the speculative decoding it ran without leaves a factor of about four. The hot set is not free in a running system: 64 hot
 experts at 3 bits decode 11\% slower at equal memory, so the served configuration is 2-bit
 only. Appendix~\ref{app:serving} has the details.
 
+\FloatBarrier
 \subsection{A limit: the residency floor}
 \label{sec:generation}
 
-\begin{figure}[t]
+\begin{figure}[ht]
   \centering
   \includegraphics[width=0.8\linewidth]{fig-generation.pdf}
   \caption{Case study: sampled scripts that run correctly against residents per layer. Counts
@@ -612,6 +735,7 @@ where no failure is a misspelling.
 
 This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here roughly 120 to 144 of 384 experts per layer. Below the floor we expect the remedy to be a different miss rule, not more bits; we did not test one.
 
+\FloatBarrier
 \section{Discussion}
 \label{sec:discussion}
 
@@ -900,7 +1024,7 @@ price is accurate for the policies it was measured under and wrong for the polic
 \section{Case study: serving details}
 \label{app:serving}
 
-\paragraph{Speed.} The comparison in row (f) of Table~\ref{tab:speed} with the pruned
+\paragraph{Speed.} The comparison of configuration (f) in Figure~\ref{fig:speed} with the pruned
 checkpoint under the waiting offload (5.6 to 6.3 tokens per second on the same sampled
 requests) is not like for like: that baseline holds 4-bit experts and ran without speculative
 decoding, from which its authors report a 29\% gain. Crediting that gain gives a factor of
@@ -909,7 +1033,7 @@ less after a long prompt. Decoding the lattice codes takes 0.037\,ms per expert,
 to 0.047\,ms for the runtime's own 4-bit and 2-bit kernels. A hot expert reads 1.5 times the
 bytes, and the residuals of 64 hot experts displace 33 residents, which roughly triples
 admissions. The median speed of one configuration differed by up to 25\% between runs on an
-otherwise idle machine (39.6, 36.7, 31.9 and 30.4 tokens per second for row (f)), for a reason
+otherwise idle machine (39.6, 36.7, 31.9 and 30.4 tokens per second for configuration (f)), for a reason
 we did not find; speeds are compared within a run.
 
 \paragraph{Footprint.} Outside the routed experts the process holds about 12\,GiB in steady
@@ -930,6 +1054,38 @@ rules of Section~\ref{sec:switch}, not by this measurement.
 hash; a sample is correct if the script runs and lists exactly the three duplicates of a test
 directory. Sampling used temperature 1.0 and top-$p$ 1.0 with reasoning off and a budget of
 4{,}096 tokens. Lowering the temperature to 0.6 or the top-$p$ to 0.95 did not raise the counts at 96 residents.
+
+\FloatBarrier
+\section{Implementation excerpt: two selections from one router evaluation}
+\label{app:code}
+
+Listing~\ref{lst:kernel} is the body of the GPU kernel behind Section~\ref{sec:switch}, written
+in the Metal shading language and run once per token and layer. It selects the top $k$ twice
+from the same scores. The first selection uses a bias that is $-10^{30}$ for every absent
+expert and yields the rows to run and their renormalized weights. The second uses the pool's
+own bias and yields the demand, which the policy reads two decode calls later.
+
+\begin{lstlisting}[float=ht, language=C, caption={Kernel body: the served set and the demand from one set of router scores (two comments added).}, label={lst:kernel}]
+    threadgroup int chosen[8];
+    const uint tid = thread_index_in_threadgroup, b = threadgroup_position_in_grid.x;
+    const device float* sc = scores + b * NE;
+    topk_select<NE, TOPK>(sc, bias, chosen, tid);          // among residents: absent experts have bias OFF
+    if (tid == 0) {
+        float wsum = 0.0f;
+        for (int j = 0; j < TOPK; ++j) wsum += sc[chosen[j]];
+        for (int j = 0; j < TOPK; ++j) {
+            slot[b * TOPK + j] = slot_of[chosen[j]];
+            weight[b * TOPK + j] = sc[chosen[j]] / (wsum + 1e-20f) * route_scale[0];
+        }
+    }
+    threadgroup_barrier(mem_flags::mem_threadgroup);
+    topk_select<NE, TOPK>(sc, pool_bias, chosen, tid);     // over the whole pool: the demand
+    if (tid == 0)
+        for (int j = 0; j < TOPK; ++j) {
+            want[b * TOPK + j] = uint(chosen[j]);
+            want_score[b * TOPK + j] = sc[chosen[j]];
+        }
+\end{lstlisting}
 
 \FloatBarrier
 \bibliographystyle{plainnat}

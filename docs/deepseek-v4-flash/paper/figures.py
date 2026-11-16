@@ -187,7 +187,201 @@ def space() -> None:
     save(fig, "fig-space")
 
 
+def sparsity() -> None:
+    """Experts per layer N and active per token k, from each model's published configuration."""
+    rows = [("Mixtral 8x7B", 8, 2), ("Qwen3-30B-A3B", 128, 8), ("DeepSeek-V3", 256, 8), ("DeepSeek-V4.1-Flash", 384, 6)]
+    fig, ax = plt.subplots(figsize=(5.2, 1.9))
+    for i, (name, n, k) in enumerate(rows):
+        y = len(rows) - 1 - i
+        ax.barh(y, 100, color="#e5e7eb", height=0.6)
+        ax.barh(y, 100 * k / n, color=BLUE, height=0.6)
+        ax.text(101.5, y, f"{k} of {n} active ({100 * k / n + 1e-9:.1f}%)".replace(".0%", "%"), va="center", fontsize=7)
+    ax.set_yticks(range(len(rows)), [r[0] for r in reversed(rows)], fontsize=7.5)
+    ax.set_xlim(0, 150)
+    ax.set_xticks([0, 25, 50, 75, 100])
+    ax.set_xlabel("Share of a layer's expert weights used by one token (%)")
+    ax.spines["bottom"].set_bounds(0, 100)
+    save(fig, "fig-sparsity")
+
+
+def missrules() -> None:
+    """Schematic: what serves a token when one of its demanded experts is absent, under each miss rule."""
+    fig, axes = plt.subplots(1, 4, figsize=(6.4, 1.75))
+    rules = [("Wait", "exact; the token blocks\non a storage read"), ("Substitute", "no wait; memory for a\ncoarse copy of every expert"),
+             ("Re-route", "no wait, no extra memory;\na different expert runs"), ("Skip", "no wait, no memory;\nthe contribution is lost")]
+    for ax, (title, note) in zip(axes, rules):
+        ax.set_xlim(0, 30)
+        ax.set_ylim(0, 30)
+        ax.axis("off")
+        ax.set_title(title, fontsize=8.5, fontweight="bold", pad=2)
+        ax.text(0, 26.5, "demand", fontsize=6.5, color=GREY)
+        ax.text(0, 15.5, "served", fontsize=6.5, color=GREY)
+        for j, name in enumerate(("a", "b", "c")):
+            miss = j == 1
+            ax.add_patch(FancyBboxPatch((1 + 9.5 * j, 19), 7.5, 5.5, boxstyle="round,pad=0.3", fc="white" if miss else "#dbeafe",
+                                        ec=RED if miss else "black", lw=0.8, ls=(0, (2, 1.5)) if miss else "-"))
+            ax.text(4.75 + 9.5 * j, 21.75, name, ha="center", va="center", fontsize=7.5, color=RED if miss else "black")
+            fc, ec, label, color = "#dbeafe", "black", name, "black"
+            if miss:
+                fc, ec, label, color = {"Wait": ("#fef3c7", ORANGE, "b", "black"), "Substitute": ("#f3f4f6", GREY, "b̃", GREY),
+                                        "Re-route": ("#dbeafe", BLUE, "d", BLUE), "Skip": ("white", "white", "—", GREY)}[title]
+            ax.add_patch(FancyBboxPatch((1 + 9.5 * j, 8), 7.5, 5.5, boxstyle="round,pad=0.3", fc=fc, ec=ec, lw=0.8))
+            ax.text(4.75 + 9.5 * j, 10.75, label, ha="center", va="center", fontsize=7.5, color=color)
+        ax.text(29.5, 26.5, "b is absent", fontsize=6, color=RED, ha="right")
+        ax.text(15, 2.5, note, fontsize=6, ha="center", va="center", linespacing=1.0)
+    axes[0].text(29.5, 15.6, "after the read", fontsize=6, color=ORANGE, ha="right")
+    axes[1].text(29.5, 15.6, "coarse copy of b", fontsize=6, color=GREY, ha="right")
+    axes[2].text(29.5, 15.6, "next best resident", fontsize=6, color=BLUE, ha="right")
+    fig.subplots_adjust(wspace=0.12)
+    save(fig, "fig-missrules")
+
+
+def locality() -> None:
+    """routing.json: demanded gate weight that K experts per layer would serve, static set against a session's own set."""
+    import json
+    d = json.loads((HERE / "routing.json").read_text())
+    fig, (a, b) = plt.subplots(1, 2, figsize=(6.3, 2.6), gridspec_kw={"width_ratios": [1.15, 1]})
+    k = d["k"]
+    for key, color, label in (("own", BLUE, "the text's own best $K$"), ("static", GREY, "static set (chosen on calibration text)")):
+        a.fill_between(k, [100 * v for v in d[key + "_lo"]], [100 * v for v in d[key + "_hi"]], color=color, alpha=0.15, lw=0)
+        a.plot(k, [100 * v for v in d[key + "_mean"]], "o-", color=color, ms=3, lw=1.2, label=label)
+    a.axvline(144, color="black", lw=0.5, ls=(0, (3, 3)))
+    a.set_xlabel("Experts per layer in the set, $K$ (of 384)")
+    a.set_ylabel("Demanded gate weight served (%)")
+    a.set_xlim(0, 390)
+    a.set_ylim(0, 102)
+    a.legend(loc="lower right", fontsize=6.5)
+    layers = range(len(d["layer_own_144"]))
+    b.plot(layers, [100 * v for v in d["layer_own_144"]], "-", color=BLUE, lw=1.2)
+    b.plot(layers, [100 * v for v in d["layer_static_144"]], "-", color=GREY, lw=1.2)
+    b.set_xlabel("Layer")
+    b.set_ylabel("Served at $K=144$ (%)")
+    b.set_ylim(0, 102)
+    b.set_xlim(0, 39)
+    fig.subplots_adjust(wspace=0.32)
+    save(fig, "fig-locality")
+
+
+def timeline() -> None:
+    """Schematic: an expert demanded at token t is read in the background and serves a few tokens later."""
+    fig, ax = plt.subplots(figsize=(5.6, 1.9))
+    ax.set_xlim(-12, 70)
+    ax.set_ylim(0, 30)
+    ax.axis("off")
+    for i in range(7):
+        served = i >= 4
+        ax.add_patch(FancyBboxPatch((1 + 9.5 * i, 20.5), 8, 5.5, boxstyle="round,pad=0.25", fc="#dbeafe" if served else "#fef3c7",
+                                    ec=BLUE if served else ORANGE, lw=0.8))
+        ax.text(5 + 9.5 * i, 23.25, "$t$" if i == 0 else f"$t{{+}}{i}$", ha="center", va="center", fontsize=7.5)
+    ax.text(-1.5, 23.25, "tokens", ha="right", va="center", fontsize=7)
+    ax.text(-1.5, 13.5, "storage", ha="right", va="center", fontsize=7)
+    ax.text(-1.5, 5, "router", ha="right", va="center", fontsize=7)
+    ax.add_patch(FancyBboxPatch((6, 11.5), 29.5, 4, boxstyle="round,pad=0.25", fc="#f3f4f6", ec="black", lw=0.7))
+    ax.text(20.75, 13.5, "read expert $e$ into a spare row", ha="center", va="center", fontsize=6.5)
+    ax.add_patch(FancyArrowPatch((5, 20), (5, 16.2), arrowstyle="-|>", mutation_scale=6, lw=0.7, color="black"))
+    ax.text(6, 18, "$e$ demanded, absent", fontsize=6, va="center")
+    ax.plot([36, 36], [2.5, 16], color="black", lw=0.7, ls=(0, (3, 2)))
+    ax.plot([-0.5, 36], [5, 5], color=ORANGE, lw=2.2, solid_capstyle="butt")
+    ax.plot([36, 67], [5, 5], color=BLUE, lw=2.2, solid_capstyle="butt")
+    ax.text(17.5, 7.2, "bias of $e$ is $-\\infty$: re-routed", fontsize=6.5, color=ORANGE, ha="center")
+    ax.text(51.5, 7.2, "bias restored: $e$ serves", fontsize=6.5, color=BLUE, ha="center")
+    ax.text(36, 1, "bytes in place, earlier calls finished", fontsize=6, ha="center")
+    save(fig, "fig-timeline")
+
+
+def order() -> None:
+    """Schematic of Section 5: gain per byte from residents and from bits as memory grows, and the order it implies."""
+    import numpy as np
+    fig, ax = plt.subplots(figsize=(5.4, 2.5))
+    m = np.linspace(0.02, 1, 300)
+    knee = 0.2
+    residents, bits = 1.05 * np.exp(-2.6 * (m - knee)), np.where(m < knee, 2.2, 0.36)
+    cross = m[np.argmin(np.abs(residents - 0.36) + (m < knee) * 9)]
+    ax.axvspan(0, knee, color=RED, alpha=0.08, lw=0)
+    ax.axvspan(knee, cross, color=BLUE, alpha=0.08, lw=0)
+    ax.axvspan(cross, 1, color=RED, alpha=0.08, lw=0)
+    ax.plot(m[m >= knee], residents[m >= knee], color=BLUE, lw=1.6, label="next byte as a resident")
+    ax.plot(m[m >= knee], bits[m >= knee], color=RED, lw=1.6, label="next byte as precision on the most used experts")
+    ax.plot([0.02, knee], [1.22, 1.22], color=RED, lw=1.6)
+    ax.annotate("", (knee, 1.22), (knee, 0.36), arrowprops={"arrowstyle": "-", "lw": 0.6, "ls": (0, (2, 2)), "color": RED})
+    for x, text in ((knee / 2, "bits, up to\na usable code"), ((knee + cross) / 2, "residents"), ((cross + 1) / 2, "bits for the\nmost used experts")):
+        ax.text(x, 1.1, text, ha="center", va="top", fontsize=7, linespacing=1.0)
+    ax.annotate("reach: every expert reachable, at no cost in memory", ((knee + 1) / 2, 1.39), ha="center", fontsize=7, color=GREEN)
+    ax.plot([knee, 1], [1.36, 1.36], color=GREEN, lw=1.2)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1.5)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xlabel("Memory for experts")
+    ax.set_ylabel("Gain per byte (schematic)")
+    ax.legend(loc="center right", fontsize=6.5, bbox_to_anchor=(1.0, 0.5))
+    save(fig, "fig-order")
+
+
+def domains() -> None:
+    """domains.json: KL per domain at 144 residents, static set against routed residency, and the whole pool."""
+    import json
+    d = json.loads((HERE / "domains.json").read_text())
+    names = {"agentic-python": "agentic\n(Python)", "agentic-rust": "agentic\n(Rust)", "bash": "shell", "code-diffs": "code\ndiffs",
+             "cyber": "security", "networking": "networks", "business": "business", "business-email": "business\nemail",
+             "english-chat": "chat", "english-prose": "prose"}
+    keys = sorted(names, key=lambda k: -(d[k]["tau384:s144"] - d[k]["c1-residents:k144"]))
+    fig, ax = plt.subplots(figsize=(6.2, 2.5))
+    for j, (variant, color, label) in enumerate((("tau384:s144", GREY, "static set, 144"), ("c1-residents:k144", BLUE, "routed residency, 144"),
+                                                 ("tau384:q384", "#93c5fd", "whole pool, 384"))):
+        ax.bar([i + 0.27 * (j - 1) for i in range(len(keys))], [d[k][variant] for k in keys], 0.25, color=color, label=label)
+    ax.set_xticks(range(len(keys)), [names[k] for k in keys], fontsize=6.5)
+    ax.set_ylabel("KL to the full model (nats)")
+    ax.legend(loc="upper right", fontsize=7)
+    save(fig, "fig-domains")
+
+
+def admission() -> None:
+    """stats.md and the threshold sweep: KL and admissions per token against the admission threshold, 144 residents."""
+    taus, kl, adm = ["0.1", "0.2", "0.3", "0.45"], [0.313, 0.307, 0.320, 0.415], [17.1, 7.6, 2.6, 1.1]
+    fig, ax = plt.subplots(figsize=(5.2, 2.6))
+    bx = ax.twinx()
+    bx.bar(range(4), adm, 0.45, color="#e5e7eb", zorder=0)
+    bx.set_ylabel("Experts read from storage per token", color=GREY)
+    bx.set_ylim(0, 40)
+    bx.spines["right"].set_visible(True)
+    bx.tick_params(axis="y", colors=GREY)
+    ax.set_zorder(bx.get_zorder() + 1)
+    ax.patch.set_visible(False)
+    for y, text, color in ((0.654, "static set (never admits)", GREY), (0.255, "best fixed set per text, in hindsight", GREEN),
+                           (0.235, "whole pool in memory", "black")):
+        ax.axhline(y, color=color, lw=0.8, ls=(0, (4, 3)))
+        ax.text(3.45, y + (0.012 if y > 0.24 else -0.03), text, fontsize=6.5, color=color, ha="right")
+    ax.plot(range(4), kl, "o-", color=BLUE, ms=4.5, lw=1.3)
+    ax.text(1.0, 0.345, "routed residency", fontsize=7, color=BLUE, ha="center")
+    ax.set_xticks(range(4), taus)
+    ax.set_xlabel("Admission threshold $\\tau$ on the gate weight")
+    ax.set_ylabel("KL to the full model (nats)")
+    ax.set_ylim(0.18, 0.72)
+    ax.set_xlim(-0.5, 3.5)
+    save(fig, "fig-admission")
+
+
+def speed() -> None:
+    """Decode speed ranges of the serving table (build plan)."""
+    rows = [("(a) 48 experts at 4 bits, offload that waits", 3.3, 4.5, ORANGE), ("(b) 48 experts at 4 bits, static set", 30, 32, GREY),
+            ("(c) pool of 192, static set of 144", 28.6, 30.1, GREY), ("(d) pool of 192, routed residency, 144, $\\tau=0.2$", 26.0, 27.9, BLUE),
+            ("(e) pool of 384, routed residency, 144, $\\tau=0.3$", 26.7, 27.2, BLUE),
+            ("(f) pool of 384, routed residency, 183,\nspeculative decoding", 30, 40, RED)]
+    fig, ax = plt.subplots(figsize=(5.6, 2.3))
+    for i, (label, lo, hi, color) in enumerate(rows):
+        y = len(rows) - 1 - i
+        ax.barh(y, hi - lo, left=lo, height=0.5, color=color)
+        ax.plot([lo, hi], [y, y], "|", color=color, ms=9, mew=1.5)
+        ax.text(hi + 1, y, f"{lo:g}–{hi:g}", va="center", fontsize=7)
+    ax.set_yticks(range(len(rows)), [r[0] for r in reversed(rows)], fontsize=7)
+    ax.set_xlim(0, 48)
+    ax.set_xlabel("Decode speed (tokens per second)")
+    save(fig, "fig-speed")
+
+
 if __name__ == "__main__":
     frontier(), generation(), system(), space()
+    sparsity(), missrules(), locality(), timeline(), order(), domains(), admission(), speed()
     if BITS:
         bits()

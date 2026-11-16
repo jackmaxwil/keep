@@ -1245,3 +1245,17 @@ What it says:
   Offloading in Mixture-of-Experts Inference*. It states the two best supported claims: the
   three techniques are one policy, and static pruning is the special case that never admits.
   Section 5 is now "an order of spending"; its content is unchanged.
+
+### 2026-11-16: paper gets more figures and code listings
+
+- At Jack's request the paper now has 13 figures (was 5) and 3 listings of real code. New
+  schematics: the four miss rules, the life of one admission, the order of spending. New data
+  charts: sparsity across four models, per-domain KL at 144 residents, the admission threshold
+  with its reference lines, decode speed (replacing a table), and concentration and locality.
+- The locality chart is a new measurement (`paper/routing.py`, stored routes of the full model,
+  17 texts, first 1,024 tokens): the static 144 chosen on calibration text would serve 65% of a
+  text's demanded gate weight (41 to 79% by text); the text's own best 144 would serve 96% (93
+  to 98%); a text touches about 263 of 384 experts per layer at least once.
+- Listings: the simulator's admission loop, the router switch with install and evict, and the
+  Metal kernel that takes the served set and the demand from one set of scores.
+- The paper's definition of routed mass now matches the code (gate weight times output norm).
