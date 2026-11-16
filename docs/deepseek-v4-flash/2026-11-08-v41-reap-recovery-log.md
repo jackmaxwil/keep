@@ -1259,3 +1259,30 @@ What it says:
 - Listings: the simulator's admission loop, the router switch with install and evict, and the
   Metal kernel that takes the served set and the demand from one set of scores.
 - The paper's definition of routed mass now matches the code (gate weight times output norm).
+
+### 2026-11-16: current models, repository links, and a fact-check of the additions
+
+- At Jack's request the paper names current models only (GLM-5.3, GLM-5.3-Flash,
+  DeepSeek-V4.1-Flash-1017, Kimi K3.1 Pro; expert counts from their published configurations),
+  and links the public repository: a title footnote, a Code availability section, and a link
+  beside each listing. The links point at `main`.
+- A separate agent checked what was added after the last full check (about 230 items: figure
+  values, the locality measurement, the three listings against their sources, the four
+  configurations, new sentences, cross-references). Corrected:
+  - `routing.py` counted the experts a text touches one short; it is about 264 of 384, not 263.
+  - The admission figure's storage bars used the build plan's 17.1 and 7.6 experts per token; the
+    stored counts give 16.7 and 7.5 (2.6 and 1.1 were right).
+  - "Pools as wide as or wider than the one we studied" was false for GLM-5.3 (256) and
+    GLM-5.3-Flash (288); the text now gives the three sizes.
+  - The per-domain sentence named the wrong ranking and the wrong link to calibration size; it
+    now says where the static set loses most to routed residency. The two agentic domains are
+    the same text and are drawn once.
+  - Listing 2 is from two files (`install`, `evict` in `omlx_routed.py`; `route`, `unroute` in
+    `omlx_lattice.py`), and Listings 1 and 2 are marked as abridged.
+  - The timeline figure and caption now show the demand read out two calls later, and the bias
+    restored when the bytes are in place.
+- Stated more carefully: the one budget where residents beat bits is also below the residency
+  floor; the locality gap is an upper bound on what a dynamic set can recover; the other three
+  models have the wide, sparse pools of condition (i), nothing more.
+- New limitation: among starting residents not yet demanded, the simulator evicts the highest
+  ranked first and the running system the lowest. The effect is not measured.

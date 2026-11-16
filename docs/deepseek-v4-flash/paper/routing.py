@@ -43,5 +43,5 @@ if __name__ == "__main__":
         "static_lo": static.mean(1).min(0)[pick].round(4).tolist(), "static_hi": static.mean(1).max(0)[pick].round(4).tolist(),
         "own_lo": own.mean(1).min(0)[pick].round(4).tolist(), "own_hi": own.mean(1).max(0)[pick].round(4).tolist(),
         "layer_static_144": static.mean(0)[:, 143].round(4).tolist(), "layer_own_144": own.mean(0)[:, 143].round(4).tolist(),
-        "used_per_layer": float((own[:, :, -1:] - own < 1e-9).argmax(2).mean().round(1)),
+        "used_per_layer": float(((own[:, :, -1:] - own < 1e-9).argmax(2) + 1).mean().round(1)),
     }, indent=1))

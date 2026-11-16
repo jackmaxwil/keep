@@ -276,16 +276,18 @@ def timeline() -> None:
     ax.text(-1.5, 23.25, "tokens", ha="right", va="center", fontsize=7)
     ax.text(-1.5, 13.5, "storage", ha="right", va="center", fontsize=7)
     ax.text(-1.5, 5, "router", ha="right", va="center", fontsize=7)
-    ax.add_patch(FancyBboxPatch((6, 11.5), 29.5, 4, boxstyle="round,pad=0.25", fc="#f3f4f6", ec="black", lw=0.7))
-    ax.text(20.75, 13.5, "read expert $e$ into a spare row", ha="center", va="center", fontsize=6.5)
-    ax.add_patch(FancyArrowPatch((5, 20), (5, 16.2), arrowstyle="-|>", mutation_scale=6, lw=0.7, color="black"))
+    ax.add_patch(FancyBboxPatch((20.5, 11.5), 15, 4, boxstyle="round,pad=0.25", fc="#f3f4f6", ec="black", lw=0.7))
+    ax.text(28, 13.5, "read $e$ into a row", ha="center", va="center", fontsize=6.5)
+    ax.plot([5, 5], [20, 13.5], color="black", lw=0.7)
+    ax.add_patch(FancyArrowPatch((5, 13.5), (20, 13.5), arrowstyle="-|>", mutation_scale=6, lw=0.7, color="black"))
     ax.text(6, 18, "$e$ demanded, absent", fontsize=6, va="center")
+    ax.text(6, 10.2, "seen two calls later", fontsize=5.5, ha="left", va="center")
     ax.plot([36, 36], [2.5, 16], color="black", lw=0.7, ls=(0, (3, 2)))
     ax.plot([-0.5, 36], [5, 5], color=ORANGE, lw=2.2, solid_capstyle="butt")
     ax.plot([36, 67], [5, 5], color=BLUE, lw=2.2, solid_capstyle="butt")
     ax.text(17.5, 7.2, "bias of $e$ is $-\\infty$: re-routed", fontsize=6.5, color=ORANGE, ha="center")
     ax.text(51.5, 7.2, "bias restored: $e$ serves", fontsize=6.5, color=BLUE, ha="center")
-    ax.text(36, 1, "bytes in place, earlier calls finished", fontsize=6, ha="center")
+    ax.text(36, 1, "bytes in place", fontsize=6, ha="center")
     save(fig, "fig-timeline")
 
 
@@ -322,7 +324,7 @@ def domains() -> None:
     """domains.json: KL per domain at 144 residents, static set against routed residency, and the whole pool."""
     import json
     d = json.loads((HERE / "domains.json").read_text())
-    names = {"agentic-python": "agentic\n(Python)", "agentic-rust": "agentic\n(Rust)", "bash": "shell", "code-diffs": "code\ndiffs",
+    names = {"agentic-python": "agentic", "bash": "shell", "code-diffs": "code\ndiffs",
              "cyber": "security", "networking": "networks", "business": "business", "business-email": "business\nemail",
              "english-chat": "chat", "english-prose": "prose"}
     keys = sorted(names, key=lambda k: -(d[k]["tau384:s144"] - d[k]["c1-residents:k144"]))
@@ -338,7 +340,7 @@ def domains() -> None:
 
 def admission() -> None:
     """stats.md and the threshold sweep: KL and admissions per token against the admission threshold, 144 residents."""
-    taus, kl, adm = ["0.1", "0.2", "0.3", "0.45"], [0.313, 0.307, 0.320, 0.415], [17.1, 7.6, 2.6, 1.1]
+    taus, kl, adm = ["0.1", "0.2", "0.3", "0.45"], [0.313, 0.307, 0.320, 0.415], [16.7, 7.5, 2.6, 1.1]
     fig, ax = plt.subplots(figsize=(5.2, 2.6))
     bx = ax.twinx()
     bx.bar(range(4), adm, 0.45, color="#e5e7eb", zorder=0)
@@ -373,7 +375,7 @@ def speed() -> None:
         y = len(rows) - 1 - i
         ax.barh(y, hi - lo, left=lo, height=0.5, color=color)
         ax.plot([lo, hi], [y, y], "|", color=color, ms=9, mew=1.5)
-        ax.text(hi + 1, y, f"{lo:g}–{hi:g}", va="center", fontsize=7)
+        ax.text(hi + 1, y, f"{lo:.1f}–{hi:.1f}" if lo % 1 or hi % 1 else f"{lo:g}–{hi:g}", va="center", fontsize=7)
     ax.set_yticks(range(len(rows)), [r[0] for r in reversed(rows)], fontsize=7)
     ax.set_xlim(0, 48)
     ax.set_xlabel("Decode speed (tokens per second)")

@@ -4,9 +4,9 @@ Build: `tectonic paper.tex` (or `pdflatex`, `bibtex`, `pdflatex` twice) in this 
 does not run BibTeX, so upload `paper.bbl` with the source. Figures: `uv run --with matplotlib
 --with numpy python figures.py`. Numbers: `python stats.py > stats.md`, `python stats.py --domains >
 domains.json` and `python routing.py > routing.json` (they need the stored evals and routes).
-The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py`,
-`scripts/v41_build/omlx_routed.py` and `scripts/v41_build/omlx_lattice.py`; keep them in step
-with the code.
+The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py` (Listing 1),
+`scripts/v41_build/omlx_routed.py` (`install`, `evict`) and `scripts/v41_build/omlx_lattice.py`
+(`route`, `unroute`, and the kernel of Listing 3); keep them in step with the code.
 
 | Item | Why | Needs |
 |---|---|---|
@@ -19,4 +19,4 @@ with the code.
 | A second MoE | every result is for one model; GLM-5.3-Flash (288 experts, 8 active; this repo already has an adapter and a plan for it), GLM-5.3 or Kimi K3.1 Pro are the current candidates, and a narrow pool would test where the order should fail | a download (Jack's go) |
 | The wait rule in our own code path at 2 bits | the speed baseline is another runtime on another checkpoint | implementation |
 | Prior-art pass on the three novelty statements | related work was checked against 15 papers only | a search |
-| Code availability statement | the paper shows excerpts but says nothing about a release | Jack |
+| License | the paper links the public repository (title footnote, a Code availability section, a link beside each listing; all point at `main`), but the repository has no license file | Jack |
