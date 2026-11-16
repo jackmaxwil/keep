@@ -16,8 +16,7 @@ with the code.
 | A second prompt set for generation, and a full-model count | one prompt, 24 samples; no full-model baseline | design; a machine that holds the full model |
 | Held-out confirmation of the settings | tau, hot set sizes and the skipping threshold were chosen on the evaluation text | pod: 54 untouched sessions, full length |
 | Simulator with the served install delay and a fixed set inside a prompt | the simulator installs after one token | a simulator option and one rerun |
-| A second MoE, ideally a narrow pool as well | every result is for one model; the prediction for narrow pools is untested | a download (Jack's go) |
-| Table 1 values | expert counts for Mixtral, Qwen3 and DeepSeek-V3 need checking against the papers | a read |
+| A second MoE | every result is for one model; GLM-5.3-Flash (288 experts, 8 active; this repo already has an adapter and a plan for it), GLM-5.3 or Kimi K3.1 Pro are the current candidates, and a narrow pool would test where the order should fail | a download (Jack's go) |
 | The wait rule in our own code path at 2 bits | the speed baseline is another runtime on another checkpoint | implementation |
 | Prior-art pass on the three novelty statements | related work was checked against 15 papers only | a search |
 | Code availability statement | the paper shows excerpts but says nothing about a release | Jack |

@@ -60,12 +60,14 @@ does not measure.
 Sparse mixture-of-experts (MoE) layers \citep{shazeer2017outrageously,fedus2021switch} are now
 the standard way to scale language models. Each layer holds many feed-forward experts and a
 router that sends every token to a few of them, so parameter count grows without a matching
-growth in computation per token. Recent models have moved toward more and smaller experts
-\citep{dai2024deepseekmoe}: eight experts per layer with two active in Mixtral
-\citep{jiang2024mixtral}, 128 with eight active in Qwen3 \citep{yang2025qwen3}, 256 with eight
-active in DeepSeek-V3 \citep{deepseek2024v3}, and 384 with six active in the model we study in
-Section~\ref{sec:case} \citep{deepseek2026v41flash}. In the last of these a token uses 1.6\% of
-the expert weights of a layer.
+growth in computation per token. Designs have moved toward more and smaller experts
+\citep{dai2024deepseekmoe}. An early open model, Mixtral \citep{jiang2024mixtral}, had eight
+experts per layer with two active. Current open models route among hundreds: 256 experts per
+layer with eight active in GLM-5.3 \citep{zai2026glm53}, 288 with eight active in GLM-5.3-Flash
+\citep{zai2026glm53flash}, 384 with six active in DeepSeek-V4.1-Flash-1017
+\citep{deepseek2026v41flash}, the model we study in Section~\ref{sec:case}, and 896 with sixteen
+active in Kimi K3.1 Pro \citep{moonshot2026kimik31}. In each of these a token uses between 1.6
+and 3.1\% of the expert weights of a layer.
 
 That sparsity is an opportunity for inference on small machines. The weights a token does not
 touch need not be in fast memory, or need not be kept at all, or need not be kept precisely.
@@ -112,8 +114,7 @@ served, predicts an order: precision up to the point where a code is usable at a
 and residency, then precision again for the most used experts once most demand is served from
 memory. We give the conditions for this order and say where we expect it to fail.
 
-\paragraph{A case study (Section~\ref{sec:case}).} We test the formulation on one large model,
-DeepSeek-V4.1-Flash, whose experts do not fit on a 128\,GB laptop at the released precision or
+\paragraph{A case study (Section~\ref{sec:case}).} We test the formulation on one large model, DeepSeek-V4.1-Flash-1017, whose experts do not fit on a 128\,GB laptop at the released precision or
 at 2 bits. At equal memory a routed set is closer to the full model than a pruned set at every
 budget and is indistinguishable from a pruned set about twice its size; a third bit on the most used experts loses to more residents at 35\,GB, is level
 at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
@@ -134,15 +135,19 @@ experts of a set $\mathcal{S}$ under scores $s$. The layer computes
 \end{equation}
 where $g$ are gate weights normalized over the selected experts and $h$ collects whatever is
 always active, such as shared experts \citep{dai2024deepseekmoe}. We call the selected experts
-the router's \emph{choices}. Figure~\ref{fig:archs} shows $N$ and $k$ for several models. $N$ has grown far faster than $k$, and the fraction of expert weights a token uses has fallen by more than
-an order of magnitude.
+the router's \emph{choices}. Figure~\ref{fig:archs} shows $N$ and $k$ for several models. $N$ has
+grown far faster than $k$: from eight experts to between 256 and 896, while the number active
+went from two to between six and sixteen. The fraction of expert weights a token uses has
+fallen by about an order of magnitude, and in current models it is a few percent.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.8\linewidth]{fig-sparsity.pdf}
   \caption{How little of a layer one token uses. Routed experts per layer and experts active per
-  token in Mixtral 8x7B \citep{jiang2024mixtral}, Qwen3-30B-A3B \citep{yang2025qwen3}, DeepSeek-V3
-  \citep{deepseek2024v3} and DeepSeek-V4.1-Flash \citep{deepseek2026v41flash}.}
+  token in an early model, Mixtral 8x7B \citep{jiang2024mixtral}, and in four current ones: GLM-5.3
+  \citep{zai2026glm53}, GLM-5.3-Flash \citep{zai2026glm53flash}, DeepSeek-V4.1-Flash-1017
+  \citep{deepseek2026v41flash} and Kimi K3.1 Pro \citep{moonshot2026kimik31}. Values are from each
+  model's published configuration.}
   \label{fig:archs}
 \end{figure}
 
@@ -519,8 +524,7 @@ wide and activation sparse, $k\ll N$, so that a resident set much smaller than t
 offers good substitutes. (ii) Demand is concentrated and local to a session, so that
 $\rho_K$ falls quickly and the resident set can follow it. (iii) A base code exists past the
 knee at a size that leaves room for breadth. (iv) Storage is fast enough to carry the admission
-traffic at the decoding speed. The trend in Figure~\ref{fig:archs} is toward models that satisfy
-(i). We expect the order to fail for narrow pools: with eight experts and two active, removing
+traffic at the decoding speed. The current models in Figure~\ref{fig:archs} all satisfy (i), with 256 to 896 experts per layer and 2 to 3\% of them active. We expect the order to fail for narrow pools: with eight experts and two active, removing
 residents removes a quarter of the layer at a time, substitutes are poor, and precision should
 come first throughout.
 
@@ -745,7 +749,10 @@ and Equations~\ref{eq:memory} and~\ref{eq:error} hold for it. The construction o
 Section~\ref{sec:switch} needs only a router followed by a gather over stacked experts, which
 is how MoE layers are implemented in the runtimes we know. Whether the allocation order holds depends on the four conditions of Section~\ref{sec:principle}. The first three can be examined for a new model on calibration text before any deployment is built, through the share of routed mass by rank, its stability within a text, and the error of a candidate code; we did not validate such a check here.
 
-\paragraph{What may not.} The crossover points are properties of one model and one code. A
+\paragraph{What may not.} The crossover points are properties of one model and one code. GLM-5.3, GLM-5.3-Flash and
+Kimi K3.1 Pro have pools as wide as or wider than the one we studied and similar sparsity, so
+they are where we would expect the order to hold; we measured none of them, and their routers
+may concentrate demand more or less than this one does. A
 model with fewer, larger experts has less concentration and poorer substitutes; a better 1-bit
 code would move the knee; a model trained with expert dropout or with nested precision in mind
 \citep{wei2026matmoe} would tolerate re-routing or coarse copies better than one that was not.
@@ -793,8 +800,9 @@ as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
 \section{Limitations}
 
 The formulation is general; the evidence for the allocation order is one model, one set of
-codes and one machine. The order's conditions are stated but tested only where that model
-meets them, and the prediction for narrow pools is untested.
+codes and one machine. The order's conditions are stated but tested only where that model meets them. Other current
+models with wide pools, such as GLM-5.3, GLM-5.3-Flash and Kimi K3.1 Pro, and the prediction
+for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
 settings chosen on the same texts, and Section~\ref{sec:generation} shows that KL misses a
@@ -817,7 +825,8 @@ reachable, then residents, then precision for the experts used most. A case stud
 not fit in memory at close to the speed of one that does, and finds a floor below which
 re-routing fails in generation. The open problems are the ones the formulation makes visible:
 predicting a session's experts before it begins, a miss rule that degrades gracefully below the
-floor, and a test of the order on models with different pools.
+floor, and a test of the order on
+other current models, whose pools range from 256 to 896 experts per layer.
 
 \appendix
 

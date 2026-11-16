@@ -189,8 +189,9 @@ def space() -> None:
 
 def sparsity() -> None:
     """Experts per layer N and active per token k, from each model's published configuration."""
-    rows = [("Mixtral 8x7B", 8, 2), ("Qwen3-30B-A3B", 128, 8), ("DeepSeek-V3", 256, 8), ("DeepSeek-V4.1-Flash", 384, 6)]
-    fig, ax = plt.subplots(figsize=(5.2, 1.9))
+    rows = [("Mixtral 8x7B (2023)", 8, 2), ("GLM-5.3", 256, 8), ("GLM-5.3-Flash", 288, 8), ("DeepSeek-V4.1-Flash-1017", 384, 6),
+            ("Kimi K3.1 Pro", 896, 16)]
+    fig, ax = plt.subplots(figsize=(5.4, 2.2))
     for i, (name, n, k) in enumerate(rows):
         y = len(rows) - 1 - i
         ax.barh(y, 100, color="#e5e7eb", height=0.6)
