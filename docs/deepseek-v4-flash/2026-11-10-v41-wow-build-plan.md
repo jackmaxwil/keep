@@ -1162,3 +1162,85 @@ Found on the way: the four agentic eval sessions (`eval-00000`, `-00001`, `-0000
 share their first 1,024 tokens, so at this window they are one record counted in two domains.
 It is the same in every stored run, so paired differences stand; domain means weight that record
 twice.
+
+### Miss cost measured through the model (rubric item 7, second try, 2026-11-15)
+
+Question: does a price per missed expert taken through the model, in place of gate mass, give
+thresholds that beat tau 0.3? It does not. The price predicts KL far better than gate mass on
+held-out records, the thresholds fitted on it cut the priced mass by 62%, and in KL they lose by
+the same margin as the first try.
+
+**Collection.** `local_eval.py --demand NAME --reference NAME` stores, per token and layer, the
+routed experts, their gates and which were resident, and scores every variant against a variant
+of the same run (here: all 384 resident, same 2-bit codes), so the KL at a token is the cost of
+that token's misses alone. `miss_cost.py draw` gives every expert one threshold at random from
+0.1, 0.2, 0.3, 0.5 and never. Two such policies at 144 residents with re-route, on 52 calibration
+records of 512 tokens: 26,572 scored tokens per policy, mean KL 0.378, 29.8% of slots missed,
+103 minutes, peak 59.8 GB. The eval sessions were not touched.
+
+**Cost model.** `miss_cost.py fit`: KL at a token = the sum over its missed slots of
+`cost[layer, expert]`, a ridge fit towards the one cost that fits every miss alike, clipped at
+zero. A first form with a factor per layer and per gate bin was dropped: on held-out records
+those two explained 2 to 7% of the KL per token, and the count of misses in the middle gate bins
+came out with weight zero. The number of misses at a token correlates with its KL at 0.09.
+Held out over 4 folds of records:
+
+| Price of a miss | R2 per token | r over records | r of the two policies' difference per record |
+|---|---:|---:|---:|
+| gate mass | 0.008 | 0.159 | 0.370 |
+| gate mass above 0.25 | 0.038 | 0.440 | 0.413 |
+| one cost for every miss | 0.007 | 0.137 | 0.225 |
+| cost per expert, prior 1 | 0.247 | 0.820 | 0.556 |
+| cost per expert, prior 3 (used) | 0.225 | 0.850 | 0.625 |
+| cost per expert, prior 10 | 0.182 | 0.840 | 0.631 |
+
+The costs are concentrated: the median is 0, the 90th percentile 0.017 KL, the 99th 0.084, and
+the costliest 1% of experts hold 18% of the total.
+
+**Thresholds.** `fit_tau.py --miss-cost` prices a miss by that cost at any gate. On held-out
+calibration routes (3 folds), 144 residents:
+
+| Policy | Priced mass missed | Installs per token |
+|---|---:|---:|
+| tau 0.25 | 0.193 | 3.51 |
+| tau 0.3 | 0.249 | 2.07 |
+| tau 0.4 | 0.329 | 1.09 |
+| per expert, lambda 0.14 | 0.095 | 2.00 |
+| per expert, lambda 0.2 | 0.110 | 1.11 |
+
+**KL** (pool of 384, re-route, 22 sessions, 1,024 tokens; control is the stored tau 0.3 run;
+paired block bootstrap, 95% interval):
+
+| Variant, 144 residents | KL | Without tool-use | Tool-use | Reads, MB per token | Against tau 0.3 |
+|---|---:|---:|---:|---:|---|
+| tau 0.3 | 0.454 | 0.320 | 1.79 | 23.8 | |
+| per expert on cost, lambda 0.14 | 0.477 | 0.341 | 1.83 | 24.3 | +0.023 (0.015 to 0.033) |
+| per expert on cost, lambda 0.2 | 0.541 | 0.398 | 1.97 | 14.0 | +0.087 (0.075 to 0.100) |
+
+Against the first try's lambda 0.2 thresholds, lambda 0.14 on cost is a tie (-0.003, -0.013 to
+0.009).
+
+**Why it failed.** Three checks on stored routes, no model run:
+
+- Not noise in the cost. Fitted on one half of the collection records and priced by the cost
+  from the other half, the thresholds still miss 0.134 to 0.140 against 0.245 to 0.253 for
+  tau 0.3 at equal installs (the two halves' costs correlate at 0.71; 54% of the costs in a half
+  are zero, 43% in both).
+- Not the transfer to the eval sessions. On their routes the lambda 0.14 thresholds miss 0.094
+  of the priced mass against 0.228 for tau 0.3, at 2.05 against 2.04 installs.
+- On those same routes they miss 72% more strong gate mass (0.058 against 0.034), the measure
+  that ranks single thresholds.
+
+So the additive cost holds for the policies it was measured on, where each expert's threshold is
+drawn independently, and not for a policy chosen by it. The fit withholds the experts priced near
+zero together and at high gates, a pattern the random policies never produce, and the price says
+nothing about it. Gate mass failed the same way from the other side. Both are open-loop prices;
+a fit will move the misses to wherever its price is blind.
+
+- Item 7 is not met by an admission policy. Two prices, two losses of +0.022 to +0.026; one
+  threshold at 0.3 is at or near the best of the per-expert class, and the whole gap an admission
+  policy could close at 144 residents is 0.064 (0.454 against 0.390 with all 384 resident).
+- What is left for item 7 is a closed-loop search (a model run of about 30 minutes per
+  candidate, for at most that 0.064) or trained nested codes on a pod.
+- `miss_cost.py`, `fit_tau.py --miss-cost` and `local_eval.py --demand/--reference` stay as the
+  record of this result. Serving keeps tau 0.3.

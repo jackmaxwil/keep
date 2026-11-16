@@ -164,3 +164,21 @@ def test_fit_tau_admits_early_what_turns_strong_and_never_what_stays_weak():
     learned = fit_tau.replay(ids, gates, bounds, warm, 3, tau, 6)
     single = fit_tau.replay(ids, gates, bounds, warm, 3, 0.3, 6)
     assert learned[0] == 0 < single[0] and learned[1] == single[1]  # no strong slot missed, as many installs
+
+
+def test_miss_cost_recovers_the_price_and_fit_tau_reads_it(tmp_path):
+    import miss_cost
+
+    rng = np.random.default_rng(0)
+    ids = np.stack([np.stack([rng.permutation(8)[:2] for _ in range(4000)]) for _ in range(2)])  # [2 layers, N, top 2]
+    missed, cost = rng.random(ids.shape) < 0.4, np.stack([np.full(8, 0.5), np.full(8, 2.0)])
+    cost[1, 3] = 8.0  # one expert whose miss costs four times its neighbours'
+    kl = miss_cost.predict(ids, missed, cost)
+    got = miss_cost.fit_cost(ids, missed, kl, 8, prior=0.01)
+    np.testing.assert_allclose(got, cost, rtol=0.05)
+    flat = miss_cost.fit_cost(ids, missed, kl, 8, prior=None)
+    assert (flat == flat[0, 0]).all() and 0.5 < flat[0, 0] < 8
+    np.savez(tmp_path / "cost.npz", cost=got)
+    price = fit_tau.priced(tmp_path / "cost.npz")
+    np.testing.assert_allclose(price(1, np.array([3, 2]), np.array([0.5, 0.12])), [8.0, 2.0], rtol=0.05)
+    assert price(1, 3, np.array([0.5, 0.12])).shape == (2,)  # one expert, its slots in time order

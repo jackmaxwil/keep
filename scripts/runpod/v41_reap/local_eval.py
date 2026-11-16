@@ -279,6 +279,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hot-tier", default="fp4", metavar="fp4|DIR",
                    help="with --hot: what a hot expert runs. fp4, or its codes plus the residual in DIR, a keep_quant.py "
                    "--residual-of fit over the checkpoint's experts")
+    p.add_argument("--demand", action="append", default=[], metavar="NAME",
+                   help="with --cache-k: write the slots this variant's router asked for and whether each was resident")
+    p.add_argument("--reference", metavar="NAME",
+                   help="score every position against this variant's logits from the same run instead of the stored "
+                   "teacher's (calibration records have none)")
     p.add_argument("--cache-warm", type=Path, help="imatrix npz (reap__gate_norm_sum): warm-start each cache with the top-K")
     p.add_argument("--sidecar", type=Path, help="a sidecar_fit.py output directory, added to every variant's MoE output")
     p.add_argument("--sidecar-rank", type=int, help="use only the top-k sidecar components (stored largest first)")
@@ -379,7 +384,9 @@ def main(argv: list[str] | None = None) -> int:
         assert not (copy_mode and hi_proj), "--hi-proj needs nested codes"
         policies = {name: v for name, _, v in (s.partition("=") for s in args.cache_policy)}
         traces: dict[str, list] = {name: [] for name in args.trace}
-        taus = {name: np.load(Path(t).expanduser())["tau"] if t.endswith(".npz") else float(t)
+        demand: dict[str, dict] = {name: {} for name in args.demand}
+        assert set(demand) <= args_cache_k_names, "--demand needs --cache-k"
+        taus ={name: np.load(Path(t).expanduser())["tau"] if t.endswith(".npz") else float(t)
                 for name, _, t in (s.partition("=") for s in args.tau)}
         tau_files = {name: t for name, _, t in (s.partition("=") for s in args.tau) if t.endswith(".npz")}
         assert all(v in args_cache_k_names for v, t in taus.items() if isinstance(t, np.ndarray)), \
@@ -454,6 +461,9 @@ def main(argv: list[str] | None = None) -> int:
             hi_all = None if k is None else torch.as_tensor(
                 simulate_cache(layer, indices.cpu().numpy(), weights.float().cpu().numpy(), k, tau, counts, resident),
                 device=x.device)
+            if state["variant"] in demand:  # before a miss is re-routed
+                demand[state["variant"]][layer] = (indices.cpu().numpy().astype(np.int16),
+                                                   weights.float().cpu().numpy().astype(np.float16), hi_all.cpu().numpy())
             if resident is not None:  # demand (above) drove the cache; the tokens run on what is resident
                 weights, indices = gate_masked(self.gate, x, torch.as_tensor(resident, device=x.device), ref.linear)
                 hi_all = weights > 0
@@ -585,16 +595,25 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     args.out.mkdir(parents=True, exist_ok=True)
-    summary: dict = {"forward_seconds": round(forward_s, 1), "max_tokens": args.max_tokens, "variants": {}}
+    summary: dict = {"forward_seconds": round(forward_s, 1), "max_tokens": args.max_tokens, "reference": args.reference,
+                     "variants": {}}
     for name, record in records.items():
-        teacher = np.load(args.stats / "eval" / "sessions" / f"{name}.npz")
-        positions = collect.target_positions(record)
+        if args.reference:
+            positions = np.arange(len(record["token_ids"]) - 1)
+        else:
+            teacher = np.load(args.stats / "eval" / "sessions" / f"{name}.npz")
+            positions = collect.target_positions(record)
+            assert np.array_equal(positions, teacher["positions"][: positions.size]), name
         rows = slice(0, positions.size)
-        assert np.array_equal(positions, teacher["positions"][rows]), name
         targets = np.asarray(record["token_ids"], dtype=np.int64)[positions + 1]
-        teacher_nll = (teacher["logsumexp"][rows] - teacher["target_logit"][rows]).astype(np.float64)
         state["positions"] = torch.as_tensor(positions, device=dev)
         state["targets"] = torch.as_tensor(targets, device=dev)
+        if args.reference:  # the head hook captures top-K logits when it has no teacher, as collect.py's teacher pass does
+            state["captured"] = {k: [] for k in collect.CAPTURE_KEYS}
+            with torch.inference_mode():
+                streamer.head(streamer.final_hidden(items[(args.reference, name)]))
+            teacher = {k: np.concatenate(x) for k, x in state["captured"].items() if x}
+        teacher_nll = (teacher["logsumexp"][rows] - teacher["target_logit"][rows]).astype(np.float64)
         state["teacher"] = {
             "ids": torch.as_tensor(teacher["topk_logit_ids"][rows].astype(np.int64), device=dev),
             "logprob": torch.as_tensor(teacher["topk_logit_values"][rows].astype(np.float32) - teacher["logsumexp"][rows, None],
@@ -635,7 +654,11 @@ def main(argv: list[str] | None = None) -> int:
             t = np.asarray(traces[v], dtype=np.int32).reshape(-1, 4)
             np.savez(args.out / v / "admissions.npz", layer=t[:, 0], record=t[:, 1], token=t[:, 2], expert=t[:, 3],
                      records=np.asarray(list(records)), tokens=np.asarray(state["bounds"]))
-        kept = n_local if variants[v] is None else float(np.mean([int((~m).sum()) for m in variants[v].values()]))
+        if v in demand:  # [layers, tokens of every record back to back, top_k]
+            ids, gates, held = (np.stack([demand[v][l][j] for l in range(n_layers_)]) for j in range(3))
+            np.savez(args.out / v / "demand.npz", ids=ids, gates=gates, resident=held,
+                     records=np.asarray(list(records)), tokens=np.asarray(state["bounds"]))
+        kept =n_local if variants[v] is None else float(np.mean([int((~m).sum()) for m in variants[v].values()]))
         # hi_units: memory (and bytes fetched) the high tier adds per expert, in units of one 1-bit expert
         hi_units = 2.0 if copy_mode else len(hi_proj.get(v, ("w1", "w2", "w3"))) / 3
         summary["variants"][v]["_tiers"] = {"tau": tau_files.get(v, taus[v]), "cache_k": cache_k.get(v),
