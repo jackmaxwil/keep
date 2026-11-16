@@ -287,3 +287,9 @@ To add a model, follow [`docs/new-model-family.md`](docs/new-model-family.md).
   decode speed has not been measured.
 - Timings on these Macs vary by up to 1.9x between runs. Compare against a
   control run, never against an absolute time.
+
+## License
+
+Apache-2.0, see [`LICENSE`](LICENSE). The reference files in
+[`tests/fixtures/v41_reference`](tests/fixtures/v41_reference) are DeepSeek's and keep their MIT
+license.

@@ -3,6 +3,8 @@ name = "keep"
 version = "0.1.0"
 description = "KEEP method and RAMP MLX/Metal runtime for low-bit routed MoE inference"
 readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "boto3==1.43.51",
