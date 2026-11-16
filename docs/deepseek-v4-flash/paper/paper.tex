@@ -61,8 +61,7 @@ Sparse mixture-of-experts (MoE) layers \citep{shazeer2017outrageously,fedus2021s
 the standard way to scale language models. Each layer holds many feed-forward experts and a
 router that sends every token to a few of them, so parameter count grows without a matching
 growth in computation per token. Designs have moved toward more and smaller experts
-\citep{dai2024deepseekmoe}. An early open model, Mixtral \citep{jiang2024mixtral}, had eight
-experts per layer with two active. Current open models route among hundreds: 256 experts per
+\citep{dai2024deepseekmoe}. Current open models route among hundreds: 256 experts per
 layer with eight active in GLM-5.3 \citep{zai2026glm53}, 288 with eight active in GLM-5.3-Flash
 \citep{zai2026glm53flash}, 384 with six active in DeepSeek-V4.1-Flash-1017
 \citep{deepseek2026v41flash}, the model we study in Section~\ref{sec:case}, and 896 with sixteen
@@ -135,16 +134,15 @@ experts of a set $\mathcal{S}$ under scores $s$. The layer computes
 \end{equation}
 where $g$ are gate weights normalized over the selected experts and $h$ collects whatever is
 always active, such as shared experts \citep{dai2024deepseekmoe}. We call the selected experts
-the router's \emph{choices}. Figure~\ref{fig:archs} shows $N$ and $k$ for several models. $N$ has
-grown far faster than $k$: from eight experts to between 256 and 896, while the number active
-went from two to between six and sixteen. The fraction of expert weights a token uses has
-fallen by about an order of magnitude, and in current models it is a few percent.
+the router's \emph{choices}. Figure~\ref{fig:archs} shows $N$ and $k$ for four current
+models. $N$ is between 256 and 896 and $k$ between six and sixteen, so a token uses a few
+percent of the expert weights of a layer.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.8\linewidth]{fig-sparsity.pdf}
   \caption{How little of a layer one token uses. Routed experts per layer and experts active per
-  token in an early model, Mixtral 8x7B \citep{jiang2024mixtral}, and in four current ones: GLM-5.3
+  token in four current models: GLM-5.3
   \citep{zai2026glm53}, GLM-5.3-Flash \citep{zai2026glm53flash}, DeepSeek-V4.1-Flash-1017
   \citep{deepseek2026v41flash} and Kimi K3.1 Pro \citep{moonshot2026kimik31}. Values are from each
   model's published configuration.}
@@ -524,7 +522,7 @@ wide and activation sparse, $k\ll N$, so that a resident set much smaller than t
 offers good substitutes. (ii) Demand is concentrated and local to a session, so that
 $\rho_K$ falls quickly and the resident set can follow it. (iii) A base code exists past the
 knee at a size that leaves room for breadth. (iv) Storage is fast enough to carry the admission
-traffic at the decoding speed. The current models in Figure~\ref{fig:archs} all satisfy (i), with 256 to 896 experts per layer and 2 to 3\% of them active. We expect the order to fail for narrow pools: with eight experts and two active, removing
+traffic at the decoding speed. The current models in Figure~\ref{fig:archs} all satisfy (i), with 256 to 896 experts per layer and 1.6 to 3.1\% of them active. We expect the order to fail for narrow pools: with eight experts and two active, removing
 residents removes a quarter of the layer at a time, substitutes are poor, and precision should
 come first throughout.
 
