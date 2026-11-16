@@ -603,7 +603,7 @@ to 100; partial credit only for measured progress).
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
-| 9 | Paper draft | 5 | 5 | 2026-11-16: *Breadth Before Bits*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
+| 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
 | | **Total** | 100 | **75** | |
 
 ### 2026-11-09: prior art, plan, restart
@@ -1234,3 +1234,14 @@ What it says:
   wins at 74 GB (-0.023) and 92 GB (-0.039). The static 192 by total mass at 2 bits is level
   with REAP-50's 192 at 2 bits on this metric (-0.030, interval spans zero).
 - Jack accepted the framing the same day: item 9 moves from 4 to 5 of 5; rubric total 75.
+
+### 2026-11-16: paper retitled *Pruning Is a Frozen Cache*
+
+- Jack asked for a pressure test of *Breadth Before Bits*. It names the least supported step of
+  the paper: residents beat bits at one budget only (35 GB, 96 residents), which is below the
+  generation floor, and the 128 GB configuration sits where bits win. The first title, *Offload
+  the Residual, Not the Expert*, states the opposite of what the system does.
+- New title, with Jack's go: *Pruning Is a Frozen Cache: Unifying Pruning, Quantization and
+  Offloading in Mixture-of-Experts Inference*. It states the two best supported claims: the
+  three techniques are one policy, and static pruning is the special case that never admits.
+  Section 5 is now "an order of spending"; its content is unchanged.

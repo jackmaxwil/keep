@@ -18,7 +18,7 @@
 \newcommand{\topk}{\operatorname{top}_k}
 \newcommand{\ci}[2]{[$#1$, $#2$]}
 
-\title{Breadth Before Bits:\\Unifying Pruning, Quantization and Offloading\\in Mixture-of-Experts Inference}
+\title{Pruning Is a Frozen Cache:\\Unifying Pruning, Quantization and Offloading\\in Mixture-of-Experts Inference}
 \author{Jack Mazac}
 \date{}
 
@@ -34,16 +34,19 @@ are in memory when a token arrives. We give a common formulation in which a depl
 described by three quantities, \emph{reach} (the experts the router may select),
 \emph{residency} (the experts in memory) and \emph{precision} (the bits each resident carries),
 together with a rule for what happens when a selected expert is absent. Existing methods are
-points in this space and differ mainly in that rule. Within it we describe \emph{routed
+points in this space and differ mainly in that rule. Static pruning, in particular, is a
+frozen cache: a resident set that never admits, with reach cut down to match. Within this space
+we describe \emph{routed
 residency}, in which the router doubles as the cache controller: every expert stays reachable on
 storage, a miss is re-routed to the best experts in memory instead of waited on, strongly
 demanded experts are admitted in the background, and nested residual codes add precision to the
 experts used most. Because all of these are settings of one policy with one memory account,
-they can be compared at equal memory, and the comparison suggests an allocation principle,
-\emph{breadth before bits}: once experts are coded at the lowest precision that keeps them
-useful, memory is better spent on reaching and holding more experts than on precision, until
-most of the demand is served from memory. We state the conditions under which this should hold
-and test it in a case study on a 384-expert, 40-layer model. There, a routed set is indistinguishable from a pruned set about twice its size, a third bit on the most used experts loses to more residents at the smallest budget
+they can be compared at equal memory, and a simple model of their errors gives an order for
+spending memory: a code precise enough to be usable, then reach, then residents, then precision
+for the experts used most. We state the conditions under which this order should hold and test
+it in a case study on a 384-expert, 40-layer model. There, letting the frozen cache admit puts
+it closer to the full model at every budget and makes it indistinguishable from a pruned set
+about twice its size, a third bit on the most used experts loses to more residents at the smallest budget
 tested, ties in the middle and wins once roughly 40 to 50\% of the pool is in memory, and a laptop serves the whole pool within about 10\% of the speed of a static set of experts. The case study also shows a limit: below a
 residency floor, re-routing damages generated text in a way that divergence from the full model
 does not measure.
@@ -88,7 +91,8 @@ the router is allowed to select. \emph{Residency} is the set in memory. \emph{Pr
 number of bits each resident carries. The \emph{miss rule} says what happens when a selected
 expert is not resident: wait for it, substitute a coarse copy, re-route to a resident, or skip.
 Pruning, quantization, offloading and their hybrids are points in this space, and what
-separates most of them is the miss rule.
+separates most of them is the miss rule. Static pruning is the point whose resident set is
+frozen: a cache that never admits.
 
 \paragraph{Routed residency (Section~\ref{sec:method}).} We then describe a policy that uses
 the router as the cache controller. The router scores every expert, as it does in the full
@@ -98,7 +102,7 @@ special case that never admits; exact offloading is the special case that always
 Precision enters as a nested residual code that refines the experts used most, and the same
 mechanism that installs an expert makes the policy implementable without stalling a decoder.
 
-\paragraph{Breadth before bits (Section~\ref{sec:principle}).} Because every setting has the
+\paragraph{An order of spending (Section~\ref{sec:principle}).} Because every setting has the
 same memory account, the marginal value of a gigabyte can be compared across uses. A simple
 model of the two error sources, the demand that is re-routed and the coding error on what is
 served, predicts an order: precision up to the point where a code is usable at all, then reach
@@ -109,11 +113,10 @@ memory. We give the conditions for this order and say where we expect it to fail
 DeepSeek-V4.1-Flash, whose experts do not fit on a 128\,GB laptop at the released precision or
 at 2 bits. At equal memory a routed set is closer to the full model than a pruned set at every
 budget and is indistinguishable from a pruned set about twice its size; a third bit on the most used experts loses to more residents at 35\,GB, is level
-at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set. The study also finds a limit that divergence-based evaluation hides: with too few
-residents, re-routing produces occasional confidently wrong tokens that break generated code.
+at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
 The evidence is one model, one set of codes and one machine. We present the formulation and
-the principle as general, the measurements as a case study, and in
+the policy as general, the order of spending as a prediction, the measurements as a case study, and in
 Section~\ref{sec:discussion} we say which parts we expect to transfer.
 
 \section{Background}
@@ -187,7 +190,7 @@ call a \emph{miss}, and the deployment needs a \emph{miss rule}. There are four 
 
 
 Table~\ref{tab:corners} places the main techniques. Two observations follow from writing them
-this way. First, static pruning is a cache: it is the deployment in which the resident set is
+this way. First, static pruning is a frozen cache: it is the deployment in which the resident set is
 fixed, reach has been cut down to it, and so the question of a miss never arises. Seen from the
 full model's router, a pruned model re-routes every token whose demand fell outside the kept
 set, and never admits. Second, the columns are independent. Nothing ties low precision to full
@@ -362,7 +365,7 @@ fixed within a single forward pass, so it cannot adapt inside the processing of 
 inside a multi-token verification step of speculative decoding. Both argue for a good initial
 set, a point Section~\ref{sec:admission} returns to.
 
-\section{Allocating memory: breadth before bits}
+\section{Allocating memory: an order of spending}
 \label{sec:principle}
 
 Equation~\ref{eq:error} splits the error into a routing term and a coding term, and
@@ -398,8 +401,9 @@ two terms. It is nevertheless enough to predict an order, because the gain from 
   implies is small, since the gain per residual falls with $\rho_H$ as well.
 \end{enumerate}
 
-We call the middle of this order \emph{breadth before bits}: between the knee of the code and
-the point where most demand is served from memory, more experts beat better experts.
+The middle of this order runs against the habit of keeping fewer experts at higher precision:
+between the knee of the code and the point where most demand is served from memory, the model
+predicts that more experts beat better experts.
 
 \paragraph{When the order should hold.} The argument needs four conditions. (i) The pool is
 wide and activation sparse, $k\ll N$, so that a resident set much smaller than the pool still
@@ -411,7 +415,7 @@ traffic at the decoding speed. The trend in Table~\ref{tab:archs} is toward mode
 residents removes a quarter of the layer at a time, substitutes are poor, and precision should
 come first throughout.
 
-\paragraph{What the principle predicts.} For a model that meets the conditions: a routed set
+\paragraph{What the order predicts.} For a model that meets the conditions: a routed set
 should beat a static set of the same size at every budget, by more at small budgets; a coarser
 code than the knee should lose to fewer experts at a finer one; a hot set should not pay at
 small budgets and should pay at large ones; and the hot set should be small. The case study
@@ -606,8 +610,7 @@ With 144 or more residents, routed residency is indistinguishable from the prune
 track the share of demand that is re-routed: 35\% at 48 residents, 25\% at 96, 10\% at 200,
 where no failure is a misspelling.
 
-This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The principle of Section~\ref{sec:principle} therefore holds above a
-\emph{residency floor}, here roughly 120 to 144 of 384 experts per layer. Below the floor we expect the remedy to be a different miss rule, not more bits; we did not test one.
+This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here roughly 120 to 144 of 384 experts per layer. Below the floor we expect the remedy to be a different miss rule, not more bits; we did not test one.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -682,7 +685,7 @@ implementation on a different checkpoint.
 
 Pruning, quantization and offloading are three answers to one question, and describing a
 deployment by its reach, residency, precision and miss rule puts them in one space with one
-memory account. In that space reach is free, the miss rule decides latency, and the division of
+memory account. In that space static pruning is a frozen cache, reach is free, the miss rule decides latency, and the division of
 memory between residents and bits follows from which term of the error is larger. For wide,
 sparse MoE models this gives an order of spending: a usable code first, then every expert
 reachable, then residents, then precision for the experts used most. A case study on a
