@@ -603,8 +603,8 @@ to 100; partial credit only for measured progress).
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
-| 9 | Paper draft | 5 | 4 | 2026-11-16: full draft from the logged results, every number checked against this log and the build plan (rewritten the same day as a LaTeX paper, [paper/paper.pdf](paper/paper.pdf)); the title no longer fits the data and is Jack's to choose; the generality section and the untouched confirmation wait on items 8 and 4 |
-| | **Total** | 100 | **74** | |
+| 9 | Paper draft | 5 | 5 | 2026-11-16: *Breadth Before Bits*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
+| | **Total** | 100 | **75** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1233,4 +1233,4 @@ What it says:
 - New simulator run: a 3-bit hot set loses to residents at 35 GB (+0.014), ties at 53 GB and
   wins at 74 GB (-0.023) and 92 GB (-0.039). The static 192 by total mass at 2 bits is level
   with REAP-50's 192 at 2 bits on this metric (-0.030, interval spans zero).
-- Rubric unchanged: item 9 stays at 4 of 5 until Jack accepts the paper; total 74.
+- Jack accepted the framing the same day: item 9 moves from 4 to 5 of 5; rubric total 75.
