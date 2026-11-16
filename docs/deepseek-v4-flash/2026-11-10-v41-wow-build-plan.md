@@ -1244,3 +1244,44 @@ a fit will move the misses to wherever its price is blind.
   candidate, for at most that 0.064) or trained nested codes on a pod.
 - `miss_cost.py`, `fit_tau.py --miss-cost` and `local_eval.py --demand/--reference` stay as the
   record of this result. Serving keeps tau 0.3.
+
+### One metric for the paper, and a 3-bit hot set at smaller budgets (2026-11-16)
+
+Two reviews of the paper draft showed that its headline numbers mixed readings. Every quality
+number is now recomputed by `docs/deepseek-v4-flash/paper/stats.py` from the stored evals in one
+metric: KL over the 10 domains without tool use, with a 95% bootstrap interval over the 17
+distinct texts (the four agentic sessions count as one text with their weight). Full tables:
+`paper/stats.md`. What changes against the 11-domain reading used above:
+
+- Routed against static at equal residents holds at every size: -1.058, -0.619, -0.333, -0.148,
+  -0.048 at 48, 96, 144, 200, 250 residents, all intervals clear of zero. A routed set matches a
+  static set about twice its size (96 against 200: -0.037 [-0.136, +0.034]; 144 against 250:
+  +0.017 [-0.026, +0.051]).
+- Breadth does not saturate at 200: 144 to 200 gains 0.041, 200 to 250 gains 0.024, 250 to 384
+  gains 0.020, all clear of zero. The flat reading came from tool-use KL, which does not fall
+  with residents (1.62 at 200, 1.94 at 384).
+- The admission threshold is flat from 0.1 to 0.3 (0.313, 0.307, 0.320). The best fixed set per
+  text with hindsight scores 0.255 against 0.235 for the whole pool and 0.320 for tau 0.3, so the
+  headroom is 0.065 and it is in the starting set, not in the admission rule.
+- Fitted thresholds: the gate-mass fit at equal reads is a tie (+0.007 [-0.004, +0.019]), the
+  measured-cost fit a loss (+0.021 [+0.014, +0.029]).
+- The nested 1-bit design is level with a static 144 at flat 2 bits (-0.020 [-0.067, +0.018]),
+  not a loss; 192 experts at 1 bit against 96 at 2 bits is -0.370 for the 2-bit set.
+
+New run (`jobs/bits_mac.sh`, `evals/bits-budget`, 8,526 s, peak 58.3 GB): a 3-bit hot set at
+equal expert memory below 92 GB, and the static 192 by total mass at 2 bits.
+
+| Expert memory | Hot variant | KL, 10 domains | 2 bits only | Difference |
+|---|---|---:|---:|---|
+| 35 GB | 80 residents, 32 hot | 0.404 | 0.390 (96) | +0.014 [+0.004, +0.024] |
+| 53 GB | 128 residents, 32 hot | 0.316 | 0.320 (144) | -0.004 [-0.014, +0.005] |
+| 74 GB | 168 residents, 64 hot | 0.255 | 0.279 (200) | -0.023 [-0.042, -0.002] |
+| 92 GB (B2) | 218 residents, 64 hot | 0.215 | 0.254 (250) | -0.039 [-0.058, -0.017] |
+
+- A third bit loses to residents at 35 GB, ties at 53 GB and wins from 74 GB: the crossover is
+  near 144 residents, not 200. 168 residents with 64 hot (74 GB) score the same as 250 residents
+  at 2 bits (92 GB).
+- Static 192 by total mass at 2 bits: 0.456, against 0.486 for REAP-50's 192 at 2 bits (-0.030
+  [-0.095, +0.051]). On this metric the choice of experts explains little of the gap between the
+  REAP-50 checkpoint at FP4 (0.389) and all 384 at 2 bits (0.235); the 0.184 selection gain on
+  the pod's 54 sessions includes tool use.
