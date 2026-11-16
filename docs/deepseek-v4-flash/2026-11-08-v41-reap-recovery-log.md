@@ -603,8 +603,8 @@ to 100; partial credit only for measured progress).
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
-| 9 | Paper draft | 5 | 1 | framing and experiment plan in this log |
-| | **Total** | 100 | **71** | |
+| 9 | Paper draft | 5 | 4 | 2026-11-16: full draft from the logged results, every number checked against this log and the build plan ([draft](2026-11-16-paper-draft.md)); the title no longer fits the data and is Jack's to choose; the generality section and the untouched confirmation wait on items 8 and 4 |
+| | **Total** | 100 | **74** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1201,3 +1201,18 @@ What it says:
 - Two open-loop prices, two losses of the same size. An admission policy can gain at most 0.064
   at 144 residents (0.390 with all 384 resident). Item 7 stays at 0; what is left is a
   closed-loop search or trained codes on a pod. Rubric total 71. Details in the build plan.
+
+### 2026-11-16: paper draft (rubric item 9)
+
+- [Draft](2026-11-16-paper-draft.md): abstract, method, setup, results (routed against static,
+  ceiling, breadth against bits, tier 0, serving, generation), what did not work, limitations,
+  and a list of what is open before submission. A separate fact-check of about 150 claims against
+  this log, the build plan, the findings note and the plan found 30 problems (wrong pairings,
+  overstated wording, unsourced details); all are corrected.
+- The working title's first half is contradicted by the data: offloading the residual lost to
+  plain pruning (+0.020 and +0.025), and offloading whole experts won. Three candidate titles
+  are in the draft for Jack.
+- Also added to the limitations: tau, K, H and tier 0 were chosen on the eval sessions, so E7 is
+  the untouched confirmation.
+- Item 9 moves from 1 to 4 of 5; the last point waits on the title and on the sections that need
+  items 4 and 8. Rubric total 74.
