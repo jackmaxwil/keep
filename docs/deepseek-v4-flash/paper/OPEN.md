@@ -19,4 +19,3 @@ The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py` (List
 | A second MoE | every result is for one model; GLM-5.3-Flash (288 experts, 8 active; this repo already has an adapter and a plan for it), GLM-5.3 or Kimi K3.1 Pro are the current candidates, and a narrow pool would test where the order should fail | a download (Jack's go) |
 | The wait rule in our own code path at 2 bits | the speed baseline is another runtime on another checkpoint | implementation |
 | Prior-art pass on the three novelty statements | related work was checked against 15 papers only | a search |
-| License | the paper links the public repository (title footnote, a Code availability section, a link beside each listing; all point at `main`), but the repository has no license file | Jack |
