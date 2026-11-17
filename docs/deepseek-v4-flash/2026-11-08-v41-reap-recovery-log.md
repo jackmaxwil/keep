@@ -1286,3 +1286,30 @@ What it says:
   models have the wide, sparse pools of condition (i), nothing more.
 - New limitation: among starting residents not yet demanded, the simulator evicts the highest
   ranked first and the running system the lowest. The effect is not measured.
+
+### 2026-11-16: prior-art pass on the paper's three novelty statements
+
+Three independent searches, one per statement, with the closest hits read at source. Headline
+unchanged at 75%: the pass changes wording and citations, not results.
+
+- **Formulation (reach, residency, precision, miss rule).** Not found elsewhere as a whole. The
+  miss rule as a design axis is in SpecMD (2602.03921), and a fixed resident set is a known cache
+  baseline (2608.07911, 2611.15842; LightMoE, Findings of ACL 2026). The paper now credits these
+  and says the formulation makes the pruning identification explicit.
+- **Order of spending.** The three-step order with its error model was not found. Credited:
+  SliceMoE already states that more low-bit experts can beat fewer high-bit ones; Jha
+  (2607.16721) compares a half-pruned model with the quantized full model at equal memory and
+  finds a crossover near 3 bits; ProQuant (2610.30779) prefers removing an expert to a 1-bit
+  code. Both support the knee and show it depends on the code. Chowdhury et al. (2604.06515) is
+  cited as a counterexample to a hot set.
+- **No-wait construction.** The statement was too broad. SwapMoE already masks the gate to
+  experts in memory and loads asynchronously, and Son (Research Square rs-11268552, 6 October
+  2026) re-routes misses by router logit with background admission by gate weight on models of
+  128 to 512 experts per layer. Son's policies still wait for a missed first choice and report
+  5.7% perplexity lost when every miss is substituted against 0.35% for a selective rule. The
+  paper now says re-routing and background admission are not its contribution; what remains is
+  the router-bias construction with no host round trip, studied at 2 bits against pruned sets.
+  A selective wait is a new limitation and joins the open wait-rule item.
+- 18 references added (41 in all), two rows in the table of techniques, a new related-work
+  paragraph on serving a miss without waiting and one on experts against bits.
+- Not opened: CommitMoE (AAAI 2026) and the MLX-Flash package; both are listed in `OPEN.md`.

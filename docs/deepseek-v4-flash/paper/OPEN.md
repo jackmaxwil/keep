@@ -17,5 +17,5 @@ The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py` (List
 | Held-out confirmation of the settings | tau, hot set sizes and the skipping threshold were chosen on the evaluation text | pod: 54 untouched sessions, full length |
 | Simulator with the served install delay and a fixed set inside a prompt | the simulator installs after one token | a simulator option and one rerun |
 | A second MoE | every result is for one model; GLM-5.3-Flash (288 experts, 8 active; this repo already has an adapter and a plan for it), GLM-5.3 or Kimi K3.1 Pro are the current candidates, and a narrow pool would test where the order should fail | a download (Jack's go) |
-| The wait rule in our own code path at 2 bits | the speed baseline is another runtime on another checkpoint | implementation |
-| Prior-art pass on the three novelty statements | related work was checked against 15 papers only | a search |
+| The wait rule in our own code path at 2 bits, with a selective wait (first choice or strong gate weight) | the speed baseline is another runtime on another checkpoint; Son (2026) finds a selective wait far cheaper in perplexity than re-routing every miss | implementation |
+| CommitMoE (AAAI 2026) and the MLX-Flash package | the prior-art pass of 2026-11-16 could not open either; both may bear on serving a miss without waiting | reading them |
