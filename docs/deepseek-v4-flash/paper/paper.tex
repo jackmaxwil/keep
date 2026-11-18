@@ -80,11 +80,16 @@ it is fast, and it loses the removed experts on every input, including those tha
 \emph{Quantization} keeps every expert at lower precision \citep{tseng2024quipsharp}; its loss
 is spread over all inputs, and the full set of experts must still fit.
 
-These families have separate literatures, separate baselines and separate implementations.
+These families have separate literatures, separate baselines and separate implementations; a
+survey of the area files pruning and quantization under model-level optimization and offloading
+under system-level optimization \citep{liu2024survey}.
 Hybrids exist: a missed expert can be served by a low-precision copy
 \citep{tang2024hobbit,chu2025dynaexq}, the router can be biased toward experts in memory
 \citep{skliar2024cache,zhu2025smoe}, and precision can follow routing statistics
-\citep{wei2026matmoe,choi2025slicemoe}. But there is no common account in which one could ask,
+\citep{wei2026matmoe,choi2025slicemoe}. Pairs of options have been compared at equal memory: a
+dynamic expert set against a pruned one \citep{kong2023swapmoe,luo2026lightmoe}, a pruned model
+against a quantized one \citep{jha2026half}, and ways of handling a missed expert against each
+other \citep{hoang2026specmd,son2026misses}. But there is no common account in which one could ask,
 for a given amount of memory, whether it is better to hold more experts or better ones, and
 whether dropping an expert, coarsening it, or leaving it on storage is the cheapest way to make
 room.
@@ -174,7 +179,7 @@ Fix a layer. At token $t$ a deployment is described by:
 \end{itemize}
 The router's choices under full reach are the \emph{demand},
 $D_t=\topk(s,\reach)$. When $D_t\not\subseteq\res_t$ some demanded expert is absent, which we
-call a \emph{miss}, and the deployment needs a \emph{miss rule}. There are four in use (Figure~\ref{fig:missrules}):
+call a \emph{miss}, and the deployment needs a \emph{miss rule}. Four are in use (Figure~\ref{fig:missrules}), and the offloading literature has compared them as policies for a cache miss \citep{hoang2026specmd,son2026misses}:
 \begin{description}
   \item[Wait.] Block the token until the expert has been read. Exact, with latency that depends
   on storage and on the miss rate.
@@ -201,7 +206,10 @@ Table~\ref{tab:corners} places the main techniques. Two observations follow from
 this way. First, static pruning is a frozen cache: it is the deployment in which the resident set is
 fixed, reach has been cut down to it, and so the question of a miss never arises. Seen from the
 full model's router, a pruned model re-routes every token whose demand fell outside the kept
-set, and never admits. Second, the columns are independent. Nothing ties low precision to full
+set, and never admits. A fixed resident set is a known baseline among cache policies
+\citep{zhang2026reproducible,bacon2026fewer}, and LightMoE notes that a static resident set incurs
+misses when the task shifts \citep{luo2026lightmoe}; the formulation makes the identification
+explicit and puts a pruned checkpoint on the same axis. Second, the columns are independent. Nothing ties low precision to full
 residency, or a dynamic resident set to full precision; those pairings are habits of the
 separate literatures. A technique can be low-precision \emph{and} offloaded \emph{and} re-routed,
 and the space contains points that none of the families occupies.
@@ -216,10 +224,12 @@ Technique & Reach & Residency & Precision & Miss rule \\
 Full model & all & all & full & none needed \\
 Static pruning \citep{lasby2025reap} & subset & $=$ reach & full & none needed \\
 Uniform quantization \citep{tseng2024quipsharp} & all & all & low & none needed \\
+Pruning with quantization \citep{chen2025collaborative} & subset & $=$ reach & per expert & none needed \\
 Exact offloading \citep{xue2024moeinfinity} & all & subset, dynamic & full & wait \\
 Low-precision fallback \citep{tang2024hobbit,chu2025dynaexq} & all & subset $+$ coarse copies & two levels & substitute \\
 Cache-aware routing \citep{skliar2024cache} & all & subset, dynamic & full & re-route (biased) \\
 Dynamic expert sets \citep{kong2023swapmoe} & all & subset, dynamic & full & re-route \\
+Selective fetch \citep{son2026misses} & all & subset, dynamic & low & wait or re-route \\
 Nested precision \citep{wei2026matmoe,choi2025slicemoe} & all & all or subset & per expert & substitute \\
 \midrule
 Routed residency (Section~\ref{sec:method}) & all & subset, dynamic & low, nested & re-route \\
@@ -494,7 +504,7 @@ This is a heuristic and not a theorem; it ignores interactions between layers an
 two terms. It is nevertheless enough to predict an order, because the gain from residents falls as the resident set grows while the gain from the first residuals does not.
 
 \begin{enumerate}
-  \item \textbf{Precision first, up to the knee of the code.} Coding error need not fall smoothly with bits. If below some precision a code stops preserving what an expert computes, $\varepsilon$ there is so large that holding the expert is worth little, and until every held expert is past that knee, bits beat anything else.
+  \item \textbf{Precision first, up to the knee of the code.} Coding error need not fall smoothly with bits. If below some precision a code stops preserving what an expert computes, $\varepsilon$ there is so large that holding the expert is worth little, and until every held expert is past that knee, bits beat anything else. Two studies of other models and codes locate such a knee: \citet{jha2026half} finds that a half-pruned model beats the full model quantized to the same size only where the full model would need fewer than 3 bits per weight, and ProQuant \citep{chen2026proquant} replaces the 1-bit option of a mixed-precision search with removal of the expert.
   \item \textbf{Then reach, for free.} Reach is absent from Equation~\ref{eq:memory}. Letting
   the router select from the whole pool costs storage and admission traffic, not memory, and it
   turns the fixed routing error of a pruned model into one that the resident set can chase.
@@ -520,7 +530,10 @@ two terms. It is nevertheless enough to predict an order, because the gain from 
 Figure~\ref{fig:order} draws this order. The middle of it runs against the habit of keeping
 fewer experts at higher precision:
 between the knee of the code and the point where most demand is served from memory, the model
-predicts that more experts beat better experts.
+predicts that more experts beat better experts. SliceMoE makes the same observation for an expert
+cache \citep{choi2025slicemoe}, and general results on compression favor more parameters at lower
+precision down to about 4 bits \citep{dettmers2022case,kuzmin2023pruning}. The model adds where
+the preference begins, at the knee, and where it ends.
 
 \paragraph{When the order should hold.} The argument needs four conditions. (i) The pool is
 wide and activation sparse, $k\ll N$, so that a resident set much smaller than the pool still
@@ -776,28 +789,66 @@ cheap predictor of a prompt's experts.
 \paragraph{Offloading.} MoE-Infinity \citep{xue2024moeinfinity}, Fate \citep{fang2025fate} and
 AdapMoE \citep{zhong2024adapmoe} keep experts off the accelerator and reduce the cost of
 loading them, by caching and by predicting which experts will be needed. These systems keep
-the wait rule and shorten the wait. Routed residency removes the wait and accepts an inexact
-token.
+the wait rule and shorten the wait. SpecMD \citep{hoang2026specmd} benchmarks such systems as
+combinations of four policies, for routing, a cache miss, eviction and prefetching, and its miss
+policies (fetch, fetch at lower precision, drop, substitute) are the rules of
+Section~\ref{sec:space}. The formulation adds reach and precision to that space, so that pruned
+and quantized models are settings of the same deployment. Routed residency removes the wait and
+accepts an inexact token. \citet{bacon2026fewer} measure the cost of that choice on a small model:
+every policy they test that holds an expert set fixed and decodes faster than an exact
+least-recently-used cache raises next-token loss by at least 0.067 nats, and they improve
+eviction instead.
 
 \paragraph{Substitution and cache-aware routing.} HOBBIT \citep{tang2024hobbit} serves a miss
 from a low-precision copy, and DynaExq \citep{chu2025dynaexq} keeps frequently used experts at
-high precision with a low-precision fallback and asynchronous promotion. Cache-conditional
+high precision with a low-precision fallback and asynchronous promotion that becomes visible
+only when the transfer completes. Cache-conditional
 routing \citep{skliar2024cache}, SMoE \citep{zhu2025smoe} and MoE-CORE \citep{yang2026moecore}
-change or substitute the router's choices in favor of experts in memory. The re-route rule we
-use is the plainest member of this family and is not our contribution. What we add is the
-account in which that rule, pruning and quantization become comparable at equal memory, the
-allocation order that follows, and a construction that applies the rule without a token ever waiting.
+change or substitute the router's choices in favor of experts in memory, BuddyMoE
+\citep{wang2025buddymoe} substitutes a similar expert already in memory when a prefetch fails, and
+eMoE \citep{tairin2025emoe} keeps a predicted expert set across several prompts.
+
+\paragraph{Serving a miss without waiting.} Re-routing a miss to experts in memory and admitting
+the missed expert in the background are both established. SwapMoE \citep{kong2023swapmoe} masks
+the gate to a set of experts in memory and updates the set by asynchronous loading. LightMoE
+\citep{luo2026lightmoe} redirects a miss to a similar resident and replaces residents when the
+task changes. The closest work to ours is \citet{son2026misses}: an engine built on llama.cpp,
+studied on models with 128 to 512 experts per layer, that replaces an unfetched miss with the
+best residents by router logit, admits an expert in the background once its accumulated
+substituted gate weight passes a threshold, and counts an expert as resident only when its read
+has finished. Its policies still wait for a miss that was the router's first choice, and in
+emulation, with a quarter of the experts resident, substituting every miss raised perplexity by
+5.7\% against 0.35\% when first choices and misses with a gate weight of at least 0.15 were
+fetched. It
+runs at 4 bits and compares against neither pruning nor lower precision. The re-route rule and
+background admission are therefore not our contribution. What we add is the account in which
+that rule, pruning and quantization become comparable at equal memory, the allocation order
+that follows, and a construction in which the rule is a bias on the router, so that demand and
+the served set come from one router evaluation and the decode path waits on neither storage nor
+the host. We study that policy at 2 bits against pruned sets of equal memory.
 
 \paragraph{Dynamic sets against pruning.} SwapMoE \citep{kong2023swapmoe} maintains a dynamic
-set of experts under a memory budget and compares it with pruning on small models. We make
+set of experts under a memory budget and compares it with pruning on small models, and LightMoE
+\citep{luo2026lightmoe} reports a gain over static pruning from its replacement of residents. We make
 that comparison on a much larger and sparser model, at low precision, and extend it along the
 precision axis.
 
 \paragraph{Mixed and nested precision.} DyMoE \citep{huang2026dymoe} assigns precision to
 experts at run time, SliceMoE \citep{choi2025slicemoe} caches bit slices of experts, and MatMoE
-\citep{wei2026matmoe} uses nested codes whose width follows the routing score. Our hot set is a
-simple instance of the same idea. The formulation adds a condition on when it pays: after
-reach, and not below the knee of the code.
+\citep{wei2026matmoe} uses nested codes whose width follows the routing score. D$^2$MoE \citep{wang2025d2moe} allocates a bit-width to each expert at run time, and MC-MoE
+\citep{huang2024mc} and MxMoE \citep{duanmu2025mxmoe} assign bits by activation frequency and
+sensitivity. Our hot set is a simple instance of the same idea. The formulation adds a condition
+on when it pays: after reach, and not below the knee of the code. The idea has a counterexample
+in the literature: \citet{chowdhury2026efficient} argue that rarely used experts can be the ones
+most sensitive to quantization and give them the higher precision.
+
+\paragraph{Experts against bits.} Pruning and quantization of experts have been combined in one
+pipeline \citep{huang2024mc,chen2025eacmoe,chen2025collaborative} and compared at equal memory:
+\citet{jha2026half} finds a crossover near 3 bits per weight between a half-pruned model and the
+quantized full model, and ProQuant \citep{chen2026proquant} prefers removing an expert to coding
+it at 1 bit. Both agree with the first step of our order, with a knee that depends on the code.
+Neither separates reach from residency, so the pruned model in those comparisons cannot admit
+what it lacks.
 
 \paragraph{Pruning and codes.} REAP \citep{lasby2025reap} produced the pruned checkpoint used
 as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
@@ -817,7 +868,7 @@ baseline, and without static sets.
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
 the running system does neither. Among starting residents not yet demanded, the simulator evicts
 the highest ranked first and the running system the lowest; we did not measure the effect. The pruned checkpoint differs from the pool in its choice of experts as well as in precision; at 2 bits the choice is not distinguishable on our metric, and we could not test it at 4 bits on the same texts. The wait rule was measured only through another runtime's
-implementation on a different checkpoint.
+implementation on a different checkpoint. We did not implement a selective wait; \citet{son2026misses} reports that waiting only for the strongest misses costs far less perplexity than re-routing every miss, and the same may hold here.
 
 \section{Conclusion}
 
