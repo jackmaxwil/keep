@@ -241,6 +241,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--checkpoint-survivors", type=Path,
                    help="the survivors JSON the checkpoint was exported from; omit for an unpruned checkpoint")
     p.add_argument("--device", default="cpu", help="cpu, or cuda on a pod")
+    p.add_argument("--torch-kernels", action="store_true",
+                   help="on cuda, run the torch stand-ins (as the Mac does) instead of the reference's tilelang kernels")
     p.add_argument("--router", type=Path, help="safetensors with every router row of the unpruned model: the pool is "
                    "all its experts, taken from --dynamic codes alone (HOT_DIR@SET.json+REST_DIR), on a pruned checkpoint")
     p.add_argument("--pack", required=True, type=Path)
@@ -323,8 +325,8 @@ def main(argv: list[str] | None = None) -> int:
     torch.set_num_threads(args.threads)
     ref_dir = args.hf_path / "inference"
     dev = args.device
-    # On a GPU the reference's own kernels run, as in collect.py; elsewhere the torch stand-ins.
-    ref = stream.import_reference(ref_dir, kernel=torch_kernel if dev == "cpu" else None)
+    # On a GPU the reference's own kernels run, as in collect.py; elsewhere, or with --torch-kernels, the torch stand-ins.
+    ref = stream.import_reference(ref_dir, kernel=torch_kernel if dev == "cpu" or args.torch_kernels else None)
     torch.set_default_dtype(torch.bfloat16)
     if dev != "cpu":
         torch.cuda.memory._set_allocator_settings("expandable_segments:True")

@@ -1,0 +1,53 @@
+{
+ "about": "E7: the 42 eval sessions with stored teacher logits (x1 shard 0/2) that the Mac never scored, full length, in three groups of about equal tokens",
+ "groups": [
+  [
+   "eval-00002",
+   "eval-00012",
+   "eval-00024",
+   "eval-00028",
+   "eval-00040",
+   "eval-00042",
+   "eval-00054",
+   "eval-00056",
+   "eval-00058",
+   "eval-00062",
+   "eval-00064",
+   "eval-00072",
+   "eval-00088",
+   "eval-00102",
+   "eval-00104"
+  ],
+  [
+   "eval-00006",
+   "eval-00020",
+   "eval-00022",
+   "eval-00026",
+   "eval-00034",
+   "eval-00050",
+   "eval-00052",
+   "eval-00060",
+   "eval-00066",
+   "eval-00078",
+   "eval-00080",
+   "eval-00086",
+   "eval-00090",
+   "eval-00094",
+   "eval-00100"
+  ],
+  [
+   "eval-00010",
+   "eval-00016",
+   "eval-00030",
+   "eval-00044",
+   "eval-00048",
+   "eval-00068",
+   "eval-00074",
+   "eval-00076",
+   "eval-00082",
+   "eval-00084",
+   "eval-00098",
+   "eval-00106"
+  ]
+ ]
+}
