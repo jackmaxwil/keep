@@ -215,7 +215,16 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
             start += n
             continue
         lru = OrderedDict((int(e), None) for e in (warm if warm is not None else []))
+        prompt = int(policy.partition(":")[2]) if policy.startswith("prompt:") else 0
         for t in range(start, start + n):
+            if prompt and t == start + prompt:  # the prompt has been read: its own top k replace the residents
+                mass = np.bincount(ind[start:t].ravel(), weights=wts[start:t].ravel(), minlength=counts.shape[0])
+                top = [int(e) for e in np.argsort(-mass, kind="stable")[:k] if mass[e] > 0]
+                new = [e for e in top if e not in lru]
+                counts[new, 4] += 1
+                others = [e for e in lru if e not in top]  # pad with the most recent of the rest
+                pad = others[max(0, len(others) - (k - len(top))):] if len(top) < k else []
+                lru = OrderedDict((e, None) for e in [*pad, *reversed(top)])  # the heaviest is the most recent
             row = ind[t].tolist()
             hi[t] = [e in lru for e in row]
             if resident is not None:
@@ -261,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
                    "from the other), and BASE may be empty when every variant has --miss")
     p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
                    help="nested only, per variant: the high tier adds the residual for these projections only")
-    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle",
+    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P",
                    help="with --cache-k: lru (default) or oracle (each record's own top-K, the upper bound)")
     p.add_argument("--trace", action="append", default=[], metavar="NAME",
                    help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")

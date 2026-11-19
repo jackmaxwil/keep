@@ -42,6 +42,20 @@ def test_residual_cache_resets_per_record_and_warm_start():
     assert hi.all()
 
 
+def test_residual_cache_prompt_warm_start():
+    # Two prompt tokens route to expert 1, which is not warm and never admitted (tau too high);
+    # from token 2 the residents are the prompt's own top k.
+    ind = np.array([[1], [1], [1], [0]])
+    counts = np.zeros((2, 5))
+    hi = local_eval.residual_cache(ind, np.ones((4, 1)), k=1, tau=9.0, bounds=[4], warm=np.array([0]), counts=counts,
+                                   policy="prompt:2")
+    assert hi[:, 0].tolist() == [False, False, True, False]
+    assert counts[:, 4].tolist() == [0, 1]
+    lru = local_eval.residual_cache(ind, np.ones((4, 1)), k=1, tau=9.0, bounds=[4], warm=np.array([0]),
+                                    counts=np.zeros((2, 5)))
+    assert lru[:, 0].tolist() == [False, False, False, True]
+
+
 def test_precision_allocator():
     precision_alloc._check()
 
