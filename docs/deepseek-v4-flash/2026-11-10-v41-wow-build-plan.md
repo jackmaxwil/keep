@@ -1285,3 +1285,28 @@ equal expert memory below 92 GB, and the static 192 by total mass at 2 bits.
   [-0.095, +0.051]). On this metric the choice of experts explains little of the gap between the
   REAP-50 checkpoint at FP4 (0.389) and all 384 at 2 bits (0.235); the 0.184 selection gain on
   the pod's 54 sessions includes tool use.
+
+### Static sets in generation (2026-11-18)
+
+Same sampled script request as "More samples and two rescue checks" (card sampling, temperature
+1.0, top_p 1.0, 4,096-token budget, thinking off, drafter off), served from the bundle through
+`run_v41.sh`. The static set is the cache with admissions off (`OMLX_ROUTED_TAU=inf`): the 144
+experts per layer with the most calibration mass, never changed, every other expert re-routed.
+Scored with `scripts/v41_build/score_dupe_script.py`, which reproduces the earlier counts exactly
+(17, 19 and 18 of 24).
+
+| Model | Residents | Correct | Runs |
+|---|---:|---:|---|
+| Static set, 2-bit | 144 | 4 of 24 | 1, 1, 2 of 8 (one run cut at 5 by a reboot, finished with 3) |
+| Cache at tau 0.3, 2-bit (above) | 144 | 17 of 24 | 6, 5, 6 |
+| Cache at tau 0.3, through the bundle (launcher check) | 144 | 5 of 8 | |
+| Exact REAP-50 checkpoint, FP4 (above) | 192 | 18 of 24 | |
+| Cache at tau 0.3 (above) | 96 | 2 of 8 | |
+
+- At equal memory the routed set writes a working script four times as often as the static set
+  (Fisher exact p = 0.0004 against the 17 of 24). The static 144 is level with the routed 96
+  (p = 0.62), the same order as on KL (0.654 against 0.390 without tool use).
+- All 20 static failures are slips of the kind seen below the floor: misspelled names
+  (`os.is_symlink`, `collectionsdefaultdict`, `mmain`), syntax errors, two answers without code.
+- The cache log is empty for the static runs by design: with tau infinite no demand is read.
+- Jobs: `~/Models/v41-reap-run/jobs/k1_static_samples.sh`; samples `k1/static-*.json`.
