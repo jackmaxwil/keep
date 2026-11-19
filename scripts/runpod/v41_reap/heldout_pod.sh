@@ -23,14 +23,17 @@ mkdir -p "$H"
 log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$H/pod.log"; }
 trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "$H/FAILED"; }' EXIT
 
+# No CPU stock in the volume's data center for a prep pod: the install runs beside the copy.
+(pip install -q -r "$KIT/requirements-ref.txt" > "$H/pip.log" 2>&1; echo "pip exit $?" >> "$H/pip.log") &
+pip_pid=$!
 log "copy checkpoint to $LOCAL/hf"
 mkdir -p "$LOCAL/hf"
 (cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/hf/")
 [[ $(cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}') == $(cd "$LOCAL/hf" && find . -type f -printf '%s\n' | awk '{s+=$1} END {print s}') ]]
 log "copy done: $(du -sh "$LOCAL/hf" | cut -f1)"
 
-pip install -q --no-index --find-links "$W/wheels-bw" -r "$KIT/requirements-ref.txt" \
-  || pip install -q -r "$KIT/requirements-ref.txt"   # wheels-bw: fetched by the CPU pod, so the GPU does not wait
+wait $pip_pid
+tail -2 "$H/pip.log" | tee -a "$H/pod.log"
 python3 -c "import torch; print(torch.__version__, torch.cuda.get_device_name(0), torch.cuda.get_arch_list())" | tee -a "$H/pod.log"
 
 fit() { python3 "$KIT/keep_quant_torch.py" fit --hf-path "$LOCAL/hf" --importance "$P/imp-all.npz" "$@"; }
