@@ -115,6 +115,10 @@ def sparse_attn(q, kv, attn_sink, topk_idxs, softmax_scale):
     """q [b,m,h,d], kv [b,n,d] (one shared head), topk_idxs [b,m,k] with -1 = empty slot.
     Softmax over the gathered slots plus a per-head sink logit; a row with no valid slot is 0."""
 
+    m = q.shape[1]
+    if m > SPARSE_ATTN_CHUNK:  # rows are independent: chunk the queries to bound the [b,m,k,d] gather
+        return torch.cat([sparse_attn(q[:, i:i + SPARSE_ATTN_CHUNK], kv, attn_sink, topk_idxs[:, i:i + SPARSE_ATTN_CHUNK],
+                                      softmax_scale) for i in range(0, m, SPARSE_ATTN_CHUNK)], dim=1)
     b = q.shape[0]
     valid = topk_idxs >= 0
     gathered = kv.float()[torch.arange(b)[:, None, None], topk_idxs.clamp_min(0).long()]  # [b,m,k,d]
@@ -125,6 +129,9 @@ def sparse_attn(q, kv, attn_sink, topk_idxs, softmax_scale):
     denom = p.sum(dim=-1) + torch.exp(attn_sink.float()[None, None, :] - row_max[..., 0])
     o = torch.einsum("bmhk,bmkd->bmhd", p, gathered) / denom[..., None]
     return o.to(q.dtype)
+
+
+SPARSE_ATTN_CHUNK = 2048  # queries per gather: 2048 x 640 slots x 512 dims in float32 is 2.7 GB
 
 
 def hc_split_sinkhorn(mixes, hc_scale, hc_base, hc_mult=4, sinkhorn_iters=20, eps=1e-6):
