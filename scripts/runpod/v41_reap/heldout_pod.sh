@@ -23,14 +23,17 @@ mkdir -p "$H"
 log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$H/pod.log"; }
 trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "$H/FAILED"; }' EXIT
 
-# No CPU stock in the volume's data center for a prep pod: the install runs beside the copy.
-(pip install -q -r "$KIT/requirements-ref.txt" > "$H/pip.log" 2>&1; echo "pip exit $?" >> "$H/pip.log") &
+# The wheels on the volume (torch 2.15, CUDA 13): PyPI ran at 260 KB/s from this data center.
+(pip install -q --no-index --find-links "$W/wheels" -r "$KIT/requirements-ref.txt" > "$H/pip.log" 2>&1; echo "pip exit $?" >> "$H/pip.log") &
 pip_pid=$!
-log "copy checkpoint to $LOCAL/hf"
-mkdir -p "$LOCAL/hf"
-(cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/hf/")
-[[ $(cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}') == $(cd "$LOCAL/hf" && find . -type f -printf '%s\n' | awk '{s+=$1} END {print s}') ]]
-log "copy done: $(du -sh "$LOCAL/hf" | cut -f1)"
+size() { (cd "$1" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}'); }
+if [[ $(size "$W/v41-hf") != $(size "$LOCAL/hf" 2>/dev/null) ]]; then
+  log "copy checkpoint to $LOCAL/hf"
+  mkdir -p "$LOCAL/hf"
+  (cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/hf/")
+  [[ $(size "$W/v41-hf") == $(size "$LOCAL/hf") ]]
+fi
+log "checkpoint in place: $(du -sh "$LOCAL/hf" | cut -f1)"
 
 wait $pip_pid
 tail -2 "$H/pip.log" | tee -a "$H/pod.log"
