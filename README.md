@@ -194,6 +194,43 @@ working script about four times as often as the static set.
 
 ![Sampled scripts that run correctly against residents per layer](docs/deepseek-v4-flash/paper/fig-generation.png)
 
+## What is oMLX's and what is ours
+
+[oMLX](https://github.com/jundot/omlx) is an MLX inference server by other authors, under
+Apache-2.0. It already runs DeepSeek-V4.1-Flash-1017 and has its own expert offload. We did not
+fork or modify it. Our scripts start oMLX at a pinned commit (`4213c328`) and replace parts of
+the loaded model in process, so the comparison below is with that commit only.
+
+**Used from oMLX unchanged:** the server and its OpenAI-compatible API, tokenization and chat
+encoding, model loading, attention, the Engram tables and their SSD offload, the shared expert
+and its kernels, the router's scoring kernel, sampling, and the speculative decoder.
+
+**Replaced by this repository:** the routed experts of every layer, meaning how they are stored,
+which ones are in memory, what happens on a miss, and the kernels that run them.
+
+| | oMLX's expert offload | This repository |
+|---|---|---|
+| Goal | exact output: routing is computed as shipped | bounded latency: no token waits |
+| Miss rule | wait. The token blocks until the missed expert is read | re-route. The token runs on the best resident experts |
+| Output | identical to the fully resident model | inexact on a miss, measured in the case study |
+| Admission | every missed expert is read | only an expert demanded with gate weight at or above τ, read in the background |
+| Eviction | lowest decayed use count | least recently strongly demanded, with spare slots kept free |
+| Expert format | the checkpoint's 4-bit format (18.8 MB an expert), or oMLX's 2 to 8-bit affine quantization | 2-bit lattice codes (9.0 MB an expert), with an optional nested third bit for a hot set |
+| Reach | the experts of the loaded checkpoint | all 384 per layer, even when the loaded checkpoint is pruned: the pool comes from the codes |
+| Decode path | oMLX's fused decode kernels do not apply while its offload is on | our Metal kernels for the routed experts, oMLX's for everything else |
+| Resident count | set as a fraction of the experts | chosen from the machine's RAM |
+
+Measured on the same machine, oMLX's waiting offload decodes seven times slower than a static
+set of the same size, and routed residency 7 to 9% slower than a static set from the same pool.
+That is the price of each miss rule, not a ranking: oMLX's offload returns exactly the full
+model's output and ours does not.
+
+The files: [`omlx_compact.py`](scripts/v41_build/omlx_compact.py) builds a fixed resident set
+that oMLX's fused kernels can run, [`omlx_routed.py`](scripts/v41_build/omlx_routed.py) adds
+demand, the cache policy and installs that never stall a token, and
+[`omlx_lattice.py`](scripts/v41_build/omlx_lattice.py) swaps the experts for 2-bit lattice
+codes with their own kernels and a pool wider than the checkpoint.
+
 ## What is not shown
 
 - **One model.** GLM-5.3, GLM-5.3-Flash and Kimi K3.1 Pro have the wide, sparse pools the order
