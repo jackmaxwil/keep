@@ -1309,4 +1309,7 @@ Scored with `scripts/v41_build/score_dupe_script.py`, which reproduces the earli
 - All 20 static failures are slips of the kind seen below the floor: misspelled names
   (`os.is_symlink`, `collectionsdefaultdict`, `mmain`), syntax errors, two answers without code.
 - The cache log is empty for the static runs by design: with tau infinite no demand is read.
+- The bundle's settings switch the drafter on, so the static rows and the launcher check ran with it;
+  the 17 of 24 row ran without. The drafter did not lower routed counts in earlier runs (4 of 8 on
+  and off at 120 residents, 21 of 24 on at 180).
 - Jobs: `~/Models/v41-reap-run/jobs/k1_static_samples.sh`; samples `k1/static-*.json`.
