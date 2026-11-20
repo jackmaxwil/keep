@@ -25,15 +25,15 @@ times slower than a static set.
 
 | Rank | Idea | Moves | Ceiling | Status |
 |---:|---|---|---|---|
-| 1 | Better 2-bit codes | KL at every budget | up to 0.235 | open |
+| 1 | Better 2-bit codes | KL at every budget | up to 0.235 | rounding works on synthetic data; real inputs queued |
 | 2 | Replay on a strong miss | generation floor, KL, exactness | 0.085 at 144, 0.347 at 48 | narrowed by its kill test, see below |
-| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | warm-start half queued |
+| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | offline test passed; both halves queued |
 | 4 | A 1.5-bit code | reach to 64 GB machines | a third more residents per GB | error measured; likely loses on KL, see below |
-| 5 | Low-rank stand-ins for absent experts | routing error | part of 0.085 to 0.347 | open |
+| 5 | Low-rank stand-ins for absent experts | routing error | part of 0.085 to 0.347 | dead |
 | 6 | Uncertainty-gated replay | cost of idea 2 | same quality, fewer replays | after idea 2 |
-| 7 | Domain profiles | starting set | a share of 0.065 | open |
+| 7 | Domain profiles | starting set | a share of 0.065 | weak: loses to plain admission |
 | 8 | Engram in the memory account | speed or residents | unknown | needs a profile |
-| 9 | Adaptive active count | decode speed | about 8% | open |
+| 9 | Adaptive active count | decode speed | about 8% | queued |
 | 10 | Multi-row kernel | drafter speed | at most 12% of a cycle | measured, low |
 | 11 | Fitted per-expert thresholds | KL | at most 0.064 | lost twice |
 
@@ -56,6 +56,14 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - **Cost.** A capture pass through the model (a heavy job) and a fit change. A full refit is
   about 2.5 h per 192 experts per pass on the Mac.
 - **Also.** This is the "trained codes" route for rubric item 7.
+- **Synthetic check, done 2026-11-20** (`scripts/runpod/v41_reap/ldlq.py`: block rounding with error
+  feedback through the inputs' second moments, E8P codebook, scales from the plain fit). Relative
+  output error, plain against feedback: 0.091 and 0.091 with uncorrelated inputs, 0.091 and 0.079
+  with a power-law input spectrum of exponent 0.5, 0.098 and 0.040 with exponent 1. The method is
+  right and its gain depends entirely on how correlated the experts' real inputs are.
+- **Queued.** `local_eval.py --moments LAYER:EXPERT` captures those second moments for six experts
+  (layers 0 and 20) on calibration records split in two by session, so the fit uses one half and
+  the score the other. The comparison is against the stored codes, not against plain rounding.
 
 ### 2. Replay on a strong miss
 
@@ -96,6 +104,18 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   exact half is one more policy: serve the first P tokens with every expert, then continue.
 - **Cost.** Simulator runs. In serving, read volume on long prompts; bound it by reading only
   the experts with the most gate mass in the chunk.
+- **Offline test, done 2026-11-20** (`scripts/runpod/v41_reap/start_sets.py`, the same 52 calibration
+  records; share of gate weight served from token 256 on):
+
+  | Residents | Static | Admission at tau 0.3 | Top K of the first 256 tokens, fixed | The same, then admission | Own best K (hindsight) |
+  |---:|---:|---:|---:|---:|---:|
+  | 96 | 55.1% | 80.8% | 80.4% | 85.4% | 91.0% |
+  | 144 | 69.6% | 85.9% | 88.3% | 91.8% | 96.8% |
+
+  A warm start from 256 prompt tokens closes about half of the gap between admission and
+  hindsight (85.9% to 91.8% of 96.8% at 144 residents), and a set fixed after 256 tokens already
+  serves as much as admission does. With 32 or 64 prompt tokens the gain is 1 to 2 points.
+  This is served demand, not KL; the simulator runs (`prompt:P` tonight, `exact:P` after it) give KL.
 
 ### 4. A 1.5-bit code
 
@@ -138,6 +158,10 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - **Kill test.** Offline, on stored demand: output error of the stand-in against the output
   error of the re-routed choice, per missed slot.
 - **Risk.** Expert weights may not be low-rank enough for this to beat re-routing.
+- **Kill test, done 2026-11-20: dead.** Importance-weighted energy kept by a rank-16 copy of each
+  projection, two experts per layer: 4 to 6% for the input projections in layers 0 and 20 (12 to
+  15% at rank 64), 10 to 22% for the output projection. Only the last layer is low-rank (25 to
+  84% at rank 16). A stand-in that keeps a twentieth of an expert's input map is a skip.
 
 ### 6. Uncertainty-gated replay
 
@@ -157,6 +181,10 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   as idea 3 does.
 - **Kill test.** Offline, on stored demand: gate weight served by the nearest profile against
   the static set (65%) and each text's own best set (96%).
+- **Done 2026-11-20: weak.** Profiles from k-means over other sessions' records, chosen after 32
+  tokens and held fixed, serve 79.5 to 81.1% at 144 residents (67 to 69% at 96): above the
+  static set, below plain admission (85.9%). As a starting point for admission they could add
+  at most what a 32-token warm start adds (1 to 2 points). No further work.
 
 ### 8. Engram in the memory account
 
@@ -172,6 +200,7 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - **Why.** Skipping slots with gate weight below 0.1 is close to free (+0.001 KL, 7.7% of
   slots). Expert decode is about 9 of the 37 ms of a token, so the ceiling is small.
 - **Kill test.** Simulator variants at several cutoffs; average experts run against KL.
+- **Queued.** `--mass-cut NAME=SHARE` (0.9 and 0.8 at 144 residents).
 
 ### 10. Multi-row lattice kernel
 
@@ -191,6 +220,13 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   of roughly 400 GB/s of memory bandwidth, so it is not bandwidth-bound. No speed idea can be
   ranked properly without a trace.
 - Why the median speed of one configuration varies by 25% between runs.
+
+## Queue on the Mac
+
+`jobs/chain_1118.sh` (held-out confirmation, then the prompt warm start), then `jobs/ideas_mac.sh`:
+a smoke run, pass a (144 residents: `wait:0.5`, `wait:0.7`, `exact:256`, `exact:256+wait:0.7`),
+pass b (96 residents: `wait:0.5`, `wait:0.7`; 144 residents: mass cut 0.9 and 0.8), and the two
+second-moment captures. Each stage skips what is already finished.
 
 ## Plan
 

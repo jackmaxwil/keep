@@ -183,7 +183,8 @@ def layer_codes(spec: str, layer: int, have: list[int]) -> dict:
 
 def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.ndarray, bounds: list[int],
                    warm: np.ndarray | None, counts: np.ndarray, policy: str = "lru",
-                   trace: list | None = None, resident: np.ndarray | None = None) -> np.ndarray:
+                   trace: list | None = None, resident: np.ndarray | None = None,
+                   waited: list | None = None) -> np.ndarray:
     """Which (token, slot) pairs may run base + residual, under an LRU of ``k`` resident residuals.
 
     ``ind``/``wts``: [T, top_k] routed experts and gate weights, the records of ``bounds`` back to
@@ -196,6 +197,12 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
 
     ``policy="oracle"`` is the upper bound for any cache of ``k``: each record's hot set is its own
     top ``k`` experts by routed gate weight, known in advance and never changed (no admissions).
+
+    ``policy`` may join options with ``+``. ``prompt:P``: after a record's first P tokens its own top
+    ``k`` so far replace the residents. ``exact:P``: the same, and those P tokens are served by
+    every expert they ask for (a prefill that waits). ``wait:W``: a slot with gate >= W whose
+    expert is absent is served by it anyway (the token waits, or is replayed); ``waited``
+    collects the indices of such tokens.
 
     ``resident`` ([T, n_experts] bool, zeroed by the caller) receives the resident set each token
     sees, for callers that re-route a miss among resident experts."""
@@ -215,7 +222,9 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
             start += n
             continue
         lru = OrderedDict((int(e), None) for e in (warm if warm is not None else []))
-        prompt = int(policy.partition(":")[2]) if policy.startswith("prompt:") else 0
+        opts = dict(part.partition(":")[::2] for part in policy.split("+"))
+        exact, wait = int(opts.get("exact", 0)), float(opts.get("wait", "inf"))
+        prompt = int(opts.get("prompt", 0)) or exact
         for t in range(start, start + n):
             if prompt and t == start + prompt:  # the prompt has been read: its own top k replace the residents
                 mass = np.bincount(ind[start:t].ravel(), weights=wts[start:t].ravel(), minlength=counts.shape[0])
@@ -226,9 +235,12 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
                 pad = others[max(0, len(others) - (k - len(top))):] if len(top) < k else []
                 lru = OrderedDict((e, None) for e in [*pad, *reversed(top)])  # the heaviest is the most recent
             row = ind[t].tolist()
-            hi[t] = [e in lru for e in row]
+            late = [e for s, e in enumerate(row) if e not in lru and (t < start + exact or wts[t, s] >= wait)]
+            if late and waited is not None and t >= start + exact:
+                waited.append(t)
+            hi[t] = [e in lru or e in late for e in row]
             if resident is not None:
-                resident[t, list(lru)] = True
+                resident[t, list(lru) + late] = True
             for s, e in enumerate(row):
                 if wts[t, s] >= thr[e]:
                     if e in lru:
@@ -242,6 +254,17 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
                             lru.popitem(last=False)
         start += n
     return hi
+
+
+def wait_stats(log: dict[int, list], tokens: int, n_layers: int) -> dict[str, float]:
+    """Share of tokens that waited in some layer, and of all layer work a replay from the first such layer repeats."""
+
+    first: dict[int, int] = {}
+    for layer in sorted(log):
+        for t in log[layer]:
+            first.setdefault(t, layer)
+    return {"wait_token_share": len(first) / max(tokens, 1),
+            "wait_layer_rerun_share": sum(n_layers - layer for layer in first.values()) / max(tokens * n_layers, 1)}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -270,13 +293,19 @@ def main(argv: list[str] | None = None) -> int:
                    "from the other), and BASE may be empty when every variant has --miss")
     p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
                    help="nested only, per variant: the high tier adds the residual for these projections only")
-    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P",
+    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P|exact:P|wait:W",
                    help="with --cache-k: lru (default) or oracle (each record's own top-K, the upper bound)")
     p.add_argument("--trace", action="append", default=[], metavar="NAME",
                    help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")
     p.add_argument("--tau", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot runs base + residual when its gate weight >= VALUE. "
                         "With --cache-k, VALUE may be a fit_tau.py file: one admission threshold per layer and expert")
+    p.add_argument("--moments", action="append", default=[], metavar="LAYER:EXPERT",
+                   help="with --dynamic and one variant: write the second moments of the inputs this expert was "
+                        "routed (moments.npz, for ldlq.py)")
+    p.add_argument("--mass-cut", action="append", default=[], metavar="NAME=SHARE",
+                   help="with --miss reroute: run only a token's strongest slots, until they hold SHARE of its gate "
+                        "weight; the rest are skipped and the kept weights rescaled to the token's total")
     p.add_argument("--tau-drop", action="append", default=[], metavar="NAME=VALUE",
                    help="with --dynamic, per variant: a slot with gate weight < VALUE is skipped (rung 0 per token)")
     p.add_argument("--miss", action="append", default=[], metavar="NAME=drop|reroute",
@@ -404,6 +433,11 @@ def main(argv: list[str] | None = None) -> int:
             "per-expert thresholds need --cache-k"
         assert all(t.shape == (int(model_args.n_layers), n_local) for t in taus.values() if isinstance(t, np.ndarray))
         tau_drop = {name: float(t) for name, _, t in (s.partition("=") for s in args.tau_drop)}
+        mass_cut = {name: float(t) for name, _, t in (s.partition("=") for s in args.mass_cut)}
+        wait_log: dict[str, dict[int, list]] = {v: {} for v in variants}
+        assert not args.moments or len(variants) == 1, "--moments takes one variant"
+        moments = {tuple(map(int, s.split(":"))): [torch.zeros(int(model_args.dim), int(model_args.dim), dtype=torch.float64), 0]
+                   for s in args.moments}
         miss = {name: mode for name, _, mode in (s.partition("=") for s in args.miss)}
         assert all(m in ("drop", "reroute") and copy_mode and v in args_cache_k_names for v, m in miss.items()), \
             "--miss takes drop or reroute, and needs BASE|HI codes and --cache-k for the same variant"
@@ -426,7 +460,8 @@ def main(argv: list[str] | None = None) -> int:
         def simulate_cache(layer, ind, wts, k, tau, counts, resident=None):
             v, found = state["variant"], []
             hi = residual_cache(ind, wts, k, tau, state["bounds"], None if warm is None else warm[layer, :k], counts,
-                                policy=policies.get(v, "lru"), trace=found if v in traces else None, resident=resident)
+                                policy=policies.get(v, "lru"), trace=found if v in traces else None, resident=resident,
+                                waited=wait_log[v].setdefault(layer, []))
             if v in traces:
                 traces[v].extend((layer, *row) for row in found)
             return hi
@@ -478,8 +513,21 @@ def main(argv: list[str] | None = None) -> int:
             if resident is not None:  # demand (above) drove the cache; the tokens run on what is resident
                 weights, indices = gate_masked(self.gate, x, torch.as_tensor(resident, device=x.device), ref.linear)
                 hi_all = weights > 0
+            if state["variant"] in mass_cut:  # run a token's strongest slots only, up to a share of its gate weight
+                assert resident is not None, "--mass-cut needs --miss reroute"
+                order = weights.argsort(dim=-1, descending=True)
+                ranked = weights.gather(1, order).float()
+                total = ranked.sum(-1, keepdim=True)
+                keep = torch.zeros_like(hi_all).scatter(1, order, ranked.cumsum(-1) - ranked < mass_cut[state["variant"]] * total)
+                kept = (weights.float() * keep).sum(-1, keepdim=True)
+                weights = (weights.float() * keep * (total / kept)).to(weights.dtype)  # the rest keep the token's total
+                hi_all = weights > 0
             for i in torch.unique(indices).tolist():
                 idx, top = torch.where(indices == i)
+                if (layer, i) in moments:
+                    rows = x[idx].double().cpu()
+                    moments[layer, i][0] += rows.T @ rows
+                    moments[layer, i][1] += rows.shape[0]
                 w = weights[idx, top]
                 hi_mask = w >= tau if hi_all is None else hi_all[idx, top]
                 drop = w < tau_drop.get(state["variant"], 0.0)  # rung 0 per token: the slot is skipped
@@ -678,13 +726,17 @@ def main(argv: list[str] | None = None) -> int:
                                             "n_bases": 0 if v in miss else kept, "pool": kept, "miss": miss.get(v),
                                             "hot": hot_n.get(v, 0), "hot_tier": "fp4" if args.hot_tier == "fp4" else "nested",
                                             "hot_slot_share": hot_slots[v] / max(tot[:2].sum() + tot[5], 1),
-                                            "tau_drop": tau_drop.get(v, 0.0),
+                                            "tau_drop": tau_drop.get(v, 0.0), "mass_cut": mass_cut.get(v),
+                                            **wait_stats(wait_log[v], sum(state["bounds"]), int(model_args.n_layers)),
                                             "hi_slot_share": float(tot[1] / (tot[:2].sum() + tot[5])),
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),
                                             "hi_mass_share": float(tot[3] / (tot[2:4].sum() + tot[6])),
                                             "drop_mass_share": float(tot[6] / (tot[2:4].sum() + tot[6])),
                                             "admissions_per_token_layer": float(tot[4] / ((tot[:2].sum() + tot[5]) / int(model_args.n_activated_experts)) / int(model_args.n_layers))}
         print(v, json.dumps(summary["variants"][v]["_tiers"]), flush=True)
+    if args.moments:
+        np.savez(args.out / "moments.npz", **{f"h_{l}_{e}": (h / max(n, 1)).numpy().astype(np.float32) for (l, e), (h, n) in moments.items()},
+                 **{f"n_{l}_{e}": np.asarray(n) for (l, e), (h, n) in moments.items()})
     summary["peak_rss_gb"] = round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**30, 2)
     (args.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps({k: summary[k] for k in ("forward_seconds", "peak_rss_gb")}), flush=True)
