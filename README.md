@@ -16,6 +16,30 @@ here the machine reaches every expert of the model and decodes at 23 to 27 token
 The evidence is one model, one set of codes and one machine. The formulation is general; the
 measurements are a case study. [What is not shown](#what-is-not-shown) lists the gaps.
 
+## What KEEP and RAMP mean
+
+The repository holds two pieces of software and is named after the first.
+
+**KEEP** stands for *KL-distilled Expert Encoding and Precision*. It is the compression side: it
+decides how each expert is stored.
+
+- *Expert encoding* is the lattice code that stores an expert's weights at about 2 bits each.
+- *Precision* is the choice of how many bits each expert gets.
+- *KL-distilled* names the yardstick. The full model is the teacher, and every compressed model
+  is measured against the teacher's next-token distribution by KL divergence.
+
+**RAMP** stands for *Routed Accelerated MoE Pipeline*. It is the runtime side: it runs the
+compressed experts on an Apple GPU with MLX and Metal kernels.
+
+- *Routed* because the model's router picks a few experts per token, and the runtime decodes
+  only those.
+- *Accelerated* because the decode from lattice codes happens inside GPU kernels, with no
+  full-precision copy of the weights in memory.
+
+In the paper's terms, KEEP supplies precision (the codes and their bit widths), and RAMP's
+kernels are what the serving code uses to apply reach, residency and the miss rule on every
+token. The paper's fitting and serving scripts import both libraries.
+
 ## The problem
 
 A sparse MoE layer holds many feed-forward experts and a router that sends each token to a few
@@ -247,7 +271,7 @@ evaluation outputs. Those outputs, the weights and the fitted codes are not in t
 
 ## Earlier work in this repository
 
-KEEP and RAMP began as a pipeline that compresses a model's experts to about 2 bits per weight
+KEEP and RAMP (defined [above](#what-keep-and-ramp-mean)) began as a pipeline that compresses a model's experts to about 2 bits per weight
 and runs them with MLX. That pipeline compressed DeepSeek-V4-Flash-0731 to a 75.25 GB expert
 payload at 2.031 bits per weight, and has adapters for GLM-5.3-Flash, GLM-4.5-Air and
 Qwen3.6-35B-A3B. Its setup guide, commands and model table are in

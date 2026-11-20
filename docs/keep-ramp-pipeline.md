@@ -2,8 +2,9 @@
 
 Run a huge mixture-of-experts language model on one Apple silicon Mac.
 
-**KEEP** shrinks a model's experts to about 2 bits per weight. **RAMP** runs
-the shrunken model on the Mac's GPU with MLX.
+**KEEP** (*KL-distilled Expert Encoding and Precision*) shrinks a model's experts to about
+2 bits per weight. **RAMP** (*Routed Accelerated MoE Pipeline*) runs the shrunken model on the
+Mac's GPU with MLX.
 
 What it has done so far: **DeepSeek-V4-Flash** (304 B parameters) squeezed to
 a **75.25 GB** expert payload at **2.031 bits per weight**. The compressed
