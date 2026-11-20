@@ -215,7 +215,16 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
             start += n
             continue
         lru = OrderedDict((int(e), None) for e in (warm if warm is not None else []))
+        prompt = int(policy.partition(":")[2]) if policy.startswith("prompt:") else 0
         for t in range(start, start + n):
+            if prompt and t == start + prompt:  # the prompt has been read: its own top k replace the residents
+                mass = np.bincount(ind[start:t].ravel(), weights=wts[start:t].ravel(), minlength=counts.shape[0])
+                top = [int(e) for e in np.argsort(-mass, kind="stable")[:k] if mass[e] > 0]
+                new = [e for e in top if e not in lru]
+                counts[new, 4] += 1
+                others = [e for e in lru if e not in top]  # pad with the most recent of the rest
+                pad = others[max(0, len(others) - (k - len(top))):] if len(top) < k else []
+                lru = OrderedDict((e, None) for e in [*pad, *reversed(top)])  # the heaviest is the most recent
             row = ind[t].tolist()
             hi[t] = [e in lru for e in row]
             if resident is not None:
@@ -241,6 +250,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--checkpoint-survivors", type=Path,
                    help="the survivors JSON the checkpoint was exported from; omit for an unpruned checkpoint")
     p.add_argument("--device", default="cpu", help="cpu, or cuda on a pod")
+    p.add_argument("--torch-kernels", action="store_true",
+                   help="on cuda, run the torch stand-ins (as the Mac does) instead of the reference's tilelang kernels")
     p.add_argument("--router", type=Path, help="safetensors with every router row of the unpruned model: the pool is "
                    "all its experts, taken from --dynamic codes alone (HOT_DIR@SET.json+REST_DIR), on a pruned checkpoint")
     p.add_argument("--pack", required=True, type=Path)
@@ -259,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
                    "from the other), and BASE may be empty when every variant has --miss")
     p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
                    help="nested only, per variant: the high tier adds the residual for these projections only")
-    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle",
+    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P",
                    help="with --cache-k: lru (default) or oracle (each record's own top-K, the upper bound)")
     p.add_argument("--trace", action="append", default=[], metavar="NAME",
                    help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")
@@ -323,8 +334,8 @@ def main(argv: list[str] | None = None) -> int:
     torch.set_num_threads(args.threads)
     ref_dir = args.hf_path / "inference"
     dev = args.device
-    # On a GPU the reference's own kernels run, as in collect.py; elsewhere the torch stand-ins.
-    ref = stream.import_reference(ref_dir, kernel=torch_kernel if dev == "cpu" else None)
+    # On a GPU the reference's own kernels run, as in collect.py; elsewhere, or with --torch-kernels, the torch stand-ins.
+    ref = stream.import_reference(ref_dir, kernel=torch_kernel if dev == "cpu" or args.torch_kernels else None)
     torch.set_default_dtype(torch.bfloat16)
     if dev != "cpu":
         torch.cuda.memory._set_allocator_settings("expandable_segments:True")

@@ -1313,3 +1313,23 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - 18 references added (41 in all), two rows in the table of techniques, a new related-work
   paragraph on serving a miss without waiting and one on experts against bits.
 - Not opened: CommitMoE (AAAI 2026) and the MLX-Flash package; both are listed in `OPEN.md`.
+
+### 2026-11-18: static sets in generation; E7 moved from a pod to the Mac
+
+- Static 144 (admissions off) writes a working script in 4 of 24 card-setting samples against 17
+  of 24 for the cache of 144 at tau 0.3 (p = 0.0004) and 18 of 24 for the exact REAP-50
+  checkpoint; it is level with the cache of 96 (2 of 8). Table in the build plan, "Static sets
+  in generation". The scorer is now in the repository (`scripts/v41_build/score_dupe_script.py`).
+- E7 (held-out confirmation): the 42 eval sessions with stored teacher logits that the Mac never
+  scored (the X1 shard minus the Mac's 22), full length, 97,656 scored positions; settings frozen
+  (tau 0.3, re-route, residents warmed from calibration mass). Variants: all 384 resident; static
+  and routed at 96 and 144; static 200 and 250.
+- The pod attempt: no H100, H200 or A100 in US-NE-1 (the volume's data center), so 1x RTX PRO 6000
+  ($2.69/h, pod `pkw2pkuvfzc24c`). PyPI ran at 260 KB/s there; the volume's own wheels fixed the
+  install. The torch fit of 2-bit codes for all 15,360 experts ran at 3 s per expert, and four
+  processes ran four times slower each: 12.8 h, about $34, the same wall time as the Mac with codes
+  the Mac already has. The pod was terminated after about 43 minutes (about $1.90) once the 1.2 GB
+  of held-out teacher logits were copied to the Mac (checksums match).
+- E7 now runs on the Mac in six groups (`jobs/heldout_mac.sh`, about 15 h), then the prompt warm
+  start (`jobs/warmstart_mac.sh`, `--cache-policy prompt:P`).
+- Rubric unchanged at 75.
