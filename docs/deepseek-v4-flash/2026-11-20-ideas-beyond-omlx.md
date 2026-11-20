@@ -28,7 +28,7 @@ times slower than a static set.
 | 1 | Better 2-bit codes | KL at every budget | up to 0.235 | open |
 | 2 | Replay on a strong miss | generation floor, KL, exactness | 0.085 at 144, 0.347 at 48 | narrowed by its kill test, see below |
 | 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | warm-start half queued |
-| 4 | A 1.5-bit code | reach to 64 GB machines | a third more residents per GB | open |
+| 4 | A 1.5-bit code | reach to 64 GB machines | a third more residents per GB | error measured; likely loses on KL, see below |
 | 5 | Low-rank stand-ins for absent experts | routing error | part of 0.085 to 0.347 | open |
 | 6 | Uncertainty-gated replay | cost of idea 2 | same quality, fewer replays | after idea 2 |
 | 7 | Domain profiles | starting set | a share of 0.065 | open |
@@ -106,6 +106,29 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - **Kill test.** Fit one layer and compare weighted error with the 1-bit and 2-bit fits, then
   score all-resident KL for that layer alone.
 - **Cost.** A codebook, one small fit on the GPU, one simulator variant.
+- **Kill test, first half, done 2026-11-20** (`scripts/runpod/v41_reap/knee_codebooks.py`: relative
+  squared error without importance weighting, three projections of one expert in layers 0 and 20):
+
+  | Codebook | Bits per weight | Relative error |
+  |---|---:|---:|
+  | E8, 256 points | 1 | 0.322 |
+  | E8P, the 4,096 points of smallest norm | 1.5 | 0.174 |
+  | 4,096 points trained by k-means on another expert | 1.5 | 0.170 |
+  | E8P, full grid | 2 | 0.094 |
+
+  The error is the same to three digits across layers and projections, and each half bit
+  multiplies it by about 0.54, which is what a memoryless Gaussian source gives. A trained
+  codebook buys 2% over the lattice subset, so there is no better 1.5-bit codebook to find.
+- **Reading.** A 1.5-bit code has 1.9 times the error of the 2-bit code. Interpolating KL
+  linearly in error between the measured 1-bit and 2-bit points puts its coding term near 0.44
+  nats against 0.235, more than the routing error it would remove at any budget we measured
+  (a third more residents is worth 0.04 to 0.07 between 96 and 200). That is an estimate, not a
+  measurement. The idea survives only as a way under the residency floor, where the question is
+  generation and not KL: one simulator variant and one set of sampled scripts would settle it.
+  It moves behind ideas 1 to 3.
+- **Side result for idea 1.** With the weights this close to a Gaussian source, no codebook or
+  scale change can lower the output-blind error at 2 bits. Any gain has to come from rounding
+  that uses the inputs' correlations, which is what error feedback does.
 
 ### 5. Low-rank stand-ins for absent experts
 
