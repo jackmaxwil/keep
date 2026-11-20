@@ -15,7 +15,6 @@ import argparse
 from pathlib import Path
 
 import numpy as np
-
 from local_eval import residual_cache
 
 WAITS = (0.15, 0.3, 0.5, 0.7)
