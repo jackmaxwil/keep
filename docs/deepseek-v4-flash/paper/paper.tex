@@ -54,7 +54,7 @@ it closer to the full model at every budget and makes it indistinguishable from 
 about twice its size, a third bit on the most used experts loses to more residents at the smallest budget
 tested, ties in the middle and wins once roughly 40 to 50\% of the pool is in memory, and a laptop serves the whole pool within about 10\% of the speed of a static set of experts. The case study also shows a limit: below a
 residency floor, re-routing damages generated text in a way that divergence from the full model
-does not measure.
+does not measure. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, by a smaller margin and with weaker session locality.
 \end{abstract}
 
 \section{Introduction}
@@ -125,7 +125,9 @@ at 2 bits. At equal memory a routed set is closer to the full model than a prune
 budget and is indistinguishable from a pruned set about twice its size; a third bit on the most used experts loses to more residents at 35\,GB, is level
 at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
-The evidence is one model, one set of codes and one machine. We present the formulation and
+\paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. The routed set wins at every budget and in every text; reach is worth less memory there than in the case study, and that model's demand is less local.
+
+The evidence for the order of spending is one model, one set of codes and one machine; the second model tests residency alone. We present the formulation and
 the policy as general, the order of spending as a prediction, the measurements as a case study, and in
 Section~\ref{sec:discussion} we say which parts we expect to transfer.
 
@@ -741,7 +743,7 @@ only. Appendix~\ref{app:serving} has the details.
   \caption{Case study: sampled scripts that run correctly against residents per layer. Counts
   are correct samples of 8 or of 24; bars are 95\% Wilson intervals. The line and band are the
   pruned checkpoint at 4 bits (18 of 24). The triangle is routed residency with speculative
-  decoding.}
+  decoding, the square a static set of the same 2-bit experts.}
   \label{fig:generation}
 \end{figure}
 
@@ -751,11 +753,79 @@ settings and counted the scripts that run and give the right output
 (Figure~\ref{fig:generation}).
 
 With 144 or more residents, routed residency is indistinguishable from the pruned checkpoint at
-4 bits (17 to 21 correct of 24, against 18). Below that, KL stops predicting the outcome. At 96 residents KL is indistinguishable from the pruned checkpoint's (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}), yet 2 of 8 samples are correct against 18 of 24, and at 48 none is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
+4 bits (17 to 21 correct of 24, against 18). A static set of 144, the same codes in the same memory with admission switched off, gets 4 of 24 ($p=0.0004$ against 17 of 24, Fisher's exact test), level with routed residency at 96 residents: the factor of two that reach is worth in KL (Section~\ref{sec:frontier}) shows in generated code as well. Below that, KL stops predicting the outcome. At 96 residents KL is indistinguishable from the pruned checkpoint's (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}), yet 2 of 8 samples are correct against 18 of 24, and at 48 none is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
 track the share of demand that is re-routed: 35\% at 48 residents, 25\% at 96, 10\% at 200,
 where no failure is a misspelling.
 
 This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here roughly 120 to 144 of 384 experts per layer. Below the floor we expect the remedy to be a different miss rule, not more bits; we did not test one.
+
+\FloatBarrier
+\section{A second model}
+\label{sec:second}
+
+To see whether the central comparison survives a change of model we repeated it on
+GLM-5.3-Flash \citep{zai2026glm53flash}: 288 experts per layer with eight active, 45 layers of
+which 42 route, a router that scores experts with a sigmoid and a correction bias, and a
+different attention design. The test is narrower than the case study and was built to isolate
+residency. Every expert runs at the model's released 8-bit precision, so there is no coding
+error and no precision axis, and nothing is fitted. The reference implementation runs one layer
+at a time on one GPU, with the policy of Algorithm~\ref{alg:policy} applied inside each layer
+as in the simulator of Section~\ref{sec:case}. The texts are those of the case study, tokenized
+for this model (22{,}182 tokens), and the starting residents come from the same separate
+calibration text. The settings were fixed before the run: resident counts at the shares of the
+pool that 96, 144 and 200 experts are in the case study, and that study's admission threshold,
+$\tau=0.3$, unchanged.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}rrccl@{}}
+\toprule
+Residents $K$ & Share of pool & Static set & Routed residency & Difference \\
+\midrule
+ 72 & 25\%   & 1.276 & 0.893 & $-0.384$ \ci{-0.489}{-0.298} \\
+108 & 37.5\% & 0.774 & 0.597 & $-0.177$ \ci{-0.282}{-0.098} \\
+150 & 52\%   & 0.482 & 0.365 & $-0.117$ \ci{-0.168}{-0.079} \\
+288 & 100\%  & 0.028 & 0.028 & \\
+\bottomrule
+\end{tabular}
+\caption{Second model: KL to the full model (nats) for a static set and for routed residency
+with the same number of experts per layer in memory, every expert at the released precision,
+$\tau=0.3$ as in the case study. In the last row every expert is resident; see the text for why
+it is not zero.}
+\label{tab:second}
+\end{table}
+
+Routed residency is closer to the full model than a static set at every budget, in each of the
+17 texts at each budget, and the gap grows as memory shrinks (Table~\ref{tab:second}). The
+first prediction of Section~\ref{sec:principle} holds on a model the policy was not developed
+on, with no setting changed.
+
+Two things differ from the case study, and both make residency cost more here. The first is
+the threshold. Eight active experts spread a token's gate weight more thinly than six, so the
+same threshold admits less: 0.04 experts per token and layer at 108 residents, against 0.065
+in the case study. With it, reach is worth less memory than the factor of two we saw there:
+108 routed residents are worse than 150 static ones ($+0.115$ \ci{+0.048}{+0.172}). We then
+lowered the threshold to 0.2, after the fixed run and as a sensitivity check only. Every
+budget improves (0.699, 0.477 and 0.332), and 108 routed residents become indistinguishable
+from 150 static ones ($-0.005$ \ci{-0.077}{+0.055}); a threshold of 0.1 admits six times as
+much and is no better ($+0.027$ \ci{-0.033}{+0.098} at 108 residents). The threshold is a
+setting of the model's routing width, not a constant.
+
+The second is session locality, condition (ii) of Section~\ref{sec:principle}. A fixed set of
+108 experts chosen for each text with hindsight holds 85\% of that text's gate weight, where
+the corresponding set in the case study holds 96\%, and it scores 0.378: better than admission
+at either threshold ($-0.219$ \ci{-0.275}{-0.177} against $\tau=0.3$) and still far from the
+full model. More of this model's demand lies outside any set of this size. The routing term
+at 37.5\% of the pool is about 0.6 nats here against about 0.09 in the case study, and a
+deployment of this model would need a larger resident share, or a different miss rule, to
+reach the same distance.
+
+This section does not test the precision half of the order, generation, or a running system.
+Our implementation of the policy reproduces the reference model exactly in a single-precision
+test; at the model's half precision it differs from it by 0.028 nats with every expert
+resident, which we take as the numerical floor of the comparison. Both columns of
+Table~\ref{tab:second} pass through that implementation.
 
 \FloatBarrier
 \section{Discussion}
@@ -769,8 +839,7 @@ is how MoE layers are implemented in the runtimes we know. Whether the allocatio
 
 \paragraph{What may not.} The crossover points are properties of one model and one code. GLM-5.3, GLM-5.3-Flash and
 Kimi K3.1 Pro have wide pools (256, 288 and 896 experts) and sparsity within a factor of two of the one we studied, so
-they are where we would expect the order to hold; we measured none of them, and their routers
-may concentrate demand more or less than this one does. A
+they are where we would expect the order to hold. We measured residency alone on one of them (Section~\ref{sec:second}): the routed set wins, and that model's router concentrates demand less than the case study's, which is the kind of difference that moves a crossover. A
 model with fewer, larger experts has less concentration and poorer substitutes; a better 1-bit
 code would move the knee; a model trained with expert dropout or with nested precision in mind
 \citep{wei2026matmoe} would tolerate re-routing or coarse copies better than one that was not.
@@ -856,14 +925,14 @@ as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
 \section{Limitations}
 
 The formulation is general; the evidence for the allocation order is one model, one set of
-codes and one machine. The order's conditions are stated but tested only where that model meets them. Other current
-models with wide pools, such as GLM-5.3, GLM-5.3-Flash and Kimi K3.1 Pro, and the prediction
+codes and one machine. The order's conditions are stated but tested only where that model meets them. The second model tests the comparison of routed and static residency only: at its released precision, under forced context, on the same texts, with no code fitted, no generation and no running system, and its threshold of 0.2 was tried after the fixed run. Other current
+models with wide pools, such as GLM-5.3 and Kimi K3.1 Pro, and the prediction
 for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
 settings chosen on the same texts, and Section~\ref{sec:generation} shows that KL misses a
-failure mode of re-routing. Generation was tested with one prompt, without a full-model
-baseline, and without static sets.
+failure mode of re-routing. Generation was tested with one prompt and without a full-model
+baseline.
 
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
 the running system does neither. Among starting residents not yet demanded, the simulator evicts
@@ -882,8 +951,8 @@ reachable, then residents, then precision for the experts used most. A case stud
 not fit in memory at close to the speed of one that does, and finds a floor below which
 re-routing fails in generation. The open problems are the ones the formulation makes visible:
 predicting a session's experts before it begins, a miss rule that degrades gracefully below the
-floor, and a test of the order on
-other current models, whose pools range from 256 to 896 experts per layer.
+floor, and a test of the whole order, precision included, on
+other current models, whose pools range from 256 to 896 experts per layer. On the one other model we tried, routed residency alone carried over.
 
 \section*{Code availability}
 
@@ -892,8 +961,8 @@ The code is public at \url{https://github.com/jackmaxwil/keep} under the Apache-
 are in \src{scripts/v41_build}. The paper's source is in \src{docs/deepseek-v4-flash/paper},
 with the script that recomputes every reported quality number from the stored evaluations
 (\texttt{stats.py}), the script that draws the figures (\texttt{figures.py}), the session
-locality measurement (\texttt{routing.py}) and their outputs. The model weights, the codes
-fitted to them and the raw evaluation outputs are not in the repository.
+locality measurement (\texttt{routing.py}) and their outputs. The second model's run is in \src{scripts/runpod/glm53}, with its per-text results in \src{docs/glm-5.3-flash/results} and the script that tabulates them (\texttt{stats\_glm.py}). The model weights, the codes
+fitted to them and the first model's raw evaluation outputs are not in the repository.
 
 \appendix
 

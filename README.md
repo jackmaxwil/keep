@@ -13,7 +13,8 @@ Its experts do not fit on that machine at the released 4 bits or at 2 bits. With
 here the machine reaches every expert of the model and decodes at 23 to 27 tokens per second,
 30 to 40 with the model's speculative decoder.
 
-The evidence is one model, one set of codes and one machine. The formulation is general; the
+The evidence for the order of spending is one model, one set of codes and one machine; a
+[second model](#a-second-model-glm-53-flash) confirms the residency result alone. The formulation is general; the
 measurements are a case study. [What is not shown](#what-is-not-shown) lists the gaps.
 
 ## What KEEP and RAMP mean
@@ -185,7 +186,7 @@ resident. On one sampled coding request, counting scripts that run and give the 
 | Routed residency, 2 bits | 144 | 17 of 24 |
 | Routed residency, 2 bits | 96 | 2 of 8 |
 | Routed residency, 2 bits | 48 | 0 of 8 |
-| Static set, 2 bits (measured after the current draft) | 144 | 4 of 24 |
+| Static set, 2 bits | 144 | 4 of 24 |
 
 At 96 residents KL matches the pruned checkpoint's (0.390 against 0.389), yet the scripts break,
 mostly through misspelled identifiers. The order of spending therefore applies above a floor,
@@ -193,6 +194,30 @@ here roughly 120 to 144 of 384 experts per layer. At equal memory the routed set
 working script about four times as often as the static set.
 
 ![Sampled scripts that run correctly against residents per layer](docs/deepseek-v4-flash/paper/fig-generation.png)
+
+## A second model: GLM-5.3-Flash
+
+The comparison of routed and static residency was repeated on
+[GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash) (288 experts per layer, 8 active),
+with every expert at the model's released precision, so nothing is fitted and only residency
+differs. Resident counts and the admission threshold were fixed before the run, at the case
+study's values.
+
+| Residents per layer | Share of pool | Static set | Routed residency | Difference |
+|---:|---:|---:|---:|---|
+| 72 | 25% | 1.276 | 0.893 | −0.384 [−0.489, −0.298] |
+| 108 | 37.5% | 0.774 | 0.597 | −0.177 [−0.282, −0.098] |
+| 150 | 52% | 0.482 | 0.365 | −0.117 [−0.168, −0.079] |
+
+Routed residency wins at every budget and in each of the 17 texts. Two things differ from the
+first model. The unchanged threshold admits less with eight active experts; at 0.2, tried
+afterwards as a sensitivity check, 108 routed residents match 150 static ones. And this model's
+demand is less local: each text's own best 108 experts hold 85% of its gate weight, against 96%
+for the first model, so residency costs more here at every budget.
+
+This run tests residency only. Codes, the residents-against-bits trade, generation and serving
+were not tested on this model. The code is in [`scripts/runpod/glm53/`](scripts/runpod/glm53/)
+and the per-text results in [`docs/glm-5.3-flash/results/`](docs/glm-5.3-flash/results/).
 
 ## What is oMLX's and what is ours
 
@@ -233,8 +258,8 @@ codes with their own kernels and a pool wider than the checkpoint.
 
 ## What is not shown
 
-- **One model.** GLM-5.3, GLM-5.3-Flash and Kimi K3.1 Pro have the wide, sparse pools the order
-  needs, and none was measured. The prediction for narrow pools is untested.
+- **The order of spending rests on one model.** The second model tests residency alone. GLM-5.3
+  and Kimi K3.1 Pro were not measured, and the prediction for narrow pools is untested.
 - **Settings chosen on the evaluation text.** τ, the hot set size and the skipping threshold
   were chosen on the 17 texts. A confirmation on untouched sessions is running.
 - **Generation was tested with one prompt**, and without a full-model baseline, which does not
