@@ -29,9 +29,9 @@ import torch
 KIT = Path(__file__).resolve().parent
 sys.path.insert(0, str(KIT.parents[2] / "src"))
 
-from keep_quant_torch import PROJ_SPACE, decode_fp4
-
 from keep.vq.e8 import e8_1bit_grid, e8p_full_grid
+
+from keep_quant_torch import PROJ_SPACE, decode_fp4
 
 
 def load_expert(root: Path, layer: int, expert: int, device) -> dict:

@@ -56,6 +56,26 @@ def test_residual_cache_prompt_warm_start():
     assert lru[:, 0].tolist() == [False, False, False, True]
 
 
+def test_residual_cache_wait_and_exact_prefill():
+    ind = np.array([[1], [1], [0], [1]])
+    wts = np.array([[0.2], [0.6], [0.6], [0.6]])
+    resident, waited = np.zeros((4, 2), dtype=bool), []
+    # tau 0.5, wait 0.5: token 0 (gate 0.2) misses; token 1 waits for expert 1 and admits it (evicting 0);
+    # token 2 waits for expert 0; token 3 waits for expert 1 again: a cache of one thrashes.
+    hi = local_eval.residual_cache(ind, wts, k=1, tau=0.5, bounds=[4], warm=np.array([0]), counts=np.zeros((2, 5)),
+                                   policy="wait:0.5", resident=resident, waited=waited)
+    assert hi[:, 0].tolist() == [False, True, True, True] and waited == [1, 2, 3]
+    assert resident.tolist() == [[True, False], [True, True], [True, True], [True, True]]
+    assert local_eval.wait_stats({0: [1, 2], 3: [2, 5]}, tokens=10, n_layers=4) == {
+        "wait_token_share": 0.3, "wait_layer_rerun_share": (4 + 4 + 1) / 40}
+    # exact:2: the first two tokens are served whatever they ask for and are not counted as waits;
+    # then the residents are the prompt's own top k (expert 1), so token 2 (expert 0) misses.
+    waited = []
+    hi = local_eval.residual_cache(ind, np.full((4, 1), 0.2), k=1, tau=9.0, bounds=[4], warm=np.array([0]),
+                                   counts=np.zeros((2, 5)), policy="exact:2", waited=waited)
+    assert hi[:, 0].tolist() == [True, True, False, True] and waited == []
+
+
 def test_precision_allocator():
     precision_alloc._check()
 
