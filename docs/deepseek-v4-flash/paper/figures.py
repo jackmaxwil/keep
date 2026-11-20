@@ -107,6 +107,10 @@ def generation() -> None:
         ax.errorbar(x, k / n, yerr=[[k / n - lo], [hi - k / n]], fmt="o", color=BLUE, ms=4, lw=0.9, capsize=2,
                     label="routed residency, 2 bits" if j == 0 else None)
         ax.annotate(f"{k}/{n}", (x, k / n), (5, -3), textcoords="offset points", fontsize=7)
+    lo, hi = wilson(4, 24)
+    ax.errorbar(144, 4 / 24, yerr=[[4 / 24 - lo], [hi - 4 / 24]], fmt="s", color=GREY, ms=4, lw=0.9, capsize=2,
+                label="static set, 2 bits")
+    ax.annotate("4/24", (144, 4 / 24), (5, -3), textcoords="offset points", fontsize=7)
     lo, hi = wilson(21, 24)
     ax.errorbar(180, 21 / 24, yerr=[[21 / 24 - lo], [hi - 21 / 24]], fmt="^", color=RED, ms=5, lw=0.9, capsize=2,
                 label="routed residency, speculative decoding")

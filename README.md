@@ -185,7 +185,7 @@ resident. On one sampled coding request, counting scripts that run and give the 
 | Routed residency, 2 bits | 144 | 17 of 24 |
 | Routed residency, 2 bits | 96 | 2 of 8 |
 | Routed residency, 2 bits | 48 | 0 of 8 |
-| Static set, 2 bits (measured after the current draft) | 144 | 4 of 24 |
+| Static set, 2 bits | 144 | 4 of 24 |
 
 At 96 residents KL matches the pruned checkpoint's (0.390 against 0.389), yet the scripts break,
 mostly through misspelled identifiers. The order of spending therefore applies above a floor,

@@ -12,7 +12,6 @@ The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py` (List
 |---|---|---|
 | Author block | affiliation and contact are not filled in | Jack |
 | Total-mass 192 at 4 bits on the 22 sessions | separates expert choice from precision in the pruned-checkpoint comparison (done at 2 bits only) | 4-bit weights of the removed experts (pod) |
-| Static sets in generation | the routed-against-static result has no task-level check | serving runs on the Mac, about 20 minutes each |
 | A second prompt set for generation, and a full-model count | one prompt, 24 samples; no full-model baseline | design; a machine that holds the full model |
 | Held-out confirmation of the settings | tau, hot set sizes and the skipping threshold were chosen on the evaluation text | pod: 54 untouched sessions, full length |
 | Simulator with the served install delay and a fixed set inside a prompt | the simulator installs after one token | a simulator option and one rerun |

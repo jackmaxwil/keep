@@ -601,10 +601,10 @@ to 100; partial credit only for measured progress).
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
-| 7 | Learned tier policy or trained nested codes | 10 | 0 | 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
+| 7 | Learned tier policy or trained nested codes | 10 | 5 | 2026-11-20 (Jack left the ruling to the plan's mapping, "a hot tier that passes C3"): the fitted third-bit hot set passes C3's bar of 0.02 at 74 GB (-0.023, interval -0.042 to -0.002) and 92 GB (-0.039), ties at 53 GB and loses at 35 GB, and it decodes 11% slower at equal memory, so half credit; the rest waits for codes that lower the 0.235 coding floor (error-feedback rounding, first real test queued). Earlier: 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 0 | |
 | 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
-| | **Total** | 100 | **75** | |
+| | **Total** | 100 | **80** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1333,3 +1333,19 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - E7 now runs on the Mac in six groups (`jobs/heldout_mac.sh`, about 15 h), then the prompt warm
   start (`jobs/warmstart_mac.sh`, `--cache-policy prompt:P`).
 - Rubric unchanged at 75.
+
+### 2026-11-20: item 7 scored, ideas beyond oMLX, second model started
+
+- Rubric item 7 moves from 0 to 5 of 10 on the plan's own mapping (a hot tier that passes C3): it
+  passes at 74 and 92 GB and not at 35 or 53 GB. Total 80.
+- Eleven ideas for going past oMLX are ranked and tracked in
+  [2026-11-20-ideas-beyond-omlx.md](2026-11-20-ideas-beyond-omlx.md). Day one: low-rank stand-ins
+  are dead, domain profiles lose to plain admission, a 1.5-bit code likely loses on KL, replay is
+  narrowed to very strong misses, a 256-token warm start closes half of the served-demand gap to
+  hindsight, and error-feedback rounding works on synthetic data.
+- Second model (item 8): Jack chose GLM-5.3-Flash on Runpod, reversing the October no-cloud
+  decision for this experiment. Design: one GPU, the reference model one layer at a time at its
+  native precision, routed against static resident sets with no code fit. Volume
+  `l730kw43zt` (380 GB, EU-RO-1) and a CPU pod for the download were created.
+- The held-out confirmation is running on the Mac at 8,192 tokens per session (full length passed
+  the 80 GB cap twice); the prompt warm start and the ideas runs are queued behind it.

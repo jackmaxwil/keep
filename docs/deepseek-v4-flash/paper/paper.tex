@@ -741,7 +741,7 @@ only. Appendix~\ref{app:serving} has the details.
   \caption{Case study: sampled scripts that run correctly against residents per layer. Counts
   are correct samples of 8 or of 24; bars are 95\% Wilson intervals. The line and band are the
   pruned checkpoint at 4 bits (18 of 24). The triangle is routed residency with speculative
-  decoding.}
+  decoding, the square a static set of the same 2-bit experts.}
   \label{fig:generation}
 \end{figure}
 
@@ -751,7 +751,7 @@ settings and counted the scripts that run and give the right output
 (Figure~\ref{fig:generation}).
 
 With 144 or more residents, routed residency is indistinguishable from the pruned checkpoint at
-4 bits (17 to 21 correct of 24, against 18). Below that, KL stops predicting the outcome. At 96 residents KL is indistinguishable from the pruned checkpoint's (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}), yet 2 of 8 samples are correct against 18 of 24, and at 48 none is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
+4 bits (17 to 21 correct of 24, against 18). A static set of 144, the same codes in the same memory with admission switched off, gets 4 of 24 ($p=0.0004$ against 17 of 24, Fisher's exact test), level with routed residency at 96 residents: the factor of two that reach is worth in KL (Section~\ref{sec:frontier}) shows in generated code as well. Below that, KL stops predicting the outcome. At 96 residents KL is indistinguishable from the pruned checkpoint's (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}), yet 2 of 8 samples are correct against 18 of 24, and at 48 none is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
 track the share of demand that is re-routed: 35\% at 48 residents, 25\% at 96, 10\% at 200,
 where no failure is a misspelling.
 
@@ -862,8 +862,8 @@ for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
 settings chosen on the same texts, and Section~\ref{sec:generation} shows that KL misses a
-failure mode of re-routing. Generation was tested with one prompt, without a full-model
-baseline, and without static sets.
+failure mode of re-routing. Generation was tested with one prompt and without a full-model
+baseline.
 
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
 the running system does neither. Among starting residents not yet demanded, the simulator evicts
