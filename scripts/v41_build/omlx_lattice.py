@@ -31,7 +31,9 @@ Optional ``"residual": DIR`` and ``"hot": H`` add the 3-bit hot tier (``LatticeC
 
 Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto``, from this
 machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
-default 70% of RAM) and the policy settings of ``omlx_routed.py``. ``check`` compares one layer's decode step with dense matrices
+default 70% of RAM), the policy settings of ``omlx_routed.py``, and ``OMLX_ROUTED_WAIT=1``: the wait rule
+in the decode step, as a baseline (each layer reads the demand on the host and fetches the experts it
+lacks before it runs; prefill still re-routes). ``check`` compares one layer's decode step with dense matrices
 decoded on the host, the prefill path with the decode path, and slots after installs with their
 stored bytes, then times the decode-step MoE.
 """
@@ -229,6 +231,12 @@ class LatticeCache(Cache):
     def __init__(self, model, config, roots: list[Path], order, full, slots: int, where=None,
                  residual: Path | None = None, hot: int = 0):
         super().__init__(config, mx)
+        # The wait rule, for comparison: a decode step reads every demanded expert it lacks before
+        # running, so the routing is the full model's and the token waits (OMLX_ROUTED_WAIT=1).
+        self.wait = os.environ.get("OMLX_ROUTED_WAIT") == "1"
+        if self.wait:
+            self.tau = float("inf")  # no background admission: every install is a wait
+            self.stats.update(waits=0, wait_s=0.0)
         blocks = model.language_model.layers
         self.codes = Codes(roots, len(blocks), where)
         self.codebook = mx.array(e8p_packed_abs_grid())
@@ -268,6 +276,39 @@ class LatticeCache(Cache):
     def unroute(self, layer, expert, slot):
         layer.gate.bias[expert] = OFF
 
+    def fetch(self, layer, want: list[int]) -> None:
+        """The wait rule. Read every demanded expert that is absent into a slot now, over the least
+        recently demanded residents. The caller has evaluated the demand, so every kernel built so
+        far has run and no pending one reads these rows."""
+        demanded = set(want)
+        self.stats["demand"] += len(want)
+        self.stats["resident"] += sum(e in layer.slot_of for e in want)
+        for e in demanded & layer.slot_of.keys():
+            layer.last_use[layer.slot_of[e]] = self.step
+        missing = sorted(demanded - layer.slot_of.keys())
+        if not missing:
+            return
+        started = time.perf_counter()
+        assert layer.views_current(), f"layer {layer.index}: expert arrays moved; cannot install in place"
+        victims = [int(s) for s in np.argsort(layer.last_use, kind="stable") if int(layer.slot_expert[s]) not in demanded]
+        reads = []
+        for expert, slot in zip(missing, victims, strict=False):
+            old = int(layer.slot_expert[slot])
+            if old >= 0:
+                del layer.slot_of[old]
+                self.unroute(layer, old, slot)
+                self.stats["evicted"] += 1
+            reads.append((expert, slot, [self.pool.submit(Store.pread_into, *slab) for slab in self.slabs(layer, expert, slot)]))
+        assert len(reads) == len(missing), "fewer slots than one call's demand"
+        for expert, slot, futures in reads:
+            self.stats["bytes"] += sum(f.result() for f in futures)
+            self.route(layer, expert, slot)
+            layer.slot_expert[slot], layer.slot_of[expert] = expert, slot
+            layer.last_use[slot] = self.step
+            self.stats["installed"] += 1
+        self.stats["waits"] += 1
+        self.stats["wait_s"] += time.perf_counter() - started
+
 
 def decode(cache, layer, moe, x, config, mma, stock_gate):
     """One MoE for the decode step. x: [tokens, dim] bf16. Returns ([tokens, dim] bf16, slots, weights)."""
@@ -275,12 +316,22 @@ def decode(cache, layer, moe, x, config, mma, stock_gate):
         cache.begin()
     nb, dim, inter, k = x.shape[0], config.dim, config.moe_inter_dim, config.n_activated_experts
     scores, xq = stock_gate(moe, x, cache.pool_config)  # every expert of the pool; act_quant(x)
-    slot, weight, want, want_score = _topk_kernel()(
-        inputs=[scores, moe.gate.bias, layer.full_bias, layer.slot_map, DM._const((config.route_scale,))],
-        template=[("NE", cache.pool_config.n_routed_experts), ("TOPK", k)],
-        grid=(nb * 32, 1, 1), threadgroup=(32, 1, 1),
-        output_shapes=[(nb * k,)] * 4, output_dtypes=[mx.uint32, mx.float32, mx.uint32, mx.float32])
-    cache.pending.setdefault(cache.step, []).append((want, want_score))  # as evaluated: reading them later costs no eval
+    def topk():
+        return _topk_kernel()(
+            inputs=[scores, moe.gate.bias, layer.full_bias, layer.slot_map, DM._const((config.route_scale,))],
+            template=[("NE", cache.pool_config.n_routed_experts), ("TOPK", k)],
+            grid=(nb * 32, 1, 1), threadgroup=(32, 1, 1),
+            output_shapes=[(nb * k,)] * 4, output_dtypes=[mx.uint32, mx.float32, mx.uint32, mx.float32])
+
+    slot, weight, want, want_score = topk()
+    if cache.wait:  # a host round trip per layer: read the demand, fetch what is absent, select again
+        if layer.index == 0:
+            cache.stats["calls"] += 1
+            cache.stats["tokens"] += nb
+        cache.fetch(layer, np.asarray(want).reshape(-1).tolist())
+        slot, weight, want, want_score = topk()
+    else:
+        cache.pending.setdefault(cache.step, []).append((want, want_score))  # as evaluated: reading them later costs no eval
     e, s = layer.experts, moe.shared_experts
     # 16-bit activations: the lattice kernel is 1.7x slower on fp32 rows, and act_quant values are exact in bf16.
     rows, slots = xq.reshape(nb, dim).astype(mx.bfloat16), slot.reshape(nb, k)
@@ -528,6 +579,21 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
     worst = max(against_reference(i) for i in (0, 1) for _ in range(3))
     print(f"after installs, against host-decoded matrices: worst relative gap {worst:.4f}; no slot differs from its bytes")
     assert worst < 2e-2
+
+    cache.wait = True
+    cache.stats.update(waits=0, wait_s=0.0)
+    for i in (0, 1):
+        for _ in range(6):
+            x = token()
+            _, slots_, _ = DM.fused_decode_moe(moes[i], x.reshape(1, 1, -1), c)
+            served = {int(cache.layers[i].slot_expert[s]) for s in np.array(slots_).reshape(-1)}
+            demand = {int(e) for e in np.array(cache.demand(cache.layers[i], x.reshape(1, -1))[0]).reshape(-1)}
+            assert served == demand, (i, sorted(served), sorted(demand))
+    worst = max(against_reference(i) for i in (0, 1) for _ in range(3))
+    print(f"wait rule: every token ran the full router's experts; {cache.stats['waits']} waits, "
+          f"{cache.stats['wait_s'] / max(cache.stats['waits'], 1) * 1e3:.1f} ms each; worst relative gap {worst:.4f}")
+    assert cache.stats["waits"] > 0 and worst < 2e-2 and cache.mismatched() == 0
+    cache.wait = False
 
     state_x = {"x": token().reshape(1, 1, -1)}
 
