@@ -1,292 +1,269 @@
-# KEEP + RAMP
+# KEEP: Pruning Is a Frozen Cache
 
-Run a huge mixture-of-experts language model on one Apple silicon Mac.
+Code and paper for running a mixture-of-experts (MoE) language model that does not fit in memory,
+by treating expert pruning, quantization and offloading as one problem.
 
-**KEEP** shrinks a model's experts to about 2 bits per weight. **RAMP** runs
-the shrunken model on the Mac's GPU with MLX.
+**Paper:** [*Pruning Is a Frozen Cache: Unifying Pruning, Quantization and Offloading in
+Mixture-of-Experts Inference*](docs/deepseek-v4-flash/paper/paper.pdf)
+([LaTeX source](docs/deepseek-v4-flash/paper/paper.tex)).
 
-What it has done so far: **DeepSeek-V4-Flash** (304 B parameters) squeezed to
-a **75.25 GB** expert payload at **2.031 bits per weight**. The compressed
-model picks the same next token as the original **89.9 %** of the time,
-measured over a full 30-session test set on one M5 Max. Proof and caveats are
-in [`docs/deepseek-v4-flash/handoff.md`](docs/deepseek-v4-flash/handoff.md).
+**Case study:** [DeepSeek-V4.1-Flash-1017](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017)
+(40 layers, 384 experts per layer, 6 active per token) served on one Apple M4 Max with 128 GB.
+Its experts do not fit on that machine at the released 4 bits or at 2 bits. With the method
+here the machine reaches every expert of the model and decodes at 23 to 27 tokens per second,
+30 to 40 with the model's speculative decoder.
 
----
+The evidence is one model, one set of codes and one machine. The formulation is general; the
+measurements are a case study. [What is not shown](#what-is-not-shown) lists the gaps.
 
-## Part 1. Check that it works on your Mac (5 minutes, downloads no models)
+## The problem
 
-Do these in order. Each step says what you should see. If you see something
-else, stop and look at [If something goes wrong](#if-something-goes-wrong).
+A sparse MoE layer holds many feed-forward experts and a router that sends each token to a few
+of them. Current open models route among hundreds:
 
-### Step 1. Install the three tools you need
+| Model | Experts per layer | Active per token | Share of expert weights a token uses |
+|---|---:|---:|---:|
+| GLM-5.3 | 256 | 8 | 3.1% |
+| GLM-5.3-Flash | 288 | 8 | 2.8% |
+| DeepSeek-V4.1-Flash-1017 | 384 | 6 | 1.6% |
+| Kimi K3.1 Pro | 896 | 16 | 1.8% |
 
-You need macOS 14 or newer on an Apple silicon Mac (M1 or later). Open
-Terminal and run these one at a time. Skip any you already have.
+The weights a token does not touch need not be in fast memory (offloading), need not be kept at
+all (pruning), or need not be kept precisely (quantization). These three techniques are built
+and studied separately, yet each answers the same question: which bytes are in memory when a
+token arrives.
 
-```bash
-xcode-select --install
-```
+## One formulation: reach, residency, precision and a miss rule
 
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+Any memory-constrained MoE deployment is described, per layer, by three quantities and one rule.
 
-Close Terminal and open it again so it finds `uv`. Then check:
+- **Reach**: the experts the router is allowed to select. Pruning shrinks it.
+- **Residency**: the experts in memory. Offloading makes it smaller than reach.
+- **Precision**: the bits each resident expert carries. Quantization lowers it.
+- **Miss rule**: what happens when a selected expert is not resident.
 
-```bash
-uv --version
-```
+| Miss rule | What it does | Cost |
+|---|---|---|
+| Wait | block the token until the expert is read | latency |
+| Substitute | serve the miss from a coarse copy kept in memory | memory for the copies, and their error |
+| Re-route | serve the token from the best experts that are resident | a lower-ranked expert runs |
+| Skip | drop the missed choice | its contribution is lost |
 
-You should see a version number such as `uv 0.12.1`.
+Existing methods are points in this space, and most differ mainly in the miss rule. Static
+pruning is the point whose resident set never changes and whose reach has been cut to match:
+**a cache that never admits**. Exact offloading is the point that always waits.
 
-### Step 2. Get the code
+![The design space: fraction of the pool in memory against precision, with lines of equal memory](docs/deepseek-v4-flash/paper/fig-space.png)
+
+Reach costs no memory. It costs storage and read traffic. That one observation drives most of
+what follows.
+
+## Routed residency
+
+The policy the paper studies uses the model's own router as the cache controller.
+
+1. The router scores every expert of the full pool, as in the unpruned model.
+2. The token is served by the best experts that are resident. No token waits for storage.
+3. An expert that was wanted but absent is read in the background if it was wanted strongly
+   (gate weight at or above a threshold τ, 0.3 in the case study). It becomes selectable only
+   when its bytes are in place.
+4. The resident that has gone longest without strong demand is evicted.
+5. Optionally, a nested residual code adds a third bit to the most used ("hot") experts.
+
+Static pruning is the special case τ = ∞. The implementation is a bias on the router: absent
+experts get a bias of minus infinity, so one router evaluation yields both the served set (top
+k over biased scores) and the demand (top k over unbiased scores), and the decode path waits on
+neither storage nor the host.
+
+Re-routing a miss and admitting it in the background are not new. SwapMoE, LightMoE and Son's
+*Which Expert Misses Are Worth Waiting For?* each do a version of it, and SpecMD benchmarks
+miss policies. What this work adds is the common account above, an allocation rule that follows
+from it, and a measurement of a policy that never waits against pruned sets of equal memory at
+2 bits. The paper's related-work section gives the details.
+
+## An order for spending memory
+
+Because every setting shares one memory account, the value of a gigabyte can be compared across
+uses. A two-term error model (demand that is re-routed, and coding error on what is served)
+predicts an order:
+
+1. **Precision first, up to the knee of the code.** Below some precision a code stops
+   preserving what an expert computes, and holding the expert is worth little.
+2. **Then reach, for free.** Let the router select from the whole pool.
+3. **Then residents.** While the resident set is small, each added expert removes routing error
+   on many choices.
+4. **Then precision again, for the hot set.** Once most demand is served from memory, a
+   residual on the most used experts buys more than one more resident.
+
+The order should hold for wide, sparsely used pools with demand that is concentrated and local
+to a session. It should fail for narrow pools (eight experts, two active), where precision
+should come first throughout.
+
+## Case study: DeepSeek-V4.1-Flash-1017 on a 128 GB Mac
+
+Quality is the KL divergence to the full model's next-token distribution, in nats, teacher
+forced, on the first 1,024 tokens of 17 distinct texts from ten domains. Differences are paired
+by text with a 95% bootstrap interval. Codes are 2-bit E8P lattice codes (2.04 bits per
+weight).
+
+### Routed residency against a static set, same codes, same memory
+
+| Residents per layer | Expert memory | Static set | Routed residency | Difference |
+|---:|---:|---:|---:|---|
+| 48 | 18 GB | 1.640 | 0.582 | −1.058 [−1.365, −0.832] |
+| 96 | 35 GB | 1.010 | 0.390 | −0.619 [−0.829, −0.460] |
+| 144 | 53 GB | 0.654 | 0.320 | −0.333 [−0.472, −0.229] |
+| 200 | 74 GB | 0.427 | 0.279 | −0.148 [−0.246, −0.078] |
+| 250 | 92 GB | 0.303 | 0.254 | −0.048 [−0.092, −0.016] |
+| 384 (all) | 142 GB | 0.235 | 0.235 | |
+
+Routed residency is closer to the full model at every budget, and reach is worth about a factor
+of two in memory: 96 routed residents are indistinguishable from 200 static ones, and 144 from
+250.
+
+![KL to the full model against expert memory, routed residency and static sets](docs/deepseek-v4-flash/paper/fig-frontier.png)
+
+### Residents against bits
+
+Holding memory fixed and moving it from residents to a third bit on a hot set:
+
+| Budget | Result of trading residents for a hot set |
+|---:|---|
+| 35 GB | worse, +0.014 [+0.004, +0.024] |
+| 53 GB | level, −0.004 [−0.014, +0.005] |
+| 74 GB | better, −0.023 [−0.042, −0.002] |
+| 92 GB | better, −0.039 [−0.058, −0.017] |
+
+The crossover lies between 144 and 200 residents, 38 to 52% of the pool. Below the knee the
+order also holds: 192 experts at 1 bit are far worse than 96 at 2 bits in the same memory
+(1.172 against 0.801).
+
+### A running system
+
+Built inside an existing MLX runtime ([oMLX](https://github.com/jundot/omlx)) without modifying
+it, on an M4 Max with 128 GB:
+
+- The runtime's own waiting offload is seven times slower than a static set of the same size.
+- Routed residency costs 7 to 9% of decode speed against a static set from the same pool, for
+  scoring demand and installing about two experts per token.
+- The whole pool of 384 is served at 23 to 27 tokens per second with 144 residents in 63 GiB,
+  and at 30 to 40 with the model's speculative decoder.
+
+### A limit: the residency floor
+
+KL under forced context does not predict free-running generation when too few experts are
+resident. On one sampled coding request, counting scripts that run and give the right output:
+
+| Configuration | Residents | Correct |
+|---|---:|---:|
+| Pruned checkpoint at 4 bits | 192 | 18 of 24 |
+| Routed residency, 2 bits | 200 | 19 of 24 |
+| Routed residency, 2 bits | 144 | 17 of 24 |
+| Routed residency, 2 bits | 96 | 2 of 8 |
+| Routed residency, 2 bits | 48 | 0 of 8 |
+| Static set, 2 bits (measured after the current draft) | 144 | 4 of 24 |
+
+At 96 residents KL matches the pruned checkpoint's (0.390 against 0.389), yet the scripts break,
+mostly through misspelled identifiers. The order of spending therefore applies above a floor,
+here roughly 120 to 144 of 384 experts per layer. At equal memory the routed set writes a
+working script about four times as often as the static set.
+
+![Sampled scripts that run correctly against residents per layer](docs/deepseek-v4-flash/paper/fig-generation.png)
+
+## What is not shown
+
+- **One model.** GLM-5.3, GLM-5.3-Flash and Kimi K3.1 Pro have the wide, sparse pools the order
+  needs, and none was measured. The prediction for narrow pools is untested.
+- **Settings chosen on the evaluation text.** τ, the hot set size and the skipping threshold
+  were chosen on the 17 texts. A confirmation on untouched sessions is running.
+- **Generation was tested with one prompt**, and without a full-model baseline, which does not
+  fit on the machine.
+- **No selective wait.** Son reports that waiting only for the strongest misses costs far less
+  than re-routing every miss. The policy here never waits and was not compared with that.
+- **Speed baselines** for the wait rule come from another runtime's implementation on a
+  different checkpoint.
+
+The full list is in [`docs/deepseek-v4-flash/paper/OPEN.md`](docs/deepseek-v4-flash/paper/OPEN.md).
+
+## Using the code
+
+### Setup
+
+macOS on Apple silicon, with [uv](https://docs.astral.sh/uv/):
 
 ```bash
 git clone https://github.com/jackmaxwil/keep.git
 ```
 
 ```bash
-cd keep
+cd keep && uv sync --group dev
 ```
 
-Every command from here on is run inside this `keep` folder.
-
-### Step 3. Install the Python packages
+### Serve the model
 
 ```bash
-uv sync --group dev
+scripts/v41_build/run_v41.sh BUNDLE
 ```
 
-This takes a minute or two the first time. It ends with a list of installed
-packages, or with almost nothing if they were already installed. Either is
-fine.
+`BUNDLE` is a directory holding a slim checkpoint, 2-bit codes for all 384 experts per layer,
+the full model's router rows and a pool file. The script checks the machine, installs oMLX at a
+pinned commit on the first run, picks the resident count from RAM and prints an
+OpenAI-compatible endpoint.
 
-### Step 4. Check your machine
+**The bundle is not published and is not in this repository.** It is 340 GiB. Building one needs
+the full checkpoint's experts, a code fit of several hours and
+[`slim_checkpoint.py`](scripts/v41_build/slim_checkpoint.py); the steps are recorded in the
+[build plan](docs/deepseek-v4-flash/2026-11-10-v41-wow-build-plan.md). Generated code was
+unreliable below about 120 residents, which is a 96 GB Mac with the speculative decoder off.
 
-```bash
-uv run keep doctor
-```
+The pruned checkpoints used as baselines are public:
+[REAP-50](https://huggingface.co/jackmaxwil/DeepSeek-V4.1-Flash-REAP-50) and
+[REAP-75](https://huggingface.co/jackmaxwil/DeepSeek-V4.1-Flash-REAP-75).
 
-You should see lines that start with `PASS`. A line that starts with `WARN`
-about disk or memory is a heads-up, not a failure. Nothing is downloaded and no
-model is loaded.
-
-### Step 5. List the models KEEP knows about
-
-```bash
-uv run keep models
-```
-
-You should see five lines, one per model, starting with
-`deepseek-v4-flash-0731`.
-
-### Step 6. Ask whether a model is already on disk
+### Rebuild the paper
 
 ```bash
-uv run keep get deepseek-v4-flash-0731 --check-only
-```
-
-On a fresh Mac this prints `ready: no` and finishes with an error code. **That
-is expected.** It only checks, it never downloads. A line saying the teacher
-"needs off-box/distributed" is also expected: the uncompressed model is bigger
-than any Mac's memory, which is why KEEP streams it one layer at a time.
-
-### Step 7. Plan a build without running it
-
-```bash
-uv run keep build examples/qwen36-a3b.yaml --dry-run --no-hash
-```
-
-You should see a list of steps (`step source_audit ...`,
-`step source_payload_audit ...` and so on). Nothing runs. This shows what a
-real build would do.
-
-### Step 8. Run the tests (optional, about 5 minutes)
-
-```bash
-uv run --frozen python -m pytest -q -p no:cacheprovider --continue-on-collection-errors --ignore=tests/test_nax_native.py --ignore=tests/test_glm45_air_projection_kernels.py
-```
-
-**Some tests fail on every machine**, because they need model files and
-prompt sets that are not in this repo. That is normal. Your result is fine if
-every failing test is listed in
-[`artifacts/baselines/test-baseline-20261007.txt`](artifacts/baselines/test-baseline-20261007.txt).
-
-If you got this far, your setup works.
-
----
-
-## Part 2. Turn on the fast kernels (M5 chips only)
-
-**Skip this part unless your Mac has an M5, M5 Pro or M5 Max.** On an M4 Max
-the extension builds, but 36 of its 94 kernel tests return wrong answers. So
-RAMP refuses to use it on anything older than M5 and falls back to slower
-kernels that are correct.
-
-On an M5:
-
-```bash
-uv run --group dev cmake -S native/vq_nax_ext -B native/vq_nax_ext/build -DPython_EXECUTABLE="$(pwd)/.venv/bin/python3"
+cd docs/deepseek-v4-flash/paper && tectonic paper.tex
 ```
 
 ```bash
-uv run --group dev cmake --build native/vq_nax_ext/build
+cd docs/deepseek-v4-flash/paper && uv run --with matplotlib --with numpy python figures.py
 ```
 
-```bash
-uv run python -c "from ramp.kernels import nax; print(nax.is_available())"
-```
+`stats.py` and `routing.py` recompute every number in the quality tables from stored
+evaluation outputs. Those outputs, the weights and the fitted codes are not in the repository.
 
-On an M5 the last command prints `True`. On M1 to M4 it prints `False`, which
-is correct. If an M5 prints `False`, delete the folder
-`native/vq_nax_ext/build` and run the three commands again.
-
----
-
-## Part 3. Compress DeepSeek-V4-Flash yourself (days, very large downloads)
-
-Only start this if all of these are true:
-
-- You have an M5 Max (or M5 Ultra) with 128 GB of memory.
-- You have **at least 240 GB of free disk**: 163 GB for the original model and
-  75 GB for the compressed experts, plus room for the teacher caches.
-- You have a calibration corpus at
-  `~/models/teich/dsv4-coding-agent-v1-20260811.json`. **This file is not part
-  of the repo.** The campaign used private coding-agent sessions. Its format is
-  pinned by [`recipes/dsv4_teich_split_manifest_v1_20260811.json`](recipes/dsv4_teich_split_manifest_v1_20260811.json).
-  Without it, steps 2, 3 and 6 cannot run.
-
-Every step below resumes where it stopped if you run it again. Long steps hold
-a lock file, `.keep-heavy-job.lock`, so only one runs at a time. **Never run
-two of them at once.** Two model-sized jobs can run a 128 GB Mac out of memory.
-
-**1. Download the original model** (163 GB, saved to `~/models/DeepSeek-V4-Flash-0731`):
-
-```bash
-uv run python scripts/download_dsv4_flash_source.py
-```
-
-**2. Record how the original model behaves on calibration text.** This took
-5.1 hours on an M5 Max.
-
-```bash
-uv run python benchmarks/produce_dsv4_teacher_cache.py run --mode calibration --split calibration --out-dir ~/keep-artifacts/dsv4-teacher-calibration
-```
-
-Check progress from a second Terminal window:
-
-```bash
-uv run python benchmarks/produce_dsv4_teacher_cache.py monitor --out-dir ~/keep-artifacts/dsv4-teacher-calibration
-```
-
-**3. Record the original model's answers on the test text.**
-
-```bash
-uv run python benchmarks/produce_dsv4_teacher_cache.py run --mode logits --split report --out-dir ~/keep-artifacts/dsv4-teacher-logits-eval
-```
-
-**4. Compress the experts.** The full sweep took 1.8 hours on an M5 Max.
-
-```bash
-uv run python benchmarks/materialize_dsv4_vq.py imatrix
-```
-
-```bash
-uv run python benchmarks/materialize_dsv4_vq.py sweep
-```
-
-```bash
-uv run python benchmarks/materialize_dsv4_vq.py manifest
-```
-
-The compressed experts land in `~/keep-artifacts/dsv4-vq-e8p-g512`.
-
-**5. Prove the compressed experts load correctly.**
-
-```bash
-uv run python benchmarks/materialize_dsv4_vq.py verify-roundtrip --block layers.0
-```
-
-**6. Score the compressed model against the original.**
-
-```bash
-uv run python benchmarks/eval_dsv4_vq_teacher_cache.py run --split report
-```
-
-```bash
-uv run python benchmarks/eval_dsv4_vq_teacher_cache.py control --split report
-```
-
-```bash
-uv run python benchmarks/eval_dsv4_vq_teacher_cache.py summarize
-```
-
-The `control` run scores the *uncompressed* model the same way. It should come
-out almost perfect. If it does not, the measurement is broken, not the
-compression, so do not trust the `run` numbers until `control` passes.
-
----
-
-## If something goes wrong
-
-| What you see | What to do |
-| --- | --- |
-| `uv: command not found` | Close Terminal, open it again, and retry. If it persists, rerun the `curl` install line from Step 1. |
-| `Failed to query Python interpreter ... Permission denied` | Run `uv python install --reinstall`, then retry. |
-| `quality prompt set '...' is empty` | That tool needs GLM-4.5-Air prompt data that is not in the repo. It does not affect Part 1 or the DeepSeek steps. |
-| `nax.is_available()` prints `False` on an M5 | Delete `native/vq_nax_ext/build` and redo Part 2. |
-| A long job says another heavy job holds the lock | Another long job is running. Wait for it, or stop it, before starting a new one. |
-| The Mac becomes slow, or memory pressure turns red | Stop the job with `Ctrl-C`. Make sure only one long job runs at a time. |
-
-More fixes: [`docs/troubleshooting.md`](docs/troubleshooting.md).
-
----
-
-## Reference
-
-### Models
-
-| Model | Status | Docs |
-| --- | --- | --- |
-| DeepSeek-V4-Flash-0731 | Compressed and evaluated. Quality gate passed | [`docs/deepseek-v4-flash/`](docs/deepseek-v4-flash/) |
-| GLM-5.3-Flash | In progress. The adapter matches the reference model. Not runnable yet | [`docs/glm-5.3-flash/`](docs/glm-5.3-flash/) |
-| GLM-4.5-Air | Earlier release candidate. The pipeline still runs | [`docs/glm45-air/rc-pipeline.md`](docs/glm45-air/rc-pipeline.md) |
-| Qwen3.6-35B-A3B | Small example used for onboarding new models | [`models/qwen36-35b-a3b.yaml`](models/qwen36-35b-a3b.yaml) |
-| GLM-5.2-REAP | Retired. Its library code remains because the build system uses it | |
-
-To add a model, follow [`docs/new-model-family.md`](docs/new-model-family.md).
-
-### Repo layout
+## Where things are
 
 | Path | What it holds |
-| --- | --- |
-| `src/keep/` | KEEP, the compression method: codebooks, quantizers, converters, quality checks, the `keep` command |
-| `src/ramp/` | RAMP, the runtime: model adapters, the model registry, GPU kernels |
-| `native/vq_nax_ext/` | The M5 tensor-unit kernel extension from Part 2 |
-| `models/` | One settings file per supported model |
-| `examples/`, `recipes/` | Short build recipes and the detailed step lists they expand into |
-| `benchmarks/` | One command-line tool per pipeline stage, named `<verb>_<model>_<thing>.py` |
-| `scripts/` | Setup, download and checking tools |
-| `tests/` | Tests, with small fixtures in `tests/fixtures/` |
-| `artifacts/` | Small evidence files the docs cite. Everything else there stays out of git |
-| `docs/` | One folder per model for decisions, plans and research, plus the guides below |
+|---|---|
+| [`docs/deepseek-v4-flash/paper/`](docs/deepseek-v4-flash/paper/) | The paper, its figures, and the scripts that produce its numbers |
+| [`scripts/v41_build/`](scripts/v41_build/) | The serving code: the routed cache (`omlx_routed.py`), the 2-bit lattice expert cache and its Metal kernel (`omlx_lattice.py`), the launcher, the slim-checkpoint tool |
+| [`scripts/runpod/v41_reap/`](scripts/runpod/v41_reap/) | The simulator that applies residency decisions inside the real forward pass (`local_eval.py`), code fitting (`keep_quant.py`), pruning and calibration tools |
+| [`src/keep/`](src/keep/) | KEEP, the compression library: lattice codebooks, quantizers, converters |
+| [`src/ramp/`](src/ramp/) | RAMP, the MLX runtime: model adapters and GPU kernels |
+| [`docs/deepseek-v4-flash/`](docs/deepseek-v4-flash/) | Dated plans, the build plan and the experiment log behind the paper |
+| [`tests/`](tests/) | Tests, with small fixtures |
 
-### Docs
+## Earlier work in this repository
 
-- [`docs/troubleshooting.md`](docs/troubleshooting.md): setup, cache, memory and build problems.
-- [`docs/new-model-family.md`](docs/new-model-family.md): checklist for adding a model.
-- [`docs/naming.md`](docs/naming.md): how runs and published models are named.
-- [`docs/deepseek-v4-flash/handoff.md`](docs/deepseek-v4-flash/handoff.md): DeepSeek state and next steps.
-- [`docs/glm-5.3-flash/2026-10-06-plan.md`](docs/glm-5.3-flash/2026-10-06-plan.md): the GLM-5.3-Flash plan.
+KEEP and RAMP began as a pipeline that compresses a model's experts to about 2 bits per weight
+and runs them with MLX. That pipeline compressed DeepSeek-V4-Flash-0731 to a 75.25 GB expert
+payload at 2.031 bits per weight, and has adapters for GLM-5.3-Flash, GLM-4.5-Air and
+Qwen3.6-35B-A3B. Its setup guide, commands and model table are in
+[`docs/keep-ramp-pipeline.md`](docs/keep-ramp-pipeline.md).
 
-### Known limitations
+## Citation
 
-- The DeepSeek full runnable size (82.5 to 85.1 GB) is an estimate. Only the
-  compressed experts exist as files so far.
-- RAMP does not yet pick the fastest kernels automatically, and DeepSeek
-  decode speed has not been measured.
-- Timings on these Macs vary by up to 1.9x between runs. Compare against a
-  control run, never against an absolute time.
+```bibtex
+@misc{mazac2026frozencache,
+  title  = {Pruning Is a Frozen Cache: Unifying Pruning, Quantization and Offloading in Mixture-of-Experts Inference},
+  author = {Mazac, Jack},
+  year   = {2026},
+  note   = {Preprint},
+  url    = {https://github.com/jackmaxwil/keep}
+}
+```
 
 ## License
 
