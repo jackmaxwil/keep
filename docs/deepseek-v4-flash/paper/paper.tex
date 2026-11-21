@@ -960,6 +960,12 @@ quantized full model, and ProQuant \citep{chen2026proquant} prefers removing an 
 it at 1 bit. Both agree with the first step of our order, with a knee that depends on the code.
 Neither separates reach from residency, so the pruned model in those comparisons cannot admit
 what it lacks.
+A published build of the model of our case study does both at once: it removes 192 of the 384
+experts in every layer, chosen by a joint search over all layers for the least KL divergence from
+the unpruned model under one budget per layer \citep{helcig2026rco}, and stores the rest near 2
+bits \citep{dadgarnia2026gsq}, in 72\,GB \citep{daslab2026coder}. In our terms it is a frozen set
+of 192 with reach 192, chosen with more care than routed mass; its list of kept experts is public,
+and it shares 137 of 192 experts per layer with ours.
 
 \paragraph{Pruning and codes.} REAP \citep{lasby2025reap} produced the pruned checkpoint used
 as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
