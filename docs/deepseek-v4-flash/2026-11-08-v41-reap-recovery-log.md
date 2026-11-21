@@ -1491,3 +1491,33 @@ Every count was recomputed from the stored evaluations before the text changed.
 - Related work: HOBBIT loads its low-precision copy on the miss; AdapMoE also lowers the number of
   active experts; PagedMoE (arXiv 2611.03173) is cited for prefix-compatible precision.
 - Rubric unchanged at 90.
+
+
+### 2026-11-21: served timing in the simulator, speed repeated, generation with more samples
+
+Three jobs of the chain finished (`jobs/timing_mac.sh`, `speed_mac.sh`, `gen2_mac.sh`).
+
+- Timing (`evals/timing`, 22 sessions, first 1,024 tokens). An admission that lands three tokens
+  after its demand costs 0.045 [0.034, 0.056] at 96 residents, 0.023 [0.020, 0.028] at 144 and
+  0.009 [0.000, 0.022] at 200. With nothing landing in the first 256 tokens as well, 96 residents
+  score 0.612 and 144 score 0.442: 0.222 and 0.121 above the simulator's own timing, 0.397
+  [0.287, 0.543] and 0.212 [0.138, 0.309] below static sets of those sizes. The comparison with
+  static sets keeps about two thirds of its size; most of the loss is the frozen opening.
+- Speed (five launches each in turn, 144 residents of 384, drafter off, server decode timings).
+  Static: median 27.5, 27.5 and 26.4 tok/s on the two short requests and after the 4,341-token
+  prompt (ranges 24.0 to 29.8, 23.5 to 28.3, 21.4 to 28.8). Routed at tau 0.3: 28.3, 28.9 and 28.0
+  (25.6 to 28.6, 25.9 to 29.1, 22.5 to 28.3). No cost of routed residency is resolved; the earlier
+  7 to 9% came from two or three requests.
+- Generation, duplicate-finder request, drafter off, 8 samples a launch: static 144 gives 5, 3 and
+  1 of 8 (9 of 24; routed 144 gave 17 of 24, Fisher p = 0.04; the earlier 4 of 24 for the static
+  set had the drafter on). Routed 96: 1 and 1 of 8 more (4 of 24 with the earlier 2 of 8). Routed
+  120: 4 and 6 of 8 more (14 of 24 with the earlier 4 of 8; p = 0.36 against the pruned
+  checkpoint's 18 of 24, p = 0.007 against 96). The floor is between 96 and 120 on this request.
+- Generation, two more requests (`score_dupe_script.py --task csvsum|largest`), 144 residents, 16
+  samples a row: sums of CSV columns, routed 10 against static 12; three largest files, routed 16
+  against static 12 (p = 0.70 and 0.10). One request of three separates routed from static, and
+  the paper now says so.
+- Paper: Section "A running system" (speed repeat, timing paragraph), the residency-floor section
+  and its figure, limitations, both appendices. `stats.py` carries the `timing:*` rows.
+- Rubric unchanged at 90. Still running: hot set on held-out texts, then llama.cpp, LDLQ, the 0.15
+  row at 73 residents, and the common-starting-set rerun.

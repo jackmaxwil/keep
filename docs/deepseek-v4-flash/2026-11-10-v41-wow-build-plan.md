@@ -1313,3 +1313,19 @@ Scored with `scripts/v41_build/score_dupe_script.py`, which reproduces the earli
   the 17 of 24 row ran without. The drafter did not lower routed counts in earlier runs (4 of 8 on
   and off at 120 residents, 21 of 24 on at 180).
 - Jobs: `~/Models/v41-reap-run/jobs/k1_static_samples.sh`; samples `k1/static-*.json`.
+
+More samples on 2026-11-21 (`jobs/gen2_mac.sh`, samples `k1/gen2-*.json`), drafter off, card
+sampling, 4,096-token budget, one server per 8 samples:
+
+| Request | Model | Residents | Correct | Runs |
+|---|---|---:|---:|---|
+| Duplicate finder | Static set, 2-bit | 144 | 9 of 24 | 5, 3, 1 |
+| Duplicate finder | Cache at tau 0.3 | 96 | 4 of 24 | 2 (C2), 1, 1 |
+| Duplicate finder | Cache at tau 0.3 | 120 | 14 of 24 | 4 (earlier), 4, 6 |
+| CSV column sums | Cache at tau 0.3 | 144 | 10 of 16 | 5, 5 |
+| CSV column sums | Static set, 2-bit | 144 | 12 of 16 | 6, 6 |
+| Three largest files | Cache at tau 0.3 | 144 | 16 of 16 | 8, 8 |
+| Three largest files | Static set, 2-bit | 144 | 12 of 16 | 6, 6 |
+
+With the drafter off the static 144 is at 9 of 24 on the duplicate finder, against 17 of 24 for
+the cache (Fisher p = 0.04), and level with it on the two other requests.

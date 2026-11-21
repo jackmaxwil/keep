@@ -579,7 +579,7 @@ evaluation text from ten domains (code, shell, security, networking, business, c
 prose), 17 distinct texts in all; calibration text is separate. The quantity is $\sum_{x\in A} p(x)\log\bigl(p(x)/q(x)\bigr)$, with $p$ and $q$ the full-vocabulary probabilities of the full and the compressed model and $A$ the 2{,}048 tokens the full model rates most probable at that position. It is a partial sum of the KL divergence, not the divergence between the two distributions renormalized on $A$: it does not see probability that the compressed model puts outside $A$, and at a single position it can be negative, as it is at 18\% of positions for routed residency with 144 residents, never below $-0.06$. We call it KL throughout; where a comparison turns on hundredths of a nat, this is one more reason for caution. Differences are paired by text
 with a 95\% bootstrap interval over texts in brackets. One text carries a fifth of the weight, because four sessions share it, so the effective sample is about 12 texts. We report several dozen paired comparisons and correct none for multiplicity; an interval that barely excludes zero should be read with that in mind. Policies are compared in a simulator
 that runs the real forward pass with the residency decisions of Algorithm~\ref{alg:policy}
-applied per token and layer. The simulator installs an admitted expert one token after it is demanded and adapts within a text; the served system of Section~\ref{sec:serving} installs later and holds its set fixed while it reads a prompt, and we did not measure how far the two agree on quality. Appendix~\ref{app:setup} gives the details, including an
+applied per token and layer. The simulator installs an admitted expert one token after it is demanded and adapts within a text; the served system of Section~\ref{sec:serving} installs later and holds its set fixed while it reads a prompt; Section~\ref{sec:serving} gives the simulator that timing and reports what it costs. Appendix~\ref{app:setup} gives the details, including an
 eleventh domain that we exclude and why.
 
 \subsection{Reach: routed residency against static sets}
@@ -765,10 +765,12 @@ Max with 128\,GB. Figure~\ref{fig:speed} separates what waiting costs from what 
   \label{fig:speed}
 \end{figure}
 
-Configurations (a) and (b) hold the same number of experts in the same memory: the runtime's waiting offload, which as implemented also leaves its fused decode path, is seven times slower than a static set. Configurations (c) and (d) compare routed residency with a static set drawn from the same pool: 7 to 9\% slower, for scoring the demand and installing about two experts per token. Reaching the whole pool costs no more at $\tau=0.3$ (e); at $\tau=0.2$ it admits about three times as many experts and was up to 15\% slower. After a 4{,}341-token prompt the whole pool decoded at 23.0 tokens per second, for which we have no static counterpart. These ranges cover two or three requests each, and the median speed of one configuration varied by up to 25\% between runs (Appendix~\ref{app:serving}), more than the difference reported here, so the cost of routed residency is small but not resolved. With the model's speculative decoder the whole pool is served at 30
+Configurations (a) and (b) hold the same number of experts in the same memory: the runtime's waiting offload, which as implemented also leaves its fused decode path, is seven times slower than a static set. Configurations (c) and (d) compare routed residency with a static set drawn from the same pool: 7 to 9\% slower, for scoring the demand and installing about two experts per token. Reaching the whole pool costs no more at $\tau=0.3$ (e); at $\tau=0.2$ it admits about three times as many experts and was up to 15\% slower. These ranges cover two or three requests each, and the median speed of one configuration varied by up to 25\% between runs (Appendix~\ref{app:serving}), more than the difference reported here. A repeat with five server launches of each configuration in turn, 144 residents from the whole pool and no speculative decoder, does not find the cost: the static set decoded at a median of 27.5 tokens per second on each of two short requests and at 26.4 after a 4{,}341-token prompt, routed residency at 28.3, 28.9 and 28.0, and the ranges overlap. Routed residency costs no decode speed that we can resolve. With the model's speculative decoder the whole pool is served at 30
 to 40 tokens per second (f). The same runtime serves the pruned checkpoint with its waiting offload at 5.6 to 6.3 tokens per second, but that run differs in checkpoint, precision and decoder, and we do not offer the ratio as a comparison of systems. We have no measurement of another runtime at equal memory on this model; the wait rules of our own code path are measured in Section~\ref{sec:dial}. The hot set is not free in a running system: 64 hot
 experts at 3 bits decode 11\% slower at equal memory, so the served configuration is 2-bit
 only. Appendix~\ref{app:serving} has the details.
+
+The divergences of this paper come from a simulator that installs an expert one token after its demand and lets the resident set change inside a prompt. The served system reads the demand two decode calls late, then reads from storage, and holds its set while it reads a prompt. We gave the simulator that timing: an admission lands three tokens after its demand, and none lands during the first 256 tokens of a text, a quarter of the scored window. The delay alone costs 0.045 \ci{0.034}{0.056} at 96 residents, 0.023 \ci{0.020}{0.028} at 144 and 0.009 \ci{0.000}{0.022} at 200. With the opening frozen as well, 96 residents score 0.612 and 144 score 0.442, which is 0.222 \ci{0.170}{0.291} and 0.121 \ci{0.088}{0.168} above the simulator's own timing and still 0.397 \ci{0.287}{0.543} and 0.212 \ci{0.138}{0.309} below static sets of those sizes. The comparison with static sets survives the served timing at about two thirds of its size. The larger part of the loss is the frozen opening, which admitting between the chunks of a prompt would address, and not the delay. These are simulator rows under the served timing; we still have no divergence measured on the served system itself.
 
 \FloatBarrier
 \subsection{A limit: the residency floor}
@@ -780,7 +782,7 @@ only. Appendix~\ref{app:serving} has the details.
   \caption{Case study: sampled scripts that run correctly against residents per layer. Counts
   are correct samples of 8 or of 24; bars are 95\% Wilson intervals. The line and band are the
   pruned checkpoint at 4 bits (18 of 24). The triangle is routed residency with speculative
-  decoding, the square a static set of the same 2-bit experts.}
+  decoding, the square a static set of the same 2-bit experts with that decoder off.}
   \label{fig:generation}
 \end{figure}
 
@@ -790,11 +792,11 @@ settings and counted the scripts that run and give the right output
 (Figure~\ref{fig:generation}).
 
 With 144 or more residents, routed residency is not separable from the pruned checkpoint at
-4 bits (17 to 21 correct of 24, against 18). A static set of 144, the same codes in the same memory with admission switched off, gets 4 of 24. Those runs had the speculative decoder on; under the same launcher routed residency scored 5 of 8 at that size ($p=0.023$, Fisher's exact test) and 21 of 24 at 180 residents. Below 144 residents KL does not predict the outcome on this prompt. At 96 residents neither KL nor the change in the loss on the text separates routed residency from the pruned checkpoint (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}; 0.081 against 0.095 nats of added loss), yet 2 of 8 samples are correct against 18 of 24 ($p=0.03$), and at 48 none is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
+4 bits (17 to 21 correct of 24, against 18). A static set of 144, the same codes in the same memory with admission switched off, gets 9 of 24 with the speculative decoder off, as the routed row at that size had it ($p=0.04$, Fisher's exact test), and 4 of 24 with it on, where routed residency scored 5 of 8 at that size ($p=0.023$) and 21 of 24 at 180 residents. The gap belongs to this request. On two further script requests, 16 samples a row at 144 residents with the decoder off, routed residency gives 10 and 16 correct and the static set 12 and 12 ($p=0.70$ and $0.10$). One request of three separates the two, and we do not claim that a static set of this size generates worse in general. Below 144 residents KL does not predict the outcome on this prompt. At 96 residents neither KL nor the change in the loss on the text separates routed residency from the pruned checkpoint (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}; 0.081 against 0.095 nats of added loss), yet 4 of 24 samples are correct against 18 of 24 ($p=0.0001$), and at 48 none of 8 is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
 track the share of demand that is re-routed: 35\% at 48 residents, 25\% at 96, 10\% at 200,
 where no failure is a misspelling.
 
-This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here somewhere between 96 and 144 of 384 experts per layer (4 of 8 samples are correct at 120). The evidence is one prompt, the divergences come from the simulator and the samples from the served system, and we have no count for the full model. Below the floor we expect the remedy to be a different miss rule, not more bits; Section~\ref{sec:dial} tests one.
+This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here between 96 and 120 of 384 experts per layer: 14 of 24 samples are correct at 120, which is not separable from the pruned checkpoint ($p=0.36$) and is from 96 residents ($p=0.007$). The evidence for the floor is one request, the divergences come from the simulator and the samples from the served system, and we have no count for the full model. Below the floor we expect the remedy to be a different miss rule, not more bits; Section~\ref{sec:dial} tests one.
 
 \FloatBarrier
 \subsection{Below the floor: a dial from re-routing to waiting}
@@ -1090,7 +1092,7 @@ as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
 
 \section{Limitations}
 
-We do not compare with any other runtime at equal memory; a claim that this system is ahead of others on a small machine would need that comparison. Every divergence comes from a simulator whose timing is more favorable than the served system's. The order of spending is a hypothesis: its error terms were not measured separately, and its residents-before-bits step rests on one budget that lies below the residency floor.
+We do not compare with any other runtime at equal memory; a claim that this system is ahead of others on a small machine would need that comparison. Every divergence comes from a simulator, and the tables report its own timing; under the served system's timing its routed rows are 0.01 to 0.05 worse for the delay and 0.12 to 0.22 worse when a 256-token prompt holds the set (Section~\ref{sec:serving}). The order of spending is a hypothesis: its error terms were not measured separately, and its residents-before-bits step rests on one budget that lies below the residency floor.
 
 The formulation is general; the evidence for the allocation order is one model, one set of
 codes and one machine. The order's conditions are stated but tested only where that model meets them. The second model tests the comparison of routed and static residency only: at its released precision, under forced context, on the same texts, with no code fitted, no generation and no running system, and its first run applied the threshold on the wrong scale, so the run we report followed a look at the data. Other current
@@ -1099,11 +1101,11 @@ for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
 settings chosen on the same texts; the held-out texts confirm the comparison with static sets and no other result, are capped at 8{,}192 tokens, and are mostly short chat. Section~\ref{sec:generation} shows that KL misses a
-failure mode of re-routing. Generation was tested with one prompt and without a full-model
+failure mode of re-routing. Generation was tested with three requests, 16 to 24 samples a row; one of them separates routed from static residency, the same one locates the floor, and there is no full-model
 baseline.
 
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
-the running system does neither. Among starting residents not yet demanded, the simulator evicts
+the running system does neither, and Section~\ref{sec:serving} prices both differences in the simulator only. Among starting residents not yet demanded, the simulator evicts
 the highest ranked first and the running system the lowest; we did not measure the effect. The pruned checkpoint differs from the pool in its choice of experts as well as in precision; at 2 bits the choice is not distinguishable on our metric, and at 4 bits, on the held-out texts and in another harness, it is not either (0.741 for the 192 of largest routed mass against 0.814, $-0.074$ \ci{-0.166}{+0.023}). The wait rules of Section~\ref{sec:dial} were served on one prompt, ten requests a row, on one machine whose smaller budgets were emulated by wiring memory; we have no divergence for the served system under any rule, and no run on a machine that has 64\,GB.
 
 The served system is an extension of an existing runtime and not a runtime of its own: our codes, kernels and miss rules are loaded into it at a pinned version, and its server, its support for the model and much of its decode path are its maintainers' work. The serving comparisons are therefore between policies inside one runtime. They do not rank runtimes, and nothing in the policy prevents that runtime, or another, from adopting it.
@@ -1195,8 +1197,8 @@ threshold were chosen on the evaluation text. Quality is flat in the threshold b
 \paragraph{Simulation.} The simulator assumes that an admitted expert is in memory one token
 after it was demanded and lets the resident set change at every token. The running system
 installs a few tokens later and holds the resident set fixed within a forward pass. The two
-agree on admissions per token for one request at 144 residents (2.5 against 2.6); their
-agreement on quality was not measured.
+agree on admissions per token for one request at 144 residents (2.5 against 2.6). Their
+agreement on quality is measured only by giving the simulator the served timing (Section~\ref{sec:serving}): variants in which an admission lands three tokens after its demand, with and without a first 256 tokens during which none lands.
 
 \paragraph{Choosing experts by routed mass.} Initial resident sets and static sets rank experts
 by routed mass summed over calibration text. REAP scores an expert per routed token and
@@ -1348,7 +1350,7 @@ to 0.047\,ms for the runtime's own 4-bit and 2-bit kernels. A hot expert reads 1
 bytes, and the residuals of 64 hot experts displace 32 residents, which roughly triples
 admissions. The median speed of one configuration differed by up to 25\% between runs on an
 otherwise idle machine (39.6, 36.7, 31.9 and 30.4 tokens per second for configuration (f)), for a reason
-we did not find; speeds are compared within a run.
+we did not find; speeds are compared within a run. In the repeat of Section~\ref{sec:serving}, the ranges over five launches were 23.5 to 29.8 tokens per second for the static set and 25.6 to 29.1 for routed residency on the short requests, and 21.4 to 28.8 against 22.5 to 28.3 after the long prompt, which the two read at a median of 175 and 192 tokens per second. Each launch served two greedy requests of about 1{,}050 tokens and one of about 300 tokens after the long prompt; speeds are the server's own decode timings.
 
 \paragraph{Footprint.} Outside the routed experts the process holds about 12\,GiB in steady
 state and up to 8\,GiB more at its peak. Measured peaks were 68 to 69\,GiB at 144 residents, 87\,GiB at 200, and 83 to 88\,GiB at 180 to 183 residents with speculative decoding.
@@ -1367,7 +1369,7 @@ rules of Section~\ref{sec:switch}, not by this measurement.
 \paragraph{Generation.} The request asks for a script that finds duplicate files by content
 hash; a sample is correct if the script runs, exits with status zero and lists the three duplicates of a test
 directory and none of its three other files. Sampling used temperature 1.0 and top-$p$ 1.0 with reasoning off and a budget of
-4{,}096 tokens. Lowering the temperature to 0.6 or the top-$p$ to 0.95 did not raise the counts at 96 residents.
+4{,}096 tokens. Lowering the temperature to 0.6 or the top-$p$ to 0.95 did not raise the counts at 96 residents. The two further requests ask for a script that prints the sums of the numeric columns of a CSV file as one line of JSON, and for one that lists the three largest files under a directory; each is scored by running the script on a fixed fixture. Counts of 24 pool three server launches of 8 samples, or one earlier launch of 8 with two later ones.
 
 \FloatBarrier
 \section{Implementation excerpt: two selections from one router evaluation}

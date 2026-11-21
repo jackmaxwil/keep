@@ -60,7 +60,8 @@ VALUES = ["tau384:q384", "tau384:s144", "tau384:o144", "tau384:t10", "tau384:t20
           "step2-fp4-bf16:reap50", "step1:reap50", "step2-e8p-podimp:reap50", "step2b-1bit:reap50", "step2c-selection:prunedmass-96",
           "e1-residency:rs144", "e1-residency:rr144", "e1-residency:rr96", "e1-residency:ro96",
           "step4-routed:all2", "step4-routed:s96", "step4-routed:c96t2", "step4-routed:c96t3",
-          *(f"dialkl:{v}" for v in ("k73", "k73w30", "k73w15", "k140w30", "k207w30", "s192", "k192")), "dialkl-ista:ista192"]
+          *(f"dialkl:{v}" for v in ("k73", "k73w30", "k73w15", "k140w30", "k207w30", "s192", "k192")), "dialkl-ista:ista192",
+          *(f"timing:{v}" for v in ("k96L", "k144L", "k200L", "k96LF", "k144LF"))]
 C, F, T, B = "c1-residents:", "frontier:", "tau384:", "bits-budget:"
 DIFFS = [*((f"{C}k{k}", f"{F}s{k}") for k in (48, 96, 200, 250)), (C + "k144", T + "s144"),
          (C + "k200", C + "k144"), (C + "k250", C + "k200"), (T + "q384", C + "k250"),
@@ -86,7 +87,9 @@ DIFFS = [*((f"{C}k{k}", f"{F}s{k}") for k in (48, 96, 200, 250)), (C + "k144", T
          ("dialkl:k73w30", "dialkl:k73"), ("dialkl:k73w15", "dialkl:k73"), ("dialkl:k73w30", C + "k200"),
          ("dialkl:k73w30", "dialkl:s192"), ("dialkl:k73w15", T + "q384"), ("dialkl:k140w30", C + "k144"),
          ("dialkl:k207w30", C + "k200"), ("dialkl:k207w30", T + "q384"), ("dialkl-ista:ista192", "dialkl:s192"),
-         ("dialkl:k73", "dialkl-ista:ista192"), ("dialkl:k73w30", "dialkl-ista:ista192")]
+         ("dialkl:k73", "dialkl-ista:ista192"), ("dialkl:k73w30", "dialkl-ista:ista192"),
+         *((f"timing:k{k}L", f"{C}k{k}") for k in (96, 144, 200)), ("timing:k96LF", C + "k96"), ("timing:k144LF", C + "k144"),
+         ("timing:k96LF", "timing:k96L"), ("timing:k144LF", "timing:k144L"), ("timing:k96LF", F + "s96"), ("timing:k144LF", T + "s144")]
 
 def domains(names: list[str]) -> dict:
     """KL per domain (tool use excluded) of each variant, for the per-domain figure."""

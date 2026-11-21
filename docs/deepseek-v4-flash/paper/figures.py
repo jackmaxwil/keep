@@ -96,8 +96,8 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 
 def generation() -> None:
-    """Sampling tables (C2, more samples, 200 residents, 180 with the drafter): correct scripts of n."""
-    pts = [(48, 0, 8), (96, 2, 8), (120, 4, 8), (144, 17, 24), (200, 19, 24)]
+    """Sampling tables (C2, more samples, 200 residents, 180 with the drafter; gen2 of 2026-11-21): correct scripts of n."""
+    pts = [(48, 0, 8), (96, 4, 24), (120, 14, 24), (144, 17, 24), (200, 19, 24)]
     fig, ax = plt.subplots(figsize=(5.4, 2.7))
     lo, hi = wilson(18, 24)
     ax.axhspan(lo, hi, color=ORANGE, alpha=0.15, lw=0)
@@ -107,10 +107,10 @@ def generation() -> None:
         ax.errorbar(x, k / n, yerr=[[k / n - lo], [hi - k / n]], fmt="o", color=BLUE, ms=4, lw=0.9, capsize=2,
                     label="routed residency, 2 bits" if j == 0 else None)
         ax.annotate(f"{k}/{n}", (x, k / n), (5, -3), textcoords="offset points", fontsize=7)
-    lo, hi = wilson(4, 24)
-    ax.errorbar(144, 4 / 24, yerr=[[4 / 24 - lo], [hi - 4 / 24]], fmt="s", color=GREY, ms=4, lw=0.9, capsize=2,
+    lo, hi = wilson(9, 24)
+    ax.errorbar(144, 9 / 24, yerr=[[9 / 24 - lo], [hi - 9 / 24]], fmt="s", color=GREY, ms=4, lw=0.9, capsize=2,
                 label="static set, 2 bits")
-    ax.annotate("4/24", (144, 4 / 24), (5, -3), textcoords="offset points", fontsize=7)
+    ax.annotate("9/24", (144, 9 / 24), (5, -3), textcoords="offset points", fontsize=7)
     lo, hi = wilson(21, 24)
     ax.errorbar(180, 21 / 24, yerr=[[21 / 24 - lo], [hi - 21 / 24]], fmt="^", color=RED, ms=5, lw=0.9, capsize=2,
                 label="routed residency, speculative decoding")
