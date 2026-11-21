@@ -1396,3 +1396,30 @@ unchanged at 75%: the pass changes wording and citations, not results.
   set are the short ones, which have no prompt to learn it from.
 - The ideas runs (wait, exact prefill, mass cut, second moments) are in progress; the served
   wait-against-re-route comparison is queued behind them.
+
+### 2026-11-21: two referee reviews, fixes, and the runs they call for
+
+- Two independent reviews of the paper (claims against evidence; novelty and baselines) both
+  recommended major revision. Sound: routed against static at equal size, held-out. Overstated:
+  the "factor of two in memory", the order of spending, the generation paragraph, the speed
+  comparison, and the absence of any comparison with another runtime at equal memory.
+- Wording fixed the same day (`df2f1dc`): the abstract and introduction claim only what is
+  shown; the policy's parts are credited in the introduction; the order of spending is a
+  hypothesis; the generation test is like for like (static 4 of 24 against routed 5 of 8, both
+  with the drafter on, p = 0.023, not 0.0004); the metric's top-2,048 truncation, the text
+  weights and the missing multiplicity correction are stated; absolute held-out values are
+  printed; number mismatches corrected; EdgeMoE cited.
+- An error of mine found while fixing: the second model's runs applied tau to gate weights
+  normalized to one. The first model's 0.3 applies to routing weights that sum to its routing
+  scale (1.5), and GLM's sum to 2.5, so the "unchanged threshold" run was 2.5 times stricter than
+  the case study's setting. `residency.py` now applies tau to the model's routing weights; a
+  rerun is on a pod (`glm53_tau_pod.sh`). The paper's second-model section waits for it.
+- New code: `lag:N` and `frozen:P` in the simulator (served timing); `OMLX_ROUTED_WAIT_MIN` in
+  serving (a selective wait); two more script tasks in the scorer (`csvsum`, `largest`).
+- Queued on the Mac behind the ideas runs and the wait comparison (`jobs/chain_1121.sh`): the
+  frontier at served timing, speed with five interleaved repeats and the long prompt, generation
+  (static 144 with the drafter off, 24 samples at 96 and 120 residents, two more prompts), and
+  the residents-against-bits trade on the held-out texts.
+- Blocked: a measured row for another runtime at equal memory (no downloads to the Mac).
+- A prompt for an adversarial review by a separate agent is in `paper/review-prompt-yi.md`.
+- Rubric unchanged at 90.
