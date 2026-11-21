@@ -137,6 +137,25 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   residents are evicted last, fetched ones never); the row is requeued behind the chain. Swap
   stood at 5.2 to 6.0 GB throughout (other processes' pages) and did not grow.
 
+  KL along the dial, simulator, 2026-11-21 (`jobs/dialkl_mac.sh`, the 17 tuning texts, 1,024
+  tokens, tool use excluded; `paper/stats.py` rows `dialkl:*`):
+
+  | Residents | Rule | KL | Against re-routing | Tokens that wait in some layer |
+  |---:|---|---:|---|---:|
+  | 73 | re-route | 0.465 | | 0% |
+  | 73 | wait at 0.3 | 0.279 | -0.185 [-0.197, -0.169] | 88% |
+  | 73 | wait at 0.15 | 0.238 | -0.227 [-0.242, -0.208] | 100% |
+  | 140 | wait at 0.3 | 0.263 | -0.057 [-0.071, -0.045] against 144 | 71% |
+  | 207 | wait at 0.3 | 0.245 | -0.033 [-0.040, -0.026] against 200 | 53% |
+  | 384 | whole pool | 0.235 | | |
+
+  With a wait at 0.3, 73 residents score as 200 do under re-routing (+0.001 [-0.007, +0.008]) and
+  as routed 192 (0.280); a wait at 0.15 is within +0.003 [-0.000, +0.006] of the whole pool. The
+  wait shares are high because each text starts cold and is short. Same run: the 192 experts kept
+  by the published pruned build, as a static set at our codes, score 0.609 against 0.456 for the
+  192 of largest routed mass (+0.153 [+0.033, +0.271]; 127 per layer in common). That scores the
+  list away from its own codes and texts, not the build.
+
 ### 3. Exact prefill, then residents chosen from the prompt
 
 - **What.** Prefill runs layer by layer over a chunk, so waiting there costs one wait per layer

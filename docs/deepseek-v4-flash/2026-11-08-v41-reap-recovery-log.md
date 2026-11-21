@@ -1456,3 +1456,15 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - Paper: new subsection on the dial with its table; abstract, limitations and conclusion follow.
 - Rubric unchanged at 90: items 7 and 8 are not what this run tests.
 
+### 2026-11-21: divergence along the dial
+
+- Simulator (`jobs/dialkl_mac.sh`, 17 tuning texts): 73 residents score 0.465 under re-routing,
+  0.279 with a wait at 0.3 (-0.185 [-0.197, -0.169]; equal to 200 residents under re-routing) and
+  0.238 with a wait at 0.15 (+0.003 [-0.000, +0.006] from the whole pool's 0.235). 140 and 207
+  residents with a wait at 0.3: 0.263 and 0.245. Tokens that wait in some layer: 88%, 100%, 71%
+  and 53%, on short texts with a cold start.
+- The published pruned build's list of 192 as a static set at our codes: 0.609, against 0.456
+  for our static 192 (+0.153 [+0.033, +0.271]). The list only, not the build.
+- Paper: second table in the dial subsection, one passage in related work; `stats.py` and
+  `stats.md` carry the rows. Rubric unchanged at 90.
+

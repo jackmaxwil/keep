@@ -806,6 +806,38 @@ at these codes. In the simulator a wait at $\omega=0.5$ lets 96 residents score 
 re-routing ($+0.009$ \ci{-0.001}{+0.018} between them; $-0.061$ \ci{-0.071}{-0.053} against
 re-routing at 96), with 29\% of tokens waiting for at least one expert.
 
+At the resident counts that we serve below, the simulator gives Table~\ref{tab:dialkl}. With 73
+residents a wait at $\omega=0.3$ takes the divergence from 0.465 to 0.279, which is the score of 200
+residents under re-routing ($+0.001$ \ci{-0.007}{+0.008} between them), and 0.176 below a static
+set of 192 \ci{-0.285}{-0.097}. A wait at $\omega=0.15$ takes it to 0.238, within $+0.003$
+\ci{-0.000}{+0.006} of the whole pool. Since $\omega=0.3$ is also the threshold of admission, that
+rule serves at once every miss that re-routing would have admitted for the next token. The price is
+the last column: with 73 residents 88\% of tokens wait for an expert in at least one of the 40
+layers at $\omega=0.3$, and every token does at $\omega=0.15$. Each text starts from the initial
+set and is 1,024 tokens long, so a long session should wait less often than this.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}rlrlr@{}}
+\toprule
+Residents & Miss rule & KL & Against re-routing & Tokens that wait \\
+\midrule
+ 73 & re-route            & 0.465 &                                       &  0\% \\
+ 73 & wait, $\omega=0.3$  & 0.279 & $-0.185$ \ci{-0.197}{-0.169} (at 73)  & 88\% \\
+ 73 & wait, $\omega=0.15$ & 0.238 & $-0.227$ \ci{-0.242}{-0.208} (at 73)  & 100\% \\
+140 & wait, $\omega=0.3$  & 0.263 & $-0.057$ \ci{-0.071}{-0.045} (at 144) & 71\% \\
+207 & wait, $\omega=0.3$  & 0.245 & $-0.033$ \ci{-0.040}{-0.026} (at 200) & 53\% \\
+384 & none needed         & 0.235 &                                       &  0\% \\
+\bottomrule
+\end{tabular}
+\caption{Case study, simulator: divergence along the dial on the tuning texts (first 1,024 tokens,
+tool use excluded), at 2 bits. Differences are paired over the 17 texts with 95\% bootstrap
+intervals, against re-routing at the resident count in parentheses, the nearest we scored (0.320 at
+144, 0.279 at 200). The last column is the share of tokens that wait in at least one layer.}
+\label{tab:dialkl}
+\end{table}
+
 We then served the dial at three budgets, with the number of residents that our memory account
 gives a machine of 64, 96 or 128\,GB (Table~\ref{tab:dial}). The two smaller machines were
 emulated on the 128\,GB one by a second process that held 64 or 32\,GiB of wired memory for the
@@ -1042,7 +1074,13 @@ experts in every layer, chosen by a joint search over all layers for the least K
 the unpruned model under one budget per layer \citep{helcig2026rco}, and stores the rest near 2
 bits \citep{dadgarnia2026gsq}, in 72\,GB \citep{daslab2026coder}. In our terms it is a frozen set
 of 192 with reach 192, chosen with more care than routed mass; its list of kept experts is public,
-and it shares 137 of 192 experts per layer with ours.
+and it shares 137 of 192 experts per layer with the pruned checkpoint we use as a baseline. We scored its
+list, and only its list: as a static set at our 2-bit codes on the tuning texts it gives 0.609,
+against 0.456 for the 192 experts of largest routed mass ($+0.153$ \ci{+0.033}{+0.271}; the two
+lists share 127 per layer), 0.465 for 73 routed residents and 0.279 for 73 with the selective wait
+of Section~\ref{sec:dial}. The list was chosen for other codes and for code generation, and ours on
+calibration text from the domains we score, so this is a statement about a frozen list away from its
+own texts, not about the build, whose weights we have not scored.
 
 \paragraph{Pruning and codes.} REAP \citep{lasby2025reap} produced the pruned checkpoint used
 as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
