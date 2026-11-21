@@ -76,6 +76,20 @@ def test_residual_cache_wait_and_exact_prefill():
     assert hi[:, 0].tolist() == [True, True, False, True] and waited == []
 
 
+def test_residual_cache_served_timing():
+    ind = np.array([[1], [1], [1], [1], [1]])
+    wts = np.ones((5, 1))
+    run = lambda policy: local_eval.residual_cache(ind, wts, k=1, tau=0.5, bounds=[5], warm=np.array([0]),  # noqa: E731
+                                                   counts=np.zeros((2, 5)), policy=policy)[:, 0].tolist()
+    assert run("lru") == [False, True, True, True, True]  # resident one token after its demand
+    assert run("lag:3") == [False, False, False, True, True]
+    assert run("frozen:4") == [False, False, False, False, True]  # nothing lands while the prompt is read
+    assert run("lag:2+frozen:1") == [False, False, True, True, True]
+    counts = np.zeros((2, 5))
+    local_eval.residual_cache(ind, wts, k=1, tau=0.5, bounds=[5], warm=np.array([0]), counts=counts, policy="lag:3")
+    assert counts[:, 4].tolist() == [0, 1]  # queued once, admitted once
+
+
 def test_precision_allocator():
     precision_alloc._check()
 

@@ -202,7 +202,9 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
     ``k`` so far replace the residents. ``exact:P``: the same, and those P tokens are served by
     every expert they ask for (a prefill that waits). ``wait:W``: a slot with gate >= W whose
     expert is absent is served by it anyway (the token waits, or is replayed); ``waited``
-    collects the indices of such tokens.
+    collects the indices of such tokens. ``lag:N``: an admitted expert is resident N tokens after
+    its demand instead of one. ``frozen:P``: no admission lands during a record's first P tokens
+    (a prompt read in one forward call); the two together are the served system's timing.
 
     ``resident`` ([T, n_experts] bool, zeroed by the caller) receives the resident set each token
     sees, for callers that re-route a miss among resident experts."""
@@ -225,6 +227,9 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
         opts = dict(part.partition(":")[::2] for part in policy.split("+"))
         exact, wait = int(opts.get("exact", 0)), float(opts.get("wait", "inf"))
         prompt = int(opts.get("prompt", 0)) or exact
+        lag, frozen = int(opts.get("lag", 1)), int(opts.get("frozen", 0))
+        queue: list[tuple[int, int]] = []  # (token at which it is resident, expert), for lag > 1 or frozen
+        queued: set[int] = set()
         for t in range(start, start + n):
             if prompt and t == start + prompt:  # the prompt has been read: its own top k replace the residents
                 mass = np.bincount(ind[start:t].ravel(), weights=wts[start:t].ravel(), minlength=counts.shape[0])
@@ -234,6 +239,16 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
                 others = [e for e in lru if e not in top]  # pad with the most recent of the rest
                 pad = others[max(0, len(others) - (k - len(top))):] if len(top) < k else []
                 lru = OrderedDict((e, None) for e in [*pad, *reversed(top)])  # the heaviest is the most recent
+            while queue and queue[0][0] <= t:
+                e = queue.pop(0)[1]
+                queued.discard(e)
+                if e not in lru:
+                    counts[e, 4] += 1
+                    if trace is not None:
+                        trace.append((rec, t - start, e))
+                    lru[e] = None
+                    if len(lru) > k:
+                        lru.popitem(last=False)
             row = ind[t].tolist()
             late = [e for s, e in enumerate(row) if e not in lru and (t < start + exact or wts[t, s] >= wait)]
             if late and waited is not None and t >= start + exact:
@@ -245,6 +260,10 @@ def residual_cache(ind: np.ndarray, wts: np.ndarray, k: int, tau: float | np.nda
                 if wts[t, s] >= thr[e]:
                     if e in lru:
                         lru.move_to_end(e)
+                    elif lag > 1 or frozen:
+                        if e not in queued:
+                            queued.add(e)
+                            queue.append((max(t + lag, start + frozen), e))
                     else:
                         counts[e, 4] += 1
                         if trace is not None:
@@ -293,7 +312,7 @@ def main(argv: list[str] | None = None) -> int:
                    "from the other), and BASE may be empty when every variant has --miss")
     p.add_argument("--hi-proj", action="append", default=[], metavar="NAME=w2|w1w3",
                    help="nested only, per variant: the high tier adds the residual for these projections only")
-    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P|exact:P|wait:W",
+    p.add_argument("--cache-policy", action="append", default=[], metavar="NAME=lru|oracle|prompt:P|exact:P|wait:W|lag:N|frozen:P",
                    help="with --cache-k: lru (default) or oracle (each record's own top-K, the upper bound)")
     p.add_argument("--trace", action="append", default=[], metavar="NAME",
                    help="with --cache-k: write this variant's residual admissions (layer, record, token, expert)")

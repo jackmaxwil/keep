@@ -33,7 +33,8 @@ Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto`
 machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
 default 70% of RAM), the policy settings of ``omlx_routed.py``, and ``OMLX_ROUTED_WAIT=1``: the wait rule
 in the decode step, as a baseline (each layer reads the demand on the host and fetches the experts it
-lacks before it runs; prefill still re-routes). ``check`` compares one layer's decode step with dense matrices
+lacks before it runs; prefill still re-routes). ``OMLX_ROUTED_WAIT_MIN=W`` makes the wait selective: only a
+demand with routing weight at or above W is fetched, and the rest re-route. ``check`` compares one layer's decode step with dense matrices
 decoded on the host, the prefill path with the decode path, and slots after installs with their
 stored bytes, then times the decode-step MoE.
 """
@@ -234,6 +235,8 @@ class LatticeCache(Cache):
         # The wait rule, for comparison: a decode step reads every demanded expert it lacks before
         # running, so the routing is the full model's and the token waits (OMLX_ROUTED_WAIT=1).
         self.wait = os.environ.get("OMLX_ROUTED_WAIT") == "1"
+        # A selective wait: only a demand with routing weight at or above this is fetched; the rest re-route.
+        self.wait_min = float(os.environ.get("OMLX_ROUTED_WAIT_MIN", "0"))
         if self.wait:
             self.tau = float("inf")  # no background admission: every install is a wait
             self.stats.update(waits=0, wait_s=0.0)
@@ -276,16 +279,18 @@ class LatticeCache(Cache):
     def unroute(self, layer, expert, slot):
         layer.gate.bias[expert] = OFF
 
-    def fetch(self, layer, want: list[int]) -> None:
+    def fetch(self, layer, want: list[int], strong: list[int] | None = None) -> None:
         """The wait rule. Read every demanded expert that is absent into a slot now, over the least
         recently demanded residents. The caller has evaluated the demand, so every kernel built so
-        far has run and no pending one reads these rows."""
+        far has run and no pending one reads these rows. With ``strong`` (a subset of ``want``), only
+        those are fetched and refreshed; no expert of ``want`` is evicted either way."""
         demanded = set(want)
         self.stats["demand"] += len(want)
         self.stats["resident"] += sum(e in layer.slot_of for e in want)
-        for e in demanded & layer.slot_of.keys():
+        fetched = demanded if strong is None else set(strong)
+        for e in fetched & layer.slot_of.keys():
             layer.last_use[layer.slot_of[e]] = self.step
-        missing = sorted(demanded - layer.slot_of.keys())
+        missing = sorted(fetched - layer.slot_of.keys())
         if not missing:
             return
         started = time.perf_counter()
@@ -328,7 +333,13 @@ def decode(cache, layer, moe, x, config, mma, stock_gate):
         if layer.index == 0:
             cache.stats["calls"] += 1
             cache.stats["tokens"] += nb
-        cache.fetch(layer, np.asarray(want).reshape(-1).tolist())
+        asked = np.asarray(want).reshape(nb, k)
+        strong = None
+        if cache.wait_min > 0:
+            share = np.asarray(want_score, dtype=np.float64).reshape(nb, k)
+            share = share / (share.sum(-1, keepdims=True) + 1e-20) * config.route_scale
+            strong = asked[share >= cache.wait_min].tolist()
+        cache.fetch(layer, asked.reshape(-1).tolist(), strong)
         slot, weight, want, want_score = topk()
     else:
         cache.pending.setdefault(cache.step, []).append((want, want_score))  # as evaluated: reading them later costs no eval
@@ -593,7 +604,21 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
     print(f"wait rule: every token ran the full router's experts; {cache.stats['waits']} waits, "
           f"{cache.stats['wait_s'] / max(cache.stats['waits'], 1) * 1e3:.1f} ms each; worst relative gap {worst:.4f}")
     assert cache.stats["waits"] > 0 and worst < 2e-2 and cache.mismatched() == 0
-    cache.wait = False
+    cut = 1.02 * c.route_scale / c.n_activated_experts  # just above an even share: some of a token's experts qualify
+    cache.wait_min, before = cut, cache.stats["waits"]
+    for i in (0, 1):
+        for _ in range(8):
+            x = token()
+            _, slots_, _ = DM.fused_decode_moe(moes[i], x.reshape(1, 1, -1), c)
+            served = {int(cache.layers[i].slot_expert[s]) for s in np.array(slots_).reshape(-1)}
+            index, weight = (np.array(a).reshape(-1) for a in cache.demand(cache.layers[i], x.reshape(1, -1)))
+            share = weight / weight.sum() * c.route_scale
+            assert {int(e) for e in index[share >= cut]} <= served, (i, sorted(served))
+    worst = max(against_reference(i) for i in (0, 1) for _ in range(3))
+    print(f"selective wait at {cut:.3f}: every strongly demanded expert ran; {cache.stats['waits'] - before} more waits; "
+          f"worst relative gap {worst:.4f}")
+    assert cache.stats["waits"] > before and worst < 2e-2 and cache.mismatched() == 0
+    cache.wait, cache.wait_min = False, 0.0
 
     state_x = {"x": token().reshape(1, 1, -1)}
 
