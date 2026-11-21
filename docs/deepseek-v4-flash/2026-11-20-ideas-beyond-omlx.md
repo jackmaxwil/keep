@@ -26,14 +26,14 @@ times slower than a static set.
 | Rank | Idea | Moves | Ceiling | Status |
 |---:|---|---|---|---|
 | 1 | Better 2-bit codes | KL at every budget | up to 0.235 | rounding works on synthetic data; real inputs queued |
-| 2 | Replay on a strong miss | generation floor, KL, exactness | 0.085 at 144, 0.347 at 48 | narrowed by its kill test, see below |
-| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | warm start: 0.009 only; exact prefill running |
+| 2 | Replay on a strong miss | generation floor, KL, exactness | 0.085 at 144, 0.347 at 48 | passes in the simulator: a wait at 0.5 makes 96 residents score as 144; served rows running |
+| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | warm start: 0.009 only; exact prefill passes: the first 256 positions go from 0.542 to the floor |
 | 4 | A 1.5-bit code | reach to 64 GB machines | a third more residents per GB | error measured; likely loses on KL, see below |
 | 5 | Low-rank stand-ins for absent experts | routing error | part of 0.085 to 0.347 | dead |
 | 6 | Uncertainty-gated replay | cost of idea 2 | same quality, fewer replays | after idea 2 |
 | 7 | Domain profiles | starting set | a share of 0.065 | weak: loses to plain admission |
 | 8 | Engram in the memory account | speed or residents | unknown | needs a profile |
-| 9 | Adaptive active count | decode speed | about 8% | queued |
+| 9 | Adaptive active count | decode speed | about 8% | passes: 10.6% of expert slots skipped for +0.004 KL |
 | 10 | Multi-row kernel | drafter speed | at most 12% of a cycle | measured, low |
 | 11 | Fitted per-expert thresholds | KL | at most 0.064 | lost twice |
 
@@ -92,6 +92,22 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   exactly (W = 0.5 and 0.7, at 96 and 144 residents), scored on KL, then on sampled scripts.
 - **Caveats.** The trace is short calibration text with a cold start per record, so rates over
   a long session should be lower; the demand was recorded under a randomized policy.
+- **Simulator result, 2026-11-21** (`--cache-policy NAME=wait:W`, the 17 tuning texts, first 1,024
+  tokens, tool use excluded; a demand with routing weight at or above W is served by its own expert,
+  the rest re-routed; differences are paired, 95% bootstrap intervals over texts):
+
+  | Residents | Re-route every miss | W = 0.7 | W = 0.5 |
+  |---:|---:|---|---|
+  | 96 | 0.390 | 0.372, -0.019 [-0.027, -0.012]; 8.5% of tokens wait | 0.329, -0.061 [-0.071, -0.053]; 29.4% |
+  | 144 | 0.320 | 0.307, -0.013 [-0.017, -0.010]; 6.5% | 0.287, -0.033 [-0.042, -0.026]; 20.9% |
+
+  The whole pool at these codes scores 0.235. With W = 0.5, 96 residents score as 144 do under
+  re-routing (+0.009 [-0.001, +0.018]): a third less expert memory for a wait on three tokens in
+  ten. At 144 residents it is level with a static set of 250 (-0.016 [-0.059, +0.015]). W = 0.7
+  buys a fifth to a third of that for a quarter of the waits. A wait in serving is a read inside
+  the layer (10.5 ms measured), not a replay of earlier layers, so the cost is the token share
+  above times the reads, not the rerun share of the kill test. Served rows (speed and sampled
+  scripts at W = 0.3 and 0.15, and waiting for every miss) are running: `jobs/dial_mac.sh`.
 
 ### 3. Exact prefill, then residents chosen from the prompt
 
@@ -122,6 +138,17 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   where the starting set matters: texts under 256 tokens, on which routed 144 is 0.54 from the whole
   pool against 0.075 on long texts. Those texts have no prompt to warm up on, so the lever there is a
   better prior or a wait rule, not this.
+- **Exact prefill, simulator, 2026-11-21** (`exact:256`: the first 256 tokens are served by the
+  whole pool, then the policy continues from the residents their demand left). At 144 residents:
+  0.261 against 0.320, -0.059 [-0.070, -0.049]. By position: the first 256 positions fall from
+  0.542 to 0.337, which is the whole pool's own value there, and the positions after them from
+  0.246 to 0.236 (-0.010 [-0.022, -0.002]; the whole pool scores 0.201 there). So the loss of the
+  routed set is concentrated at the start of a text, exact prefill removes that part, and little
+  of the gain carries past it. With a wait at 0.7 after the prefill: 0.256, and 0.229 after
+  position 256 (-0.017 [-0.030, -0.009]). In serving the prompt is prefill, so this is the wait
+  rule's exact prefill (`moe_wait`, merged 2026-11-21) followed by re-routing; the held-out texts
+  under 256 tokens, where routed 144 trails the whole pool by 0.54, are the case it addresses, and
+  it has not been scored on them.
 
 ### 4. A 1.5-bit code
 
@@ -206,7 +233,11 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - **Why.** Skipping slots with gate weight below 0.1 is close to free (+0.001 KL, 7.7% of
   slots). Expert decode is about 9 of the 37 ms of a token, so the ceiling is small.
 - **Kill test.** Simulator variants at several cutoffs; average experts run against KL.
-- **Queued.** `--mass-cut NAME=SHARE` (0.9 and 0.8 at 144 residents).
+- **Simulator result, 2026-11-21** (`--mass-cut NAME=SHARE`, 144 residents): a cut at 0.9 of the
+  routing weight skips 10.6% of expert slots for +0.004 KL [-0.003, +0.009]; a cut at 0.8 skips
+  26.1% for +0.019 [+0.014, +0.026]. The first is free within noise; with expert decode at about
+  a quarter of a token's time it is worth about 3% of decode speed, so it is cheap to add and
+  small. Not implemented in serving.
 
 ### 10. Multi-row lattice kernel
 
@@ -228,6 +259,16 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - Why the median speed of one configuration varies by 25% between runs.
 
 ## Queue on the Mac
+
+Status 2026-11-21 04:30: the ideas runs finished. Running: `jobs/dial_mac.sh` (re-route, waits at
+0.3 and 0.15, and waiting for every miss, at 73, 140 and 207 residents; the first two under 64 and
+32 GiB of wired ballast for the 64 and 96 GB machines). Its first start was stopped by a swap
+guard of 8 GB set too low for the 12 GB spike while the model loads under the ballast; the guard
+is now 32 GB and the run was restarted. Behind it: `dialkl_mac.sh` (KL along the dial, and the
+192 experts of the IST-DASLab pruned build as a static set), timing, speed, generation, the hot
+set on held-out text, `llamacpp_mac.sh` (that build under llama.cpp at the three budgets) and
+`ldlq_mac.sh` (idea 1 on real second moments; only 165 to 1,017 input rows per expert against
+5,120 dimensions, so the test is underpowered and is scored on a disjoint half).
 
 `jobs/chain_1118.sh` (held-out confirmation, then the prompt warm start), then `jobs/ideas_mac.sh`:
 a smoke run, pass a (144 residents: `wait:0.5`, `wait:0.7`, `exact:256`, `exact:256+wait:0.7`),
