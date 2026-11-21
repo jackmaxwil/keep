@@ -63,6 +63,11 @@
 | dialkl:s192 | 0.456 | 0.579 | 1.81 | 0.812 |
 | dialkl:k192 | 0.280 | 0.413 | 1.74 | 0.852 |
 | dialkl-ista:ista192 | 0.609 | 0.770 | 2.38 | 0.770 |
+| timing:k96L | 0.435 | 0.652 | 2.82 | 0.820 |
+| timing:k144L | 0.344 | 0.486 | 1.91 | 0.838 |
+| timing:k200L | 0.288 | 0.414 | 1.68 | 0.854 |
+| timing:k96LF | 0.612 | 0.799 | 2.67 | 0.785 |
+| timing:k144LF | 0.442 | 0.585 | 2.02 | 0.821 |
 
 | A | B | KL(A) - KL(B), 10 domains | 95% interval |
 |---|---|---:|---|
@@ -137,3 +142,12 @@
 | dialkl-ista:ista192 | dialkl:s192 | +0.153 | [+0.033, +0.271] |
 | dialkl:k73 | dialkl-ista:ista192 | -0.144 | [-0.266, -0.048] |
 | dialkl:k73w30 | dialkl-ista:ista192 | -0.329 | [-0.450, -0.236] |
+| timing:k96L | c1-residents:k96 | +0.045 | [+0.034, +0.056] |
+| timing:k144L | c1-residents:k144 | +0.023 | [+0.020, +0.028] |
+| timing:k200L | c1-residents:k200 | +0.009 | [+0.000, +0.022] |
+| timing:k96LF | c1-residents:k96 | +0.222 | [+0.170, +0.291] |
+| timing:k144LF | c1-residents:k144 | +0.121 | [+0.088, +0.168] |
+| timing:k96LF | timing:k96L | +0.177 | [+0.117, +0.253] |
+| timing:k144LF | timing:k144L | +0.098 | [+0.065, +0.145] |
+| timing:k96LF | frontier:s96 | -0.397 | [-0.543, -0.287] |
+| timing:k144LF | tau384:s144 | -0.212 | [-0.309, -0.138] |
