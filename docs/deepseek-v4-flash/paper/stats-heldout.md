@@ -1,4 +1,4 @@
-42 sessions, 69894 scored positions; 36 texts outside tool use, median 213 positions
+42 sessions, 69894 scored positions; 36 texts outside tool use, median 213.5 positions
 
 | Variant | KL | Top-1 | KL pooled over positions | Tool-use KL |
 |---|---:|---:|---:|---:|
@@ -30,3 +30,18 @@
 | 1,024 and over | 7 | k144 | s144 | -0.255 | [-0.402, -0.123] | 7 of 7 |
 | 1,024 and over | 7 | k144 | s250 | +0.032 | [-0.011, +0.072] | 1 of 7 |
 | 1,024 and over | 7 | k144 | q384 | +0.075 | [+0.045, +0.110] | 0 of 7 |
+
+5 texts open with 64 or more tokens that also open a calibration or tuning text (3921, 3902, 702, 299, 163 tokens); 8982 of 49990 scored positions lie inside them
+
+| A | B | KL(A) - KL(B) without those positions | 95% interval | Texts where A is better |
+|---|---|---:|---|---|
+| k96 | s96 | -0.795 | [-0.970, -0.627] | 35 of 35 |
+| k144 | s144 | -0.521 | [-0.648, -0.400] | 34 of 35 |
+
+| Archived 4-bit student, 192 experts | KL | A | KL(A) - KL(student) | 95% interval | Texts where A is better |
+|---|---:|---|---:|---|---|
+| student-fm192 | 0.741 | k96 | +0.134 | [+0.013, +0.253] | 10 of 36 |
+| student-fm192 | 0.741 | k144 | -0.025 | [-0.141, +0.087] | 15 of 36 |
+| student-reap192 | 0.814 | k96 | +0.060 | [-0.047, +0.175] | 16 of 36 |
+| student-reap192 | 0.814 | k144 | -0.099 | [-0.191, -0.008] | 24 of 36 |
+| student-reap192 | 0.814 | student-fm192 | -0.074 | [-0.166, +0.023] | 21 of 36 |

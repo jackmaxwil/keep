@@ -1468,3 +1468,26 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - Paper: second table in the dial subsection, one passage in related work; `stats.py` and
   `stats.md` carry the rows. Rubric unchanged at 90.
 
+
+### 2026-11-21: the third review's remaining corrections
+
+Every count was recomputed from the stored evaluations before the text changed.
+
+- Held-out texts: 5 of 36 open with 64 or more tokens that also open a calibration or tuning text
+  (3,921, 3,902, 702, 299 and 163 tokens), 8,982 of 49,990 scored positions. Without them routed
+  minus static is -0.795 [-0.970, -0.627] at 96 residents and -0.521 [-0.648, -0.400] at 144.
+- Archived static sets of 192 at 4 bits on the same positions (pod harness): 0.741 for the 192 of
+  largest routed mass, 0.814 for the pruned checkpoint (the review gave 0.978 for the second).
+  Routed 96 at 2 bits is worse than the first by 0.134 [0.013, 0.253]; routed 144 is not separable
+  from the first and beats the second by 0.099 [0.008, 0.191].
+- The comparison across pool widths started from sets that share 108 of 144 experts per layer; the
+  paper says so. A rerun of the wide pool from the narrow run's starting set is queued
+  (`jobs/commoninit_mac.sh`).
+- The 4-bit control is 0.389 on the decoded path and 0.393 on its native path; both are printed.
+- The metric is described as a partial sum that can be negative (3,072 of 17,391 positions at 144
+  residents, minimum -0.056). Median held-out length 213.5; tuning texts have 1,023 scored positions.
+- `admissions_per_token_layer` in `local_eval.py` divided by the layer count twice; fixed. Stored
+  summaries from before are 40 times too small (0.0016 for 0.065 at 144 residents).
+- Related work: HOBBIT loads its low-precision copy on the miss; AdapMoE also lowers the number of
+  active experts; PagedMoE (arXiv 2611.03173) is cited for prefix-compatible precision.
+- Rubric unchanged at 90.

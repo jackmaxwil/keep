@@ -751,7 +751,8 @@ def main(argv: list[str] | None = None) -> int:
                                             "drop_slot_share": float(tot[5] / (tot[:2].sum() + tot[5])),
                                             "hi_mass_share": float(tot[3] / (tot[2:4].sum() + tot[6])),
                                             "drop_mass_share": float(tot[6] / (tot[2:4].sum() + tot[6])),
-                                            "admissions_per_token_layer": float(tot[4] / ((tot[:2].sum() + tot[5]) / int(model_args.n_activated_experts)) / int(model_args.n_layers))}
+                                            # slots / top_k is already tokens times layers; summaries written before 2026-11-21 divided by the layer count again
+                                            "admissions_per_token_layer": float(tot[4] / ((tot[:2].sum() + tot[5]) / int(model_args.n_activated_experts)))}
         print(v, json.dumps(summary["variants"][v]["_tiers"]), flush=True)
     if args.moments:
         np.savez(args.out / "moments.npz", **{f"h_{l}_{e}": (h / max(n, 1)).numpy().astype(np.float32) for (l, e), (h, n) in moments.items()},

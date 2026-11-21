@@ -51,9 +51,9 @@ spending memory: a code precise enough to be usable, then reach, then residents,
 for the experts used most. We state the conditions under which this order should hold and test
 it in a case study on a 384-expert, 40-layer model. There, letting the frozen cache admit puts
 it closer to the full model at every budget on the texts the settings were chosen on, and at both budgets rescored on held-out text. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size; on short texts it is worse than one 1.7 times its size. A third bit on the most used experts loses to more residents at the smallest budget
-tested, ties in the middle and wins once 38 to 52\% of the pool is in memory. A laptop serves the whole pool within about 10\% of the speed of a static set of experts on short prompts, over a handful of requests. The case study also shows a limit: below a
+tested, ties in the middle and wins at the two largest. A laptop serves the whole pool within about 10\% of the speed of a static set of experts on short prompts, over a handful of requests. The case study also shows a limit: below a
 residency floor, re-routing damages generated text in a way that divergence from the full model
-does not measure; waiting only for strongly demanded experts removes the floor on the one prompt tested, at two thirds of the speed, with the residents that fit a 64\,GB machine. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, under forced context and on the same texts; there it is not separable from a static set 1.4 times its size, session locality is weaker, and the policy asks for about five times the read traffic. We do not compare with other runtimes at equal memory.
+does not measure; waiting only for strongly demanded experts removes the floor on the one prompt tested, at two thirds of the speed, with the residents that fit a 64\,GB machine. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, under forced context and on the same texts; there it is not separable from a static set 1.4 times its size, session locality is weaker, and the simulated policy asks for about five times as many admissions. We do not compare with other runtimes at equal memory.
 \end{abstract}
 
 \section{Introduction}
@@ -121,10 +121,10 @@ memory. We give the conditions for this order and say where we expect it to fail
 
 \paragraph{A case study (Section~\ref{sec:case}).} We test the formulation on one large model, DeepSeek-V4.1-Flash-1017, whose experts do not fit on a 128\,GB laptop at the released precision or
 at 2 bits. At equal memory a routed set is closer to the full model than a pruned set at every
-budget on the tuning texts, and at both budgets rescored on texts that no setting was chosen on. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size, and on short texts it is worse; a third bit on the most used experts loses to more residents at 35\,GB, is level
+budget on the tuning texts, and at both budgets rescored on further texts, on which no threshold or budget was chosen. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size, and on short texts it is worse; a third bit on the most used experts loses to more residents at 35\,GB, is level
 at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set on short prompts. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
-\paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. Under forced context the routed set wins at every budget and in every text. Against larger static sets it is worth about 1.4 times its size, not two; that model's demand is less local, and the policy asks for about five times the read traffic per token.
+\paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. Under forced context the routed set wins at every budget and in every text. It is not separable from a static set 1.4 times its size and is worse than one twice its size; that model's demand is less local, and the simulated policy asks for about five times as many admissions per token.
 
 The evidence for the order of spending is one model, one set of codes and one machine; the second model tests residency alone. We present the formulation and
 the policy as general, the order of spending as a prediction, the measurements as a case study, and in
@@ -227,7 +227,8 @@ Static pruning \citep{lasby2025reap} & subset & $=$ reach & full & none needed \
 Uniform quantization \citep{tseng2024quipsharp} & all & all & low & none needed \\
 Pruning with quantization \citep{chen2025collaborative} & subset & $=$ reach & per expert & none needed \\
 Exact offloading \citep{xue2024moeinfinity} & all & subset, dynamic & full & wait \\
-Low-precision fallback \citep{tang2024hobbit,chu2025dynaexq} & all & subset $+$ coarse copies & two levels & substitute \\
+Low-precision fetch \citep{tang2024hobbit} & all & subset, dynamic & two levels & wait, shortened \\
+Low-precision fallback \citep{chu2025dynaexq} & all & subset $+$ coarse copies & two levels & substitute \\
 Cache-aware routing \citep{skliar2024cache} & all & subset, dynamic & full & re-route (biased) \\
 Dynamic expert sets \citep{kong2023swapmoe} & all & subset, dynamic & full & re-route \\
 Selective fetch \citep{son2026misses} & all & subset, dynamic & low & wait or re-route \\
@@ -379,8 +380,8 @@ arrives a few tokens late is still needed.
 Figure~\ref{fig:locality} measures concentration, and the gap that locality implies, in the model of Section~\ref{sec:case}. The
 144 experts per layer that calibration text ranks highest would serve 65\% of a text's
 demanded gate weight on average, and between 41 and 79\% depending on the text. The text's own
-best 144 would serve 96\% (93 to 98\%; unweighted means over the 17 texts). The text's own set is chosen in hindsight, so the gap between the two curves is what a static
-set gives up and the most a dynamic one can recover; it is present in every layer. Locality does not
+best 144 would serve 96\% (93 to 98\%; unweighted means over the 17 texts). The text's own set is chosen in hindsight, so the gap between the two curves is what the calibration
+set gives up against the best fixed set for that text; a set that changes within the text could serve more still. The gap is present in every layer. Locality does not
 mean a small footprint: a text touches about 264 of the 384 experts of a layer at least once,
 so the tail of demand is long and thin, which is the case for admitting only on strong demand.
 
@@ -575,7 +576,7 @@ layer and kept at 4 bits; its 192 experts recoded at 2 bits are the \emph{pool o
 \paragraph{Measurement.} Quality is the KL divergence from the full model's next-token
 distribution to the compressed model's, teacher-forced, in nats, on the first 1{,}024 tokens of
 evaluation text from ten domains (code, shell, security, networking, business, chat and
-prose), 17 distinct texts in all; calibration text is separate. The divergence is summed over the 2{,}048 tokens the full model rates most probable at each position, so it does not see probability that the compressed model puts on tokens outside that set. Differences are paired by text
+prose), 17 distinct texts in all; calibration text is separate. The quantity is $\sum_{x\in A} p(x)\log\bigl(p(x)/q(x)\bigr)$, with $p$ and $q$ the full-vocabulary probabilities of the full and the compressed model and $A$ the 2{,}048 tokens the full model rates most probable at that position. It is a partial sum of the KL divergence, not the divergence between the two distributions renormalized on $A$: it does not see probability that the compressed model puts outside $A$, and at a single position it can be negative, as it is at 18\% of positions for routed residency with 144 residents, never below $-0.06$. We call it KL throughout; where a comparison turns on hundredths of a nat, this is one more reason for caution. Differences are paired by text
 with a 95\% bootstrap interval over texts in brackets. One text carries a fifth of the weight, because four sessions share it, so the effective sample is about 12 texts. We report several dozen paired comparisons and correct none for multiplicity; an interval that barely excludes zero should be read with that in mind. Policies are compared in a simulator
 that runs the real forward pass with the residency decisions of Algorithm~\ref{alg:policy}
 applied per token and layer. The simulator installs an admitted expert one token after it is demanded and adapts within a text; the served system of Section~\ref{sec:serving} installs later and holds its set fixed while it reads a prompt, and we did not measure how far the two agree on quality. Appendix~\ref{app:setup} gives the details, including an
@@ -622,8 +623,8 @@ the memory axis, on these texts a routed set is not separable from a static set 
 200 static ones ($-0.037$ \ci{-0.136}{+0.034}), and 144 against 250
 ($+0.017$ \ci{-0.026}{+0.051}). These are failures to separate at 17 texts, not tests of equivalence, and the held-out texts below qualify them.
 
-Two comparisons isolate reach from residency. Holding residency at 144 and widening only the
-pool, from the pool of 192 to all 384 experts, lowers KL from 0.499 to 0.307 at an admission threshold of 0.2 ($-0.192$ \ci{-0.272}{-0.128}), although the added experts occupy no memory until they are asked for. And 144 residents drawn from the whole pool at the default threshold, in 53\,GB, are closer to the full model than the entire pool of 192 held in memory at once in 71\,GB (0.320 against 0.486, $-0.166$ \ci{-0.232}{-0.115}). Reaching a wide pool is worth more than holding a
+Two comparisons bear on reach apart from residency. Holding residency at 144 and widening the
+pool, from the pool of 192 to all 384 experts, lowers KL from 0.499 to 0.307 at an admission threshold of 0.2 ($-0.192$ \ci{-0.272}{-0.128}), although the added experts occupy no memory until they are asked for. The two runs differ in more than reach: each starts from the 144 experts that its own calibration statistics rank first, and the two starting sets share 108 of 144 experts per layer, so part of the difference may belong to the starting set. And 144 residents drawn from the whole pool at the default threshold, in 53\,GB, are closer to the full model than the entire pool of 192 held in memory at once in 71\,GB (0.320 against 0.486, $-0.166$ \ci{-0.232}{-0.115}). Reaching a wide pool is worth more than holding a
 narrow one.
 
 \paragraph{Held-out texts.} The settings above were chosen on the 17 texts they are reported
@@ -631,16 +632,18 @@ on. We therefore froze them and scored 36 further texts, each up to its first
 8{,}192 tokens (Table~\ref{tab:heldout}). No threshold, hot set or budget was chosen on these texts, but they are not untouched: they belong to the 54 sessions on which the rule that ranks experts by routed mass was compared with the pruning method's own (Appendix~\ref{app:setup}). Routed residency beats the static set of the same
 size by more than on the tuning texts: $-0.503$ \ci{-0.631}{-0.383} at 144 residents, in 35 of
 36 texts, and $-0.793$ \ci{-0.969}{-0.629} at 96, in all 36. Two of the five budgets were rescored; at both, the comparison at equal size
-does not depend on the texts the settings were chosen on.
+does not depend on the texts the settings were chosen on. Nor does it depend on text the policy could have met before. Five of the 36 texts open with a run of 64 or more tokens that also opens a calibration or tuning text: shared code context at the head of two long sessions, shorter openings of two more, and one chat prompt repeated whole. Those runs hold 8{,}982 of the 49{,}990 scored positions. Without them, and without the text they leave empty, the differences are $-0.521$ \ci{-0.648}{-0.400} at 144 residents and $-0.795$ \ci{-0.970}{-0.627} at 96.
 
 In absolute terms the held-out texts are harder. The whole pool scores 0.373 (0.235 on the tuning texts), routed residency with 144 residents 0.715 (0.320), and static sets of 144 and 250 score 1.218 and 0.598 (0.654 and 0.303). The comparison with larger static sets does not survive intact. 96 routed residents are not separable
 from 200 static ones ($+0.069$ \ci{-0.044}{+0.190}), but 144 are worse than
-250 ($+0.117$ \ci{+0.025}{+0.220}, better in 9 of 36 texts) and not separable from 200 ($-0.090$ \ci{-0.198}{+0.019}). The held-out texts are short, with a median of 213 scored
-positions, where the tuning texts all have 1{,}024. Splitting them by length, a split we chose after seeing these results, suggests why: the routed set starts as the static set and needs demand to
+250 ($+0.117$ \ci{+0.025}{+0.220}, better in 9 of 36 texts) and not separable from 200 ($-0.090$ \ci{-0.198}{+0.019}). The held-out texts are short, with a median of 213.5 scored
+positions, where the tuning texts all have 1{,}023. Splitting them by length, a split we chose after seeing these results, suggests why: the routed set starts as the static set and needs demand to
 depart from it. On texts under 256 positions it is 0.54 from holding the whole pool and worse than 250 static residents; from
 1{,}024 positions on it is 0.075 from the whole pool, close to the 0.086 of the tuning texts, and
 not separable from 250 static residents, though better in only 1 of those 7 texts. Reach is worth less than a factor of two in memory on short texts and may approach it on long ones; these data do not establish the second. What a short text lacks is the starting set,
 the gap Section~\ref{sec:admission} returns to.
+
+The same positions were also scored, in the comparison of ranking rules of Appendix~\ref{app:setup}, for two static sets of 192 at 4 bits, each 144\,GB of experts: the 192 experts of largest routed mass score 0.741 and the pruned checkpoint 0.814. Routed residency with 96 residents at 2 bits, in 35\,GB, is worse than the first ($+0.134$ \ci{+0.013}{+0.253}) and not separable from the second ($+0.060$ \ci{-0.047}{+0.175}); with 144 residents, in 53\,GB, it is not separable from the first ($-0.025$ \ci{-0.141}{+0.087}) and better than the second ($-0.099$ \ci{-0.191}{-0.008}). These rows come from another harness, at the released arithmetic, and cost three to four times the expert memory; they are the strongest static baselines we have on these texts, and at the smaller budget the routed set does not match the better of them.
 
 \begin{table}[ht]
 \centering
@@ -704,13 +707,13 @@ what extra bits can buy. The third prediction is not contradicted: above the res
 on 32 hot experts makes the model worse ($+0.014$ \ci{+0.004}{+0.024}). At 53\,GB the same
 trade is level ($-0.004$ \ci{-0.014}{+0.005}), and so are hot sets at 4 bits at 53 and
 65\,GB. At 74\,GB a hot set of 64 wins ($-0.023$ \ci{-0.042}{-0.002}), and at 92\,GB it wins
-clearly ($-0.039$ \ci{-0.058}{-0.017}). The crossover lies between 144 and 200 residents, 38 to 52\% of the pool; past it, 168 residents with a hot set in 74\,GB are indistinguishable from 250 residents at 2 bits in 92\,GB ($+0.001$ \ci{-0.018}{+0.023}). The residents' side of the order rests on the one budget below the crossover, and that budget is also below the residency floor of Section~\ref{sec:generation}; above the floor we saw ties and then wins for bits. The hot-set sizes were chosen on these texts and were not rescored on held-out text, and the interval of the win at 74\,GB ends at $-0.002$. The hot set need not be large: at 92\,GB, 32, 64 and 96 hot experts per layer are within 0.01 of one another. A third bit
+clearly ($-0.039$ \ci{-0.058}{-0.017}). The tested allocations change rank between 53 and 74\,GB. The configurations with a hot set at those budgets hold 128 and 168 residents, 33 and 44\% of the pool, and the 2-bit alternatives 144 and 200, 38 and 52\%; two pairs do not place a crossover more closely than that. Past it, 168 residents with a hot set in 74\,GB are indistinguishable from 250 residents at 2 bits in 92\,GB ($+0.001$ \ci{-0.018}{+0.023}). The residents' side of the order rests on the one budget below the crossover, and that budget is also below the residency floor of Section~\ref{sec:generation}; above the floor we saw ties and then wins for bits. The hot-set sizes were chosen on these texts and were not rescored on held-out text, and the interval of the win at 74\,GB ends at $-0.002$. The hot set need not be large: at 92\,GB, 32, 64 and 96 hot experts per layer are within 0.01 of one another. A third bit
 does what the 4-bit weights do at equal memory ($-0.004$ \ci{-0.009}{+0.004}), so the nested
 residual loses nothing to a separate high-precision copy. Appendix~\ref{app:bits} gives every
 configuration.
 
 \paragraph{The opposite allocation.} The pruned checkpoint spends its memory the other way:
-half the pool at 4 bits, in 144\,GB. It scores 0.389, against 0.235 for the whole pool at 2
+half the pool at 4 bits, in 144\,GB. It scores 0.389 with its 4-bit weights decoded and run through the arithmetic of our other rows, and 0.393 on its own 4-bit path ($-0.004$ \ci{-0.009}{+0.002} between the two); we use the first, against 0.235 for the whole pool at 2
 bits in 141\,GB, and against 0.303 for a static set of 250 at 2 bits in 92\,GB.
 The pruned checkpoint also differs from our static sets in which experts it keeps. At 2 bits its 192 experts and the 192 with the most routed mass are not distinguishable on this metric (0.486 against 0.456, $-0.030$ \ci{-0.095}{+0.051}), an interval wide enough that the choice of experts could account for part of the gap; with tool use included the two differ by 0.17 nats (0.747 against 0.579).
 
@@ -949,8 +952,8 @@ a low bar: the routed set starts as the static set and can only move toward what
 asks for. Against larger static sets the result is weaker than in the case study. 72 routed
 residents are closer to the full model than 108 static ones ($-0.126$ \ci{-0.266}{-0.018}),
 108 are not separable from 150 ($-0.026$ \ci{-0.111}{+0.045}), and 72 are worse than 150
-($+0.166$ \ci{+0.052}{+0.261}). On this model, under forced context, reach is worth about 1.4
-times its size in static residents, not two.
+($+0.166$ \ci{+0.052}{+0.261}). On this model, under forced context, the routed set is not separated from a static set 1.4
+times its size and is worse than one twice its size.
 
 Two things differ from the case study, and both make residency cost more here. The first is
 traffic. Eight active experts spread a token's gate weight more thinly than six, and at this
@@ -1009,7 +1012,7 @@ cheap predictor of a prompt's experts.
 \paragraph{Offloading.} MoE-Infinity \citep{xue2024moeinfinity}, Fate \citep{fang2025fate} and
 AdapMoE \citep{zhong2024adapmoe} keep experts off the accelerator and reduce the cost of
 loading them, by caching and by predicting which experts will be needed. These systems keep
-the wait rule and shorten the wait. SpecMD \citep{hoang2026specmd} benchmarks such systems as
+the wait rule and shorten the wait; AdapMoE also lowers the number of experts a token activates, which changes the output as well as the traffic. SpecMD \citep{hoang2026specmd} benchmarks such systems as
 combinations of four policies, for routing, a cache miss, eviction and prefetching, and its miss
 policies (fetch, fetch at lower precision, drop, substitute) are the rules of
 Section~\ref{sec:space}. The formulation adds reach and precision to that space, so that pruned
@@ -1019,8 +1022,8 @@ every policy they test that holds an expert set fixed and decodes faster than an
 least-recently-used cache raises next-token loss by at least 0.067 nats, and they improve
 eviction instead.
 
-\paragraph{Substitution and cache-aware routing.} HOBBIT \citep{tang2024hobbit} serves a miss
-from a low-precision copy, and DynaExq \citep{chu2025dynaexq} keeps frequently used experts at
+\paragraph{Substitution and cache-aware routing.} HOBBIT \citep{tang2024hobbit} replaces a
+missed expert of low importance by a low-precision copy, which is itself loaded on the miss, so the wait is shortened and not removed; DynaExq \citep{chu2025dynaexq} keeps frequently used experts at
 high precision with a low-precision fallback and asynchronous promotion that becomes visible
 only when the transfer completes. Cache-conditional
 routing \citep{skliar2024cache}, SMoE \citep{zhu2025smoe} and MoE-CORE \citep{yang2026moecore}
@@ -1044,8 +1047,8 @@ runs at 4 bits and compares against neither pruning nor lower precision. The re-
 background admission are therefore not our contribution. What we add is the account in which
 that rule, pruning and quantization become comparable at equal memory, the allocation order
 that follows, and a construction in which the rule is a bias on the router, so that demand and
-the served set come from one router evaluation and the decode path waits on neither storage nor
-the host. We study that policy at 2 bits against pruned sets of equal memory.
+the served set come from one router evaluation and no token waits on storage for an expert it
+missed; the host still applies finished reads between forward passes. We study that policy at 2 bits against pruned sets of equal memory.
 
 \paragraph{Dynamic sets against pruning.} SwapMoE \citep{kong2023swapmoe} maintains a dynamic
 set of experts under a memory budget and compares it with pruning on small models, and LightMoE
@@ -1055,7 +1058,7 @@ precision axis.
 
 \paragraph{Mixed and nested precision.} DyMoE \citep{huang2026dymoe} assigns precision to
 experts at run time, SliceMoE \citep{choi2025slicemoe} caches bit slices of experts, and MatMoE
-\citep{wei2026matmoe} uses nested codes whose width follows the routing score. D$^2$MoE \citep{wang2025d2moe} allocates a bit-width to each expert at run time, and MC-MoE
+\citep{wei2026matmoe} uses nested codes whose width follows the routing score. PagedMoE \citep{lin2026pagedmoe} stores each expert once, as a code whose shorter prefixes are valid lower precisions laid out in bit planes, so that a cached expert is refined by reading only the planes it lacks; it chooses the prefix per token from routing weights and error profiles and serves a 397-billion-parameter model from storage at an average of 2.5 bits. Our base code with its residual is a two-level case of that layout, and as described that system keeps storage reads on a token's path, where routed residency does not. D$^2$MoE \citep{wang2025d2moe} allocates a bit-width to each expert at run time, and MC-MoE
 \citep{huang2024mc} and MxMoE \citep{duanmu2025mxmoe} assign bits by activation frequency and
 sensitivity, and EdgeMoE \citep{yi2023edgemoe} gave experts different bit widths and loaded them ahead of use on mobile devices as early as 2023. Our hot set is a simple instance of the same idea. The formulation adds a condition
 on when it pays: after reach, and not below the knee of the code. The idea has a counterexample
@@ -1101,13 +1104,15 @@ baseline.
 
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
 the running system does neither. Among starting residents not yet demanded, the simulator evicts
-the highest ranked first and the running system the lowest; we did not measure the effect. The pruned checkpoint differs from the pool in its choice of experts as well as in precision; at 2 bits the choice is not distinguishable on our metric, and we could not test it at 4 bits on the same texts. The wait rules of Section~\ref{sec:dial} were served on one prompt, ten requests a row, on one machine whose smaller budgets were emulated by wiring memory; we have no divergence for the served system under any rule, and no run on a machine that has 64\,GB.
+the highest ranked first and the running system the lowest; we did not measure the effect. The pruned checkpoint differs from the pool in its choice of experts as well as in precision; at 2 bits the choice is not distinguishable on our metric, and at 4 bits, on the held-out texts and in another harness, it is not either (0.741 for the 192 of largest routed mass against 0.814, $-0.074$ \ci{-0.166}{+0.023}). The wait rules of Section~\ref{sec:dial} were served on one prompt, ten requests a row, on one machine whose smaller budgets were emulated by wiring memory; we have no divergence for the served system under any rule, and no run on a machine that has 64\,GB.
+
+The served system is an extension of an existing runtime and not a runtime of its own: our codes, kernels and miss rules are loaded into it at a pinned version, and its server, its support for the model and much of its decode path are its maintainers' work. The serving comparisons are therefore between policies inside one runtime. They do not rank runtimes, and nothing in the policy prevents that runtime, or another, from adopting it.
 
 \section{Conclusion}
 
 Pruning, quantization and offloading are three answers to one question, and describing a
 deployment by its reach, residency, precision and miss rule puts them in one space with one
-memory account. In that space static pruning is a frozen cache, reach is free, the miss rule decides latency, and the division of
+memory account. In that space static pruning is a frozen cache, reach costs no resident memory, the miss rule decides latency, and the division of
 memory between residents and bits follows from which term of the error is larger. For wide,
 sparse MoE models this suggests an order of spending: a usable code first, then every expert
 reachable, then residents, then precision for the experts used most. A case study on a
@@ -1173,7 +1178,8 @@ Routed residency, 250 & 0.254 & 0.862 & 0.398 & 1.83 \\
 Routed residency, 218, 64 hot at 3 bits & 0.215 & 0.875 & 0.311 & 1.27 \\
 Whole pool at 2 bits & 0.235 & 0.861 & 0.390 & 1.94 \\
 Whole pool, 32 hot at 4 bits & 0.167 & 0.885 & 0.268 & 1.28 \\
-Pruned checkpoint at 4 bits & 0.389 & 0.838 & 0.578 & 2.47 \\
+Pruned checkpoint at 4 bits, decoded & 0.389 & 0.838 & 0.578 & 2.47 \\
+Pruned checkpoint at 4 bits, native path & 0.393 & 0.835 & 0.588 & 2.54 \\
 Pool of 192 at 2 bits & 0.486 & 0.806 & 0.747 & 3.36 \\
 \bottomrule
 \end{tabular}
