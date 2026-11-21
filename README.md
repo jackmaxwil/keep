@@ -197,6 +197,18 @@ This is one prompt, with no count for the full model.
 
 ![Sampled scripts that run correctly against residents per layer](docs/deepseek-v4-flash/paper/fig-generation.png)
 
+The floor belongs to the miss rule. Served on 2026-11-21 with the residents that fit a 64, 96 or
+128 GB machine (the two smaller emulated by wiring 64 or 32 GiB), ten requests a row:
+
+| Machine | Residents | Re-route | Wait at weight 0.3 | Wait for every miss |
+|---|---:|---|---|---|
+| 64 GB | 73 | 0 of 10, 25.3 tok/s | 9 of 10, 16.5 tok/s | 10 of 10, 6.0 tok/s |
+| 96 GB | 140 | 7 of 10, 24.5 tok/s | 9 of 10, 21.1 tok/s | 10 of 10, 10.8 tok/s |
+| 128 GB | 207 | 10 of 10, 25.7 tok/s | 9 of 10, 20.6 tok/s | 10 of 10, 11.5 tok/s |
+
+Waiting for every miss is the whole pool's output at these codes. One prompt, one run a row, and
+the emulation removes memory, not compute.
+
 ## A second model: GLM-5.3-Flash
 
 The comparison of routed and static residency was repeated on

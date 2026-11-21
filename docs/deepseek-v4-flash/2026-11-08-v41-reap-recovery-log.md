@@ -1440,3 +1440,19 @@ unchanged at 75%: the pass changes wording and citations, not results.
   (`stats_glm.py`): 0.3 as a share is 0.75 on the routing weights.
 - Paper section, abstract, introduction and README rewritten with the corrected numbers and the
   error disclosed. Rubric unchanged at 90.
+
+### 2026-11-21: the dial, served
+
+- `jobs/dial_mac.sh`: re-route, waits at 0.3 and 0.15, and waiting for every miss, at 73, 140 and
+  207 residents (64, 96 and 128 GB; the first two under 64 and 32 GiB of wired ballast). At 73
+  residents: re-route 0 of 10 scripts at 25.3 tok/s, wait at 0.3 9 of 10 at 16.5, every miss 10
+  of 10 at 6.0. At 140: 7, 9, 9 and 10 of 10 at 24.5, 21.1, 12.5 and 10.8. At 207: 10, 9, 10 and
+  10 at 25.7, 20.6, 16.7 and 11.5. Footprints 39 to 44, 62 to 67 and 84 G.
+- The 0.15 row at 73 residents failed (`fetch()` found fewer victims than experts to fetch);
+  fixed with `victim_order` and requeued. Two earlier false starts of the run (a swap guard set
+  too low, a server lingering in shutdown) were discarded whole.
+- A third review by a separate agent returned. Fixed from it: the held-out texts' description,
+  the scorer's substring match, the stats-script claim. The rest is a row in `paper/OPEN.md`.
+- Paper: new subsection on the dial with its table; abstract, limitations and conclusion follow.
+- Rubric unchanged at 90: items 7 and 8 are not what this run tests.
+
