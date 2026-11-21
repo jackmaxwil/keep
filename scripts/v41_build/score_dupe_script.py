@@ -61,7 +61,9 @@ def fixture(task: str, root: Path) -> Path:
 def judge(task: str, out: str) -> str:
     """Empty when ``out`` is what the task asks for, else what is wrong."""
     if task == "dupes":
-        missing, extra = [d for d in DUPES if d not in out], [u for u in UNIQUE if u in out]
+        # "alpha.txt" must stand on its own: it is also the tail of "copy_of_alpha.txt".
+        missing = [d for d in DUPES if not re.search(r"(?<!copy_of_)" + re.escape(d), out)]
+        extra = [u for u in UNIQUE if u in out]
         return f"wrong output (missing {missing}, extra {extra})" if missing or extra else ""
     if task == "csvsum":
         found = re.findall(r"\{[^{}]*\}", out)

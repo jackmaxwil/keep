@@ -284,7 +284,8 @@ class LatticeCache(Cache):
         """The wait rule. Read every demanded expert that is absent into a slot now, over the least
         recently demanded residents. The caller has evaluated the demand, so every kernel built so
         far has run and no pending one reads these rows. With ``strong`` (a subset of ``want``), only
-        those are fetched and refreshed; no expert of ``want`` is evicted either way."""
+        those are fetched and refreshed. No fetched expert is evicted; another expert of ``want`` is
+        evicted only when every other slot is taken."""
         demanded = set(want)
         self.stats["demand"] += len(want)
         self.stats["resident"] += sum(e in layer.slot_of for e in want)
@@ -296,7 +297,7 @@ class LatticeCache(Cache):
             return
         started = time.perf_counter()
         assert layer.views_current(), f"layer {layer.index}: expert arrays moved; cannot install in place"
-        victims = [int(s) for s in np.argsort(layer.last_use, kind="stable") if int(layer.slot_expert[s]) not in demanded]
+        victims = victim_order(layer.last_use, layer.slot_expert, fetched, demanded)
         reads = []
         for expert, slot in zip(missing, victims, strict=False):
             old = int(layer.slot_expert[slot])
@@ -314,6 +315,13 @@ class LatticeCache(Cache):
             self.stats["installed"] += 1
         self.stats["waits"] += 1
         self.stats["wait_s"] += time.perf_counter() - started
+
+
+def victim_order(last_use, slot_expert, fetched: set, demanded: set) -> list[int]:
+    """Slots to overwrite, first to last: least recently demanded first, residents that this call
+    demands without fetching (below the selective wait's cut) after all others, fetched ones never."""
+    free = [int(s) for s in np.argsort(last_use, kind="stable") if int(slot_expert[s]) not in fetched]
+    return sorted(free, key=lambda s: int(slot_expert[s]) in demanded)  # stable
 
 
 def decode(cache, layer, moe, x, config, mma, stock_gate):
@@ -521,6 +529,8 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
     from bench_expert_formats import median_ms, omlx_moe
     from omlx.patches.deepseek_v41.config import ModelConfig
 
+    # Selective wait: experts 0 and 1 are demanded but not fetched; they go last, fetched 2 never.
+    assert victim_order(np.array([5, 0, 1, 2]), np.array([0, 1, 2, 3]), {2, 9}, {0, 1, 2, 9}) == [3, 1, 0]
     rng = np.random.default_rng(0)
     c = replace(ModelConfig.from_dict(json.loads(config_path.read_text())), n_routed_experts=64)
     moes = [omlx_moe(c, "mxfp4", 4, 32, rng)[0] for _ in range(2)]

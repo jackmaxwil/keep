@@ -106,8 +106,36 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   ten. At 144 residents it is level with a static set of 250 (-0.016 [-0.059, +0.015]). W = 0.7
   buys a fifth to a third of that for a quarter of the waits. A wait in serving is a read inside
   the layer (10.5 ms measured), not a replay of earlier layers, so the cost is the token share
-  above times the reads, not the rerun share of the kill test. Served rows (speed and sampled
-  scripts at W = 0.3 and 0.15, and waiting for every miss) are running: `jobs/dial_mac.sh`.
+  above times the reads, not the rerun share of the kill test.
+
+  Served, 2026-11-21 (`jobs/dial_mac.sh`; drafter off; ten requests a row, two greedy and eight
+  sampled, one server per row; 73 and 140 residents under 64 and 32 GiB of wired ballast):
+
+  | Residents (machine) | Rule | tok/s (median) | Scripts correct | Demand in memory | Read per token | Footprint |
+  |---|---|---:|---:|---:|---:|---:|
+  | 73 (64 GB) | re-route | 25.3 | 0 of 10 | 66% | 62 MB | 39 G |
+  | | wait at 0.3 | 16.5 | 9 of 10 | 68% | 57 MB | 44 G |
+  | | wait at 0.15 | failed, requeued | | | | |
+  | | wait for every miss | 6.0 | 10 of 10 | 79% | 438 MB | 39 G |
+  | 140 (96 GB) | re-route | 24.5 | 7 of 10 | 81% | 14 MB | 66 G |
+  | | wait at 0.3 | 21.1 | 9 of 10 | 83% | 14 MB | 62 G |
+  | | wait at 0.15 | 12.5 | 9 of 10 | 90% | 144 MB | 62 G |
+  | | wait for every miss | 10.8 | 10 of 10 | 91% | 190 MB | 67 G |
+  | 207 (128 GB) | re-route | 25.7 | 10 of 10 | 91% | 3 MB | 84 G |
+  | | wait at 0.3 | 20.6 | 9 of 10 | 91% | 3 MB | 84 G |
+  | | wait at 0.15 | 16.7 | 10 of 10 | 96% | 58 MB | 84 G |
+  | | wait for every miss | 11.5 | 10 of 10 | 96% | 82 MB | 84 G |
+
+  The floor is the miss rule's, not the budget's: at 73 residents re-routing gives no working
+  script and a wait at 0.3 gives nine of ten at two thirds of the speed. Three of the four
+  failures under a selective wait printed the right files and exited 1 by design (the scorer
+  wants status 0). A wait costs about 20% even when it reads nothing (207 residents, 0.5 ms of
+  reads per token), because `decode` reads each layer's demand back to the host; a wait that
+  synchronizes only on a strong miss is the next step. The 0.15 row at 73 residents hit an
+  assertion in `fetch()`: residents demanded below the cut were protected from eviction, so a
+  prompt piece could find fewer victims than experts to fetch. Fixed (`victim_order`: such
+  residents are evicted last, fetched ones never); the row is requeued behind the chain. Swap
+  stood at 5.2 to 6.0 GB throughout (other processes' pages) and did not grow.
 
 ### 3. Exact prefill, then residents chosen from the prompt
 
@@ -259,6 +287,10 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
 - Why the median speed of one configuration varies by 25% between runs.
 
 ## Queue on the Mac
+
+Status 2026-11-21 07:30: the dial finished (11 of 12 rows; table under idea 2). Running:
+`dialkl_mac.sh`, then timing, speed, generation, the hot set on held-out text, `llamacpp_mac.sh`,
+`ldlq_mac.sh`, and last the one failed dial row (`chain_1121b.sh`).
 
 Status 2026-11-21 04:30: the ideas runs finished. Running: `jobs/dial_mac.sh` (re-route, waits at
 0.3 and 0.15, and waiting for every miss, at 73, 140 and 207 residents; the first two under 64 and
