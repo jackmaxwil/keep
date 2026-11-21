@@ -8,12 +8,17 @@ made on later blocks, carried through ``L``: the loss becomes the sum of the blo
 errors under ``D``, instead of those errors compounding through the inputs' correlations.
 
     python ldlq.py            # synthetic check: nearest rounding against feedback at three spectra
+    python ldlq.py --hf-path CKPT --fit A/moments.npz --score B/moments.npz --survivors SURVIVORS.json
+
+The second form is the test on real inputs: second moments from ``local_eval.py --moments`` on two
+disjoint halves of the calibration records. Each input projection of each expert is rounded with
+feedback through the first half's moments and scored on the second half's, so a gain that only
+fits the sample does not count.
 """
 
 from __future__ import annotations
 
 import torch
-
 from knee_codebooks import nearest
 
 
@@ -54,6 +59,7 @@ def output_error(w: torch.Tensor, w_hat: torch.Tensor, hessian: torch.Tensor) ->
 
 def demo() -> None:
     import numpy as np
+
     from keep.vq.e8 import e8p_full_grid
 
     torch.manual_seed(0)
@@ -72,5 +78,41 @@ def demo() -> None:
         assert b <= a * 1.001, (name, a, b)
 
 
+def real(argv: list[str]) -> None:
+    import argparse
+    import json
+    from pathlib import Path
+
+    import numpy as np
+    from knee_codebooks import load_expert
+
+    from keep.vq.e8 import e8p_full_grid
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--hf-path", required=True, type=Path, help="checkpoint that stores the experts at 4 bits")
+    p.add_argument("--fit", required=True, type=Path)
+    p.add_argument("--score", required=True, type=Path)
+    p.add_argument("--survivors", required=True, type=Path, help="maps the moments' pool ids to the checkpoint's ids")
+    p.add_argument("--damp", type=float, nargs="+", default=[0.01, 0.1, 1.0])
+    p.add_argument("--device", default="cpu")
+    args = p.parse_args(argv)
+    fit_h, score_h = np.load(args.fit), np.load(args.score)
+    survivors = json.loads(args.survivors.read_text())["survivors"]
+    book = torch.from_numpy(e8p_full_grid().astype(np.float32)).to(args.device)
+    print("layer expert proj rows(fit,score) | nearest | " + " | ".join(f"feedback damp {d:g}" for d in args.damp) + "   (error on the score half)")
+    for key in sorted(k for k in fit_h.files if k.startswith("h_")):
+        layer, expert = map(int, key.split("_")[1:])
+        weights = load_expert(args.hf_path, layer, sorted(survivors[str(layer)]).index(expert), args.device)
+        h, hs = (torch.from_numpy(z[key]).to(args.device) for z in (fit_h, score_h))
+        rows = int(fit_h[f"n_{layer}_{expert}"]), int(score_h[f"n_{layer}_{expert}"])
+        for proj in ("w1", "w3"):  # the projections that read the layer's input, which the moments describe
+            w = weights[proj].float()
+            base = output_error(w, plain(w, book, 256)[0], hs)
+            fed = [output_error(w, ldlq(w, h, book, 256, damp), hs) for damp in args.damp]
+            print(f"{layer:5d} {expert:6d} {proj} {rows} | {base:.4f} | " + " | ".join(f"{x:.4f}" for x in fed), flush=True)
+
+
 if __name__ == "__main__":
-    demo()
+    import sys
+
+    real(sys.argv[1:]) if len(sys.argv) > 1 else demo()
