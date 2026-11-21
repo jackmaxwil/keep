@@ -50,8 +50,8 @@ they can be compared at equal memory, and a simple model of their errors gives a
 spending memory: a code precise enough to be usable, then reach, then residents, then precision
 for the experts used most. We state the conditions under which this order should hold and test
 it in a case study on a 384-expert, 40-layer model. There, letting the frozen cache admit puts
-it closer to the full model at every budget and makes it indistinguishable from a pruned set
-about twice its size, a third bit on the most used experts loses to more residents at the smallest budget
+it closer to the full model at every budget, on held-out text as well, and makes it indistinguishable from a pruned set
+about twice its size once a text is a few hundred tokens long, a third bit on the most used experts loses to more residents at the smallest budget
 tested, ties in the middle and wins once roughly 40 to 50\% of the pool is in memory, and a laptop serves the whole pool within about 10\% of the speed of a static set of experts. The case study also shows a limit: below a
 residency floor, re-routing damages generated text in a way that divergence from the full model
 does not measure. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, by a smaller margin and with weaker session locality.
@@ -122,7 +122,7 @@ memory. We give the conditions for this order and say where we expect it to fail
 
 \paragraph{A case study (Section~\ref{sec:case}).} We test the formulation on one large model, DeepSeek-V4.1-Flash-1017, whose experts do not fit on a 128\,GB laptop at the released precision or
 at 2 bits. At equal memory a routed set is closer to the full model than a pruned set at every
-budget and is indistinguishable from a pruned set about twice its size; a third bit on the most used experts loses to more residents at 35\,GB, is level
+budget, also on texts that no setting was chosen on, and is indistinguishable from a pruned set about twice its size once a text is a few hundred tokens long; a third bit on the most used experts loses to more residents at 35\,GB, is level
 at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
 \paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. The routed set wins at every budget and in every text; reach is worth less memory there than in the case study, and that model's demand is less local.
@@ -627,6 +627,43 @@ Two comparisons isolate reach from residency. Holding residency at 144 and widen
 pool, from the pool of 192 to all 384 experts, lowers KL from 0.499 to 0.307 at an admission threshold of 0.2 ($-0.192$ \ci{-0.272}{-0.128}), although the added experts occupy no memory until they are asked for. And 144 residents drawn from the whole pool at the default threshold, in 53\,GB, are closer to the full model than the entire pool of 192 held in memory at once in 71\,GB (0.320 against 0.486, $-0.166$ \ci{-0.232}{-0.115}). Reaching a wide pool is worth more than holding a
 narrow one.
 
+\paragraph{Held-out texts.} The settings above were chosen on the 17 texts they are reported
+on. We therefore froze them and scored 36 texts that no setting had seen, each up to its first
+8{,}192 tokens (Table~\ref{tab:heldout}). Routed residency beats the static set of the same
+size by more than on the tuning texts: $-0.503$ \ci{-0.631}{-0.383} at 144 residents, in 35 of
+36 texts, and $-0.793$ \ci{-0.969}{-0.629} at 96, in all 36. The comparison at equal memory
+does not depend on the texts the settings were chosen on.
+
+The equivalence in memory is conditional. On these texts 96 routed residents are still
+indistinguishable from 200 static ones ($+0.069$ \ci{-0.044}{+0.190}), but 144 are worse than
+250 ($+0.117$ \ci{+0.025}{+0.220}). The held-out texts are short, with a median of 213 scored
+positions, and length decides it: the routed set starts as the static set and needs demand to
+depart from it. On texts under 256 positions it is 0.54 from holding the whole pool; from
+1{,}024 positions on it is 0.075 from it, the distance we measured on the tuning texts, and
+level with 250 static residents again. Reach is worth a factor of two in memory once a text is
+a few hundred tokens long, and less before that. What a short text lacks is the starting set,
+the gap Section~\ref{sec:admission} returns to.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lrlll@{}}
+\toprule
+Scored positions & Texts & Against static 144 & Against static 250 & Against the whole pool \\
+\midrule
+under 256      & 19 & $-0.486$ \ci{-0.603}{-0.369} & $+0.238$ \ci{+0.092}{+0.408} & $+0.543$ \ci{+0.372}{+0.741} \\
+256 to 1{,}023 & 10 & $-0.709$ \ci{-1.043}{-0.391} & $-0.055$ \ci{-0.162}{+0.030} & $+0.148$ \ci{+0.102}{+0.200} \\
+1{,}024 and over & 7 & $-0.255$ \ci{-0.402}{-0.123} & $+0.032$ \ci{-0.011}{+0.072} & $+0.075$ \ci{+0.045}{+0.110} \\
+\midrule
+all            & 36 & $-0.503$ \ci{-0.631}{-0.383} & $+0.117$ \ci{+0.025}{+0.220} & $+0.342$ \ci{+0.234}{+0.470} \\
+\bottomrule
+\end{tabular}
+\caption{Held-out texts: KL of routed residency with 144 residents minus KL of a static set of
+144, of a static set of 250, and of the whole pool in memory, by the length of the text.
+Settings frozen before scoring.}
+\label{tab:heldout}
+\end{table}
+
 \begin{figure}[ht]
   \centering
   \includegraphics[width=0.92\linewidth]{fig-domains.pdf}
@@ -930,7 +967,7 @@ models with wide pools, such as GLM-5.3 and Kimi K3.1 Pro, and the prediction
 for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
-settings chosen on the same texts, and Section~\ref{sec:generation} shows that KL misses a
+settings chosen on the same texts; the held-out texts confirm the comparison with static sets and no other result, are capped at 8{,}192 tokens, and are mostly short chat. Section~\ref{sec:generation} shows that KL misses a
 failure mode of re-routing. Generation was tested with one prompt and without a full-model
 baseline.
 
