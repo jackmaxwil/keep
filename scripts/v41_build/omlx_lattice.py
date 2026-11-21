@@ -32,8 +32,9 @@ Optional ``"residual": DIR`` and ``"hot": H`` add the 3-bit hot tier (``LatticeC
 Environment: ``OMLX_LATTICE_SLOTS`` (resident experts per layer; default ``auto``, from this
 machine's RAM, see ``auto_slots``), ``OMLX_LATTICE_BUDGET_GIB`` (the footprint ``auto`` aims at,
 default 70% of RAM), the policy settings of ``omlx_routed.py``, and ``OMLX_ROUTED_WAIT=1``: the wait rule
-in the decode step, as a baseline (each layer reads the demand on the host and fetches the experts it
-lacks before it runs; prefill still re-routes). ``OMLX_ROUTED_WAIT_MIN=W`` makes the wait selective: only a
+as a baseline: each layer reads the demand on the host and fetches the experts it lacks before it runs.
+Prefill does the same in pieces of tokens whose demand fits the slots, so the output is that of the whole
+pool at these codes. ``OMLX_ROUTED_WAIT_MIN=W`` makes the wait selective: only a
 demand with routing weight at or above W is fetched, and the rest re-route. ``check`` compares one layer's decode step with dense matrices
 decoded on the host, the prefill path with the decode path, and slots after installs with their
 stored bytes, then times the decode-step MoE.
@@ -383,7 +384,7 @@ def decode(cache, layer, moe, x, config, mma, stock_gate):
 def hook(state: dict) -> None:
     """Send the layers of ``state["cache"]`` through the lattice paths; every other MoE is oMLX's."""
     stock = SimpleNamespace(one=DM.fused_decode_moe, many=DM.fused_decode_moe_nb, supported=DM.supported,
-                            gate=DM._gate, gate_call=language.Gate.__call__)
+                            gate=DM._gate, gate_call=language.Gate.__call__, moe_call=language.MoE.__call__)
 
     def find(gate):
         cache = state.get("cache")
@@ -415,8 +416,33 @@ def hook(state: dict) -> None:
         index, weights = stock.gate_call(self, x, image_mask)  # pool numbers of resident experts
         return cache.observe(self, x, layer.slot_map[index]), weights
 
+    def moe_wait(self, x, image_mask):  # prefill under the wait rule: exact, in pieces whose demand fits the slots
+        cache, layer = find(self.gate)
+        if layer is None or not cache.wait:
+            return stock.moe_call(self, x, image_mask)
+        c = cache.config
+        index, score = (np.asarray(a).reshape(-1, c.n_activated_experts) for a in cache.demand(layer, x))
+        share = score / (score.sum(-1, keepdims=True) + 1e-20) * c.route_scale
+        fetch = [set(row[w >= cache.wait_min].tolist()) for row, w in zip(index, share)]  # per token, what must be resident
+        pieces, start, held = [], 0, set()
+        for t, want in enumerate(fetch):
+            if len(held | want) > layer.slot_expert.size:
+                pieces.append((start, t, held))
+                start, held = t, set()
+            held = held | want
+        pieces.append((start, len(fetch), held))
+        cache.stats["tokens"] += len(fetch) if layer.index == 0 else 0
+        out = []
+        for a, b, held in pieces:
+            cache.fetch(layer, index[a:b].reshape(-1).tolist(), sorted(held))
+            mask = image_mask[:, a:b] if image_mask is not None and getattr(image_mask, "ndim", 0) >= 2 else image_mask
+            out.append(stock.moe_call(self, x[:, a:b], mask))
+            mx.eval(out[-1])  # before the next piece's reads overwrite these slots
+        return out[0] if len(out) == 1 else mx.concatenate(out, axis=1)
+
     DM.fused_decode_moe, DM.fused_decode_moe_nb, DM.supported = one, many, supported
     language.Gate.__call__ = gate_plain
+    language.MoE.__call__ = moe_wait
 
 
 def hot_count(spec: dict) -> int:
@@ -604,6 +630,12 @@ def check(config_path: Path, root: Path, slots: int = 32, chain: int = 40) -> No
     print(f"wait rule: every token ran the full router's experts; {cache.stats['waits']} waits, "
           f"{cache.stats['wait_s'] / max(cache.stats['waits'], 1) * 1e3:.1f} ms each; worst relative gap {worst:.4f}")
     assert cache.stats["waits"] > 0 and worst < 2e-2 and cache.mismatched() == 0
+    xs = mx.stack([token() for _ in range(40)])[None]  # 40 tokens ask for more experts than there are slots
+    pre = host(moes[0](xs, None))[0]
+    dec = np.stack([host(DM.fused_decode_moe(moes[0], xs[0, j].reshape(1, 1, -1), c)[0]).reshape(-1) for j in range(40)])
+    worst = gap(pre, dec)
+    print(f"wait rule, prefill in pieces against the decode step, 40 tokens: worst relative gap {worst:.4f}")
+    assert worst < 2e-2 and cache.mismatched() == 0
     cut = 1.02 * c.route_scale / c.n_activated_experts  # just above an even share: some of a token's experts qualify
     cache.wait_min, before = cut, cache.stats["waits"]
     for i in (0, 1):
