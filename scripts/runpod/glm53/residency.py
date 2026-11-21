@@ -12,7 +12,9 @@ gate mass; the K heaviest are a variant's starting residents. Evaluation session
 through the full model (the teacher) and through each variant, in which the router's choices are
 re-routed among resident experts and the cache policy of ``v41_reap/local_eval.py``
 (``residual_cache``) admits and evicts. A static set is the same policy with a threshold nothing
-reaches. Scores are the KL from the teacher's next-token distribution, per session.
+reaches. The threshold is on the model's routing weights, which sum to its routing scale (2.5 here,
+1.5 in the first model); a policy that starts with ``share`` reads it as a share of the token's weight
+instead, which is how the runs of 2026-11-20 applied it. Scores are the KL from the teacher's next-token distribution, per session.
 
     python residency.py --ckpt DIR --cal cal.json --eval eval.json --out OUT \\
         --variant s108=108:1e9 --variant k108=108:0.3
@@ -126,7 +128,11 @@ def moe_forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         k, tau, policy = spec
         resident = np.zeros((x.shape[0], gate.num_experts), dtype=bool)
         counts = STATE["counts"].setdefault(STATE["name"], np.zeros((gate.num_experts, 5)))
-        residual_cache(index.cpu().numpy(), weight.double().cpu().numpy(), k, tau, [x.shape[0]], STATE["warm"][layer][:k],
+        # tau applies to the routing weights the model uses (they sum to routed_scaling_factor), as in the
+        # serving code and the first model's simulator; ``share`` variants give it as a share of a token's weight.
+        scale = 1.0 if policy.startswith("share") else gate.routed_scaling_factor
+        policy = policy.removeprefix("share").lstrip("+") or "lru"
+        residual_cache(index.cpu().numpy(), (weight.double() * scale).cpu().numpy(), k, tau, [x.shape[0]], STATE["warm"][layer][:k],
                        counts, policy=policy, resident=resident)
         resident = torch.as_tensor(resident, device=x.device)
         STATE["served"][STATE["name"]] += np.array([float((weight * resident.gather(1, index)).sum()), float(weight.sum())])
