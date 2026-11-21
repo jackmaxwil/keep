@@ -53,7 +53,7 @@ it in a case study on a 384-expert, 40-layer model. There, letting the frozen ca
 it closer to the full model at every budget on the texts the settings were chosen on, and at both budgets rescored on held-out text. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size; on short texts it is worse than one 1.7 times its size. A third bit on the most used experts loses to more residents at the smallest budget
 tested, ties in the middle and wins once 38 to 52\% of the pool is in memory. A laptop serves the whole pool within about 10\% of the speed of a static set of experts on short prompts, over a handful of requests. The case study also shows a limit: below a
 residency floor, re-routing damages generated text in a way that divergence from the full model
-does not measure. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, under forced context and on the same texts, by a smaller margin, with weaker session locality, and without the memory equivalence at the first model's threshold. We do not compare with other runtimes at equal memory.
+does not measure. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, under forced context and on the same texts; there it is not separable from a static set 1.4 times its size, session locality is weaker, and the policy asks for about five times the read traffic. We do not compare with other runtimes at equal memory.
 \end{abstract}
 
 \section{Introduction}
@@ -124,7 +124,7 @@ at 2 bits. At equal memory a routed set is closer to the full model than a prune
 budget on the tuning texts, and at both budgets rescored on texts that no setting was chosen on. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size, and on short texts it is worse; a third bit on the most used experts loses to more residents at 35\,GB, is level
 at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set on short prompts. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
-\paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. Under forced context the routed set wins at every budget and in every text. The stronger comparison does not carry over: at the case study's threshold a routed set is worse than a static set 1.4 times its size, and that model's demand is less local.
+\paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. Under forced context the routed set wins at every budget and in every text. Against larger static sets it is worth about 1.4 times its size, not two; that model's demand is less local, and the policy asks for about five times the read traffic per token.
 
 The evidence for the order of spending is one model, one set of codes and one machine; the second model tests residency alone. We present the formulation and
 the policy as general, the order of spending as a prediction, the measurements as a case study, and in
@@ -806,9 +806,13 @@ error and no precision axis, and nothing is fitted. The divergence here is over 
 at a time on one GPU, with the policy of Algorithm~\ref{alg:policy} applied inside each layer
 as in the simulator of Section~\ref{sec:case}. The texts are those of the case study, tokenized
 for this model (22{,}182 tokens), and the starting residents come from the same separate
-calibration text. The settings were fixed before the run: resident counts at the shares of the
-pool that 96, 144 and 200 experts are in the case study, and that study's admission threshold,
-$\tau=0.3$, unchanged.
+calibration text. The settings are the case study's: resident counts at the shares of the
+pool that 96, 144 and 200 experts are there, and its admission threshold, $\tau=0.3$ on the
+routing weights, which in this model sum to 2.5 for a token. We disclose an error here. Our
+first run applied the threshold to gate weights normalized to one, which is 0.75 on this
+model's routing weights and two and a half times stricter than the case study's setting. We
+found this after seeing that run, corrected it and ran again. Table~\ref{tab:second} is the
+corrected run; the first appears below as a threshold of 0.75.
 
 \begin{table}[ht]
 \centering
@@ -817,43 +821,47 @@ $\tau=0.3$, unchanged.
 \toprule
 Residents $K$ & Share of pool & Static set & Routed residency & Difference \\
 \midrule
- 72 & 25\%   & 1.276 & 0.893 & $-0.384$ \ci{-0.489}{-0.298} \\
-108 & 37.5\% & 0.774 & 0.597 & $-0.177$ \ci{-0.282}{-0.098} \\
-150 & 52\%   & 0.482 & 0.365 & $-0.117$ \ci{-0.168}{-0.079} \\
+ 72 & 25\%   & 1.276 & 0.648 & $-0.628$ \ci{-0.753}{-0.509} \\
+108 & 37.5\% & 0.774 & 0.457 & $-0.317$ \ci{-0.445}{-0.223} \\
+150 & 52\%   & 0.482 & 0.312 & $-0.171$ \ci{-0.227}{-0.128} \\
 288 & 100\%  & 0.028 & 0.028 & \\
 \bottomrule
 \end{tabular}
 \caption{Second model: KL to the full model (nats) for a static set and for routed residency
 with the same number of experts per layer in memory, every expert at the released precision,
-$\tau=0.3$ as in the case study. In the last row every expert is resident; see the text for why
-it is not zero.}
+$\tau=0.3$ on the routing weights as in the case study. In the last row every expert is
+resident; see the text for why it is not zero.}
 \label{tab:second}
 \end{table}
 
 Routed residency is closer to the full model than a static set at every budget, in each of the
-17 texts at each budget, and the gap grows as memory shrinks (Table~\ref{tab:second}). The
-first prediction of Section~\ref{sec:principle} holds on a model the policy was not developed
-on, with no setting changed. It is a low bar: the routed set starts as the static set and can only move toward what the router asks for. The informative comparison is with larger static sets, and there the case study's result does not carry over at its threshold.
+17 texts at each budget, and the gap grows as memory shrinks (Table~\ref{tab:second}). That is
+a low bar: the routed set starts as the static set and can only move toward what the router
+asks for. Against larger static sets the result is weaker than in the case study. 72 routed
+residents are closer to the full model than 108 static ones ($-0.126$ \ci{-0.266}{-0.018}),
+108 are not separable from 150 ($-0.026$ \ci{-0.111}{+0.045}), and 72 are worse than 150
+($+0.166$ \ci{+0.052}{+0.261}). On this model, under forced context, reach is worth about 1.4
+times its size in static residents, not two.
 
 Two things differ from the case study, and both make residency cost more here. The first is
-the threshold. Eight active experts spread a token's gate weight more thinly than six, so the
-same threshold admits less: 0.04 experts per token and layer at 108 residents, against 0.065
-in the case study. With it, reach is worth less memory than on the case study's tuning texts:
-108 routed residents are worse than 150 static ones ($+0.115$ \ci{+0.048}{+0.172}). We then
-lowered the threshold to 0.2, after the fixed run and as a sensitivity check only. Every
-budget improves (0.699, 0.477 and 0.332), and 108 routed residents are no longer separable
-from 150 static ones ($-0.005$ \ci{-0.077}{+0.055}); a threshold of 0.1 admits six times as
-much and is no better ($+0.027$ \ci{-0.033}{+0.098} at 108 residents). The threshold is a
-setting of the model's routing width, not a constant.
+traffic. Eight active experts spread a token's gate weight more thinly than six, and at this
+threshold the policy admits 0.35 experts per token and layer at 108 residents, against 0.065
+in the case study: about fifteen expert reads for a token over the 42 routing layers, where
+the case study has under three. We did not serve this model and do not know that storage can
+carry that; condition (iv) of Section~\ref{sec:principle} is untested here. Other thresholds
+show the trade. At 0.5 the policy admits 3.4 times less and loses 0.020 \ci{0.007}{0.035}; at
+0.25 it admits more and is no better; at 0.75, the threshold of our first run, admission is
+too rare, and 108 routed residents are worse than 150 static ones ($+0.115$
+\ci{+0.048}{+0.172}). The threshold is a setting of the model's routing width and of its
+storage, not a constant.
 
 The second is session locality, condition (ii) of Section~\ref{sec:principle}. A fixed set of
 108 experts chosen for each text with hindsight holds 85\% of that text's gate weight, where
 the corresponding set in the case study holds 96\%, and it scores 0.378: better than admission
-at either threshold ($-0.219$ \ci{-0.275}{-0.177} against $\tau=0.3$) and still far from the
-full model. More of this model's demand lies outside any set of this size. The routing term
-at 37.5\% of the pool is about 0.6 nats here against about 0.09 in the case study, and a
-deployment of this model would need a larger resident share, or a different miss rule, to
-reach the same distance.
+($-0.079$ \ci{-0.129}{-0.042}) and still 0.35 from the full model. More of this model's demand
+lies outside any set of this size. The routing term at 37.5\% of the pool is about 0.43 nats
+here against about 0.09 in the case study, and a deployment of this model would need a larger
+resident share, or a different miss rule, to reach the same distance.
 
 This section does not test the precision half of the order, generation, or a running system.
 Our implementation of the policy reproduces the reference model exactly in a single-precision
@@ -961,7 +969,7 @@ as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
 We do not compare with any other runtime at equal memory, and the only wait rule we measured is the host runtime's, on a different checkpoint and precision; a claim that this system is ahead of others on a small machine would need that comparison. Every divergence comes from a simulator whose timing is more favorable than the served system's. The order of spending is a hypothesis: its error terms were not measured separately, and its residents-before-bits step rests on one budget that lies below the residency floor.
 
 The formulation is general; the evidence for the allocation order is one model, one set of
-codes and one machine. The order's conditions are stated but tested only where that model meets them. The second model tests the comparison of routed and static residency only: at its released precision, under forced context, on the same texts, with no code fitted, no generation and no running system, and its threshold of 0.2 was tried after the fixed run. Other current
+codes and one machine. The order's conditions are stated but tested only where that model meets them. The second model tests the comparison of routed and static residency only: at its released precision, under forced context, on the same texts, with no code fitted, no generation and no running system, and its first run applied the threshold on the wrong scale, so the run we report followed a look at the data. Other current
 models with wide pools, such as GLM-5.3 and Kimi K3.1 Pro, and the prediction
 for narrow pools, are untested.
 
