@@ -598,13 +598,13 @@ to 100; partial credit only for measured progress).
 | 1 | Nested codes, all layers, validated | 10 | 10 | fit 40/40; error 0.102 gate/up, 0.084 down; end to end +0.053 KL against flat 2-bit |
 | 2 | Per-token routed tiers, implemented and tested | 10 | 10 | `--dynamic/--tau/--tau-drop`, smoke-tested |
 | 3 | Offload cache simulation and cost model | 10 | 10 | `residual_cache` (unit-tested), `routed_report.py` |
-| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 20 | E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
+| 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 25 | 2026-11-20, E7 on the Mac: on 36 held-out texts (42 untouched sessions less tool use, first 8,192 tokens, settings frozen) routed beats static by 0.503 at 144 residents (35 of 36 texts) and 0.793 at 96 (36 of 36), intervals clear of zero. Earlier: E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 5 | 2026-11-20 (Jack left the ruling to the plan's mapping, "a hot tier that passes C3"): the fitted third-bit hot set passes C3's bar of 0.02 at 74 GB (-0.023, interval -0.042 to -0.002) and 92 GB (-0.039), ties at 53 GB and loses at 35 GB, and it decodes 11% slower at equal memory, so half credit; the rest waits for codes that lower the 0.235 coding floor (error-feedback rounding, first real test queued). Earlier: 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
 | 8 | Generality: a second MoE plus downstream benchmarks | 10 | 5 | 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.384, 0.177 and 0.117 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test). Half credit: no generation or downstream benchmark on the second model, and no codes |
 | 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
-| | **Total** | 100 | **85** | |
+| | **Total** | 100 | **90** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1372,3 +1372,27 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - Rubric item 8 moves from 0 to 5 of 10. Total 85. Tables: `paper/stats-glm.md`.
 - Paper: new Section "A second model", abstract, introduction, discussion, limitations and
   conclusion updated; static sets in generation added the same day.
+
+### 2026-11-20: held-out confirmation (E7), and the prompt warm start
+
+- E7 ran on the Mac in 18 passes (six groups, three passes each, about 30 minutes a pass, peak
+  memory under 60 GB): the 42 sessions with stored teacher logits that the Mac had never scored,
+  cut to 8,192 tokens because 16,384 passed the 80 GB cap twice; 69,894 scored positions.
+  Settings frozen: tau 0.3, re-route, residents warmed from calibration mass.
+- Paper metric, 36 texts outside tool use (all distinct): all 384 resident 0.373; static 96,
+  144, 200, 250: 1.668, 1.218, 0.805, 0.598; routed 96, 144: 0.874, 0.715. Routed minus static:
+  -0.793 [-0.969, -0.629] at 96 (36 of 36 texts), -0.503 [-0.631, -0.383] at 144 (35 of 36).
+- The memory equivalence is conditional on length. 96 routed against 200 static: +0.069
+  [-0.044, +0.190]. 144 routed against 250 static: +0.117 [+0.025, +0.220], worse. By length
+  of text: under 256 positions (19 texts) routed 144 is +0.238 against static 250 and +0.543
+  against the whole pool; 256 to 1,023 (10 texts) -0.055 and +0.148; 1,024 and over (7 texts)
+  +0.032 and +0.075. The held-out texts are mostly short chat (median 213 positions); the
+  tuning texts were all 1,024 tokens. The paper's "factor of two" now carries that condition.
+- Rubric item 4 moves from 20 to 25. Total 90. Tables: `paper/stats-heldout.md`.
+- Prompt warm start (`prompt:P`, 22 tuning sessions): 256 tokens gives -0.009 [-0.019, -0.002]
+  at 144 residents, 64 tokens -0.005 [-0.016, +0.004], and -0.002 at 96. The control reproduces
+  the stored 0.320 exactly. On 1,024-token texts the cache has mostly adapted by token 256, so
+  the offline gain in served demand does not become KL. The texts that need a better starting
+  set are the short ones, which have no prompt to learn it from.
+- The ideas runs (wait, exact prefill, mass cut, second moments) are in progress; the served
+  wait-against-re-route comparison is queued behind them.

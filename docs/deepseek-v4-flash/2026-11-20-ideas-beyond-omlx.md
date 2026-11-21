@@ -27,7 +27,7 @@ times slower than a static set.
 |---:|---|---|---|---|
 | 1 | Better 2-bit codes | KL at every budget | up to 0.235 | rounding works on synthetic data; real inputs queued |
 | 2 | Replay on a strong miss | generation floor, KL, exactness | 0.085 at 144, 0.347 at 48 | narrowed by its kill test, see below |
-| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | offline test passed; both halves queued |
+| 3 | Exact prefill and residents from the prompt | KL, starting set | 0.065 plus prompt contamination | warm start: 0.009 only; exact prefill running |
 | 4 | A 1.5-bit code | reach to 64 GB machines | a third more residents per GB | error measured; likely loses on KL, see below |
 | 5 | Low-rank stand-ins for absent experts | routing error | part of 0.085 to 0.347 | dead |
 | 6 | Uncertainty-gated replay | cost of idea 2 | same quality, fewer replays | after idea 2 |
@@ -116,6 +116,12 @@ machines routing error and the floor dominate, and ideas 2 and 4 move ahead of i
   hindsight (85.9% to 91.8% of 96.8% at 144 residents), and a set fixed after 256 tokens already
   serves as much as admission does. With 32 or 64 prompt tokens the gain is 1 to 2 points.
   This is served demand, not KL; the simulator runs (`prompt:P` tonight, `exact:P` after it) give KL.
+- **Simulator result, 2026-11-20.** `prompt:256` at 144 residents: -0.009 [-0.019, -0.002]. `prompt:64`:
+  -0.005 [-0.016, +0.004]. `prompt:256` at 96 residents: -0.002. The gain in served demand does not
+  become KL on 1,024-token texts, where admission has caught up by token 256. The held-out run shows
+  where the starting set matters: texts under 256 tokens, on which routed 144 is 0.54 from the whole
+  pool against 0.075 on long texts. Those texts have no prompt to warm up on, so the lever there is a
+  better prior or a wait rule, not this.
 
 ### 4. A 1.5-bit code
 

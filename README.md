@@ -260,8 +260,11 @@ codes with their own kernels and a pool wider than the checkpoint.
 
 - **The order of spending rests on one model.** The second model tests residency alone. GLM-5.3
   and Kimi K3.1 Pro were not measured, and the prediction for narrow pools is untested.
-- **Settings chosen on the evaluation text.** τ, the hot set size and the skipping threshold
-  were chosen on the 17 texts. A confirmation on untouched sessions is running.
+- **Settings were chosen on the evaluation text.** A held-out run on 36 untouched texts confirms
+  the main comparison: routed beats static by 0.503 KL at 144 residents (35 of 36 texts) and 0.793
+  at 96 (36 of 36). It also shows a limit: on texts under 256 tokens the routed set has had no time
+  to adapt, and the "factor of two in memory" holds only from a few hundred tokens on. The
+  precision results were not rescored on held-out text.
 - **Generation was tested with one prompt**, and without a full-model baseline, which does not
   fit on the machine.
 - **No selective wait.** Son reports that waiting only for the strongest misses costs far less
