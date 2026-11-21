@@ -202,20 +202,24 @@ This is one prompt, with no count for the full model.
 The comparison of routed and static residency was repeated on
 [GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash) (288 experts per layer, 8 active),
 with every expert at the model's released precision, so nothing is fitted and only residency
-differs. Resident counts and the admission threshold were fixed before the run, at the case
-study's values.
+differs. Resident counts and the admission threshold are the case study's.
 
 | Residents per layer | Share of pool | Static set | Routed residency | Difference |
 |---:|---:|---:|---:|---|
-| 72 | 25% | 1.276 | 0.893 | −0.384 [−0.489, −0.298] |
-| 108 | 37.5% | 0.774 | 0.597 | −0.177 [−0.282, −0.098] |
-| 150 | 52% | 0.482 | 0.365 | −0.117 [−0.168, −0.079] |
+| 72 | 25% | 1.276 | 0.648 | −0.628 [−0.753, −0.509] |
+| 108 | 37.5% | 0.774 | 0.457 | −0.317 [−0.445, −0.223] |
+| 150 | 52% | 0.482 | 0.312 | −0.171 [−0.227, −0.128] |
 
-Routed residency wins at every budget and in each of the 17 texts. Two things differ from the
-first model. The unchanged threshold admits less with eight active experts; at 0.2, tried
-afterwards as a sensitivity check, 108 routed residents match 150 static ones. And this model's
-demand is less local: each text's own best 108 experts hold 85% of its gate weight, against 96%
-for the first model, so residency costs more here at every budget.
+Routed residency wins at every budget and in each of the 17 texts. Against larger static sets it
+is worth about 1.4 times its size, not two: 108 routed residents are not separable from 150
+static ones. Two things differ from the first model. The policy admits about five times as many
+experts per token here, a read load we did not test on storage. And this model's demand is less
+local: each text's own best 108 experts hold 85% of its gate weight, against 96% for the first
+model.
+
+An earlier version of this table came from a run that applied the admission threshold on the
+wrong scale (2.5 times too strict). The numbers above are from the corrected run; both are in
+the results directory.
 
 This run tests residency only. Codes, the residents-against-bits trade, generation and serving
 were not tested on this model. The code is in [`scripts/runpod/glm53/`](scripts/runpod/glm53/)

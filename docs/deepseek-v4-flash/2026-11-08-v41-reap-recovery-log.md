@@ -602,7 +602,7 @@ to 100; partial credit only for measured progress).
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 5 | 2026-11-20 (Jack left the ruling to the plan's mapping, "a hot tier that passes C3"): the fitted third-bit hot set passes C3's bar of 0.02 at 74 GB (-0.023, interval -0.042 to -0.002) and 92 GB (-0.039), ties at 53 GB and loses at 35 GB, and it decodes 11% slower at equal memory, so half credit; the rest waits for codes that lower the 0.235 coding floor (error-feedback rounding, first real test queued). Earlier: 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
-| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 5 | 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.384, 0.177 and 0.117 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test). Half credit: no generation or downstream benchmark on the second model, and no codes |
+| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 5 | 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.628, 0.317 and 0.171 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test; numbers from the corrected run of 2026-11-21, the first run had the threshold on the wrong scale and gave 0.384, 0.177 and 0.117). Half credit: no generation or downstream benchmark on the second model, and no codes |
 | 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
 | | **Total** | 100 | **90** | |
 
@@ -1423,3 +1423,20 @@ unchanged at 75%: the pass changes wording and citations, not results.
 - Blocked: a measured row for another runtime at equal memory (no downloads to the Mac).
 - A prompt for an adversarial review by a separate agent is in `paper/review-prompt-yi.md`.
 - Rubric unchanged at 90.
+
+### 2026-11-21: second model, corrected run
+
+- Run 3 on a pod (A100 80GB, $2.19/h, about 40 minutes, terminated): tau 0.3 on GLM's routing
+  weights (sum 2.5), the case study's setting. Paper metric, 17 texts: static 1.276, 0.774,
+  0.482; routed 0.648, 0.457, 0.312; differences -0.628 [-0.753, -0.509], -0.317 [-0.445,
+  -0.223], -0.171 [-0.227, -0.128], 17 of 17 texts each.
+- Against larger static sets: 72 routed against 108 static -0.126 [-0.266, -0.018]; 108 against
+  150 -0.026 [-0.111, +0.045]; 72 against 150 +0.166 [+0.052, +0.261]. About 1.4 times, not two.
+- Traffic: 0.35 admissions per token and layer at 108 residents (0.065 in the case study), about
+  15 expert reads a token over 42 layers. At 0.5 on the routing weights admissions fall 3.4 times
+  for +0.020 KL. Not served, so storage is untested for this model.
+- Hindsight 108: 0.378, -0.079 [-0.129, -0.042] against admission, 0.35 from the full model.
+- The earlier runs are kept in `docs/glm-5.3-flash/results` and tabulated by share of gate weight
+  (`stats_glm.py`): 0.3 as a share is 0.75 on the routing weights.
+- Paper section, abstract, introduction and README rewritten with the corrected numbers and the
+  error disclosed. Rubric unchanged at 90.
