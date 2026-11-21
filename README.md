@@ -142,9 +142,9 @@ weight).
 | 250 | 92 GB | 0.303 | 0.254 | −0.048 [−0.092, −0.016] |
 | 384 (all) | 142 GB | 0.235 | 0.235 | |
 
-Routed residency is closer to the full model at every budget, and reach is worth about a factor
-of two in memory: 96 routed residents are indistinguishable from 200 static ones, and 144 from
-250.
+Routed residency is closer to the full model at every budget. On these texts a routed set is not
+separable from a static set 1.7 to 2 times its size (96 against 200, 144 against 250); held-out
+texts qualify that, see [What is not shown](#what-is-not-shown).
 
 ![KL to the full model against expert memory, routed residency and static sets](docs/deepseek-v4-flash/paper/fig-frontier.png)
 
@@ -170,7 +170,8 @@ it, on an M4 Max with 128 GB:
 
 - The runtime's own waiting offload is seven times slower than a static set of the same size.
 - Routed residency costs 7 to 9% of decode speed against a static set from the same pool, for
-  scoring demand and installing about two experts per token.
+  scoring demand and installing about two experts per token. That is over two or three requests
+  each, beside a 25% run-to-run spread, so the cost is small but not resolved.
 - The whole pool of 384 is served at 23 to 27 tokens per second with 144 residents in 63 GiB,
   and at 30 to 40 with the model's speculative decoder.
 
@@ -190,8 +191,9 @@ resident. On one sampled coding request, counting scripts that run and give the 
 
 At 96 residents KL matches the pruned checkpoint's (0.390 against 0.389), yet the scripts break,
 mostly through misspelled identifiers. The order of spending therefore applies above a floor,
-here roughly 120 to 144 of 384 experts per layer. At equal memory the routed set writes a
-working script about four times as often as the static set.
+here somewhere between 96 and 144 of 384 experts per layer. The static-set row ran with the
+speculative decoder on; under the same launcher the routed set scored 5 of 8 (p = 0.023).
+This is one prompt, with no count for the full model.
 
 ![Sampled scripts that run correctly against residents per layer](docs/deepseek-v4-flash/paper/fig-generation.png)
 
@@ -263,14 +265,17 @@ codes with their own kernels and a pool wider than the checkpoint.
 - **Settings were chosen on the evaluation text.** A held-out run on 36 untouched texts confirms
   the main comparison: routed beats static by 0.503 KL at 144 residents (35 of 36 texts) and 0.793
   at 96 (36 of 36). It also shows a limit: on texts under 256 tokens the routed set has had no time
-  to adapt, and the "factor of two in memory" holds only from a few hundred tokens on. The
+  to adapt and is worse than a static set 1.7 times its size; on long texts the two are not separable. The
   precision results were not rescored on held-out text.
 - **Generation was tested with one prompt**, and without a full-model baseline, which does not
   fit on the machine.
 - **No selective wait.** Son reports that waiting only for the strongest misses costs far less
   than re-routing every miss. The policy here never waits and was not compared with that.
-- **Speed baselines** for the wait rule come from another runtime's implementation on a
-  different checkpoint.
+- **No comparison with other runtimes at equal memory.** The only wait rule measured is oMLX's, on
+  a different checkpoint and precision. Speed ranges cover two or three requests, beside a 25%
+  run-to-run spread.
+- **Quality is from a simulator** whose timing is more favorable than the served system's; their
+  agreement on quality was not measured.
 
 The full list is in [`docs/deepseek-v4-flash/paper/OPEN.md`](docs/deepseek-v4-flash/paper/OPEN.md).
 
