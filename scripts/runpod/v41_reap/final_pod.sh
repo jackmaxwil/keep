@@ -79,7 +79,8 @@ nvidia-smi --query-gpu=name --format=csv,noheader | head -1 | grep -q B200 && ex
 VLLM_ENGINE_READY_TIMEOUT_S=3600 VLLM_USE_RUST_FRONTEND=1 "$LOCAL/vllm-venv/bin/python" -m vllm.entrypoints.cli.main serve "$LOCAL/hf" \
   --served-model-name full --tokenizer-mode deepseek_v41 --tensor-parallel-size "$NGPU" "${extra[@]}" \
   --engram-config '{"cpu_offload":true}' --reasoning-parser deepseek_v41 --language-model-only \
-  --max-model-len 16384 --max-num-seqs 64 ${OFFLOAD_GB:+--cpu-offload-gb "$OFFLOAD_GB"} --port 8000 > "$O/vllm.log" 2>&1 &
+  --max-model-len "${MAX_LEN:-16384}" --max-num-seqs "${MAX_SEQS:-64}" --gpu-memory-utilization "${GPU_UTIL:-0.9}" \
+  ${OFFLOAD_GB:+--cpu-offload-gb "$OFFLOAD_GB"} --port 8000 > "$O/vllm.log" 2>&1 &
 vllm_pid=$!
 until curl -s -m 5 http://127.0.0.1:8000/v1/models | grep -q '"full"'; do
   kill -0 $vllm_pid 2>/dev/null || { log "vLLM exited: $(tail -3 "$O/vllm.log")"; exit 1; }
