@@ -31,29 +31,33 @@
 \maketitle
 
 \begin{abstract}
-A mixture-of-experts language model keeps most of its weights in experts that a given token
-never uses, which makes it the natural architecture to run on a machine too small to hold it.
-Three techniques exploit this: pruning experts, quantizing them, and offloading them to
-storage. They are built and studied separately, yet each answers the same question, which bytes
-are in memory when a token arrives. We give a common formulation in which a deployment is
-described by three quantities, \emph{reach} (the experts the router may select),
-\emph{residency} (the experts in memory) and \emph{precision} (the bits each resident carries),
-together with a rule for what happens when a selected expert is absent. Existing methods are
-points in this space, and those that hold fewer experts than the router can reach differ mainly in that rule. Static pruning, in particular, is a
-frozen cache: a resident set that never admits, with reach cut down to match. Within this space
-we study \emph{routed
-residency}, a policy assembled from known parts in which the router doubles as the cache controller: every expert stays reachable on
-storage, a miss is re-routed to the best experts in memory instead of waited on, strongly
-demanded experts are admitted in the background, and nested residual codes add precision to the
-experts used most. Because all of these are settings of one policy with one memory account,
-they can be compared at equal memory, and a simple model of their errors gives an order for
-spending memory: a code precise enough to be usable, then reach, then residents, then precision
-for the experts used most. We state the conditions under which this order should hold and test
-it in a case study on a 384-expert, 40-layer model. There, letting the frozen cache admit puts
-it closer to the full model at every budget on the texts the settings were chosen on, and at both budgets rescored on held-out text. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size; on short texts it is worse than one 1.7 times its size. A third bit on the most used experts loses to more residents at the smallest budget
-tested, ties in the middle and wins at the two largest. A laptop serves the whole pool within about 10\% of the speed of a static set of experts on short prompts, over a handful of requests. The case study also shows a limit: below a
-residency floor, re-routing damages generated text in a way that divergence from the full model
-does not measure; waiting only for strongly demanded experts removes the floor on the one prompt tested, at two thirds of the speed, with the residents that fit a 64\,GB machine. On a second model, a 288-expert model at its released precision, a routed set again beats a static set of equal size at every budget tested, under forced context and on the same texts; there it is not separable from a static set 1.4 times its size, session locality is weaker, and the simulated policy asks for about five times as many admissions. We do not compare with other runtimes at equal memory.
+Many large open language models are mixtures of experts: each layer holds hundreds of small
+networks, and a given token (roughly a word) uses only a few. Most weights sit idle, which
+suits machines too small to hold the model. Three techniques exploit this: pruning deletes
+experts, quantization stores them in fewer bits, and offloading leaves them on storage until
+needed. Studied apart, each answers one question: which bytes are in memory when a token
+arrives?
+
+We describe all three by four settings: which experts may be selected (\emph{reach}), which are
+in memory (\emph{residency}), how many bits each carries (\emph{precision}), and what happens
+when a selected expert is absent. In these terms pruning is a frozen cache, a set in memory
+that never changes. \emph{Routed residency} lets it change: every expert stays reachable on
+storage, a missing expert is replaced by the best in memory so no token waits, and experts in
+strong demand load in the background.
+
+A 384-expert model whose experts do not fit in a 128\,GB laptop even at 2 bits runs there with
+every expert reachable at about 28 tokens per second, as fast as a fixed subset of the same
+size. At equal memory it is closer to the full model than a pruned set at every budget tested,
+and on longer texts not separable from one 1.7 to 2 times its size. The advantage recurs on a
+second model.
+
+Two lessons follow. Memory has an apparent order of spending: a usable code, reach to every
+expert, more experts in memory, then more bits for the busiest. And divergence from the full
+model can mislead: with too few experts in memory, a routed set that matched a pruned model on
+that measure wrote working programs in 4 of 24 attempts against 18. Waiting only for strongly
+demanded experts repaired this on the prompt tested, at two thirds of the speed, in the memory
+of a 64\,GB machine. Quality figures come from a simulator and mostly one model; we do not
+compare with other runtimes.
 \end{abstract}
 
 \section{Introduction}
@@ -122,7 +126,7 @@ memory. We give the conditions for this order and say where we expect it to fail
 \paragraph{A case study (Section~\ref{sec:case}).} We test the formulation on one large model, DeepSeek-V4.1-Flash-1017, whose experts do not fit on a 128\,GB laptop at the released precision or
 at 2 bits. At equal memory a routed set is closer to the full model than a pruned set at every
 budget on the tuning texts, and at both budgets rescored on further texts, on which no threshold or budget was chosen. On texts of a few hundred tokens or more it is not separable from a pruned set 1.7 to 2 times its size, and on short texts it is worse; a third bit on the most used experts loses to more residents at 35\,GB, is level
-at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model within about 10\% of the decoding speed of a static set on short prompts. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
+at 53\,GB and wins from 74\,GB up; and the running system reaches every expert of the model at a decoding speed we cannot separate from that of a static set of the same size. The study also finds a limit that divergence-based evaluation hides: with too few residents, generated code breaks in a way the divergence does not predict.
 
 \paragraph{A second model (Section~\ref{sec:second}).} We repeat the comparison of routed and static residency on GLM-5.3-Flash at its released precision, with the settings of the case study unchanged. Under forced context the routed set wins at every budget and in every text. It is not separable from a static set 1.4 times its size and is worse than one twice its size; that model's demand is less local, and the simulated policy asks for about five times as many admissions per token.
 
