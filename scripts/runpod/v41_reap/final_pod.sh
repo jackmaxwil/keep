@@ -38,6 +38,7 @@ size() { (cd "$1" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk
 if [[ $(size "$W/v41-hf") != $(size "$LOCAL/hf" 2>/dev/null) ]]; then
   log "copy checkpoint to $LOCAL/hf"
   mkdir -p "$LOCAL/hf"
+  (cd "$W/v41-hf" && find . -type d -not -path './.cache*' -exec mkdir -p "$LOCAL/hf/{}" \;)  # parallel cp --parents races on mkdir
   (cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/hf/")
   [[ $(size "$W/v41-hf") == $(size "$LOCAL/hf") ]]
 fi
