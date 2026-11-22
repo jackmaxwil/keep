@@ -12,6 +12,7 @@
 #   /workspace/keep        this repo                  /workspace/vllm-venv  vLLM >= 0.31 (uv venv)
 #   /workspace/final/in    final_inputs.py output
 # Output: /workspace/final/out/{exp2,gen,parity.json,pod.log}, then DONE or FAILED.
+# SKIP_GEN=1 runs experiment 2 alone (one GPU is enough).
 set -euo pipefail
 W=/workspace
 F=$W/final
@@ -63,6 +64,8 @@ if [[ ! -f "$O/exp2/scores.json" ]]; then
   log "experiment 2: fm192 and reap192 at 4 bits, 22 sessions"
   if exp2; then log "experiment 2 done"; else log "experiment 2 FAILED (exp2-*.log); going on to experiment 1"; fi
 fi
+
+if [[ -n "${SKIP_GEN:-}" ]]; then log "SKIP_GEN set: experiment 1 not run"; touch "$O/DONE"; exit 0; fi
 
 # Experiment 1: vLLM, the recipe's flags; Engram tables in host memory, vision encoder off.
 wait $venv_pid
