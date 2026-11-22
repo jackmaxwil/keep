@@ -31,33 +31,32 @@
 \maketitle
 
 \begin{abstract}
-Many large open language models are mixtures of experts: each layer holds hundreds of small
-networks, and each token (roughly a word) uses only a few. Most weights sit idle, which
-suits machines too small to hold the model. Three techniques exploit this: pruning deletes
-experts, quantization stores them in fewer bits, and offloading leaves them on storage until
-needed. Studied apart, each answers one question: which bytes are in memory when a token
-arrives?
+The most capable open language models no longer fit on the computers people own. The one we
+study holds 289\,GB of weights in its experts; an Apple M4 Max laptop has 128\,GB
+of memory and even at 2 bits a weight the experts need 141\,GB. Its design leaves an
+opening. It is a mixture of experts: each layer holds hundreds of small networks
+and each token (roughly a word) uses only a few, so most weights sit idle. Three techniques
+exploit this, each at a price: pruning deletes experts for good, quantization blurs them
+into fewer bits, and offloading leaves them on storage and stalls to fetch one.
 
-We describe all three by four settings: which experts may be selected (\emph{reach}), which are
-in memory (\emph{residency}), how many bits each carries (\emph{precision}), and what happens
-when a selected expert is absent. In these terms pruning is a frozen cache, a set in memory
-that never changes. \emph{Routed residency} lets it change: every expert stays reachable on
-storage, a missing expert is replaced by the best in memory so no token waits, and experts in
-strong demand load in the background.
+We treat the three as one decision: which bytes are in memory when a token arrives. A setup is
+described by which experts may be selected (\emph{reach}), which are in memory
+(\emph{residency}), how many bits each carries (\emph{precision}), and what happens when a
+selected expert is absent. Seen this way, pruning is a frozen cache, a set in memory that never
+changes. \emph{Routed residency} lets it change: every expert stays reachable on storage, a
+missing one is replaced by the best in memory so no token waits, and experts in strong demand
+load in the background.
 
-Our test model has 384 experts per layer, too many for a 128\,GB laptop even at 2 bits a
-weight. The laptop runs it anyway, every expert reachable, at about 28 tokens per second, as
-fast as a pruned set that size. At equal memory it is closer to the full model than that
-set at every budget tested, and on longer texts not separable from one 1.7 to 2 times as large. The advantage recurs on a
-second model.
+The laptop then runs the model, every expert reachable, at about 28 tokens per second:
+as fast as a pruned set of the same size and, at equal memory, closer to the full model at
+every budget tested. The advantage recurs on a second model.
 
-Two lessons follow. Memory has an apparent order of spending: a usable code, reach to every
-expert, more experts in memory, then more bits for the busiest. And divergence from the full
-model can mislead: with too few experts in memory, a routed set that matched a pruned model on
-that measure wrote working programs in 4 of 24 attempts against 18. Waiting only for strongly
-demanded experts repaired this on the prompt tested, at two thirds of the speed, on a 64\,GB
-budget. Quality figures come from a simulator and mostly one model; we do not
-compare with other runtimes.
+Two lessons. Memory has an apparent order of spending: a usable code, reach to every
+expert, more experts in memory, then more bits for the busiest. And the usual quality score can
+mislead: with too few experts in memory, a setup that matched a pruned model on it wrote
+working programs in 4 of 24 attempts against 18. Waiting only for strongly demanded experts
+fixed this on the prompt tested, at two thirds of the speed, on a 64\,GB budget. Quality
+figures come from a simulator and mostly one model; we do not compare with other runtimes.
 \end{abstract}
 
 \section{Introduction}
