@@ -9,6 +9,7 @@
 # 2-bit row has equal-memory rows with 32 or 64 hot experts. FP8 rows of run 3 are repeated in the
 # same harness (k72, k108, k150), and "all" must reproduce the full model.
 #
+# Any GPU count: each stage runs one command per GPU, GPUS (default: all) at a time.
 # On the volume (a CPU pod put it there): /workspace/glm53 (328 GB), /workspace/wheels,
 # /workspace/keep (this repo), /workspace/sessions/{eval,cal}.json. Output: /workspace/out-bits;
 # codes in /workspace/glm-codes/{codes2,resid1} (77 GB and 13 GB; finished layers are skipped, so
@@ -19,7 +20,7 @@ KIT=$W/keep/scripts/runpod/glm53
 LOCAL=${LOCAL:-/root/glm53}
 OUT=$W/out-bits
 C=$W/glm-codes
-GPUS=${GPUS:-4}
+GPUS=${GPUS:-$(nvidia-smi -L | wc -l)}
 export PIP_BREAK_SYSTEM_PACKAGES=1 PYTHONPATH=$W/keep/src
 mkdir -p "$OUT" "$C"
 log() { printf '[%s] %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$OUT/pod.log"; }
@@ -33,6 +34,7 @@ size() { (cd "$1" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk
 if [[ $(size "$W/glm53") != $(size "$LOCAL" 2>/dev/null) ]]; then
   log "copy checkpoint to $LOCAL"
   mkdir -p "$LOCAL"
+  (cd "$W/glm53" && find . -type d -not -path './.cache*' -exec mkdir -p "$LOCAL/{}" \;)  # parallel cp --parents races on mkdir
   (cd "$W/glm53" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/")
   [[ $(size "$W/glm53") == $(size "$LOCAL") ]]
 fi
@@ -42,12 +44,13 @@ tail -1 "$OUT/pip.log" | tee -a "$OUT/pod.log"
 python3 -c "import torch, transformers; print(torch.__version__, transformers.__version__, torch.cuda.device_count(), torch.cuda.get_device_name(0))" | tee -a "$OUT/pod.log"
 python3 "$KIT/residency.py" --selftest 2>&1 | tail -2 | tee -a "$OUT/pod.log"
 
-# Run every command of a stage at once, one per GPU, and fail if any fails.
+# Run a stage's commands one per GPU, GPUS at a time, and fail if any fails.
 fan() {
-  local pids=() g=0
+  local pids=() g=0 p
   while read -r cmd; do
     CUDA_VISIBLE_DEVICES=$g bash -c "$cmd" & pids+=($!)
     g=$((g + 1))
+    if ((g == GPUS)); then for p in "${pids[@]}"; do wait "$p"; done; pids=(); g=0; fi
   done
   for p in "${pids[@]}"; do wait "$p"; done
 }

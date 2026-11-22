@@ -14,7 +14,7 @@ ids in the file's ``experts`` row.
     # 1-bit residual of those codes for the 96 experts of largest calibration mass per layer
     fit_codes.py fit --ckpt DIR --importance imp-glm.npz --out resid1 --residual-of codes2 --code-bits 8 --top 96
     # the torch fit against KEEP's numpy fit (random weights, or rows of one real expert with --ckpt)
-    fit_codes.py check [--ckpt DIR --importance imp-glm.npz]
+    fit_codes.py check [--ckpt DIR [--importance imp-glm.npz]]
 """
 
 from __future__ import annotations
@@ -68,9 +68,11 @@ def check(args) -> None:
 
     search, rng = Search("cpu"), np.random.default_rng(0)
     if args.ckpt:
-        with np.load(args.importance) as z:
-            row = z["layers"].tolist().index(args.layer)
-            imp = {s: z[s][row, args.expert] for s in ("hidden", "down")}
+        imp = {"hidden": np.ones(4096), "down": np.ones(2048)}  # without an importance file, uniform
+        if args.importance:
+            with np.load(args.importance) as z:
+                row = z["layers"].tolist().index(args.layer)
+                imp = {s: z[s][row, args.expert] for s in ("hidden", "down")}
         weights = loader(args.ckpt, "cpu")(args.layer, args.expert)
         weights = {proj: w[: args.rows].numpy() for proj, w in weights.items()}
     else:  # random weights at GLM's shapes, heavy-tailed importance
