@@ -13,8 +13,8 @@ The three listings are excerpts of `scripts/runpod/v41_reap/local_eval.py` (List
 | Item | Why | Needs |
 |---|---|---|
 | Author block | affiliation and contact are not filled in | Jack |
-| Total-mass 192 at 4 bits on the 22 sessions | separates expert choice from precision in the pruned-checkpoint comparison (done at 2 bits only) | 4-bit weights of the removed experts (pod) |
-| A second prompt set for generation, and a full-model count | one prompt, 24 samples; no full-model baseline | design; a machine that holds the full model |
+| Total-mass 192 at 4 bits on the 22 sessions | separates expert choice from precision in the pruned-checkpoint comparison | done on 2026-11-22 (one H100, `final_pod.sh SKIP_GEN=1`, `docs/deepseek-v4-flash/results/fm192-4bit.json`): 0.336 against 0.392 for the pruned checkpoint's 192 (-0.056 [-0.122, +0.026]); the pod's 0.392 matches the Mac's 0.389. In the paper ("The opposite allocation", Limitations) |
+| A second prompt set for generation, and a full-model count | one prompt, 24 samples; no full-model baseline | design; a machine that holds the full model; 2026-11-22: vLLM on 1×B200 with weight offload was OOM-killed twice (the plan allows one B200/H200 at a time); needs 2×B200 or 4×H200 |
 | Held-out check of the precision results | the held-out run (2026-11-20) confirmed routed against static only; the hot set, the skipping threshold and the residents-against-bits crossover were not rescored on held-out text, and sessions were capped at 8,192 tokens | simulator runs on the Mac, about 10 h for the same 42 sessions |
 | Simulator with the served install delay and a fixed set inside a prompt | the simulator installs after one token | a simulator option and one rerun |
 | The rest of the order on the second model | GLM-5.3-Flash was measured for residency only (routed against static at native precision, done 2026-11-20); codes, the residents-against-bits trade, generation and serving are untested there, and its threshold of 0.2 was chosen after the fixed run | a code fit for 288 experts in 42 layers (pod), then the simulator |
