@@ -1,6 +1,9 @@
 """Inputs for final_pod.sh, built on the Mac from files it already has.
 
-    python final_inputs.py OUT
+    python final_inputs.py OUT [RUN [MODEL]]
+
+RUN defaults to the Mac's run directory and MODEL to the slim checkpoint there; on a pod, pass the
+volume (/workspace, which holds pack/, x1/ and mac-eval-sessions.json) and the full checkpoint.
 
 OUT/sessions-22.jsonl  the 22 tuning sessions of the paper, cut to their first 1,024 tokens, in the
                        pack format collect.py reads (the Mac's local_eval.py --max-tokens 1024 scores
@@ -19,14 +22,16 @@ import subprocess
 import sys
 from pathlib import Path
 
-RUN = Path("~/Models/v41-reap-run").expanduser()
-MODEL = RUN / "bundle/models/v41-lattice"  # tokenizer and encoding/ are the checkpoint's own
+RUN = Path(sys.argv[2] if len(sys.argv) > 2 else "~/Models/v41-reap-run").expanduser()
+MODEL = Path(sys.argv[3]) if len(sys.argv) > 3 else RUN / "bundle/models/v41-lattice"  # its own tokenizer, encoding/
+DUPES = ("Write a Python script that walks a directory tree, hashes every file with SHA-256, and prints duplicate "
+         "files grouped by hash. Include a main guard and argparse.")  # k1/creq-nothink.json, the Mac rows' request
 SCORER = Path(__file__).resolve().parents[2] / "v41_build/score_dupe_script.py"
 
 
 def prompt(task: str) -> str:
     if task == "dupes":
-        return json.loads((RUN / "k1/creq-nothink.json").read_text())["messages"][0]["content"]
+        return DUPES
     return subprocess.run([sys.executable, str(SCORER), "--prompt", task], capture_output=True, text=True, check=True).stdout.strip()
 
 
