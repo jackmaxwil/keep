@@ -30,7 +30,7 @@ trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "
 ( sleep $((MAX_GPU_HOURS * 3600)); log "watchdog: ${MAX_GPU_HOURS} h"; runpodctl pod stop "${RUNPOD_POD_ID:-}" || runpodctl stop pod "${RUNPOD_POD_ID:-}" ) &
 
 # Reference wheels and the vLLM venv go on in the background while the checkpoint copies.
-(pip install -q --no-index --find-links "$W/wheels" -r "$KIT/requirements-ref.txt" > "$O/pip.log" 2>&1; echo "pip exit $?" >> "$O/pip.log") &
+(set +e; pip install -q --no-index --find-links "$W/wheels" -r "$KIT/requirements-ref.txt" > "$O/pip.log" 2>&1; echo "pip exit $?" >> "$O/pip.log") &
 pip_pid=$!
 ([[ -x "$LOCAL/vllm-venv/bin/python" ]] || cp -a "$W/vllm-venv" "$LOCAL/vllm-venv"; echo "venv copied" >> "$O/pip.log") &  # a rerun keeps the copy
 venv_pid=$!
@@ -42,7 +42,7 @@ if [[ $(size "$W/v41-hf") != $(size "$LOCAL/hf" 2>/dev/null) ]]; then
   (cd "$W/v41-hf" && find . -type f -not -path './.cache/*' -print0 | xargs -0 -P 16 -I{} cp --parents {} "$LOCAL/hf/")
   [[ $(size "$W/v41-hf") == $(size "$LOCAL/hf") ]]
 fi
-log "checkpoint in place: $(du -sh "$LOCAL/hf" | cut -f1); $NGPU GPUs: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+log "checkpoint in place: $(du -shL "$LOCAL/hf" | cut -f1); $NGPU GPUs: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
 wait $pip_pid
 tail -1 "$O/pip.log" | tee -a "$O/pod.log"
 
@@ -71,6 +71,10 @@ if [[ -n "${SKIP_GEN:-}" ]]; then log "SKIP_GEN set: experiment 1 not run"; touc
 
 # Experiment 1: vLLM, the recipe's flags; Engram tables in host memory, vision encoder off.
 wait $venv_pid
+# FlashInfer and DeepGEMM JIT-build kernels at start: they need the venv's ninja and a whole CUDA
+# toolkit of 12.9 or later (the image has 12.8; the venv's CUDA 13 wheels lack a consistent one).
+[[ -d /usr/local/cuda-13.0 ]] || apt-get install -y -q --no-install-recommends cuda-toolkit-13-0 > "$O/apt.log" 2>&1
+export CUDA_HOME=/usr/local/cuda-13.0 PATH="$LOCAL/vllm-venv/bin:/usr/local/cuda-13.0/bin:$PATH"
 log "vLLM $("$LOCAL/vllm-venv/bin/python" -c 'import vllm; print(vllm.__version__)'), TP $NGPU"
 # Blackwell takes the recipe's own attention backend and FP8 KV cache; Hopper the recipe's defaults.
 extra=()

@@ -54,7 +54,7 @@ every budget tested. The advantage recurs on a second model.
 Two lessons. Memory has an apparent order of spending: a usable code, reach to every
 expert, more experts in memory, then more bits for the busiest. And the usual quality score can
 mislead: with too few experts in memory, a setup that matched a pruned model on it wrote
-working programs in 4 of 24 attempts against 18. Waiting only for strongly demanded experts
+working programs in 4 of 24 attempts against 18, and 22 for the full model. Waiting only for strongly demanded experts
 fixed this on the prompt tested, at two thirds of the speed, on a 64\,GB budget. Quality
 figures come from a simulator and mostly one model; we do not compare with other runtimes.
 \end{abstract}
@@ -771,7 +771,7 @@ The divergences of this paper come from a simulator that installs an expert one 
   \includegraphics[width=0.8\linewidth]{fig-generation.pdf}
   \caption{Case study: sampled scripts that run correctly against residents per layer. Counts
   are correct samples of 8 or of 24; bars are 95\% Wilson intervals. The line and band are the
-  pruned checkpoint at 4 bits (18 of 24). The triangle is routed residency with speculative
+  pruned checkpoint at 4 bits (18 of 24), the dashed line the full model (22 of 24). The triangle is routed residency with speculative
   decoding, the square a static set of the same 2-bit experts with that decoder off.}
   \label{fig:generation}
 \end{figure}
@@ -781,11 +781,11 @@ settings and counted the scripts that run and give the right output
 (Figure~\ref{fig:generation}).
 
 With 144 or more residents, routed residency is not separable from the pruned checkpoint at
-4 bits (17 to 21 correct of 24, against 18). A static set of 144, the same codes in the same memory with admission switched off, gets 9 of 24 with the speculative decoder off, the condition under which routed residency at that size got 17 ($p=0.04$, Fisher's exact test), and 4 of 24 with it on, where routed residency scored 5 of 8 at that size ($p=0.023$) and 21 of 24 at 180 residents. The gap is specific to this request. On two further script requests, 16 samples a row at 144 residents with the decoder off, routed residency gives 10 and 16 correct and the static set 12 and 12 ($p=0.70$ and $0.10$). One request of three separates the two, and we do not claim that a static set of this size generates worse in general. Below 144 residents KL does not predict the outcome on this prompt. At 96 residents neither KL nor the change in the loss on the text separates routed residency from the pruned checkpoint (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}; 0.081 against 0.095 nats of added loss), yet 4 of 24 samples are correct against 18 of 24 ($p=0.0001$), and at 48 none of 8 is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
+4 bits (17 to 21 correct of 24, against 18). The full model, served at its released precision by another runtime on eight data-center GPUs with the same prompt tokens and sampling settings, writes a correct script in 22 of 24 samples. Neither routed residency at 144 ($p=0.14$) nor the pruned checkpoint ($p=0.25$) is separable from it. A static set of 144, the same codes in the same memory with admission switched off, gets 9 of 24 with the speculative decoder off, the condition under which routed residency at that size got 17 ($p=0.04$, Fisher's exact test), and 4 of 24 with it on, where routed residency scored 5 of 8 at that size ($p=0.023$) and 21 of 24 at 180 residents. The gap is specific to this request. On two further script requests, 16 samples a row at 144 residents with the decoder off, routed residency gives 10 and 16 correct and the static set 12 and 12 ($p=0.70$ and $0.10$), and the full model 14 and 16. One request of three separates the two, and we do not claim that a static set of this size generates worse in general. Below 144 residents KL does not predict the outcome on this prompt. At 96 residents neither KL nor the change in the loss on the text separates routed residency from the pruned checkpoint (0.390 against 0.389, $+0.002$ \ci{-0.075}{+0.058}; 0.081 against 0.095 nats of added loss), yet 4 of 24 samples are correct against 18 of 24 ($p=0.0001$), and at 48 none of 8 is. The failures are mostly misspelled identifiers and answers that never finish, and neither a lower temperature nor a truncated sampling tail raises the counts. They
 track the share of demand that is re-routed: 35\% at 48 residents, 25\% at 96, 10\% at 200,
 where no failure is a misspelling.
 
-This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here between 96 and 120 of 384 experts per layer: 14 of 24 samples are correct at 120, which is not separable from the pruned checkpoint ($p=0.36$) and is separable from 96 residents ($p=0.007$). The evidence for the floor is one request, the divergences come from the simulator and the samples from the served system, and we have no count for the full model. Below the floor we expect the remedy to be a different miss rule, not more bits; Section~\ref{sec:dial} tests one.
+This is consistent with the failure mode anticipated in Section~\ref{sec:why}, although we did not trace individual wrong tokens to re-routed choices. Our hypothesis is that a re-routed choice occasionally yields a confidently wrong token. Such errors would be concentrated in a few positions, so that an average divergence under forced context barely registers them while free-running generation cannot recover from them. The order of Section~\ref{sec:principle} therefore applies above a \emph{residency floor}, here between 96 and 120 of 384 experts per layer: 14 of 24 samples are correct at 120, which is not separable from the pruned checkpoint ($p=0.36$) and is separable from 96 residents ($p=0.007$). Measured against the full model the floor sits higher, between 120 and 144: 120 residents are separable from it ($p=0.017$) and 144 are not. The evidence for the floor is one request, the divergences come from the simulator and the samples from the served system, and the full model's count comes from another runtime. Below the floor we expect the remedy to be a different miss rule, not more bits; Section~\ref{sec:dial} tests one.
 
 \FloatBarrier
 \subsection{Below the floor: a dial from re-routing to waiting}
@@ -1088,8 +1088,8 @@ for narrow pools, are untested.
 
 The quality measure is teacher-forced KL on short windows of 17 texts, with the policy's
 settings chosen on the same texts; the held-out texts confirm the comparison with static sets and no other result, are capped at 8{,}192 tokens, and are mostly short chat. Section~\ref{sec:generation} shows that KL misses a
-failure mode of re-routing. Generation was tested with three requests, 16 to 24 samples a row; one of them separates routed from static residency, the same one locates the floor, and there is no full-model
-baseline.
+failure mode of re-routing. Generation was tested with three requests, 16 to 24 samples a row; one of them separates routed from static residency, the same one locates the floor, and the full model's
+count (22 of 24) comes from another runtime on data-center GPUs.
 
 The simulator installs an expert one token after it is demanded and adapts within a prompt;
 the running system does neither, and Section~\ref{sec:serving} prices both differences in the simulator only. Among starting residents not yet demanded, the simulator evicts
@@ -1356,7 +1356,7 @@ rules of Section~\ref{sec:switch}, not by this measurement.
 \paragraph{Generation.} The request asks for a script that finds duplicate files by content
 hash; a sample is correct if the script runs, exits with status zero and lists the three duplicates of a test
 directory and none of its three other files. Sampling used temperature 1.0 and top-$p$ 1.0 with reasoning off and a budget of
-4{,}096 tokens. Lowering the temperature to 0.6 or the top-$p$ to 0.95 did not raise the counts at 96 residents. The two further requests ask for a script that prints the sums of the numeric columns of a CSV file as one line of JSON, and for one that lists the three largest files under a directory; each is scored by running the script on a fixed fixture. Counts of 24 pool three server launches of 8 samples, or one earlier launch of 8 with two later ones.
+4{,}096 tokens. Lowering the temperature to 0.6 or the top-$p$ to 0.95 did not raise the counts at 96 residents. The two further requests ask for a script that prints the sums of the numeric columns of a CSV file as one line of JSON, and for one that lists the three largest files under a directory; each is scored by running the script on a fixed fixture. Counts of 24 pool three server launches of 8 samples, or one earlier launch of 8 with two later ones. The full model ran in vLLM 0.34.0 on eight H100 GPUs with tensor parallelism, its Engram tables in host memory, the vision encoder off and a context of 8{,}192 tokens, at the released 4-bit experts; for each of the three requests the prompt vLLM rendered was the same token sequence as the checkpoint's own encoding gives, and the same scorer judged its 56 samples.
 
 \FloatBarrier
 \section{Implementation excerpt: two selections from one router evaluation}

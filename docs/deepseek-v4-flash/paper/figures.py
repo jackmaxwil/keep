@@ -102,6 +102,7 @@ def generation() -> None:
     lo, hi = wilson(18, 24)
     ax.axhspan(lo, hi, color=ORANGE, alpha=0.15, lw=0)
     ax.axhline(18 / 24, color=ORANGE, lw=1, label="pruned to 192 experts, 4 bits, waiting offload (18/24)")
+    ax.axhline(22 / 24, color="black", lw=0.9, ls="--", label="full model, 4 bits, vLLM on 8 H100 (22/24)")
     for j, (x, k, n) in enumerate(pts):
         lo, hi = wilson(k, n)
         ax.errorbar(x, k / n, yerr=[[k / n - lo], [hi - k / n]], fmt="o", color=BLUE, ms=4, lw=0.9, capsize=2,
@@ -114,14 +115,13 @@ def generation() -> None:
     lo, hi = wilson(21, 24)
     ax.errorbar(180, 21 / 24, yerr=[[21 / 24 - lo], [hi - 21 / 24]], fmt="^", color=RED, ms=5, lw=0.9, capsize=2,
                 label="routed residency, speculative decoding")
-    ax.annotate("21/24", (180, 21 / 24), (-24, 2), textcoords="offset points", fontsize=7)
+    ax.annotate("21/24", (180, 21 / 24), (-26, -12), textcoords="offset points", fontsize=7)
     ax.set_xlabel("Residents per layer (of 384)")
     ax.set_ylabel("Sampled scripts correct")
     ax.set_xlim(30, 215)
     ax.set_ylim(-0.03, 1.03)
-    ax.set_ylim(-0.03, 1.22)
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1.0])
-    ax.legend(loc="upper left", fontsize=6.5)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, fontsize=6.5, frameon=False)
     save(fig, "fig-generation")
 
 
