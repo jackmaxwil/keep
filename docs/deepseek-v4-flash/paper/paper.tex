@@ -32,7 +32,7 @@
 
 \begin{abstract}
 Many large open language models are mixtures of experts: each layer holds hundreds of small
-networks, and a given token (roughly a word) uses only a few. Most weights sit idle, which
+networks, and each token (roughly a word) uses only a few. Most weights sit idle, which
 suits machines too small to hold the model. Three techniques exploit this: pruning deletes
 experts, quantization stores them in fewer bits, and offloading leaves them on storage until
 needed. Studied apart, each answers one question: which bytes are in memory when a token
@@ -45,18 +45,18 @@ that never changes. \emph{Routed residency} lets it change: every expert stays r
 storage, a missing expert is replaced by the best in memory so no token waits, and experts in
 strong demand load in the background.
 
-A 384-expert model whose experts do not fit in a 128\,GB laptop even at 2 bits runs there with
-every expert reachable at about 28 tokens per second, as fast as a fixed subset of the same
-size. At equal memory it is closer to the full model than a pruned set at every budget tested,
-and on longer texts not separable from one 1.7 to 2 times its size. The advantage recurs on a
+Our test model has 384 experts per layer, too many for a 128\,GB laptop even at 2 bits a
+weight. The laptop runs it anyway, every expert reachable, at about 28 tokens per second, as
+fast as a pruned set that size. At equal memory it is closer to the full model than that
+set at every budget tested, and on longer texts not separable from one 1.7 to 2 times as large. The advantage recurs on a
 second model.
 
 Two lessons follow. Memory has an apparent order of spending: a usable code, reach to every
 expert, more experts in memory, then more bits for the busiest. And divergence from the full
 model can mislead: with too few experts in memory, a routed set that matched a pruned model on
 that measure wrote working programs in 4 of 24 attempts against 18. Waiting only for strongly
-demanded experts repaired this on the prompt tested, at two thirds of the speed, in the memory
-of a 64\,GB machine. Quality figures come from a simulator and mostly one model; we do not
+demanded experts repaired this on the prompt tested, at two thirds of the speed, on a 64\,GB
+budget. Quality figures come from a simulator and mostly one model; we do not
 compare with other runtimes.
 \end{abstract}
 
