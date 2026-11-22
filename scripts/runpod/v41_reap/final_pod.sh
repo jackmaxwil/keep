@@ -32,7 +32,7 @@ trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "
 # Reference wheels and the vLLM venv go on in the background while the checkpoint copies.
 (pip install -q --no-index --find-links "$W/wheels" -r "$KIT/requirements-ref.txt" > "$O/pip.log" 2>&1; echo "pip exit $?" >> "$O/pip.log") &
 pip_pid=$!
-(cp -a "$W/vllm-venv" "$LOCAL/vllm-venv"; echo "venv copied" >> "$O/pip.log") &
+([[ -x "$LOCAL/vllm-venv/bin/python" ]] || cp -a "$W/vllm-venv" "$LOCAL/vllm-venv"; echo "venv copied" >> "$O/pip.log") &  # a rerun keeps the copy
 venv_pid=$!
 size() { (cd "$1" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}'); }
 if [[ $(size "$W/v41-hf") != $(size "$LOCAL/hf" 2>/dev/null) ]]; then
