@@ -12,11 +12,12 @@
 #   /workspace/keep        this repo                  /workspace/vllm-venv  vLLM >= 0.31 (uv venv)
 #   /workspace/final/in    final_inputs.py output
 # Output: /workspace/final/out/{exp2,gen,parity.json,pod.log}, then DONE or FAILED.
-# SKIP_GEN=1 runs experiment 2 alone (one GPU is enough).
+# SKIP_GEN=1 runs experiment 2 alone (one GPU is enough); SKIP_EXP2=1 experiment 1 alone. OFFLOAD_GB keeps
+# that many GB of weights in host memory (vLLM --cpu-offload-gb), for a GPU too small for the model.
 set -euo pipefail
 W=/workspace
 F=$W/final
-O=$F/out
+O=${OUT:-$F/out}  # one OUT per pod when two pods share the volume
 KIT=$W/keep/scripts/runpod/v41_reap
 LOCAL=${LOCAL:-/root/v41}
 NGPU=$(nvidia-smi -L | wc -l)
@@ -60,7 +61,7 @@ exp2() {
     --student reap192="$LOCAL/exp2/student-reap192" > "$LOCAL/exp2/scores.json" || return 1
   mkdir -p "$O/exp2" && cp -r "$LOCAL/exp2/." "$O/exp2/"
 }
-if [[ ! -f "$O/exp2/scores.json" ]]; then
+if [[ -z "${SKIP_EXP2:-}" && ! -f "$O/exp2/scores.json" ]]; then
   log "experiment 2: fm192 and reap192 at 4 bits, 22 sessions"
   if exp2; then log "experiment 2 done"; else log "experiment 2 FAILED (exp2-*.log); going on to experiment 1"; fi
 fi
@@ -78,7 +79,7 @@ nvidia-smi --query-gpu=name --format=csv,noheader | head -1 | grep -q B200 && ex
 VLLM_ENGINE_READY_TIMEOUT_S=3600 VLLM_USE_RUST_FRONTEND=1 "$LOCAL/vllm-venv/bin/python" -m vllm.entrypoints.cli.main serve "$LOCAL/hf" \
   --served-model-name full --tokenizer-mode deepseek_v41 --tensor-parallel-size "$NGPU" "${extra[@]}" \
   --engram-config '{"cpu_offload":true}' --reasoning-parser deepseek_v41 --language-model-only \
-  --max-model-len 16384 --port 8000 > "$O/vllm.log" 2>&1 &
+  --max-model-len 16384 --max-num-seqs 64 ${OFFLOAD_GB:+--cpu-offload-gb "$OFFLOAD_GB"} --port 8000 > "$O/vllm.log" 2>&1 &
 vllm_pid=$!
 until curl -s -m 5 http://127.0.0.1:8000/v1/models | grep -q '"full"'; do
   kill -0 $vllm_pid 2>/dev/null || { log "vLLM exited: $(tail -3 "$O/vllm.log")"; exit 1; }
