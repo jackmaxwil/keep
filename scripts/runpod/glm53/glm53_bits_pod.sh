@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Residents against bits on GLM-5.3-Flash, on one 4-GPU pod. The first model's order, on the second:
+# Residents against bits on GLM-5.3-Flash, on one GPU pod (any GPU count). The first model's order, on the second:
 # 2-bit E8P codes for every routed expert, a 1-bit residual for the 96 heaviest experts per layer,
 # then the simulator with coded variants (residency.py ``:codes``). The teacher stays at FP8.
 #
@@ -28,6 +28,8 @@ trap 'status=$?; [[ $status -ne 0 ]] && { log "FAILED (status $status)"; touch "
 
 (pip install -q --no-index --find-links "$W/wheels" transformers==5.22.2 > "$OUT/pip.log" 2>&1
  pip install -q --no-index --no-deps --find-links "$W/wheels" flash-linear-attention einops >> "$OUT/pip.log" 2>&1
+ # mlx (CPU build) only because keep.quant imports it; fit_codes check needs KEEP's numpy fit
+ pip install -q --no-index --no-deps --find-links "$W/wheels" mlx mlx-cpu >> "$OUT/pip.log" 2>&1
  echo "pip exit $?" >> "$OUT/pip.log") &
 pip_pid=$!
 size() { (cd "$1" && find . -type f -not -path './.cache/*' -printf '%s\n' | awk '{s+=$1} END {print s}'); }
