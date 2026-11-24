@@ -29,6 +29,12 @@ for name, rename in (("residency-run1.json", lambda k: k + "s30" if k.startswith
     for key, value in json.loads((RESULTS / name).read_text()).items():
         if not (name != "residency-run3.json" and key in ("o108", "all") and False):
             RUN[rename(key) if key[0] == "k" else ("o108share" if key == "o108" and name == "residency-run2.json" else key)] = value
+# Residents against bits (glm53_bits_pod.sh, four groups merged): keys get a "b" prefix, so the run's
+# own FP8 rows (bk72, bk108, bk150) sit beside run 3's. cK is K residents at 2 bits, hH the H hottest
+# of them with a 1-bit residual (half a 2-bit resident each), f the hot set at native FP8.
+BITS = RESULTS / "residency-bits.json"
+if BITS.exists():
+    RUN.update({"b" + k: v for k, v in json.loads(BITS.read_text()).items() if k[0] != "_"})
 KEEP = [s for s, v in RUN["_teacher"].items() if v["domain"] != "tool-use" and s not in SAME[1:]]
 W = np.array([len(SAME) if s == SAME[0] else 1 for s in KEEP], float)
 W /= W.sum()
@@ -63,3 +69,19 @@ if __name__ == "__main__":
                  ("o108", "k108"), ("o108", "all"), ("k108", "k108s10"), ("k108", "k108s20"), ("k108", "k108s30"),
                  ("k108s30", "s150"), ("k108s20", "s150")):
         print(f"| {a} | {b} | {diff(a, b)} |")
+    if BITS.exists():
+        # memory in 2-bit experts per layer: an FP8 expert is four, a 1-bit residual half
+        print("\n| Variant | Residents | Hot | Memory (2-bit experts) | KL | Top-1 | Gate weight resident |\n|---|---:|---:|---:|---:|---:|---:|")
+        for name in ("ball", "bk72", "bc72", "bc56h32", "bk108", "bc108", "bc92h32", "bc76h64", "bc108f16", "bk150", "bc150",
+                     "bc134h32", "bc118h64", "bc188", "bc172h32", "bc156h64", "bc288", "bc288h32"):
+            p, hot = RUN[name]["_policy"], 16 if name.endswith("f16") else (int(name.split("h")[1]) if "h" in name else 0)
+            k = p["residents"]
+            memory = ("-" if name == "ball" else f"{4 * k}" if name[1] == "k" else
+                      f"{k + 3 * hot}" if name.endswith("f16") else f"{k + hot / 2:g}")  # FP8 hot: 3 more than its 2-bit copy
+            print(f"| {name} | {k} | {hot} | {memory} | {float(kl(name) @ W):.3f} | {float(kl(name, 'top1') @ W):.3f} | "
+                  f"{p['gate_weight_resident']:.3f} |")
+        print("\n| A | B | KL(A) - KL(B) | 95% interval | Texts where A is better |\n|---|---|---:|---|---|")
+        for a, b in (("bc56h32", "bc72"), ("bc92h32", "bc108"), ("bc76h64", "bc108"), ("bc134h32", "bc150"), ("bc118h64", "bc150"),
+                     ("bc172h32", "bc188"), ("bc156h64", "bc188"), ("bc288", "bk72"), ("bc72", "bk72"), ("bc108", "bk108"),
+                     ("bc150", "bk150"), ("bc108f16", "bc108"), ("bc288h32", "bc288"), ("bc288", "ball"), ("bk108", "k108")):
+            print(f"| {a} | {b} | {diff(a, b)} |")

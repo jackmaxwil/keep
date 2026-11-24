@@ -602,9 +602,9 @@ to 100; partial credit only for measured progress).
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
 | 7 | Learned tier policy or trained nested codes | 10 | 5 | 2026-11-20 (Jack left the ruling to the plan's mapping, "a hot tier that passes C3"): the fitted third-bit hot set passes C3's bar of 0.02 at 74 GB (-0.023, interval -0.042 to -0.002) and 92 GB (-0.039), ties at 53 GB and loses at 35 GB, and it decodes 11% slower at equal memory, so half credit; the rest waits for codes that lower the 0.235 coding floor (error-feedback rounding, first real test queued). Earlier: 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
-| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 5 | 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.628, 0.317 and 0.171 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test; numbers from the corrected run of 2026-11-21, the first run had the threshold on the wrong scale and gave 0.384, 0.177 and 0.117). Half credit: no generation or downstream benchmark on the second model, and no codes |
+| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 7 | 2026-11-23: codes and the residents-against-bits trade on GLM-5.3-Flash (2-bit lattice codes for 288 experts in 42 layers, 1-bit residuals for the top 96): every expert at 2 bits beats 72 routed residents at 8 bits in the same memory by 0.221 [0.133, 0.304] (16 of 17 texts); hot residuals lose to residents at 72 and 108 residents and win from 150 (-0.038 to -0.049), the same tested shares of the pool as the case study's crossover. Seven of ten: no generation or downstream benchmark on the second model. Earlier, 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.628, 0.317 and 0.171 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test; numbers from the corrected run of 2026-11-21, the first run had the threshold on the wrong scale and gave 0.384, 0.177 and 0.117). |
 | 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
-| | **Total** | 100 | **90** | |
+| | **Total** | 100 | **92** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1521,3 +1521,19 @@ Three jobs of the chain finished (`jobs/timing_mac.sh`, `speed_mac.sh`, `gen2_ma
   and its figure, limitations, both appendices. `stats.py` carries the `timing:*` rows.
 - Rubric unchanged at 90. Still running: hot set on held-out texts, then llama.cpp, LDLQ, the 0.15
   row at 73 residents, and the common-starting-set rerun.
+
+
+### 2026-11-22 to 2026-11-23: final RunPod experiments
+
+- Four-bit control (one H100): the 192 experts of largest routed mass score 0.336 at the released
+  4 bits against 0.392 for the pruned checkpoint's 192 (-0.056 [-0.122, +0.026], 13 of 17 texts);
+  the same set loses 0.120 going to 2 bits, in every text.
+- Full-model generation (vLLM 0.34.0, 8×H100 in EUR-NO-2, prompt tokens identical to the
+  checkpoint's encoding): 22 of 24 on the duplicate finder, 14 and 16 of 16 on the other two
+  requests. Routed 144 (17 of 24, p = 0.14) and the pruned checkpoint (18 of 24, p = 0.25) are not
+  separable from it; routed 120 (14 of 24, p = 0.017) is. Against the full model the floor sits
+  between 120 and 144. About $53; `results/full-gen.json`.
+- Second model, residents against bits (GLM-5.3-Flash, one pod): see rubric item 8. The run's
+  full-model row reproduces the first run (0.027 against 0.028).
+- The V4.1 volume `yqazs7aqe6` was deleted on Jack's word (2026-11-22).
+- Rubric item 8 moves from 5 to 7 of 10. Total 92.

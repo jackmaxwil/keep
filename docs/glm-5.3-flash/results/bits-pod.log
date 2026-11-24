@@ -1,0 +1,49 @@
+[2026-11-23T16:57:53Z] copy checkpoint to /root/glm53
+[2026-11-23T16:58:52Z] checkpoint in place: 306G
+pip exit 0
+2.9.1+cu128 5.22.2 1 NVIDIA RTX PRO 6000 Blackwell Server Edition
+selftest ok: {'all': 0.0, 'static': 4.11814, 'routed': 5.01873} {'all': 1.0, 'static': 0.81, 'routed': 0.746}
+selftest codes ok: {'c': 5.14236, 'ch': 3.73412, 'cf': 0.0, 'cr': 5.75343}
+[2026-11-23T16:59:07Z] importance pass (calibration only)
+/workspace/glm-codes/imp-glm.npz.tmp.npz: 0 (expert, space) importances replaced by the layer mean
+w1 16-bit: codes equal 1.0000, weighted error 0.088476 (numpy 0.088476)
+w1 8-bit: codes equal 1.0000, weighted error 0.328768 (numpy 0.328768)
+w3 16-bit: codes equal 1.0000, weighted error 0.088179 (numpy 0.088179)
+w3 8-bit: codes equal 1.0000, weighted error 0.328880 (numpy 0.328880)
+w2 16-bit: codes equal 1.0000, weighted error 0.050601 (numpy 0.050601)
+w2 8-bit: codes equal 1.0000, weighted error 0.272595 (numpy 0.272595)
+check ok
+[2026-11-23T17:07:27Z] 2-bit fit, every expert
+[2026-11-24T00:06:52Z] 1-bit residuals, 96 experts per layer
+[2026-11-24T00:57:12Z] smoke: five layers, 128 tokens
+teacher mean NLL 10.998 over 22 sessions
+all KL 0.0000 {"residents": 288, "tau": 0.0, "policy": "lru", "codes": null, "gate_weight_resident": 1.0, "admissions_per_token_layer": 0.0}
+c108 KL 0.2174 {"residents": 108, "tau": 0.3, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 0.608278441158208, "admissions_per_token_layer": 0.7347301136363636}
+c76h64 KL 0.2984 {"residents": 76, "tau": 0.3, "policy": "lru", "codes": {"hot": 64, "hot_fp8": false}, "gate_weight_resident": 0.4931345886804841, "admissions_per_token_layer": 1.0113636363636365}
+c108f16 KL 0.2150 {"residents": 108, "tau": 0.3, "policy": "lru", "codes": {"hot": 16, "hot_fp8": true}, "gate_weight_resident": 0.6069254008206454, "admissions_per_token_layer": 0.7407670454545454}
+[2026-11-24T00:57:53Z] simulator, variants grouped by memory over the GPUs
+layer 44: load 9.1 s, run 14.2 s
+teacher mean NLL 1.411 over 22 sessions
+all KL 0.0385 {"residents": 288, "tau": 0.0, "policy": "lru", "codes": null, "gate_weight_resident": 1.0, "admissions_per_token_layer": 0.0}
+k72 KL 0.6653 {"residents": 72, "tau": 0.3, "policy": "lru", "codes": null, "gate_weight_resident": 0.7089068059348309, "admissions_per_token_layer": 0.6040225665597588}
+c72 KL 0.9332 {"residents": 72, "tau": 0.3, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 0.7353586900619676, "admissions_per_token_layer": 0.5458705256514291}
+c56h32 KL 0.9757 {"residents": 56, "tau": 0.3, "policy": "lru", "codes": {"hot": 32, "hot_fp8": false}, "gate_weight_resident": 0.6762404303334096, "admissions_per_token_layer": 0.7169723628338721}
+teacher mean NLL 1.411 over 22 sessions
+k108 KL 0.4603 {"residents": 108, "tau": 0.3, "policy": "lru", "codes": null, "gate_weight_resident": 0.8028617433147958, "admissions_per_token_layer": 0.35066613427446536}
+c108 KL 0.7292 {"residents": 108, "tau": 0.3, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 0.8184959103413353, "admissions_per_token_layer": 0.32399822249700533}
+c92h32 KL 0.7300 {"residents": 92, "tau": 0.3, "policy": "lru", "codes": {"hot": 32, "hot_fp8": false}, "gate_weight_resident": 0.779924265055545, "admissions_per_token_layer": 0.4184795909167021}
+c76h64 KL 0.7951 {"residents": 76, "tau": 0.3, "policy": "lru", "codes": {"hot": 64, "hot_fp8": false}, "gate_weight_resident": 0.7354901249893899, "admissions_per_token_layer": 0.5398102708759998}
+c108f16 KL 0.6747 {"residents": 108, "tau": 0.3, "policy": "lru", "codes": {"hot": 16, "hot_fp8": true}, "gate_weight_resident": 0.8124294268148856, "admissions_per_token_layer": 0.33634736015044375}
+layer 44: load 6.1 s, run 13.7 s
+teacher mean NLL 1.411 over 22 sessions
+k150 KL 0.3569 {"residents": 150, "tau": 0.3, "policy": "lru", "codes": null, "gate_weight_resident": 0.8716292373814, "admissions_per_token_layer": 0.19390775875763705}
+c150 KL 0.6097 {"residents": 150, "tau": 0.3, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 0.8828331344247248, "admissions_per_token_layer": 0.1781667675635758}
+c134h32 KL 0.5679 {"residents": 134, "tau": 0.3, "policy": "lru", "codes": {"hot": 32, "hot_fp8": false}, "gate_weight_resident": 0.8574441667824524, "admissions_per_token_layer": 0.23002026525153385}
+c118h64 KL 0.5674 {"residents": 118, "tau": 0.3, "policy": "lru", "codes": {"hot": 64, "hot_fp8": false}, "gate_weight_resident": 0.8304057009228486, "admissions_per_token_layer": 0.2916929642653202}
+teacher mean NLL 1.411 over 22 sessions
+c188 KL 0.5248 {"residents": 188, "tau": 0.3, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 0.9266431303289744, "admissions_per_token_layer": 0.09770255591191485}
+c172h32 KL 0.4910 {"residents": 172, "tau": 0.3, "policy": "lru", "codes": {"hot": 32, "hot_fp8": false}, "gate_weight_resident": 0.9069608494950777, "admissions_per_token_layer": 0.13046292360601258}
+c156h64 KL 0.4798 {"residents": 156, "tau": 0.3, "policy": "lru", "codes": {"hot": 64, "hot_fp8": false}, "gate_weight_resident": 0.8867522494855616, "admissions_per_token_layer": 0.16779370660896223}
+c288 KL 0.4547 {"residents": 288, "tau": 1000000000.0, "policy": "lru", "codes": {"hot": 0, "hot_fp8": false}, "gate_weight_resident": 1.0, "admissions_per_token_layer": 0.0}
+c288h32 KL 0.3791 {"residents": 288, "tau": 1000000000.0, "policy": "lru", "codes": {"hot": 32, "hot_fp8": false}, "gate_weight_resident": 1.0, "admissions_per_token_layer": 0.0}
+[2026-11-24T01:59:43Z] all done

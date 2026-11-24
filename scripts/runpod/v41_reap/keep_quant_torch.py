@@ -13,11 +13,16 @@ torch. Rows are independent, so ``check`` can compare a few rows against a ``kee
     keep_quant_torch.py check --hf-path PRUNED_CKPT --survivors survivors-192.json --stats STATS --codes QUANT_DIR
     # pod: fit, one process per GPU (--layers splits the work); finished layers are skipped
     keep_quant_torch.py fit --hf-path FULL_CKPT --importance imp-pruned.npz --out OUT [--layers 0,1,...]
+    # pod: the 1-bit residual of those codes (keep_quant.py --residual-of DIR --code-bits 8)
+    keep_quant_torch.py fit --hf-path FULL_CKPT --importance imp-pruned.npz --out RES --residual-of OUT --code-bits 8
     # pod: every router row of the full checkpoint
     keep_quant_torch.py router --hf-path FULL_CKPT --out router-384.npz
 
 ``fit`` writes ``layer-XX.npz`` in ``keep_quant``'s format (experts in the order of
-``imp-pruned.npz``'s ``experts`` row, which ``experts.json`` repeats) and ``metrics.jsonl``.
+``imp-pruned.npz``'s ``experts`` row, which the file's ``experts`` and ``experts.json`` repeat) and
+``metrics.jsonl``. ``--code-bits 8`` uses the 1-bit E8 codebook (weighted nearest of its 256 rows,
+the same scale alternation); ``--residual-of DIR`` fits ``W - decode(DIR)``, and ``total_wrel_mse``
+scores base + residual against ``W``.
 """
 
 from __future__ import annotations
@@ -35,7 +40,7 @@ KIT = Path(__file__).resolve().parent
 sys.path.insert(0, str(KIT))
 sys.path.insert(0, str(KIT.parents[2] / "src"))
 
-from keep.vq.e8 import E8P_SHUFFLE_MAP, e8p_abs_grid, e8p_full_grid
+from keep.vq.e8 import E8P_SHUFFLE_MAP, e8_1bit_grid, e8p_abs_grid, e8p_full_grid
 
 PROJ_SPACE = {"w1": "hidden", "w3": "hidden", "w2": "down"}
 
@@ -47,7 +52,8 @@ def _parity(x: torch.Tensor) -> torch.Tensor:
 
 
 class Search:
-    """Weighted nearest E8P codeword; ``e8._encode_e8p_rtn_per_row_diagonal_hessian`` in torch."""
+    """Weighted nearest E8P codeword; ``e8._encode_e8p_rtn_per_row_diagonal_hessian`` in torch. With
+    ``bits=8``, the weighted nearest row of the 1-bit E8 table (``rtn.nearest_e8_codes_diagonal_hessian``)."""
 
     def __init__(self, device, vectors_per_chunk: int = 1 << 17):
         base = e8p_abs_grid().astype(np.float32)  # signed base rows [256, 8]
@@ -55,13 +61,20 @@ class Search:
         self.bit = torch.from_numpy(E8P_SHUFFLE_MAP.astype(np.int32)).to(device)  # dim -> sign bit
         self.base_signs = ((torch.from_numpy(base < 0).to(device).int() << self.bit).sum(-1)).int()
         self.grid = torch.from_numpy(e8p_full_grid().astype(np.float32)).to(device)  # [65536, 8]
+        self.grid1 = torch.from_numpy(e8_1bit_grid().astype(np.float32)).to(device)  # [256, 8]
         self.vectors_per_chunk = vectors_per_chunk
 
-    def assign(self, vectors: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
+    def assign(self, vectors: torch.Tensor, w: torch.Tensor, bits: int = 16) -> torch.Tensor:
         """vectors [rows, P, 8] (already divided by their scales), w [P, 8] -> codes [rows, P] int32."""
-        abs_norm_w = w @ (self.abs_rows * self.abs_rows).T  # [P, 256]
+        rows = self.abs_rows if bits == 16 else self.grid1
+        norm_w = w @ (rows * rows).T  # [P, 256]
         step = max(1, self.vectors_per_chunk // vectors.shape[1])
-        return torch.cat([self._assign(vectors[i:i + step], w, abs_norm_w) for i in range(0, vectors.shape[0], step)])
+        one = self._assign if bits == 16 else self._assign1
+        return torch.cat([one(vectors[i:i + step], w, norm_w) for i in range(0, vectors.shape[0], step)])
+
+    def _assign1(self, chunk, w, norm_w):
+        # sum w (v - c)^2 without the constant sum w v^2; argmin takes the first of tied rows, as numpy does
+        return (norm_w - 2.0 * ((chunk * w) @ self.grid1.T)).argmin(-1).int()
 
     def _assign(self, chunk, w, abs_norm_w):
         best_dist = torch.full(chunk.shape[:2], torch.inf, device=chunk.device)
@@ -87,30 +100,40 @@ class Search:
             best_dist, best_code = torch.where(take, row_dist, best_dist), torch.where(take, code, best_code)
         return best_code
 
-    def fit(self, weight: torch.Tensor, importance: torch.Tensor, group: int, iterations: int = 8):
-        """weight [out, in] fp32, importance [in] -> (codes uint16 [out, in/8], scales fp16 [out, in/group],
-        weighted relative squared error of the stored code)."""
+    def fit(self, weight: torch.Tensor, importance: torch.Tensor, group: int, iterations: int = 8, bits: int = 16):
+        """weight [out, in] fp32, importance [in] -> (codes [out, in/8] (uint16, or uint8 for ``bits=8``),
+        scales fp16 [out, in/group], weighted relative squared error of the stored code)."""
         out_dim, in_dim = weight.shape
+        table = self.grid if bits == 16 else self.grid1
         grouped = weight.reshape(out_dim, in_dim // group, group // 8, 8)
         h = importance.reshape(in_dim // group, group // 8, 8)
         w = importance.reshape(-1, 8)
-        scales = grouped.abs().amax((2, 3)) / self.grid.abs().max()
+        scales = grouped.abs().amax((2, 3)) / table.abs().max()
         scales = torch.where(scales > 0, scales, torch.ones_like(scales))
 
         def assign():
-            return self.assign((grouped / scales[:, :, None, None]).reshape(out_dim, -1, 8), w).reshape(grouped.shape[:3])
+            vectors = (grouped / scales[:, :, None, None]).reshape(out_dim, -1, 8)
+            return self.assign(vectors, w, bits).reshape(grouped.shape[:3])
 
         for _ in range(iterations):
-            decoded = self.grid[assign().long()]
+            decoded = table[assign().long()]
             numerator = (h * grouped * decoded).double().sum((2, 3))
             denominator = (h * decoded * decoded).double().sum((2, 3))
             ok = (denominator > 0) & (numerator > 0)
             scales = torch.where(ok, numerator / denominator.clamp_min(1e-300), scales.double()).float()
         codes = assign()
         stored = scales.half()
-        error = self.grid[codes.long()] * stored.float()[:, :, None, None] - grouped
+        error = table[codes.long()] * stored.float()[:, :, None, None] - grouped
         wrel = float((h * error * error).double().sum() / (h * grouped * grouped).double().sum())
-        return codes.reshape(out_dim, in_dim // 8).cpu().numpy().astype(np.uint16), stored.cpu().numpy(), wrel
+        codes = codes.reshape(out_dim, in_dim // 8).cpu().numpy().astype(np.uint16 if bits == 16 else np.uint8)
+        return codes, stored.cpu().numpy(), wrel
+
+    def decode(self, codes: np.ndarray, scales: np.ndarray, bits: int = 16) -> torch.Tensor:
+        """One projection of a layer file, ``codes`` [out, in/8] and ``scales`` [out, in/g] -> fp32 [out, in]."""
+        table = self.grid if bits == 16 else self.grid1
+        vec = table[torch.from_numpy(codes.astype(np.int64)).to(table.device)]
+        s = torch.from_numpy(scales.astype(np.float32)).to(table.device)
+        return (vec * s.repeat_interleave(vec.shape[1] // s.shape[1], 1)[..., None]).reshape(vec.shape[0], -1)
 
 
 def decode_fp4(weight: torch.Tensor, scale: torch.Tensor, device) -> torch.Tensor:
@@ -126,6 +149,16 @@ def load_expert(ckpt, layer: int, expert: int, device) -> dict[str, torch.Tensor
     return {proj: decode_fp4(sd[f"{proj}.weight"], sd[f"{proj}.scale"], device) for proj in PROJ_SPACE}
 
 
+def fill_dead(picked: np.ndarray, total: np.ndarray) -> int:
+    """The search needs some weight in every group of eight inputs. An expert that calibration never
+    routed has none: in place, it gets its layer's mean over all experts. ``picked`` [L, E, in] is a
+    selection of ``total`` [L, all, in]; returns how many were replaced."""
+    dead = ~(picked.reshape(*picked.shape[:2], -1, 8) > 0).any(-1).all(-1)  # [L, E]
+    picked[dead] = np.broadcast_to(total.mean(1)[:, None, :], picked.shape)[dead]
+    assert (picked.reshape(*picked.shape[:2], -1, 8) > 0).any(-1).all() and np.isfinite(picked).all()
+    return int(dead.sum())
+
+
 def importance(args) -> None:
     from keep_quant import pod_importance
 
@@ -137,12 +170,7 @@ def importance(args) -> None:
     out, replaced = {"experts": removed}, 0
     for space, total in full.items():
         picked = np.stack([total[layer][removed[layer]] for layer in range(n_layers)])
-        # The search needs some weight in every group of eight inputs. An expert that calibration
-        # never routed has none: it gets its layer's mean over all experts.
-        dead = ~(picked.reshape(*picked.shape[:2], -1, 8) > 0).any(-1).all(-1)  # [L, E]
-        picked[dead] = np.broadcast_to(total.mean(1)[:, None, :], picked.shape)[dead]
-        replaced += int(dead.sum())
-        assert (picked.reshape(*picked.shape[:2], -1, 8) > 0).any(-1).all() and np.isfinite(picked).all(), space
+        replaced += fill_dead(picked, total)
         out[space] = picked.astype(np.float32)
     np.savez(args.out, **out)
     print(f"{args.out}: {removed.shape[1]} experts in each of {n_layers} layers; "
@@ -179,6 +207,51 @@ def check(args) -> None:
             assert same > 0.99 and abs(wrel - ref_wrel) < 1e-3 * ref_wrel, (same, wrel, ref_wrel)
 
 
+def fit_layers(search: Search, load, layers, experts: dict, imp: dict, out: Path, iterations: int = 8,
+               bits: int = 16, residual_of: Path | None = None) -> None:
+    """Fit each layer's experts to ``out/layer-XX.npz``; finished layers are skipped. ``load(layer, expert)``
+    gives ``{w1, w2, w3: fp32 [out, in]}`` on the search's device, ``experts[layer]`` the experts in file
+    order and ``imp[layer][space]`` their importances [len(experts[layer]), in]. With ``residual_of``, the
+    target is ``W`` minus that run's decoded codes."""
+    out.mkdir(parents=True, exist_ok=True)
+    for layer in layers:
+        dest = out / f"layer-{layer:02d}.npz"
+        if dest.exists():
+            continue
+        started = time.time()
+        base = np.load(residual_of / dest.name) if residual_of else None
+        if base is not None:  # the first runs wrote the order only to experts.json
+            order = base["experts"] if "experts" in base else json.loads((residual_of / "experts.json").read_text())["experts"][layer]
+            slot_of, base_bits = {int(e): s for s, e in enumerate(order)}, int(base["code_bits"]) if "code_bits" in base else 16
+        arrays: dict[str, list[np.ndarray]] = {}
+        errors: dict[str, list[float]] = {proj: [] for proj in PROJ_SPACE}
+        totals: dict[str, list[float]] = {proj: [] for proj in PROJ_SPACE}
+        for slot, expert in enumerate(experts[layer]):
+            weights = load(layer, expert)
+            for proj, space in PROJ_SPACE.items():
+                w, d = weights[proj], torch.from_numpy(np.asarray(imp[layer][space][slot], np.float32)).to(search.grid.device)
+                b = 0.0
+                if base is not None:
+                    b = search.decode(base[f"{proj}_codes"][slot_of[expert]], base[f"{proj}_scales"][slot_of[expert]], base_bits)
+                codes, scales, wrel = search.fit(w - b, d, 512 if w.shape[1] % 512 == 0 else 256, iterations, bits)
+                if base is not None:
+                    error = b + search.decode(codes, scales, bits) - w
+                    totals[proj].append(float((d * error * error).double().sum() / (d * w * w).double().sum()))
+                arrays.setdefault(f"{proj}_codes", []).append(codes)
+                arrays.setdefault(f"{proj}_scales", []).append(scales)
+                errors[proj].append(wrel)
+        tmp = dest.with_suffix(".tmp.npz")
+        np.savez(tmp, code_bits=np.asarray(16 if bits == 16 else 8), experts=np.asarray(experts[layer]),
+                 **{k: np.stack(v) for k, v in arrays.items()})
+        tmp.rename(dest)
+        row = {"layer": layer, "experts": len(errors["w1"]), "seconds": round(time.time() - started, 1),
+               **{f"{proj}_wrel_mse": float(np.mean(v)) for proj, v in errors.items()},
+               **{f"{proj}_total_wrel_mse": float(np.mean(v)) for proj, v in totals.items() if v}}
+        with (out / "metrics.jsonl").open("a") as f:
+            f.write(json.dumps(row) + "\n")
+        print(json.dumps(row), flush=True)
+
+
 def fit(args) -> None:
     import stream
 
@@ -186,34 +259,14 @@ def fit(args) -> None:
     with np.load(args.importance) as z:
         imp = {"hidden": z["hidden"], "down": z["down"]}
         experts = z["experts"]
-    ckpt, search = stream.HFCheckpoint(args.hf_path), Search(device)
+    ckpt = stream.HFCheckpoint(args.hf_path)
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "experts.json").write_text(json.dumps({"experts": experts.tolist(), "source": str(args.hf_path)}))
     layers = range(experts.shape[0]) if args.layers == "all" else [int(x) for x in args.layers.split(",")]
-    for layer in layers:
-        dest = args.out / f"layer-{layer:02d}.npz"
-        if dest.exists():
-            continue
-        started = time.time()
-        arrays: dict[str, list[np.ndarray]] = {}
-        errors: dict[str, list[float]] = {proj: [] for proj in PROJ_SPACE}
-        for slot, expert in enumerate(experts[layer][: args.experts or None].tolist()):
-            weights = load_expert(ckpt, layer, expert, device)
-            for proj, space in PROJ_SPACE.items():
-                w = weights[proj]
-                codes, scales, wrel = search.fit(w, torch.from_numpy(imp[space][layer, slot]).to(device),
-                                                 512 if w.shape[1] % 512 == 0 else 256, args.iterations)
-                arrays.setdefault(f"{proj}_codes", []).append(codes)
-                arrays.setdefault(f"{proj}_scales", []).append(scales)
-                errors[proj].append(wrel)
-        tmp = dest.with_suffix(".tmp.npz")
-        np.savez(tmp, code_bits=np.asarray(16), **{k: np.stack(v) for k, v in arrays.items()})
-        tmp.rename(dest)
-        row = {"layer": layer, "experts": len(errors["w1"]), "seconds": round(time.time() - started, 1),
-               **{f"{proj}_wrel_mse": float(np.mean(v)) for proj, v in errors.items()}}
-        with (args.out / "metrics.jsonl").open("a") as f:
-            f.write(json.dumps(row) + "\n")
-        print(json.dumps(row), flush=True)
+    fit_layers(Search(device), lambda layer, expert: load_expert(ckpt, layer, expert, device), layers,
+               {layer: experts[layer][: args.experts or None].tolist() for layer in layers},
+               {layer: {space: a[layer] for space, a in imp.items()} for layer in layers},
+               args.out, args.iterations, args.code_bits, args.residual_of)
 
 
 def router(args) -> None:
@@ -244,6 +297,8 @@ def main() -> None:
         s.add_argument("--rows", type=int, default=64)
         s.add_argument("--n-layers", type=int, default=40)
         s.add_argument("--device", default="cuda" if torch.cuda.is_available() else "mps")
+        s.add_argument("--code-bits", type=int, default=16, choices=(8, 16))
+        s.add_argument("--residual-of", type=Path)
     args = p.parse_args()
     with torch.no_grad():
         {"importance": importance, "check": check, "fit": fit, "router": router}[args.command](args)
