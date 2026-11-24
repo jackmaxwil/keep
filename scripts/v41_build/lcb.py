@@ -1,6 +1,8 @@
 """A LiveCodeBench code-generation subset against any OpenAI-compatible server.
 
-The problems are the most recent ``--n`` (default 50) of a ``code_generation_lite`` release file, by contest date.
+The problems are the most recent ``--n`` (default 50) of a ``code_generation_lite`` release file, by contest date,
+among the difficulty levels of ``--levels`` (default easy and medium: with 16,384 new tokens a hard problem ends in
+thought before any answer, so it costs the most time and separates nothing).
 Prompts, answer extraction (the last fenced block) and grading (every public and private test, 6 s a test,
 stripped-line or decimal equality for stdin problems, ``==`` on the JSON value for call-based ones) follow the
 benchmark's own runner. Each answer runs in a subprocess under ``sandbox-exec`` with no network and writes only
@@ -63,8 +65,9 @@ class _NoGlobals(pickle.Unpickler):  # the private tests are a pickled str; noth
         raise pickle.UnpicklingError(f"{module}.{name}")
 
 
-def problems(path: str, n: int) -> list[dict]:
+def problems(path: str, n: int, levels: str = "easy,medium") -> list[dict]:
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
+    rows = [r for r in rows if r["difficulty"] in levels.split(",")]
     rows.sort(key=lambda r: (r["contest_date"], r["question_id"]))
     return rows[-n:]
 
@@ -143,7 +146,7 @@ def gen(args: argparse.Namespace) -> None:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     extra = json.loads(args.extra)
-    jobs = [(row, s) for row in problems(args.data, args.n) for s in range(args.samples)]
+    jobs = [(row, s) for row in problems(args.data, args.n, args.levels) for s in range(args.samples)]
 
     def one(job: tuple[dict, int]) -> None:
         row, s = job
@@ -167,7 +170,7 @@ def gen(args: argparse.Namespace) -> None:
 def score(args: argparse.Namespace) -> None:
     if not args.no_sandbox and not shutil.which("sandbox-exec"):
         sys.exit("sandbox-exec not found: score on macOS (or pass --no-sandbox inside a throwaway container)")
-    out, rows = Path(args.dir), problems(args.data, args.n)
+    out, rows = Path(args.dir), problems(args.data, args.n, args.levels)
 
     def one(row: dict) -> tuple[str, list]:
         fn = json.loads(row["metadata"] or "{}").get("func_name")
@@ -240,6 +243,7 @@ def main() -> None:
     g.add_argument("--model", required=True)
     g.add_argument("--out", required=True)
     g.add_argument("--n", type=int, default=50)
+    g.add_argument("--levels", default="easy,medium")
     g.add_argument("--samples", type=int, default=2)
     g.add_argument("--max-tokens", type=int, default=16384)
     g.add_argument("--extra", default="{}", help="JSON merged into each request body, e.g. the server's thinking switch")
@@ -249,6 +253,7 @@ def main() -> None:
     s.add_argument("dir")
     s.add_argument("--data", required=True)
     s.add_argument("--n", type=int, default=50)
+    s.add_argument("--levels", default="easy,medium")
     s.add_argument("--workers", type=int, default=8)
     s.add_argument("--no-sandbox", action="store_true")
     c = sub.add_parser("compare")
