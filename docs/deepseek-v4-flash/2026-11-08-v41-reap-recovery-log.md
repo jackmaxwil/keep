@@ -1581,3 +1581,24 @@ Three jobs of the chain finished (`jobs/timing_mac.sh`, `speed_mac.sh`, `gen2_ma
   8-GPU pod, is not run. The head-to-head rows on the Mac (ours at 128, 96 and 64 GB, the static
   140, llama.cpp) are reported against each other, without a full-model reference. Final rubric
   total 97.
+
+### 2026-11-26: head-to-head rows complete
+
+LiveCodeBench subset, 50 easy and medium problems, 2 samples, 16,384 new tokens; per-trial
+results in `results/lcb-mac.json`.
+
+| Row | Passed of 100 | Cut off | Tok/s | minus llama.cpp [95%] |
+|---|---:|---:|---:|---|
+| llama.cpp, ISTA coder build, 128 GB | 97 | 2 | 15.6 | |
+| routed 207, 128 GB | 89 | 11 | 18.3 | -0.08 [-0.15, -0.02] |
+| routed 140, 96 GB | 88 | 11 | 22.9 | -0.09 [-0.17, -0.02] |
+| selective wait 73, 64 GB | 92 | 8 | 17.7 | -0.05 [-0.10, 0.00] |
+| static 140, 96 GB | 62 | 32 | 16.2 | -0.35 [-0.47, -0.23] |
+
+- Static 140 minus routed 140: -0.26 [-0.36, -0.17] (better on 0 problems, worse on 20). The
+  static row took 12.2 h, because a third of its answers run to the limit.
+- llama.cpp solves more than every row of ours. Ours used the older codes; the feedback codes
+  were lost with the pod and are untested here.
+- The llama.cpp probes at 96 and 64 GB are not used: wiring does not constrain mapped weights.
+- The problems (2025-02 to 2025-04) predate the model.
+- Paper: new section "Head-to-head on one machine"; abstract and limitations updated.

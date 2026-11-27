@@ -56,7 +56,10 @@ expert, more experts in memory, then more bits for the busiest. And the usual qu
 mislead: with too few experts in memory, a setup that matched a pruned model on it wrote
 working programs in 4 of 24 attempts against 18, and 22 for the full model. Waiting only for strongly demanded experts
 fixed this on the prompt tested, at two thirds of the speed, on a 64\,GB budget. Quality
-figures come from a simulator and mostly one model; we do not compare with other runtimes.
+figures come from a simulator and mostly one model. On a downstream coding benchmark on the
+laptop, routed residency solves 88 of 100 trials against 62 for a static set in the same memory,
+and 97 for a coding-specialised pruned build under another runtime: we do not claim to be ahead
+of other systems on accuracy.
 \end{abstract}
 
 \section{Introduction}
@@ -756,7 +759,7 @@ Max with 128\,GB. Figure~\ref{fig:speed} separates what waiting costs from what 
 \end{figure}
 
 Configurations (a) and (b) hold the same number of experts in the same memory: the runtime's waiting offload, which as implemented also leaves its fused decode path, is seven times slower than a static set. Configurations (c) and (d) compare routed residency with a static set drawn from the same pool: 7 to 9\% slower, for scoring the demand and installing about two experts per token. Reaching the whole pool costs no more at $\tau=0.3$ (e); at $\tau=0.2$ it admits about three times as many experts and was up to 15\% slower. These ranges cover two or three requests each, and the median speed of one configuration varied by up to 25\% between runs (Appendix~\ref{app:serving}), more than the difference reported here. A repeat with five server launches of each configuration in turn, 144 residents from the whole pool and no speculative decoder, does not find the cost: the static set decoded at a median of 27.5 tokens per second on each of two short requests and at 26.4 after a 4{,}341-token prompt, routed residency at 28.3, 28.9 and 28.0, and the ranges overlap. Routed residency costs no decode speed that we can resolve. With the model's speculative decoder the whole pool is served at 30
-to 40 tokens per second (f). The same runtime serves the pruned checkpoint with its waiting offload at 5.6 to 6.3 tokens per second, but that run differs in checkpoint, precision and decoder, and we do not offer the ratio as a comparison of systems. We have no measurement of another runtime at equal memory on this model; the wait rules of our own code path are measured in Section~\ref{sec:dial}. The hot set is not free in a running system: 64 hot
+to 40 tokens per second (f). The same runtime serves the pruned checkpoint with its waiting offload at 5.6 to 6.3 tokens per second, but that run differs in checkpoint, precision and decoder, and we do not offer the ratio as a comparison of systems. Section~\ref{sec:headtohead} compares accuracy and speed with another runtime and build on a coding benchmark; the wait rules of our own code path are measured in Section~\ref{sec:dial}. The hot set is not free in a running system: 64 hot
 experts at 3 bits decode 11\% slower at equal memory, so the served configuration is 2-bit
 only. Appendix~\ref{app:serving} has the details.
 
@@ -894,6 +897,31 @@ for 73 residents per layer, 19\% of the pool, serves the whole model's output ex
 per second or working code at 16.5, and the choice is one setting. What the table does not show is
 a real 64\,GB machine: the emulation removes memory, not memory bandwidth or compute, and about
 5.5\,GB of other processes' pages were in swap throughout.
+
+\subsection{Head-to-head on one machine}
+\label{sec:headtohead}
+
+We last ran a downstream benchmark on the laptop itself: the 50 most recent easy and medium problems of one LiveCodeBench release file \citep{jain2024livecodebench}, two samples each, with the benchmark's prompts and tests, the model card's sampling (temperature 1.0, thinking on) and at most 16{,}384 new tokens. The other system is llama.cpp serving a published build of the same model \citep{daslab2026coder}: 192 of 384 experts per layer, 72\,GB of weights at about 2 bits, quantized for coding, with its lookup table read from disk. Our rows use the pool of 384 at 2 bits without the speculative decoder; the smaller machines are emulated by wiring memory away. The problems date from February to April 2025, before the model was released, so the scores may be inflated by training data and serve only to compare rows.
+
+\begin{table}[ht]
+  \centering
+  \small
+  \caption{LiveCodeBench subset, 100 trials a row. Memory is the largest process footprint we sampled (for llama.cpp, wired memory, since its weights are mapped from a file). Speed is completion tokens over total request time. The difference is paired by problem, with a bootstrap interval over problems.}
+  \label{tab:headtohead}
+  \begin{tabular}{lrrrrl}
+    \toprule
+    System and machine & Memory & Passed & Cut off & Tok/s & minus llama.cpp [95\%] \\
+    \midrule
+    llama.cpp, pruned build, 128\,GB & 72--74\,GB & 97 & 2 & 15.6 & \\
+    Routed, 207 residents, 128\,GB & 86\,GB & 89 & 11 & 18.3 & $-0.08$ \ci{-0.15}{-0.02} \\
+    Routed, 140 residents, 96\,GB & 63\,GB & 88 & 11 & 22.9 & $-0.09$ \ci{-0.17}{-0.02} \\
+    Selective wait, 73 residents, 64\,GB & 46\,GB & 92 & 8 & 17.7 & $-0.05$ \ci{-0.10}{0.00} \\
+    Static, 140 residents, 96\,GB & 64\,GB & 62 & 32 & 16.2 & $-0.35$ \ci{-0.47}{-0.23} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Two results (Table~\ref{tab:headtohead}). First, at equal resident count and equal codes, admission matters: the static set solves 62 trials and routed residency 88, a difference of $-0.26$ \ci{-0.36}{-0.17}, with the static set better on no problem and worse on 20. The static set also reaches the token limit three times as often. This is generation evidence for the paper's central contrast over 50 problems rather than one request. Second, the pruned build under llama.cpp solves more than any of our rows. Our failures mostly coincide with answers cut off at the token limit: our rows reason longer before answering, and the compressibility of the cut-off text does not suggest repetition loops. The comparison does not isolate the runtime or the policy, because the two systems differ in codes, in the expert choice and in that the other build was quantized for coding. Our rows decode faster, but each row ran once, hours apart, on a machine with 2 to 8\,GB already in swap, and we do not rank speeds across resident counts. Short probes of llama.cpp with 32 and 64\,GiB wired answered all four requests, which a 72\,GB set of weights should not do comfortably in 64\,GB; we conclude that wiring does not constrain a runtime that maps its weights from a file, and we report no llama.cpp result for the smaller machines.
 
 \FloatBarrier
 \section{A second model}
@@ -1147,7 +1175,7 @@ as a baseline, and the 2-bit codes follow QuIP\# \citep{tseng2024quipsharp}.
 
 \section{Limitations}
 
-We do not compare with any other runtime at equal memory; a claim that this system is ahead of others on a small machine would need that comparison. Every divergence comes from a simulator, and the tables report its own timing; under the served system's timing its routed rows are 0.01 to 0.05 worse for the delay and 0.12 to 0.22 worse when a 256-token prompt holds the set (Section~\ref{sec:serving}). The order of spending is a hypothesis: its error terms were not measured separately, and in the case study its residents-before-bits step rests on one budget that lies below the residency floor, and on the second model on two budgets whose floor we did not measure.
+The one comparison with another runtime (Section~\ref{sec:headtohead}) is a coding benchmark on which that system, with a build quantized for coding, solves more; it covers one build, one machine with emulated smaller budgets, and problems older than the model, and we have no result for the model at full precision on it. Every divergence comes from a simulator, and the tables report its own timing; under the served system's timing its routed rows are 0.01 to 0.05 worse for the delay and 0.12 to 0.22 worse when a 256-token prompt holds the set (Section~\ref{sec:serving}). The order of spending is a hypothesis: its error terms were not measured separately, and in the case study its residents-before-bits step rests on one budget that lies below the residency floor, and on the second model on two budgets whose floor we did not measure.
 
 The formulation is general; the evidence for the allocation order is two models under forced
 context, of which one was served and asked to generate, on one machine. The order's conditions are stated but tested only where those models meet them. The second model is tested under forced context only, on the same texts, with no generation and no running system; its codes were fitted by the case study's method and not tuned for it, no code below 2 bits was tried, and its first residency run applied the threshold on the wrong scale, so the run we report followed a look at the data. Other current
@@ -1163,7 +1191,7 @@ The simulator installs an expert one token after it is demanded and adapts withi
 the running system does neither, and Section~\ref{sec:serving} prices both differences in the simulator only. Among starting residents not yet demanded, the simulator evicts
 the highest ranked first and the running system the lowest; we did not measure the effect. The pruned checkpoint differs from the pool in its choice of experts as well as in precision; at 2 bits the choice is not distinguishable on our metric, and at 4 bits it is not either, on the tuning texts ($-0.056$ \ci{-0.122}{+0.026}) or on the held-out texts (0.741 for the 192 of largest routed mass against 0.814, $-0.074$ \ci{-0.166}{+0.023}). The wait rules of Section~\ref{sec:dial} were served on one prompt, ten requests a row, on one machine whose smaller budgets were emulated by wiring memory; we have no divergence for the served system under any rule, and no run on a machine that has 64\,GB.
 
-The served system is an extension of an existing runtime and not a runtime of its own: our codes, kernels and miss rules are loaded into it at a pinned version, and its server, its support for the model and much of its decode path are its maintainers' work. The serving comparisons are therefore between policies inside one runtime. They do not rank runtimes, and nothing in the policy prevents that runtime, or another, from adopting it.
+The served system is an extension of an existing runtime and not a runtime of its own: our codes, kernels and miss rules are loaded into it at a pinned version, and its server, its support for the model and much of its decode path are its maintainers' work. The serving comparisons outside Section~\ref{sec:headtohead} are therefore between policies inside one runtime. They do not rank runtimes, and nothing in the policy prevents that runtime, or another, from adopting it.
 
 \section{Conclusion}
 
@@ -1183,7 +1211,7 @@ other current models, whose pools range from 256 to 896 experts per layer. On th
 
 The code is public at \url{https://github.com/jackmaxwil/keep} under the Apache-2.0 license. The simulator and the evaluation are in
 \src{scripts/runpod/v41_reap}, and the serving patches, which load into an unmodified runtime,
-are in \src{scripts/v41_build}. The paper's source is in \src{docs/deepseek-v4-flash/paper},
+are in \src{scripts/v41_build}, with the benchmark client and scorer (\texttt{lcb.py}); the per-trial results of Section~\ref{sec:headtohead} are in \src{docs/deepseek-v4-flash/results/lcb-mac.json}. The paper's source is in \src{docs/deepseek-v4-flash/paper},
 with the scripts that recompute the reported divergences from the stored evaluations
 (\texttt{stats.py} and, for the held-out texts, \texttt{stats\_heldout.py}), the script that draws the figures (\texttt{figures.py}), the session
 locality measurement (\texttt{routing.py}) and their outputs. The second model's runs, its code fits included (\texttt{fit\_codes.py}), are in \src{scripts/runpod/glm53}, with its per-text results in \src{docs/glm-5.3-flash/results} and the script that tabulates them (\texttt{stats\_glm.py}). The model weights, the codes
