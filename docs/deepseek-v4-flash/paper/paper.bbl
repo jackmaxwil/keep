@@ -1,0 +1,347 @@
+\begin{thebibliography}{49}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Bacon et~al.(2026)Bacon, Calanzone, and Larouche]{bacon2026fewer}
+Pierre-Luc Bacon, Diego Calanzone, and Jean-Maxime Larouche.
+\newblock Fewer expert transfers without changing routing: Expert eviction for
+  {MoE} offloading.
+\newblock \emph{arXiv preprint arXiv:2611.15842}, 2026.
+
+\bibitem[Chen et~al.(2026)Chen, Yan, Bao, Chen, and Zhang]{chen2026proquant}
+Jiaqi Chen, Xianglong Yan, Chengzhu Bao, Xie Chen, and Yulun Zhang.
+\newblock {ProQuant}: Preserving expert quality over quantity in ultra-low-bit
+  quantization of mixture-of-experts models.
+\newblock \emph{arXiv preprint arXiv:2610.30779}, 2026.
+
+\bibitem[Chen et~al.(2025{\natexlab{a}})Chen, Xie, Yang, Jiang, Wang, He, Chen,
+  Zhao, and Wang]{chen2025collaborative}
+Yixiao Chen, Yanyue Xie, Ruining Yang, Wei Jiang, Wei Wang, Yong He, Yue Chen,
+  Pu~Zhao, and Yanzhi Wang.
+\newblock Collaborative compression for large-scale {MoE} deployment on edge.
+\newblock \emph{arXiv preprint arXiv:2509.25689}, 2025{\natexlab{a}}.
+
+\bibitem[Chen et~al.(2025{\natexlab{b}})Chen, Shao, Wang, and
+  Cheng]{chen2025eacmoe}
+Yuanteng Chen, Yuantian Shao, Peisong Wang, and Jian Cheng.
+\newblock {EAC-MoE}: Expert-selection aware compressor for mixture-of-experts
+  large language models.
+\newblock \emph{arXiv preprint arXiv:2508.01625}, 2025{\natexlab{b}}.
+
+\bibitem[Choi et~al.(2025)Choi, Kim, Oh, Park, Kim, and Yoo]{choi2025slicemoe}
+Yuseon Choi, Sangjin Kim, Jungjun Oh, Gwangtae Park, Byeongcheol Kim, and
+  Hoi-Jun Yoo.
+\newblock {SliceMoE}: Bit-sliced expert caching under miss-rate constraints for
+  efficient {MoE} inference.
+\newblock \emph{arXiv preprint arXiv:2512.12990}, 2025.
+
+\bibitem[Chowdhury et~al.(2026)Chowdhury, El~Maghraoui, Tsai, Wang, Burr, Liu,
+  and Wang]{chowdhury2026efficient}
+Mohammed Nowaz~Rabbani Chowdhury, Kaoutar El~Maghraoui, Hsinyu Tsai, Naigang
+  Wang, Geoffrey~W. Burr, Liu Liu, and Meng Wang.
+\newblock Efficient quantization of mixture-of-experts with theoretical
+  generalization guarantees.
+\newblock \emph{arXiv preprint arXiv:2604.06515}, 2026.
+
+\bibitem[Chu et~al.(2025)Chu, Xiang, Shen, Yang, Liu, and
+  Zhang]{chu2025dynaexq}
+Kexin Chu, Dawei Xiang, Zixu Shen, Yiwei Yang, Zecheng Liu, and Wei Zhang.
+\newblock Dynamic expert quantization for scalable mixture-of-experts
+  inference.
+\newblock \emph{arXiv preprint arXiv:2511.15015}, 2025.
+
+\bibitem[Dadgarnia et~al.(2026)Dadgarnia, Tabesh, Nikdan, Helcig, Kurtic,
+  Kleinegger, and Alistarh]{dadgarnia2026gsq}
+Alireza Dadgarnia, Soroush Tabesh, Mahdi Nikdan, Michael Helcig, Eldar Kurtic,
+  Maximilian Kleinegger, and Dan Alistarh.
+\newblock {GSQ}: Highly-accurate low-precision scalar quantization for {LLMs}
+  via {G}umbel-{S}oftmax sampling.
+\newblock \emph{arXiv preprint arXiv:2604.18556}, 2026.
+
+\bibitem[Dai et~al.(2024)Dai, Deng, Zhao, Xu, Gao, Chen, Li, Zeng,
+  et~al.]{dai2024deepseekmoe}
+Damai Dai, Chengqi Deng, Chenggang Zhao, R.~X. Xu, Huazuo Gao, Deli Chen,
+  Jiashi Li, Wangding Zeng, et~al.
+\newblock {DeepSeekMoE}: Towards ultimate expert specialization in
+  mixture-of-experts language models.
+\newblock \emph{arXiv preprint arXiv:2401.06066}, 2024.
+
+\bibitem[{DeepSeek-AI}(2026)]{deepseek2026v41flash}
+{DeepSeek-AI}.
+\newblock {DeepSeek-V4.1-Flash-1017}.
+\newblock Model card and weights,
+  \url{https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017}, 2026.
+
+\bibitem[Dettmers and Zettlemoyer(2022)]{dettmers2022case}
+Tim Dettmers and Luke Zettlemoyer.
+\newblock The case for 4-bit precision: k-bit inference scaling laws.
+\newblock \emph{arXiv preprint arXiv:2212.09720}, 2022.
+
+\bibitem[Duanmu et~al.(2025)Duanmu, Li, Yuan, Zheng, Duan, Zhang, and
+  Lin]{duanmu2025mxmoe}
+Haojie Duanmu, Xiuhong Li, Zhihang Yuan, Size Zheng, Jiangfei Duan, Xingcheng
+  Zhang, and Dahua Lin.
+\newblock {MxMoE}: Mixed-precision quantization for {MoE} with accuracy and
+  performance co-design.
+\newblock \emph{arXiv preprint arXiv:2505.05799}, 2025.
+
+\bibitem[Fang et~al.(2025)Fang, Hong, Huang, Lyu, Chen, Yu, Yu, and
+  Zheng]{fang2025fate}
+Zhiyuan Fang, Zicong Hong, Yuegui Huang, Yufeng Lyu, Wuhui Chen, Yue Yu, Fan
+  Yu, and Zibin Zheng.
+\newblock Fate: Fast edge inference of mixture-of-experts models via
+  cross-layer gate.
+\newblock \emph{arXiv preprint arXiv:2502.12224}, 2025.
+
+\bibitem[Fedus et~al.(2021)Fedus, Zoph, and Shazeer]{fedus2021switch}
+William Fedus, Barret Zoph, and Noam Shazeer.
+\newblock Switch transformers: Scaling to trillion parameter models with simple
+  and efficient sparsity.
+\newblock \emph{arXiv preprint arXiv:2101.03961}, 2021.
+
+\bibitem[Frantar et~al.(2023)Frantar, Ashkboos, Hoefler, and
+  Alistarh]{frantar2023optq}
+Elias Frantar, Saleh Ashkboos, Torsten Hoefler, and Dan Alistarh.
+\newblock {OPTQ}: Accurate quantization for generative pre-trained
+  transformers.
+\newblock In \emph{International Conference on Learning Representations}, 2023.
+
+\bibitem[Hannun et~al.(2023)Hannun, Digani, Katharopoulos, and Collobert]{mlx}
+Awni Hannun, Jagrit Digani, Angelos Katharopoulos, and Ronan Collobert.
+\newblock {MLX}: Efficient and flexible machine learning on {Apple} silicon.
+\newblock Software, \url{https://github.com/ml-explore/mlx}, 2023.
+
+\bibitem[Helcig and Alistarh(2026)]{helcig2026rco}
+Michael Helcig and Dan Alistarh.
+\newblock Model compression with exact budget constraints via {R}iemannian
+  manifolds.
+\newblock \emph{arXiv preprint arXiv:2605.00649}, 2026.
+
+\bibitem[Hoang et~al.(2026)Hoang, Jaiswal, Samragh, and Cho]{hoang2026specmd}
+Duc Hoang, Ajay Jaiswal, Mohammad Samragh, and Minsik Cho.
+\newblock {SpecMD}: A comprehensive study on speculative expert prefetching.
+\newblock \emph{arXiv preprint arXiv:2602.03921}, 2026.
+
+\bibitem[Huang et~al.(2024)Huang, Liao, Liu, He, Tan, Zhang, Li, Liu, and
+  Qi]{huang2024mc}
+Wei Huang, Yue Liao, Jianhui Liu, Ruifei He, Haoru Tan, Shiming Zhang,
+  Hongsheng Li, Si~Liu, and Xiaojuan Qi.
+\newblock Mixture compressor for mixture-of-experts {LLMs} gains more.
+\newblock \emph{arXiv preprint arXiv:2410.06270}, 2024.
+
+\bibitem[Huang et~al.(2026)Huang, Fang, Luo, Wu, Chen, and
+  Zheng]{huang2026dymoe}
+Yuegui Huang, Zhiyuan Fang, Weiqi Luo, Ruoyu Wu, Wuhui Chen, and Zibin Zheng.
+\newblock {DyMoE}: Dynamic expert orchestration with mixed-precision
+  quantization for efficient {MoE} inference on edge.
+\newblock \emph{arXiv preprint arXiv:2603.19172}, 2026.
+
+\bibitem[{IST-DASLab}(2026)]{daslab2026coder}
+{IST-DASLab}.
+\newblock {DeepSeek-V4.1-Flash-1017} {GSQ-RCO} {C}oder.
+\newblock
+  \url{https://huggingface.co/ISTA-DASLab/DeepSeek-V4.1-Flash-1017-GSQ-RCO-Coder-GGUF},
+  2026.
+\newblock Model release.
+
+\bibitem[Jain et~al.(2024)Jain, Han, Gu, Li, Yan, Zhang, Wang, Solar-Lezama,
+  Sen, and Stoica]{jain2024livecodebench}
+Naman Jain, King Han, Alex Gu, Wen-Ding Li, Fanjia Yan, Tianjun Zhang, Sida
+  Wang, Armando Solar-Lezama, Koushik Sen, and Ion Stoica.
+\newblock {LiveCodeBench}: Holistic and contamination free evaluation of large
+  language models for code.
+\newblock \emph{arXiv preprint arXiv:2403.07974}, 2024.
+
+\bibitem[Jha(2026)]{jha2026half}
+Anik Jha.
+\newblock Half the experts, all the code: One-shot domain pruning of
+  mixture-of-experts {LLMs} for coding.
+\newblock \emph{arXiv preprint arXiv:2607.16721}, 2026.
+
+\bibitem[Kong et~al.(2023)Kong, Li, Feng, Wang, Ye, Ouyang, Kong, and
+  Liu]{kong2023swapmoe}
+Rui Kong, Yuanchun Li, Qingtian Feng, Weijun Wang, Xiaozhou Ye, Ye~Ouyang,
+  Linghe Kong, and Yunxin Liu.
+\newblock {SwapMoE}: Serving off-the-shelf {MoE}-based large language models
+  with tunable memory budget.
+\newblock \emph{arXiv preprint arXiv:2308.15030}, 2023.
+
+\bibitem[Kuzmin et~al.(2023)Kuzmin, Nagel, van Baalen, Behboodi, and
+  Blankevoort]{kuzmin2023pruning}
+Andrey Kuzmin, Markus Nagel, Mart van Baalen, Arash Behboodi, and Tijmen
+  Blankevoort.
+\newblock Pruning vs quantization: Which is better?
+\newblock \emph{arXiv preprint arXiv:2307.02973}, 2023.
+
+\bibitem[Lasby et~al.(2025)Lasby, Lazarevich, Sinnadurai, Lie, Ioannou, and
+  Thangarasa]{lasby2025reap}
+Mike Lasby, Ivan Lazarevich, Nish Sinnadurai, Sean Lie, Yani Ioannou, and
+  Vithursan Thangarasa.
+\newblock {REAP} the experts: Why pruning prevails for one-shot {MoE}
+  compression.
+\newblock \emph{arXiv preprint arXiv:2510.13999}, 2025.
+
+\bibitem[Lin et~al.(2026)Lin, Shan, Chen, Chen, Wu, and Zhang]{lin2026pagedmoe}
+Yutong Lin, Yingdi Shan, Shaoyuan Chen, Yuanyong Chen, Yongwei Wu, and Mingxing
+  Zhang.
+\newblock {PagedMoE}: Cross-precision expert caching for token-level dynamic
+  precision in {SSD}-resident {MoE} inference.
+\newblock \emph{arXiv preprint arXiv:2611.03173}, 2026.
+
+\bibitem[Liu et~al.(2026)Liu, Cen, Shi, Niu, Fan, Zhou, Lei, Zhang, Yang,
+  Zheng, Xue, Yu, and Zhu]{liu2026dfly2}
+Hong Liu, Rui Cen, Junhan Shi, Lin Niu, Runzhi Fan, Zhaojing Zhou, Haodi Lei,
+  Jiebin Zhang, Saiyong Yang, Junqiang Zheng, Zhenghai Xue, Guanghua Yu, and
+  Jianchen Zhu.
+\newblock {DFly2}: Turbocharging long-context speculative decoding by sharing
+  the target's sparsity.
+\newblock \emph{arXiv preprint arXiv:2611.34776}, 2026.
+
+\bibitem[Liu et~al.(2024)Liu, Tang, Wang, Ren, Hou, Heng, Guo, and
+  Li]{liu2024survey}
+Jiacheng Liu, Peng Tang, Wenfeng Wang, Yuhang Ren, Xiaofeng Hou, Pheng-Ann
+  Heng, Minyi Guo, and Chao Li.
+\newblock A survey on inference optimization techniques for mixture of experts
+  models.
+\newblock \emph{arXiv preprint arXiv:2412.14219}, 2024.
+
+\bibitem[Luo et~al.(2026)Luo, Yao, Wang, Zhang, and Li]{luo2026lightmoe}
+Puhan Luo, Yunhao Yao, Junyang Wang, Junyang Zhang, and Xiangyang Li.
+\newblock {LightMoE}: Task-aware expert availability management for
+  memory-efficient {MoE-LLM} inference.
+\newblock In \emph{Findings of the Association for Computational Linguistics:
+  ACL 2026}, pages 21124--21134, 2026.
+
+\bibitem[{Moonshot AI}(2026)]{moonshot2026kimik31}
+{Moonshot AI}.
+\newblock {Kimi K3.1 Pro}.
+\newblock Model card and weights,
+  \url{https://huggingface.co/moonshotai/Kimi-K3.1-Pro}, 2026.
+
+\bibitem[{oMLX contributors}(2026)]{omlx}
+{oMLX contributors}.
+\newblock {oMLX}.
+\newblock Software, \url{https://github.com/jundot/omlx}, 2026.
+
+\bibitem[Shazeer et~al.(2017)Shazeer, Mirhoseini, Maziarz, Davis, Le, Hinton,
+  and Dean]{shazeer2017outrageously}
+Noam Shazeer, Azalia Mirhoseini, Krzysztof Maziarz, Andy Davis, Quoc Le,
+  Geoffrey Hinton, and Jeff Dean.
+\newblock Outrageously large neural networks: The sparsely-gated
+  mixture-of-experts layer.
+\newblock \emph{arXiv preprint arXiv:1701.06538}, 2017.
+
+\bibitem[Skliar et~al.(2024)Skliar, van Rozendaal, Lepert, Boinovski, van
+  Baalen, Nagel, Whatmough, and Bejnordi]{skliar2024cache}
+Andrii Skliar, Ties van Rozendaal, Romain Lepert, Todor Boinovski, Mart van
+  Baalen, Markus Nagel, Paul Whatmough, and Babak~Ehteshami Bejnordi.
+\newblock Mixture of cache-conditional experts for efficient mobile device
+  inference.
+\newblock \emph{arXiv preprint arXiv:2412.00099}, 2024.
+
+\bibitem[Son(2026)]{son2026misses}
+ChaeWoo Son.
+\newblock Which expert misses are worth waiting for? substitution and caching
+  for mixture-of-experts inference on a consumer {GPU}.
+\newblock Research Square preprint,
+  \url{https://doi.org/10.21203/rs.3.rs-11268552/v1}, 2026.
+
+\bibitem[Tairin et~al.(2025)Tairin, Mahmud, Shen, and Iyer]{tairin2025emoe}
+Suraiya Tairin, Shohaib Mahmud, Haiying Shen, and Anand Iyer.
+\newblock {eMoE}: Task-aware memory efficient mixture-of-experts-based ({MoE})
+  model inference.
+\newblock \emph{arXiv preprint arXiv:2503.06823}, 2025.
+
+\bibitem[Tang et~al.(2024)Tang, Liu, Hou, Pu, Wang, Heng, Li, and
+  Guo]{tang2024hobbit}
+Peng Tang, Jiacheng Liu, Xiaofeng Hou, Yifei Pu, Jing Wang, Pheng-Ann Heng,
+  Chao Li, and Minyi Guo.
+\newblock {HOBBIT}: A mixed precision expert offloading system for fast {MoE}
+  inference.
+\newblock \emph{arXiv preprint arXiv:2411.01433}, 2024.
+
+\bibitem[Tseng et~al.(2024)Tseng, Chee, Sun, Kuleshov, and
+  De~Sa]{tseng2024quipsharp}
+Albert Tseng, Jerry Chee, Qingyao Sun, Volodymyr Kuleshov, and Christopher
+  De~Sa.
+\newblock {QuIP\#}: Even better {LLM} quantization with {Hadamard} incoherence
+  and lattice codebooks.
+\newblock \emph{arXiv preprint arXiv:2402.04396}, 2024.
+
+\bibitem[Wang et~al.(2025{\natexlab{a}})Wang, Zhou, Hong, and
+  Guo]{wang2025d2moe}
+Haodong Wang, Qihua Zhou, Zicong Hong, and Song Guo.
+\newblock {D$^2$MoE}: Dual routing and dynamic scheduling for efficient
+  on-device {MoE}-based {LLM} serving.
+\newblock \emph{arXiv preprint arXiv:2504.15299}, 2025{\natexlab{a}}.
+
+\bibitem[Wang et~al.(2025{\natexlab{b}})Wang, Yang, Yu, Wang, Li, Wei, Yen, and
+  Qi]{wang2025buddymoe}
+Yun Wang, Lingyun Yang, Senhao Yu, Yixiao Wang, Ruixing Li, Zhixiang Wei, James
+  Yen, and Zhengwei Qi.
+\newblock {BuddyMoE}: Exploiting expert redundancy to accelerate
+  memory-constrained mixture-of-experts inference.
+\newblock \emph{arXiv preprint arXiv:2511.10054}, 2025{\natexlab{b}}.
+
+\bibitem[Wei et~al.(2026)Wei, Huang, Qiu, Wen, Xu, and Li]{wei2026matmoe}
+Renjie Wei, Haochen Huang, Chuyu Qiu, Jinqi Wen, Dehao Xu, and Meng Li.
+\newblock {MatMoE}: Matryoshka mixture-of-experts with dynamic mixed-precision
+  quantization for efficient inference.
+\newblock \emph{arXiv preprint arXiv:2611.01704}, 2026.
+
+\bibitem[Xue et~al.(2024)Xue, Fu, Lu, Mai, and Marina]{xue2024moeinfinity}
+Leyang Xue, Yao Fu, Zhan Lu, Luo Mai, and Mahesh Marina.
+\newblock {MoE-Infinity}: Efficient {MoE} inference on personal machines with
+  sparsity-aware expert cache.
+\newblock \emph{arXiv preprint arXiv:2401.14361}, 2024.
+
+\bibitem[Yang et~al.(2026)Yang, Gao, Li, Luo, Zhang, Zhou, Liu, Lu, Chen, Meng,
+  Gao, Li, et~al.]{yang2026moecore}
+Ke~Yang, Yongji Gao, Xushi Li, Kui Luo, Sicheng Zhang, Tianming Zhou, Keyi Liu,
+  Shufang Lu, Aoxuan Chen, Jie Meng, Jingchun Gao, Dan Li, et~al.
+\newblock {MoE-CORE}: Coordinated expert offloading and residency for
+  memory-constrained {MoE} inference.
+\newblock \emph{arXiv preprint arXiv:2610.01950}, 2026.
+
+\bibitem[Yi et~al.(2023)Yi, Guo, Wei, Zhou, Wang, and Xu]{yi2023edgemoe}
+Rongjie Yi, Liwei Guo, Shiyun Wei, Ao~Zhou, Shangguang Wang, and Mengwei Xu.
+\newblock {EdgeMoE}: Empowering sparse large language models on mobile devices.
+\newblock \emph{arXiv preprint arXiv:2308.14352}, 2023.
+
+\bibitem[{Z.ai}(2026{\natexlab{a}})]{zai2026glm53}
+{Z.ai}.
+\newblock {GLM-5.3}.
+\newblock Model card and weights, \url{https://huggingface.co/zai-org/GLM-5.3},
+  2026{\natexlab{a}}.
+
+\bibitem[{Z.ai}(2026{\natexlab{b}})]{zai2026glm53flash}
+{Z.ai}.
+\newblock {GLM-5.3-Flash}.
+\newblock Model card and weights,
+  \url{https://huggingface.co/zai-org/GLM-5.3-Flash}, 2026{\natexlab{b}}.
+
+\bibitem[Zhang(2026)]{zhang2026reproducible}
+Yu~Zhang.
+\newblock Reproducible evaluation of {MoE} expert caching: Replay semantics,
+  workload contamination, and operating regimes.
+\newblock \emph{arXiv preprint arXiv:2608.07911}, 2026.
+
+\bibitem[Zhong et~al.(2024)Zhong, Liang, Wang, Wang, Huang, and
+  Li]{zhong2024adapmoe}
+Shuzhang Zhong, Ling Liang, Yuan Wang, Runsheng Wang, Ru~Huang, and Meng Li.
+\newblock {AdapMoE}: Adaptive sensitivity-based expert gating and management
+  for efficient {MoE} inference.
+\newblock \emph{arXiv preprint arXiv:2408.10284}, 2024.
+
+\bibitem[Zhu et~al.(2025)Zhu, Li, Dai, Liu, Wang, Li, Xiao, Chen, and
+  Wang]{zhu2025smoe}
+Guoying Zhu, Meng Li, Haipeng Dai, Xuechen Liu, Weijun Wang, Keran Li, Jun
+  Xiao, Ligeng Chen, and Wei Wang.
+\newblock {SMoE}: An algorithm-system co-design for pushing {MoE} to the edge
+  via expert substitution.
+\newblock \emph{arXiv preprint arXiv:2508.18983}, 2025.
+
+\end{thebibliography}

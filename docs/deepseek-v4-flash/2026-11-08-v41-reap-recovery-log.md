@@ -601,10 +601,10 @@ to 100; partial credit only for measured progress).
 | 4 | Core result: routed beats the static frontier at equal resident memory, SSD rate sustainable | 25 | 25 | 2026-11-20, E7 on the Mac: on 36 held-out texts (42 untouched sessions less tool use, first 8,192 tokens, settings frozen) routed beats static by 0.503 at 144 residents (35 of 36 texts) and 0.793 at 96 (36 of 36), intervals clear of zero. Earlier: E1 (2026-11-10): an expert cache with re-route beats the static set by 0.056 at 144 and 0.231 at 96, intervals clear of zero, 0.45 and 1.72 GB/s at 30 tok/s; inside a pool of 192, 22 sessions, simulated reads. Pool of 384 (2026-11-10): a cache of 144 beats the static 144 by 0.309 (21 of 22 sessions) and the exact REAP-50 checkpoint by 0.12, at 0.7 GB/s for tau 0.3. The rest needs the pod confirmation (E7) |
 | 5 | Unification: per-token tier 0 + expert pruning in one policy, frontier figure | 10 | 10 | 2026-11-15: one policy (residents K, admission tau, hot set H, tier-0 threshold) over the pool of 384, 22 sessions; static pruning is its tau = 1e9 corner. Figure `figures/frontier.svg`: routed beats static at every memory size (0.955 at 48 to 0.054 at 250, intervals clear of zero); tier 0 at 0.05 costs 0.002–0.008 for 0.7–0.9% of slots, at 0.1 0.006–0.024 for 5–6% |
 | 6 | Real Apple Silicon streaming measured, not simulated | 10 | 10 | 2026-11-10: the no-wait cache runs under oMLX on the M4 Max over the full pool of 384 with 144 2-bit lattice residents at 23–27 tok/s (17–19 with thinking on), 80 MB of real reads per token, 63 GiB. Memory pressure (2026-11-12): with another process holding 40 GB of incompressible memory and 20 GB pushed to swap, the server keeps its 83 GiB, answers all 61 requests and decodes at 33.5 tok/s against 36.7 before |
-| 7 | Learned tier policy or trained nested codes | 10 | 5 | 2026-11-20 (Jack left the ruling to the plan's mapping, "a hot tier that passes C3"): the fitted third-bit hot set passes C3's bar of 0.02 at 74 GB (-0.023, interval -0.042 to -0.002) and 92 GB (-0.039), ties at 53 GB and loses at 35 GB, and it decodes 11% slower at equal memory, so half credit; the rest waits for codes that lower the 0.235 coding floor (error-feedback rounding, first real test queued). Earlier: 2026-11-15: per-expert admission thresholds fitted on calibration routes lose to tau 0.3 (+0.022 to +0.026 KL at 144 residents, intervals clear of zero; a tie at 96). Gate mass does not rank such policies. Second try: a cost per missed expert measured through the model (held-out r 0.85 over records against 0.44 for gate mass) gives thresholds that miss 62% less priced mass and lose by the same +0.023 (0.015 to 0.033). Open-loop prices do not rank fitted policies; what is left is a closed-loop search for at most 0.064, or trained codes (pod) |
-| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 7 | 2026-11-23: codes and the residents-against-bits trade on GLM-5.3-Flash (2-bit lattice codes for 288 experts in 42 layers, 1-bit residuals for the top 96): every expert at 2 bits beats 72 routed residents at 8 bits in the same memory by 0.221 [0.133, 0.304] (16 of 17 texts); hot residuals lose to residents at 72 and 108 residents and win from 150 (-0.038 to -0.049), the same tested shares of the pool as the case study's crossover. Seven of ten: no generation or downstream benchmark on the second model. Earlier, 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.628, 0.317 and 0.171 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test; numbers from the corrected run of 2026-11-21, the first run had the threshold on the wrong scale and gave 0.384, 0.177 and 0.117). |
+| 7 | Learned tier policy or trained nested codes | 10 | 10 | 2026-11-25: error-feedback codes fitted from the source checkpoint lower the coding floor. All 384 experts at 2 bits, fitted on a pod from `deepseek-ai/DeepSeek-V4.1-Flash-1017` with importance and input second moments from the full model: with every expert resident, the 10-domain KL falls from 0.232 (plain weighted rounding, the same fit without feedback) to 0.155, -0.077 [-0.101, -0.047], 15 of 20 sessions; routed 144 at tau 0.3 falls from 0.317 to 0.270 (-0.046 [-0.066, -0.026]), static 144 from 0.648 to 0.618. The bar fixed beforehand (0.02 or more, interval clear of zero, routed 144 not worse) is met. The plain from-source fit lands within 0.01 of the Mac's mixed pool (0.235), which checks the harness. Earlier half credit: the fitted third-bit hot set passes C3 at 74 and 92 GB and decodes 11% slower (2026-11-20); fitted admission thresholds and priced misses lose to tau 0.3 (2026-11-15) |
+| 8 | Generality: a second MoE plus downstream benchmarks | 10 | 7 | 2026-11-23: codes and the residents-against-bits trade on GLM-5.3-Flash (2-bit lattice codes for 288 experts in 42 layers, 1-bit residuals for the top 96): every expert at 2 bits beats 72 routed residents at 8 bits in the same memory by 0.221 [0.133, 0.304] (16 of 17 texts); hot residuals lose to residents at 72 and 108 residents and win from 150 (-0.038 to -0.049), the same tested shares of the pool as the case study's crossover. Seven of ten: no generation or downstream benchmark on the second model. Closed at 7 on Jack's ruling (2026-11-25): no full-model LiveCodeBench score on a pod; the Mac head-to-head rows go in the paper without it. Earlier, 2026-11-20: GLM-5.3-Flash (288 experts, 8 active) at native precision, settings fixed before the run: routed beats static by 0.628, 0.317 and 0.171 KL at 25%, 37.5% and 52% of the pool, 17 of 17 texts each, intervals clear of zero (conjecture C10's test; numbers from the corrected run of 2026-11-21, the first run had the threshold on the wrong scale and gave 0.384, 0.177 and 0.117). |
 | 9 | Paper draft | 5 | 5 | 2026-11-16: *Pruning Is a Frozen Cache*, a LaTeX paper ([paper/paper.pdf](paper/paper.pdf)): general formulation, routed residency, an allocation principle, the 384-expert model as a case study; numbers from `paper/stats.py`, fact-checked; Jack accepted the framing. What is open before posting is in `paper/OPEN.md` and belongs to items 4 and 8 |
-| | **Total** | 100 | **92** | |
+| | **Total** | 100 | **97** | |
 
 ### 2026-11-09: prior art, plan, restart
 
@@ -1537,3 +1537,68 @@ Three jobs of the chain finished (`jobs/timing_mac.sh`, `speed_mac.sh`, `gen2_ma
   full-model row reproduces the first run (0.027 against 0.028).
 - The V4.1 volume `yqazs7aqe6` was deleted on Jack's word (2026-11-22).
 - Rubric item 8 moves from 5 to 7 of 10. Total 92.
+
+### 2026-11-25: codes from the source checkpoint (rubric item 7)
+
+- One pod, 4×H100 SXM in CA-MTL-1 at $17.56/h (no 8-GPU shape was in stock; Jack's go). The run
+  downloaded the source checkpoint (revision `1bae0e10`), took the full model's logits on the 22
+  tuning sessions, and fitted every expert of all 40 layers twice in one layer-streamed pass:
+  plain weighted rounding under importance measured on the full model, and error-feedback
+  rounding through the full second moments of the same rows (`scripts/runpod/v41_reap/fit_source.py`).
+  Damping for the feedback fit was chosen per layer from 0.01, 0.1 and 1.0 on 16 held-out experts.
+  123 calibration records, 300,676 tokens; about 23 minutes a layer on each GPU, 4.6 h of fitting.
+- Held-out output error, feedback against plain, at the chosen damping: the gate and up
+  projections fall 42% on average (at least 28% in every layer), the down projection 10% (at least
+  1%). Feedback was kept in 40 of 40 layers for both. Damping 0.01 makes the down projection worse
+  than plain in every layer; deep layers choose 1.0.
+- Scores, KL to the full model over the first 1,024 tokens (10 domains without tool use; the two
+  tool-use sessions apart):
+
+  | Resident set | Plain | Feedback | Feedback - plain | Sessions better |
+  |---|---:|---:|---|---:|
+  | all 384 | 0.232 | 0.155 | -0.077 [-0.101, -0.047] | 15 of 20 |
+  | routed 144, tau 0.3 | 0.317 | 0.270 | -0.046 [-0.066, -0.026] | 14 of 20 |
+  | static 144 | 0.648 | 0.618 | -0.030 [-0.045, -0.015] | 15 of 20 |
+
+  Over all 11 domains the all-384 floor falls from 0.370 to 0.209; the tool-use sessions fall from
+  1.66 and 1.84 to 0.74 and 0.76. Feedback loses up to 0.03 on English chat and one business text.
+  The four agentic sessions share their first 1,024 tokens and score identically, as in the
+  paper's harness. Bootstrap over sessions, 10,000 draws. Per-session rows and per-layer fit
+  metrics: `results/codes-source.json`.
+- The codes themselves were lost. The run had no Hugging Face token, so they stayed on the pod's
+  container disk; the pod sat idle for five hours after scoring while the question of pulling
+  them waited, the prepaid balance reached -$1.00, and RunPod terminated the pod at 17:13 UTC.
+  Scores, metrics and logs had been pulled at 12:49. About $176 in all, of which about $88 idle.
+  A Mac benchmark row with the new codes needs a refit (about 5 h on 4×H100).
+- The kill test on the Mac (`evals/ldlq-real.out`, six real experts, fit on one half of the
+  calibration rows, scored on the other) had already shown the same direction: gate and up error
+  falls from 0.047–0.174 to 0.007–0.044 at the best damping.
+- Rubric item 7 moves from 5 to 10. Total 97.
+
+### 2026-11-25: item 8 closed at 7
+
+- Jack's ruling: item 8 stays at 7 of 10. The full model's LiveCodeBench score, which needs an
+  8-GPU pod, is not run. The head-to-head rows on the Mac (ours at 128, 96 and 64 GB, the static
+  140, llama.cpp) are reported against each other, without a full-model reference. Final rubric
+  total 97.
+
+### 2026-11-26: head-to-head rows complete
+
+LiveCodeBench subset, 50 easy and medium problems, 2 samples, 16,384 new tokens; per-trial
+results in `results/lcb-mac.json`.
+
+| Row | Passed of 100 | Cut off | Tok/s | minus llama.cpp [95%] |
+|---|---:|---:|---:|---|
+| llama.cpp, ISTA coder build, 128 GB | 97 | 2 | 15.6 | |
+| routed 207, 128 GB | 89 | 11 | 18.3 | -0.08 [-0.15, -0.02] |
+| routed 140, 96 GB | 88 | 11 | 22.9 | -0.09 [-0.17, -0.02] |
+| selective wait 73, 64 GB | 92 | 8 | 17.7 | -0.05 [-0.10, 0.00] |
+| static 140, 96 GB | 62 | 32 | 16.2 | -0.35 [-0.47, -0.23] |
+
+- Static 140 minus routed 140: -0.26 [-0.36, -0.17] (better on 0 problems, worse on 20). The
+  static row took 12.2 h, because a third of its answers run to the limit.
+- llama.cpp solves more than every row of ours. Ours used the older codes; the feedback codes
+  were lost with the pod and are untested here.
+- The llama.cpp probes at 96 and 64 GB are not used: wiring does not constrain mapped weights.
+- The problems (2025-02 to 2025-04) predate the model.
+- Paper: new section "Head-to-head on one machine"; abstract and limitations updated.

@@ -32,23 +32,32 @@ def plain(w: torch.Tensor, book: torch.Tensor, group: int, rounds: int = 4) -> t
     return (scale * c).reshape(w.shape), scale[:, :, 0, 0]
 
 
-def ldlq(w: torch.Tensor, hessian: torch.Tensor, book: torch.Tensor, group: int, damp: float = 0.01) -> torch.Tensor:
-    """``w`` ([out, in]) rounded block by block with feedback through ``hessian`` ([in, in]); scales from ``plain``."""
+def ldlq_codes(w: torch.Tensor, hessian: torch.Tensor, book: torch.Tensor, group: int, damp: float = 0.01,
+               scale: torch.Tensor | None = None, assign=nearest) -> tuple[torch.Tensor, torch.Tensor]:
+    """``w`` ([out, in]) rounded block by block with feedback through ``hessian`` ([in, in]): (w_hat, codes [out, in/8]).
+    ``scale`` ([out, in/group]) defaults to ``plain``'s; ``assign(vectors [n, 8], book)`` gives each vector's book row."""
     n = w.shape[1]
-    _, scale = plain(w, book, group)
+    if scale is None:
+        _, scale = plain(w, book, group)
     h = hessian.double() + damp * hessian.diagonal().mean().double() * torch.eye(n, dtype=torch.float64, device=w.device)
     chol = torch.linalg.cholesky(h)
     diag = torch.stack([chol[i:i + 8, i:i + 8] for i in range(0, n, 8)])  # [n/8, 8, 8]
     lower = torch.einsum("nbi,bij->nbj", chol.reshape(n, n // 8, 8), torch.linalg.inv(diag))
     lower = lower.reshape(n, n).to(w.dtype)  # identity blocks on the diagonal
     w_hat, err = torch.zeros_like(w), torch.zeros_like(w)
+    codes = torch.zeros(w.shape[0], n // 8, dtype=torch.long, device=w.device)
     for k in reversed(range(n // 8)):
         cols = slice(8 * k, 8 * k + 8)
         target = w[:, cols] + err[:, 8 * k + 8:] @ lower[8 * k + 8:, cols]
         s = scale[:, 8 * k // group, None]
-        w_hat[:, cols] = book[nearest(target / s, book)] * s
+        codes[:, k] = assign(target / s, book)
+        w_hat[:, cols] = book[codes[:, k]] * s
         err[:, cols] = w[:, cols] - w_hat[:, cols]
-    return w_hat
+    return w_hat, codes
+
+
+def ldlq(w: torch.Tensor, hessian: torch.Tensor, book: torch.Tensor, group: int, damp: float = 0.01) -> torch.Tensor:
+    return ldlq_codes(w, hessian, book, group, damp)[0]
 
 
 def output_error(w: torch.Tensor, w_hat: torch.Tensor, hessian: torch.Tensor) -> float:
